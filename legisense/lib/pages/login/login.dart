@@ -8,7 +8,12 @@ import 'components/email_login_form.dart';
 import 'components/footer.dart';
 
 class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+  final VoidCallback? onLoginSuccess;
+  
+  const LoginPage({
+    super.key,
+    this.onLoginSuccess,
+  });
 
   @override
   State<LoginPage> createState() => _LoginPageState();
@@ -54,13 +59,7 @@ class _LoginPageState extends State<LoginPage> {
                   EmailLoginForm(
                     onBack: toggleEmailForm,
                     onLoginSuccess: () {
-                      // TODO: Navigate to home page
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Login successful!'),
-                          backgroundColor: Colors.green,
-                        ),
-                      );
+                      widget.onLoginSuccess?.call();
                     },
                   )
                 else

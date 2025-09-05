@@ -64,8 +64,8 @@ class _EmailLoginFormState extends State<EmailLoginForm> {
       // Show success animation
       _showSuccessMessage();
       
-      // Call success callback after animation
-      Future.delayed(const Duration(milliseconds: 1500), () {
+      // Call success callback after dialog is dismissed (2.5 seconds total)
+      Future.delayed(const Duration(milliseconds: 2500), () {
         widget.onLoginSuccess();
       });
     } else {
@@ -151,6 +151,13 @@ class _EmailLoginFormState extends State<EmailLoginForm> {
         ),
       ),
     );
+    
+    // Auto-dismiss the dialog after 2 seconds
+    Future.delayed(const Duration(seconds: 2), () {
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
+    });
   }
 
   @override
@@ -393,11 +400,7 @@ class _EmailLoginFormState extends State<EmailLoginForm> {
                     duration: 400.ms,
                     curve: Curves.easeOut,
                   )
-                  .fadeIn(duration: 400.ms)
-                  .shimmer(
-                    duration: 1000.ms,
-                    color: const Color(0xFFFECACA),
-                  ),
+                  .fadeIn(duration: 400.ms),
             
             const SizedBox(height: 16),
             
@@ -449,12 +452,7 @@ class _EmailLoginFormState extends State<EmailLoginForm> {
                   duration: 600.ms,
                   curve: Curves.elasticOut,
                 )
-                .fadeIn(duration: 800.ms, delay: 1200.ms)
-                .shimmer(
-                  duration: 2000.ms,
-                  delay: 1400.ms,
-                  color: Colors.white.withValues(alpha: 0.3),
-                ),
+                .fadeIn(duration: 800.ms, delay: 1200.ms),
           ],
         ),
       ),

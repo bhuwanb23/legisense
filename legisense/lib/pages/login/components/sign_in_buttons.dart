@@ -91,11 +91,6 @@ class SignInButtons extends StatelessWidget {
           duration: 600.ms,
           curve: Curves.easeOut,
         )
-        .fadeIn(duration: 800.ms, delay: delay.ms)
-        .shimmer(
-          duration: 2000.ms,
-          delay: (delay + 400).ms,
-          color: Colors.white.withValues(alpha: 0.3),
-        );
+        .fadeIn(duration: 800.ms, delay: delay.ms);
   }
 }
