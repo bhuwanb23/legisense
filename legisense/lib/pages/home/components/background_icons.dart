@@ -72,7 +72,7 @@ class BackgroundIcons extends StatelessWidget {
     required double size,
     required int delay,
   }) {
-    return Container(
+    return SizedBox(
       width: size,
       height: size,
       child: Icon(

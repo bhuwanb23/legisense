@@ -11,7 +11,7 @@ class UploadZone extends StatefulWidget {
 }
 
 class _UploadZoneState extends State<UploadZone> {
-  bool _isDragOver = false;
+  final bool _isDragOver = false;
 
   @override
   Widget build(BuildContext context) {
@@ -120,7 +120,12 @@ class _UploadZoneState extends State<UploadZone> {
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: () {
-                      // TODO: Implement file upload
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Uploading... (stub action)'),
+                          duration: Duration(seconds: 2),
+                        ),
+                      );
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF3B82F6),
@@ -165,7 +170,12 @@ class _UploadZoneState extends State<UploadZone> {
                   width: double.infinity,
                   child: OutlinedButton(
                     onPressed: () {
-                      // TODO: Implement sample document
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Using sample document...'),
+                          duration: Duration(seconds: 2),
+                        ),
+                      );
                     },
                     style: OutlinedButton.styleFrom(
                       foregroundColor: const Color(0xFF374151),

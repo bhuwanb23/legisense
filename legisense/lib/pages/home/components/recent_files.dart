@@ -70,7 +70,7 @@ class RecentFiles extends StatelessWidget {
                 delay: 400 + (index * 200),
               ),
             );
-          }).toList(),
+          }),
         ],
       ),
     );
@@ -154,9 +154,15 @@ class RecentFiles extends StatelessWidget {
               color: Colors.transparent,
               borderRadius: BorderRadius.circular(8),
             ),
-            child: IconButton(
+            child: Builder(
+              builder: (context) => IconButton(
               onPressed: () {
-                // TODO: Implement file options
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Options for "$title"'),
+                    duration: const Duration(seconds: 2),
+                  ),
+                );
               },
               icon: const Icon(
                 FontAwesomeIcons.ellipsisVertical,
@@ -164,6 +170,7 @@ class RecentFiles extends StatelessWidget {
                 size: 16,
               ),
               padding: EdgeInsets.zero,
+            ),
             ),
           ),
         ],

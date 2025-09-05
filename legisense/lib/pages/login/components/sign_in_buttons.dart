@@ -20,7 +20,12 @@ class SignInButtons extends StatelessWidget {
           icon: FontAwesomeIcons.google,
           label: 'Continue with Google',
           onTap: () {
-            // TODO: Implement Google sign in
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Google sign-in coming soon'),
+                duration: Duration(seconds: 2),
+              ),
+            );
           },
           delay: 600,
         ),
@@ -31,7 +36,12 @@ class SignInButtons extends StatelessWidget {
           icon: FontAwesomeIcons.envelope,
           label: 'Continue with Email',
           onTap: onEmailPressed ?? () {
-            // TODO: Implement email sign in
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Email sign-in coming soon'),
+                duration: Duration(seconds: 2),
+              ),
+            );
           },
           delay: 800,
         ),

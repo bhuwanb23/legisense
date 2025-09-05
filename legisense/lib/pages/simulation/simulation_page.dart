@@ -13,35 +13,41 @@ class SimulationPage extends StatelessWidget {
       backgroundColor: const Color(0xFFF8FAFC),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
+          padding: EdgeInsets.zero,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Global Main Header
               const MainHeader(title: 'Simulation'),
-              
-              const SizedBox(height: 8),
-              
-              Text(
-                'Practice with sample legal scenarios',
-                style: GoogleFonts.inter(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w400,
-                  color: const Color(0xFF6B7280),
-                ),
-              )
-                  .animate()
-                  .slideX(
-                    begin: -0.3,
-                    duration: 600.ms,
-                    curve: Curves.easeOut,
-                  )
-                  .fadeIn(duration: 800.ms, delay: 200.ms),
+
+              // Page body padding (keeps header flush)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 8),
+
+                    Text(
+                      'Practice with sample legal scenarios',
+                      style: GoogleFonts.inter(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w400,
+                        color: const Color(0xFF6B7280),
+                      ),
+                    )
+                        .animate()
+                        .slideX(
+                          begin: -0.3,
+                          duration: 600.ms,
+                          curve: Curves.easeOut,
+                        )
+                        .fadeIn(duration: 800.ms, delay: 200.ms),
               
               const SizedBox(height: 32),
               
-              // Simulation Cards
-              _buildSimulationCard(
+                  // Simulation Cards
+                  _buildSimulationCard(
                 title: 'Contract Analysis',
                 subtitle: 'Learn to identify key terms and clauses',
                 icon: FontAwesomeIcons.fileContract,
@@ -50,9 +56,9 @@ class SimulationPage extends StatelessWidget {
                 delay: 400,
               ),
               
-              const SizedBox(height: 16),
+                  const SizedBox(height: 16),
               
-              _buildSimulationCard(
+                  _buildSimulationCard(
                 title: 'Legal Research',
                 subtitle: 'Practice finding relevant case law',
                 icon: FontAwesomeIcons.magnifyingGlass,
@@ -61,9 +67,9 @@ class SimulationPage extends StatelessWidget {
                 delay: 600,
               ),
               
-              const SizedBox(height: 16),
+                  const SizedBox(height: 16),
               
-              _buildSimulationCard(
+                  _buildSimulationCard(
                 title: 'Document Drafting',
                 subtitle: 'Create professional legal documents',
                 icon: FontAwesomeIcons.penToSquare,
@@ -72,10 +78,10 @@ class SimulationPage extends StatelessWidget {
                 delay: 800,
               ),
               
-              const SizedBox(height: 32),
+                  const SizedBox(height: 32),
               
-              // Quick Start Button
-              Container(
+                  // Quick Start Button
+                  Container(
                 width: double.infinity,
                 height: 56,
                 decoration: BoxDecoration(
@@ -98,7 +104,12 @@ class SimulationPage extends StatelessWidget {
                   color: Colors.transparent,
                   child: InkWell(
                     onTap: () {
-                      // TODO: Start simulation
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Starting a new simulation...'),
+                          duration: Duration(seconds: 2),
+                        ),
+                      );
                     },
                     borderRadius: BorderRadius.circular(12),
                     child: Row(
@@ -122,14 +133,19 @@ class SimulationPage extends StatelessWidget {
                     ),
                   ),
                 ),
-              )
-                  .animate()
-                  .scale(
-                    begin: const Offset(0.9, 0.9),
-                    duration: 600.ms,
-                    curve: Curves.elasticOut,
                   )
-                  .fadeIn(duration: 800.ms, delay: 1000.ms),
+                      .animate()
+                      .scale(
+                        begin: const Offset(0.9, 0.9),
+                        duration: 600.ms,
+                        curve: Curves.elasticOut,
+                      )
+                      .fadeIn(duration: 800.ms, delay: 1000.ms),
+                  const SizedBox(height: 24),
+                ],
+              ),
+              // End Padding
+              ),
             ],
           ),
         ),

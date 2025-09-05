@@ -60,6 +60,7 @@ class QuickActions extends StatelessWidget {
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 6),
                   child: _buildActionCard(
+                    context,
                     icon: action['icon'],
                     title: action['title'],
                     gradient: action['gradient'],
@@ -74,7 +75,8 @@ class QuickActions extends StatelessWidget {
     );
   }
 
-  Widget _buildActionCard({
+  Widget _buildActionCard(
+    BuildContext context, {
     required IconData icon,
     required String title,
     required LinearGradient gradient,
@@ -82,7 +84,12 @@ class QuickActions extends StatelessWidget {
   }) {
     return GestureDetector(
       onTap: () {
-        // TODO: Implement action functionality
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('$title tapped'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
       },
       child: Container(
         padding: const EdgeInsets.all(16),
