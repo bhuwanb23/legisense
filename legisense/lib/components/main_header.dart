@@ -24,17 +24,28 @@ class MainHeader extends StatelessWidget {
           // Logo + Name
           Row(
             children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF2563EB).withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(
-                  FontAwesomeIcons.scaleBalanced,
-                  color: Color(0xFF2563EB),
-                  size: 18,
+              ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.asset(
+                  'assets/images/Wordmark Logo with Upload Arrow and Magnifying Glass.png',
+                  width: 40,
+                  height: 40,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stack) {
+                    return Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF2563EB).withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(
+                        FontAwesomeIcons.scaleBalanced,
+                        color: Color(0xFF2563EB),
+                        size: 18,
+                      ),
+                    );
+                  },
                 ),
               ),
               const SizedBox(width: 12),
