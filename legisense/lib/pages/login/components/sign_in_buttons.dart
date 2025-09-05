@@ -4,7 +4,12 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 
 class SignInButtons extends StatelessWidget {
-  const SignInButtons({super.key});
+  final VoidCallback? onEmailPressed;
+  
+  const SignInButtons({
+    super.key,
+    this.onEmailPressed,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +30,7 @@ class SignInButtons extends StatelessWidget {
         _buildSignInButton(
           icon: FontAwesomeIcons.envelope,
           label: 'Continue with Email',
-          onTap: () {
+          onTap: onEmailPressed ?? () {
             // TODO: Implement email sign in
           },
           delay: 800,
