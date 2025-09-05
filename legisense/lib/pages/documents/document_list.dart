@@ -1,18 +1,14 @@
 import 'package:flutter/material.dart';
 import 'document_view_detail.dart';
 import 'components/components.dart';
+import 'data/sample_documents.dart';
 
 class DocumentListPanel extends StatelessWidget {
   const DocumentListPanel({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final documents = [
-      {'title': 'Employment Contract.pdf', 'meta': '2.3 MB • 2h ago'},
-      {'title': 'Service Agreement.docx', 'meta': '456 KB • yesterday'},
-      {'title': 'NDA Template.pdf', 'meta': '1.1 MB • 3 days ago'},
-      {'title': 'Privacy Policy.txt', 'meta': '234 KB • 1 week ago'},
-    ];
+    final documents = kSampleDocuments;
 
     return Container(
       decoration: const BoxDecoration(
@@ -34,14 +30,14 @@ class DocumentListPanel extends StatelessWidget {
               itemBuilder: (context, index) {
                 final doc = documents[index];
                 return DocumentListItem(
-                  title: doc['title']!,
-                  meta: doc['meta']!,
+                  title: doc.title,
+                  meta: doc.meta,
                   onTap: () {
                     Navigator.of(context).push(
                       MaterialPageRoute(
                         builder: (_) => DocumentViewDetail(
-                          title: doc['title']!,
-                          meta: doc['meta']!,
+                          title: doc.title,
+                          meta: doc.meta,
                         ),
                       ),
                     );

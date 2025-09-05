@@ -3,12 +3,14 @@ import 'package:google_fonts/google_fonts.dart';
 import 'document_display.dart';
 import 'document_analysis.dart';
 import 'components/components.dart';
+import 'data/sample_documents.dart';
 
 class DocumentViewDetail extends StatefulWidget {
-  const DocumentViewDetail({super.key, required this.title, required this.meta});
+  const DocumentViewDetail({super.key, required this.title, required this.meta, this.docId});
 
   final String title;
   final String meta;
+  final String? docId;
 
   @override
   State<DocumentViewDetail> createState() => _DocumentViewDetailState();
@@ -19,6 +21,10 @@ class _DocumentViewDetailState extends State<DocumentViewDetail> {
 
   @override
   Widget build(BuildContext context) {
+    final SampleDocument? current = widget.docId == null
+        ? null
+        : kSampleDocuments.firstWhere((d) => d.id == widget.docId, orElse: () => kSampleDocuments.first);
+
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
@@ -55,8 +61,8 @@ class _DocumentViewDetailState extends State<DocumentViewDetail> {
         ),
       ),
       body: _tabIndex == 0
-          ? const DocumentDisplayPanel()
-          : const AnalysisPanel(),
+          ? DocumentDisplayPanel(document: current)
+          : AnalysisPanel(document: current),
     );
   }
 }
