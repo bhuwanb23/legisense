@@ -6,4 +6,6 @@ export 'analysis_card.dart';
 export 'detail_tabs.dart';
 export 'tldr_summary.dart';
 export 'insight_rich_card.dart';
+export 'doc_page_card.dart';
+export 'stats_metric.dart';
 
