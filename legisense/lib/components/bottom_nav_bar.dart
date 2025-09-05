@@ -83,7 +83,7 @@ class BottomNavBar extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
           color: isActive 
-              ? const Color(0xFF2563EB).withValues(alpha: 0.1)
+              ? const Color(0xFF2563EB)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
         ),
@@ -94,8 +94,8 @@ class BottomNavBar extends StatelessWidget {
               icon,
               size: 20,
               color: isActive 
-                  ? const Color(0xFF2563EB)
-                  : const Color(0xFF6B7280),
+                  ? Colors.white
+                  : const Color(0xFF2563EB),
             )
                 .animate(target: isActive ? 1 : 0)
                 .scale(
@@ -111,8 +111,8 @@ class BottomNavBar extends StatelessWidget {
                 fontSize: 12,
                 fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
                 color: isActive 
-                    ? const Color(0xFF2563EB)
-                    : const Color(0xFF6B7280),
+                    ? Colors.white
+                    : const Color(0xFF2563EB),
               ),
             )
                 .animate(target: isActive ? 1 : 0)
