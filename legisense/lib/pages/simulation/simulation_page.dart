@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import '../../components/main_header.dart';
 
 class SimulationPage extends StatelessWidget {
   const SimulationPage({super.key});
@@ -16,22 +17,8 @@ class SimulationPage extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Header
-              Text(
-                'Simulation',
-                style: GoogleFonts.inter(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: const Color(0xFF1F2937),
-                ),
-              )
-                  .animate()
-                  .slideX(
-                    begin: -0.3,
-                    duration: 600.ms,
-                    curve: Curves.easeOut,
-                  )
-                  .fadeIn(duration: 800.ms),
+              // Global Main Header
+              const MainHeader(title: 'Simulation'),
               
               const SizedBox(height: 8),
               

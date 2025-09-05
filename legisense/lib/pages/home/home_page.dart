@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'components/components.dart';
+import '../../components/main_header.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -29,8 +30,8 @@ class HomePage extends StatelessWidget {
               child: SingleChildScrollView(
                 child: Column(
                   children: [
-                    // Header
-                    const HeaderComponent(),
+                    // Global Main Header
+                    const MainHeader(title: 'Legisense'),
                     
                     // Welcome Section
                     const WelcomeSection(),

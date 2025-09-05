@@ -96,12 +96,7 @@ class BottomNavBar extends StatelessWidget {
               color: isActive 
                   ? Colors.white
                   : const Color(0xFF2563EB),
-            )
-                .animate(target: isActive ? 1 : 0)
-                .scale(
-                  duration: 200.ms,
-                  curve: Curves.easeInOut,
-                ),
+            ),
             
             const SizedBox(height: 4),
             
@@ -114,12 +109,7 @@ class BottomNavBar extends StatelessWidget {
                     ? Colors.white
                     : const Color(0xFF2563EB),
               ),
-            )
-                .animate(target: isActive ? 1 : 0)
-                .fadeIn(
-                  duration: 200.ms,
-                  curve: Curves.easeInOut,
-                ),
+            ),
           ],
         ),
       ),
