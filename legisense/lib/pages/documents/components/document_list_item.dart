@@ -78,15 +78,18 @@ class DocumentListItem extends StatelessWidget {
               ),
             ),
 
-            // Trailing menu
-            PopupMenuButton<String>(
-              icon: const Icon(Icons.more_vert, size: 18, color: Color(0xFF9CA3AF)),
-              itemBuilder: (context) => const [
-                PopupMenuItem(value: 'open', child: Text('Open')),
-                PopupMenuItem(value: 'download', child: Text('Download')),
-                PopupMenuItem(value: 'delete', child: Text('Delete')),
-              ],
-              onSelected: (v) {},
+            // Trailing arrow
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF3F4F6),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: const Icon(
+                Icons.arrow_forward_ios,
+                size: 14,
+                color: Color(0xFF6B7280),
+              ),
             ),
           ],
         ),
