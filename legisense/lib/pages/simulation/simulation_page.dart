@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import '../../components/main_header.dart';
 import '../../theme/app_theme.dart';
+import '../../components/main_header.dart';
 import 'components/components.dart';
+import 'simulation_details.dart';
 
 class SimulationPage extends StatelessWidget {
   const SimulationPage({super.key});
@@ -31,106 +31,116 @@ class SimulationPage extends StatelessWidget {
               // Animated background elements
               _buildAnimatedBackground(),
               
-              // Main content
-              SingleChildScrollView(
-                padding: EdgeInsets.zero,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Global Main Header with enhanced animation
-                    const MainHeader(title: 'Simulation')
-                        .animate()
-                        .slideY(
-                          begin: -0.5,
-                          duration: AppTheme.animationSlow,
-                          curve: Curves.elasticOut,
-                        )
-                        .fadeIn(duration: AppTheme.animationSlow),
+              // Main content with fixed layout
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Global Main Header with enhanced animation
+                  const MainHeader(title: 'Simulation')
+                      .animate()
+                      .slideY(
+                        begin: -0.5,
+                        duration: AppTheme.animationSlow,
+                        curve: Curves.elasticOut,
+                      )
+                      .fadeIn(duration: AppTheme.animationSlow),
 
-                    // Enhanced subtitle section
-                    Container(
-                      margin: const EdgeInsets.symmetric(horizontal: AppTheme.spacingL, vertical: AppTheme.spacingM),
-                      padding: const EdgeInsets.all(AppTheme.spacingL),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.8),
-                        borderRadius: BorderRadius.circular(AppTheme.radiusL),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.05),
-                            blurRadius: 20,
-                            offset: const Offset(0, 8),
+                  // Enhanced subtitle section
+                  Container(
+                    margin: const EdgeInsets.symmetric(horizontal: AppTheme.spacingM, vertical: AppTheme.spacingS),
+                    padding: const EdgeInsets.all(AppTheme.spacingM),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.8),
+                      borderRadius: BorderRadius.circular(AppTheme.radiusM),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.05),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(AppTheme.spacingS),
+                          decoration: BoxDecoration(
+                            color: AppTheme.primaryBlue.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(AppTheme.radiusS),
                           ),
-                        ],
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(AppTheme.spacingS),
-                            decoration: BoxDecoration(
-                              color: AppTheme.primaryBlue.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(AppTheme.radiusS),
-                            ),
-                            child: const Icon(
-                              FontAwesomeIcons.play, 
-                              size: 16, 
-                              color: AppTheme.primaryBlue,
-                            ),
+                          child: const Icon(
+                            Icons.play_arrow, 
+                            size: 16, 
+                            color: AppTheme.primaryBlue,
                           ),
-                          const SizedBox(width: AppTheme.spacingM),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Legal Practice Simulations',
-                                  style: AppTheme.heading4.copyWith(
-                                    color: AppTheme.textPrimary,
-                                  ),
+                        ),
+                        const SizedBox(width: AppTheme.spacingM),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Legal Practice Simulations',
+                                style: AppTheme.heading4.copyWith(
+                                  color: AppTheme.textPrimary,
                                 ),
-                                const SizedBox(height: AppTheme.spacingXS),
-                                Text(
-                                  'Practice with sample legal scenarios and improve your skills',
-                                  style: AppTheme.bodySmall.copyWith(
-                                    color: AppTheme.textSecondary,
-                                  ),
+                              ),
+                              const SizedBox(height: AppTheme.spacingXS),
+                              Text(
+                                'Select a document to start simulation',
+                                style: AppTheme.bodySmall.copyWith(
+                                  color: AppTheme.textSecondary,
                                 ),
-                              ],
+                              ),
+                            ],
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppTheme.spacingM,
+                            vertical: AppTheme.spacingXS,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppTheme.warningOrange.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(AppTheme.radiusXL),
+                            border: Border.all(
+                              color: AppTheme.warningOrange.withValues(alpha: 0.3),
+                              width: 1,
                             ),
                           ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: AppTheme.spacingM,
-                              vertical: AppTheme.spacingXS,
-                            ),
-                            decoration: BoxDecoration(
-                              color: AppTheme.warningOrange.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(AppTheme.radiusXL),
-                              border: Border.all(
-                                color: AppTheme.warningOrange.withValues(alpha: 0.3),
-                                width: 1,
-                              ),
-                            ),
-                            child: Text(
-                              'Interactive',
-                              style: AppTheme.caption.copyWith(
-                                color: AppTheme.warningOrange,
-                                fontWeight: FontWeight.w600,
-                              ),
+                          child: Text(
+                            'Interactive',
+                            style: AppTheme.caption.copyWith(
+                              color: AppTheme.warningOrange,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
+                    ),
+                  )
+                      .animate()
+                      .slideX(
+                        begin: -0.3,
+                        duration: AppTheme.animationSlow,
+                        curve: Curves.easeOut,
+                      )
+                      .fadeIn(duration: AppTheme.animationSlow, delay: 200.ms),
+
+                  // Document List Section - Fixed height with internal scrolling
+                  Expanded(
+                    child: DocumentListSection(
+                      onDocumentTap: (documentId, documentTitle) {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => SimulationDetailsPage(
+                              documentId: documentId,
+                              documentTitle: documentTitle,
+                            ),
+                          ),
+                        );
+                      },
                     )
-                        .animate()
-                        .slideX(
-                          begin: -0.3,
-                          duration: AppTheme.animationSlow,
-                          curve: Curves.easeOut,
-                        )
-                        .fadeIn(duration: AppTheme.animationSlow, delay: 200.ms),
-
-                    // Document List Section
-                    const DocumentListSection()
                         .animate()
                         .slideY(
                           begin: 0.3,
@@ -138,8 +148,8 @@ class SimulationPage extends StatelessWidget {
                           curve: Curves.easeOut,
                         )
                         .fadeIn(duration: AppTheme.animationSlow, delay: 200.ms),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -156,11 +166,11 @@ class SimulationPage extends StatelessWidget {
           top: 150,
           right: 50,
           child: Container(
-            width: 100,
-            height: 100,
+            width: 60,
+            height: 60,
             decoration: BoxDecoration(
               color: AppTheme.primaryBlue.withValues(alpha: 0.05),
-              borderRadius: BorderRadius.circular(50),
+              borderRadius: BorderRadius.circular(30),
             ),
           )
               .animate(onPlay: (controller) => controller.repeat())
@@ -182,8 +192,8 @@ class SimulationPage extends StatelessWidget {
           top: 300,
           left: 40,
           child: Container(
-            width: 70,
-            height: 70,
+            width: 45,
+            height: 45,
             decoration: BoxDecoration(
               color: AppTheme.successGreen.withValues(alpha: 0.05),
               shape: BoxShape.circle,
@@ -201,11 +211,11 @@ class SimulationPage extends StatelessWidget {
           bottom: 200,
           right: 80,
           child: Container(
-            width: 50,
-            height: 50,
+            width: 35,
+            height: 35,
             decoration: BoxDecoration(
               color: AppTheme.warningOrange.withValues(alpha: 0.05),
-              borderRadius: BorderRadius.circular(25),
+              borderRadius: BorderRadius.circular(18),
             ),
           )
               .animate(onPlay: (controller) => controller.repeat())
