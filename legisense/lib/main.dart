@@ -75,7 +75,7 @@ class _AppWrapperState extends State<AppWrapper> {
           ProfilePage(onLogout: handleLogout),
         ],
       ),
-      bottomNavigationBar: BottomNavBar(
+        bottomNavigationBar: BottomNavBar(
         currentIndex: currentPageIndex,
         onTap: onPageChanged,
       ),

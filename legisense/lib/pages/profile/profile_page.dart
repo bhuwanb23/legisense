@@ -1,16 +1,309 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 import '../../components/main_header.dart';
 import '../../theme/app_theme.dart';
 import 'components/components.dart';
 
-class ProfilePage extends StatelessWidget {
+class ProfilePage extends StatefulWidget {
   final VoidCallback? onLogout;
   
   const ProfilePage({
     super.key,
     this.onLogout,
   });
+
+  @override
+  State<ProfilePage> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
+  // Profile data
+  String _fullName = 'Sarah Johnson';
+  String _phoneNumber = '+1 (555) 123-4567';
+  String _location = 'San Francisco, CA';
+  final String _email = 'sarah.johnson@company.com';
+  final String _role = 'Senior Product Manager';
+  String _initials = 'SJ';
+  
+  // Settings
+  bool _emailNotifications = true;
+  bool _pushNotifications = false;
+  String _language = 'English (US)';
+  String _profileVisibility = 'Public';
+  String _dataSharing = 'Limited';
+  bool _twoFactorAuth = true;
+  
+  // Avatar
+  File? _selectedImage;
+
+  // Camera tap functionality
+  Future<void> _onCameraTap() async {
+    try {
+      final ImagePicker picker = ImagePicker();
+      final XFile? image = await picker.pickImage(
+        source: ImageSource.camera,
+        maxWidth: 300,
+        maxHeight: 300,
+        imageQuality: 80,
+      );
+      
+      if (image != null) {
+        setState(() {
+          _selectedImage = File(image.path);
+        });
+        
+        // Show success message
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Profile picture updated successfully!'),
+              backgroundColor: AppTheme.successGreen,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error updating profile picture: $e'),
+            backgroundColor: AppTheme.errorRed,
+          ),
+        );
+      }
+    }
+  }
+
+  // Name change functionality
+  void _onNameChanged(String value) {
+    setState(() {
+      _fullName = value;
+      _initials = _generateInitials(value);
+    });
+  }
+
+  // Phone change functionality
+  void _onPhoneChanged(String value) {
+    setState(() {
+      _phoneNumber = value;
+    });
+  }
+
+  // Location change functionality
+  void _onLocationChanged(String value) {
+    setState(() {
+      _location = value;
+    });
+  }
+
+  // Email notifications change
+  void _onEmailNotificationsChanged(bool value) {
+    setState(() {
+      _emailNotifications = value;
+    });
+  }
+
+  // Push notifications change
+  void _onPushNotificationsChanged(bool value) {
+    setState(() {
+      _pushNotifications = value;
+    });
+  }
+
+  // Language change functionality
+  void _onLanguageChanged(String value) {
+    setState(() {
+      _language = value;
+    });
+  }
+
+  // Profile visibility tap
+  void _onProfileVisibilityTap() {
+    _showSelectionDialog(
+      'Profile Visibility',
+      ['Public', 'Friends Only', 'Private'],
+      _profileVisibility,
+      (value) => setState(() => _profileVisibility = value),
+    );
+  }
+
+  // Data sharing tap
+  void _onDataSharingTap() {
+    _showSelectionDialog(
+      'Data Sharing',
+      ['None', 'Limited', 'Full'],
+      _dataSharing,
+      (value) => setState(() => _dataSharing = value),
+    );
+  }
+
+  // Two factor auth tap
+  void _onTwoFactorAuthTap() {
+    setState(() {
+      _twoFactorAuth = !_twoFactorAuth;
+    });
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(_twoFactorAuth 
+          ? 'Two-factor authentication enabled' 
+          : 'Two-factor authentication disabled'),
+        backgroundColor: _twoFactorAuth ? AppTheme.successGreen : AppTheme.warningOrange,
+      ),
+    );
+  }
+
+  // Create simulation functionality
+  void _onCreateSimulation() {
+    // Navigate to simulation page
+    Navigator.of(context).pushNamed('/simulation');
+  }
+
+  // Edit profile functionality
+  void _onEditProfile() {
+    _showEditProfileDialog();
+  }
+
+  // Manage privacy functionality
+  void _onManagePrivacy() {
+    _showPrivacySettingsDialog();
+  }
+
+  // Helper methods
+  String _generateInitials(String name) {
+    final words = name.trim().split(' ');
+    if (words.length >= 2) {
+      return '${words[0][0]}${words[1][0]}'.toUpperCase();
+    } else if (words.isNotEmpty) {
+      return words[0][0].toUpperCase();
+    }
+    return 'U';
+  }
+
+  void _showSelectionDialog(String title, List<String> options, String current, Function(String) onChanged) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(title),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: options.map((option) => ListTile(
+            title: Text(option),
+            leading: Icon(
+              option == current ? Icons.radio_button_checked : Icons.radio_button_unchecked,
+              color: option == current ? AppTheme.primaryBlue : Colors.grey,
+            ),
+            onTap: () {
+              onChanged(option);
+              Navigator.of(context).pop();
+            },
+          )).toList(),
+        ),
+      ),
+    );
+  }
+
+  void _showEditProfileDialog() {
+    final nameController = TextEditingController(text: _fullName);
+    final phoneController = TextEditingController(text: _phoneNumber);
+    final locationController = TextEditingController(text: _location);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Edit Profile'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameController,
+                decoration: const InputDecoration(
+                  labelText: 'Full Name',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: phoneController,
+                decoration: const InputDecoration(
+                  labelText: 'Phone Number',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: locationController,
+                decoration: const InputDecoration(
+                  labelText: 'Location',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              _onNameChanged(nameController.text);
+              _onPhoneChanged(phoneController.text);
+              _onLocationChanged(locationController.text);
+              Navigator.of(context).pop();
+              
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Profile updated successfully!'),
+                  backgroundColor: AppTheme.successGreen,
+                ),
+              );
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showPrivacySettingsDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Privacy Settings'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            SwitchListTile(
+              title: const Text('Email Notifications'),
+              value: _emailNotifications,
+              onChanged: _onEmailNotificationsChanged,
+            ),
+            SwitchListTile(
+              title: const Text('Push Notifications'),
+              value: _pushNotifications,
+              onChanged: _onPushNotificationsChanged,
+            ),
+            SwitchListTile(
+              title: const Text('Two-Factor Authentication'),
+              value: _twoFactorAuth,
+              onChanged: (value) => setState(() => _twoFactorAuth = value),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -61,13 +354,12 @@ class ProfilePage extends StatelessWidget {
                           // Avatar Section with enhanced animation
                           Center(
                             child: AvatarSection(
-                              initials: 'SJ',
-                              name: 'Sarah Johnson',
-                              email: 'sarah.johnson@company.com',
-                              role: 'Senior Product Manager',
-                              onCameraTap: () {
-                                // TODO: Implement camera tap
-                              },
+                              initials: _initials,
+                              name: _fullName,
+                              email: _email,
+                              role: _role,
+                              onCameraTap: _onCameraTap,
+                              selectedImage: _selectedImage,
                             )
                                 .animate()
                                 .scale(
@@ -82,18 +374,12 @@ class ProfilePage extends StatelessWidget {
                           
                           // Personal Info Card with slide animation
                           PersonalInfoCard(
-                            fullName: 'Sarah Johnson',
-                            phoneNumber: '+1 (555) 123-4567',
-                            location: 'San Francisco, CA',
-                            onNameChanged: (value) {
-                              // TODO: Implement name change
-                            },
-                            onPhoneChanged: (value) {
-                              // TODO: Implement phone change
-                            },
-                            onLocationChanged: (value) {
-                              // TODO: Implement location change
-                            },
+                            fullName: _fullName,
+                            phoneNumber: _phoneNumber,
+                            location: _location,
+                            onNameChanged: _onNameChanged,
+                            onPhoneChanged: _onPhoneChanged,
+                            onLocationChanged: _onLocationChanged,
                           )
                               .animate()
                               .slideY(
@@ -107,18 +393,12 @@ class ProfilePage extends StatelessWidget {
                           
                           // Preferences Card with slide animation
                           PreferencesCard(
-                            emailNotifications: true,
-                            pushNotifications: false,
-                            language: 'English (US)',
-                            onEmailNotificationsChanged: (value) {
-                              // TODO: Implement email notifications change
-                            },
-                            onPushNotificationsChanged: (value) {
-                              // TODO: Implement push notifications change
-                            },
-                            onLanguageChanged: (value) {
-                              // TODO: Implement language change
-                            },
+                            emailNotifications: _emailNotifications,
+                            pushNotifications: _pushNotifications,
+                            language: _language,
+                            onEmailNotificationsChanged: _onEmailNotificationsChanged,
+                            onPushNotificationsChanged: _onPushNotificationsChanged,
+                            onLanguageChanged: _onLanguageChanged,
                           )
                               .animate()
                               .slideX(
@@ -132,18 +412,12 @@ class ProfilePage extends StatelessWidget {
                           
                           // Privacy Settings Card with slide animation
                           PrivacySettingsCard(
-                            profileVisibility: 'Public',
-                            dataSharing: 'Limited',
-                            twoFactorAuth: true,
-                            onProfileVisibilityTap: () {
-                              // TODO: Implement profile visibility tap
-                            },
-                            onDataSharingTap: () {
-                              // TODO: Implement data sharing tap
-                            },
-                            onTwoFactorAuthTap: () {
-                              // TODO: Implement two factor auth tap
-                            },
+                            profileVisibility: _profileVisibility,
+                            dataSharing: _dataSharing,
+                            twoFactorAuth: _twoFactorAuth,
+                            onProfileVisibilityTap: _onProfileVisibilityTap,
+                            onDataSharingTap: _onDataSharingTap,
+                            onTwoFactorAuthTap: _onTwoFactorAuthTap,
                           )
                               .animate()
                               .slideX(
@@ -157,9 +431,7 @@ class ProfilePage extends StatelessWidget {
                           
                           // Saved Simulations Card with slide animation
                           SavedSimulationsCard(
-                            onCreateSimulation: () {
-                              // TODO: Implement create simulation
-                            },
+                            onCreateSimulation: _onCreateSimulation,
                           )
                               .animate()
                               .slideY(
@@ -173,13 +445,9 @@ class ProfilePage extends StatelessWidget {
                           
                           // Action Buttons with enhanced animation
                           ProfileActionButtons(
-                            onEditProfile: () {
-                              // TODO: Implement edit profile
-                            },
-                            onManagePrivacy: () {
-                              // TODO: Implement manage privacy
-                            },
-                            onLogout: onLogout,
+                            onEditProfile: _onEditProfile,
+                            onManagePrivacy: _onManagePrivacy,
+                            onLogout: widget.onLogout,
                           )
                               .animate()
                               .slideY(

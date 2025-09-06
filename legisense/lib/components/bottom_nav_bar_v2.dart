@@ -4,11 +4,11 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../utils/responsive.dart';
 
-class BottomNavBar extends StatelessWidget {
+class BottomNavBarV2 extends StatelessWidget {
   final int currentIndex;
   final Function(int) onTap;
   
-  const BottomNavBar({
+  const BottomNavBarV2({
     super.key,
     required this.currentIndex,
     required this.onTap,

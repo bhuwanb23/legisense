@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'dart:io';
 import '../../../theme/app_theme.dart';
 
 class AvatarSection extends StatelessWidget {
   final String? imageUrl;
+  final File? selectedImage;
   final String initials;
   final String name;
   final String email;
@@ -13,6 +15,7 @@ class AvatarSection extends StatelessWidget {
   const AvatarSection({
     super.key,
     this.imageUrl,
+    this.selectedImage,
     required this.initials,
     required this.name,
     required this.email,
@@ -38,10 +41,10 @@ class AvatarSection extends StatelessWidget {
                   width: 4,
                 ),
               ),
-              child: imageUrl != null
+              child: selectedImage != null
                   ? ClipOval(
-                      child: Image.network(
-                        imageUrl!,
+                      child: Image.file(
+                        selectedImage!,
                         width: 80,
                         height: 80,
                         fit: BoxFit.cover,
@@ -50,7 +53,19 @@ class AvatarSection extends StatelessWidget {
                         },
                       ),
                     )
-                  : _buildInitialsAvatar(),
+                  : imageUrl != null
+                      ? ClipOval(
+                          child: Image.network(
+                            imageUrl!,
+                            width: 80,
+                            height: 80,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return _buildInitialsAvatar();
+                            },
+                          ),
+                        )
+                      : _buildInitialsAvatar(),
             ),
             // Camera button
             Positioned(
