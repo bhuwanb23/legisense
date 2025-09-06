@@ -47,16 +47,16 @@ class DocumentsPage extends StatelessWidget {
 
                   // Enhanced subtitle section
                   Container(
-                    margin: const EdgeInsets.symmetric(horizontal: AppTheme.spacingL, vertical: AppTheme.spacingM),
-                    padding: const EdgeInsets.all(AppTheme.spacingL),
+                    margin: const EdgeInsets.symmetric(horizontal: AppTheme.spacingM, vertical: AppTheme.spacingS),
+                    padding: const EdgeInsets.all(AppTheme.spacingM),
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.8),
-                      borderRadius: BorderRadius.circular(AppTheme.radiusL),
+                      borderRadius: BorderRadius.circular(AppTheme.radiusM),
                       boxShadow: [
                         BoxShadow(
                           color: Colors.black.withValues(alpha: 0.05),
-                          blurRadius: 20,
-                          offset: const Offset(0, 8),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
                         ),
                       ],
                     ),
@@ -130,7 +130,7 @@ class DocumentsPage extends StatelessWidget {
                   // Enhanced list layout
                   Expanded(
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingS),
+                      padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingM),
                       child: LayoutBuilder(
                         builder: (context, constraints) {
                           final double width = constraints.maxWidth;
@@ -142,7 +142,7 @@ class DocumentsPage extends StatelessWidget {
                             return Row(
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
-                                Flexible(flex: 100, child: list),
+                                Expanded(flex: 100, child: list),
                               ],
                             );
                           }
@@ -176,8 +176,8 @@ class DocumentsPage extends StatelessWidget {
           top: 100,
           left: 50,
           child: Container(
-            width: 80,
-            height: 80,
+            width: 50,
+            height: 50,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: AppTheme.primaryBlue.withValues(alpha: 0.1),
@@ -202,8 +202,8 @@ class DocumentsPage extends StatelessWidget {
           top: 200,
           right: 80,
           child: Container(
-            width: 60,
-            height: 60,
+            width: 40,
+            height: 40,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: AppTheme.successGreen.withValues(alpha: 0.1),
@@ -228,8 +228,8 @@ class DocumentsPage extends StatelessWidget {
           bottom: 150,
           left: 100,
           child: Container(
-            width: 40,
-            height: 40,
+            width: 30,
+            height: 30,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: AppTheme.warningOrange.withValues(alpha: 0.1),

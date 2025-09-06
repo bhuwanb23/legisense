@@ -88,7 +88,7 @@ class HomePage extends StatelessWidget {
                         .fadeIn(duration: AppTheme.animationSlow, delay: 800.ms),
                     
                     // Bottom padding for better scrolling
-                    const SizedBox(height: AppTheme.spacingXL),
+                    const SizedBox(height: AppTheme.spacingL),
                   ],
                 ),
               ),
@@ -107,11 +107,11 @@ class HomePage extends StatelessWidget {
           top: 120,
           right: 30,
           child: Container(
-            width: 100,
-            height: 100,
+            width: 60,
+            height: 60,
             decoration: BoxDecoration(
               color: AppTheme.primaryBlue.withValues(alpha: 0.05),
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(12),
             ),
           )
               .animate(onPlay: (controller) => controller.repeat())
@@ -126,8 +126,8 @@ class HomePage extends StatelessWidget {
           top: 300,
           left: 20,
           child: Container(
-            width: 60,
-            height: 60,
+            width: 40,
+            height: 40,
             decoration: BoxDecoration(
               color: AppTheme.successGreen.withValues(alpha: 0.05),
               shape: BoxShape.circle,
@@ -152,11 +152,11 @@ class HomePage extends StatelessWidget {
           bottom: 200,
           right: 50,
           child: Container(
-            width: 80,
-            height: 80,
+            width: 50,
+            height: 50,
             decoration: BoxDecoration(
               color: AppTheme.warningOrange.withValues(alpha: 0.05),
-              borderRadius: BorderRadius.circular(40),
+              borderRadius: BorderRadius.circular(25),
             ),
           )
               .animate(onPlay: (controller) => controller.repeat())
