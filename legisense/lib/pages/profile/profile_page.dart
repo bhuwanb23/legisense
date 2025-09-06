@@ -1,12 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../components/main_header.dart';
 import '../../theme/app_theme.dart';
-import 'components/profile_avatar.dart';
-import 'components/user_info_section.dart';
-import 'components/info_card.dart';
-import 'components/action_buttons.dart';
+import 'components/components.dart';
 
 class ProfilePage extends StatelessWidget {
   final VoidCallback? onLogout;
@@ -62,12 +58,16 @@ class ProfilePage extends StatelessWidget {
                         children: [
                           const SizedBox(height: AppTheme.spacingM),
                           
-                          // Profile Avatar with enhanced animation
+                          // Avatar Section with enhanced animation
                           Center(
-                            child: ProfileAvatar(
-                              initials: 'DU',
-                              size: 80,
-                              showRing: true,
+                            child: AvatarSection(
+                              initials: 'SJ',
+                              name: 'Sarah Johnson',
+                              email: 'sarah.johnson@company.com',
+                              role: 'Senior Product Manager',
+                              onCameraTap: () {
+                                // TODO: Implement camera tap
+                              },
                             )
                                 .animate()
                                 .scale(
@@ -80,13 +80,19 @@ class ProfilePage extends StatelessWidget {
                           
                           const SizedBox(height: AppTheme.spacingL),
                           
-                          // User Info Section with slide animation
-                          UserInfoSection(
-                            name: 'Demo User',
-                            email: 'demo@legisense.com',
-                            role: 'Small Business Owner',
-                            onEdit: () {
-                              // TODO: Implement edit profile
+                          // Personal Info Card with slide animation
+                          PersonalInfoCard(
+                            fullName: 'Sarah Johnson',
+                            phoneNumber: '+1 (555) 123-4567',
+                            location: 'San Francisco, CA',
+                            onNameChanged: (value) {
+                              // TODO: Implement name change
+                            },
+                            onPhoneChanged: (value) {
+                              // TODO: Implement phone change
+                            },
+                            onLocationChanged: (value) {
+                              // TODO: Implement location change
                             },
                           )
                               .animate()
@@ -97,45 +103,22 @@ class ProfilePage extends StatelessWidget {
                               )
                               .fadeIn(duration: AppTheme.animationSlow, delay: 400.ms),
                           
-                          const SizedBox(height: AppTheme.spacingL),
+                          const SizedBox(height: AppTheme.spacingM),
                           
-                          // Personal Information Card with staggered animation
-                          InfoCard(
-                            title: 'Personal Information',
-                            delay: 600,
-                            onEdit: () {
-                              // TODO: Implement edit personal info
+                          // Preferences Card with slide animation
+                          PreferencesCard(
+                            emailNotifications: true,
+                            pushNotifications: false,
+                            language: 'English (US)',
+                            onEmailNotificationsChanged: (value) {
+                              // TODO: Implement email notifications change
                             },
-                            fields: [
-                              InfoField(
-                                icon: FontAwesomeIcons.user,
-                                label: 'Full Name',
-                                value: 'Demo User',
-                                hint: 'Enter your full name',
-                                isEditable: true,
-                              ),
-                              InfoField(
-                                icon: FontAwesomeIcons.envelope,
-                                label: 'Email Address',
-                                value: 'demo@legisense.com',
-                                hint: 'Enter your email',
-                                isEditable: true,
-                              ),
-                              InfoField(
-                                icon: FontAwesomeIcons.phone,
-                                label: 'Phone Number',
-                                value: '+1 (555) 123-4567',
-                                hint: 'Enter your phone number',
-                                isEditable: true,
-                              ),
-                              InfoField(
-                                icon: FontAwesomeIcons.building,
-                                label: 'Company',
-                                value: 'Legisense Inc.',
-                                hint: 'Enter your company name',
-                                isEditable: true,
-                              ),
-                            ],
+                            onPushNotificationsChanged: (value) {
+                              // TODO: Implement push notifications change
+                            },
+                            onLanguageChanged: (value) {
+                              // TODO: Implement language change
+                            },
                           )
                               .animate()
                               .slideX(
@@ -145,36 +128,22 @@ class ProfilePage extends StatelessWidget {
                               )
                               .fadeIn(duration: AppTheme.animationSlow, delay: 600.ms),
                           
-                          // Preferences Card with slide animation
-                          InfoCard(
-                            title: 'Preferences',
-                            delay: 800,
-                            onEdit: () {
-                              // TODO: Implement edit preferences
+                          const SizedBox(height: AppTheme.spacingM),
+                          
+                          // Privacy Settings Card with slide animation
+                          PrivacySettingsCard(
+                            profileVisibility: 'Public',
+                            dataSharing: 'Limited',
+                            twoFactorAuth: true,
+                            onProfileVisibilityTap: () {
+                              // TODO: Implement profile visibility tap
                             },
-                            fields: [
-                              InfoField(
-                                icon: FontAwesomeIcons.globe,
-                                label: 'Language',
-                                value: 'English (US)',
-                                hint: 'Select your language',
-                                isEditable: true,
-                              ),
-                              InfoField(
-                                icon: FontAwesomeIcons.clock,
-                                label: 'Time Zone',
-                                value: 'Pacific Standard Time',
-                                hint: 'Select your time zone',
-                                isEditable: true,
-                              ),
-                              InfoField(
-                                icon: FontAwesomeIcons.bell,
-                                label: 'Notifications',
-                                value: 'Email & Push',
-                                hint: 'Select notification preferences',
-                                isEditable: true,
-                              ),
-                            ],
+                            onDataSharingTap: () {
+                              // TODO: Implement data sharing tap
+                            },
+                            onTwoFactorAuthTap: () {
+                              // TODO: Implement two factor auth tap
+                            },
                           )
                               .animate()
                               .slideX(
@@ -184,40 +153,17 @@ class ProfilePage extends StatelessWidget {
                               )
                               .fadeIn(duration: AppTheme.animationSlow, delay: 800.ms),
                           
-                          // Privacy Settings Card with slide animation
-                          InfoCard(
-                            title: 'Privacy Settings',
-                            delay: 1000,
-                            onEdit: () {
-                              // TODO: Implement edit privacy settings
+                          const SizedBox(height: AppTheme.spacingM),
+                          
+                          // Saved Simulations Card with slide animation
+                          SavedSimulationsCard(
+                            onCreateSimulation: () {
+                              // TODO: Implement create simulation
                             },
-                            fields: [
-                              InfoField(
-                                icon: FontAwesomeIcons.lock,
-                                label: 'Data Sharing',
-                                value: 'Limited',
-                                hint: 'Control data sharing preferences',
-                                isEditable: true,
-                              ),
-                              InfoField(
-                                icon: FontAwesomeIcons.shield,
-                                label: 'Security Level',
-                                value: 'High',
-                                hint: 'Set your security level',
-                                isEditable: true,
-                              ),
-                              InfoField(
-                                icon: FontAwesomeIcons.eye,
-                                label: 'Profile Visibility',
-                                value: 'Private',
-                                hint: 'Control who can see your profile',
-                                isEditable: true,
-                              ),
-                            ],
                           )
                               .animate()
-                              .slideX(
-                                begin: -0.3,
+                              .slideY(
+                                begin: 0.3,
                                 duration: AppTheme.animationSlow,
                                 curve: Curves.easeOut,
                               )
@@ -226,8 +172,7 @@ class ProfilePage extends StatelessWidget {
                           const SizedBox(height: AppTheme.spacingL),
                           
                           // Action Buttons with enhanced animation
-                          ActionButtons(
-                            delay: 1200,
+                          ProfileActionButtons(
                             onEditProfile: () {
                               // TODO: Implement edit profile
                             },
