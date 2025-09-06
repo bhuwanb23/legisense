@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-// import removed: flutter_animate not used after cleanup
-import 'package:google_fonts/google_fonts.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'document_list.dart';
 import '../../components/main_header.dart';
+import '../../theme/app_theme.dart';
 // Only list on this page; detail is a separate route
 
 class DocumentsPage extends StatelessWidget {
@@ -12,7 +11,7 @@ class DocumentsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: AppTheme.backgroundLight,
       body: SafeArea(
         child: Stack(
           children: [
@@ -40,29 +39,25 @@ class DocumentsPage extends StatelessWidget {
 
                 // Subtitle row
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingL),
                   child: Row(
                     children: [
-                      const Icon(FontAwesomeIcons.folderOpen, size: 14, color: Color(0xFF64748B)),
-                      const SizedBox(width: 8),
+                      const Icon(FontAwesomeIcons.folderOpen, size: 14, color: AppTheme.textMuted),
+                      const SizedBox(width: AppTheme.spacingS),
                       Text(
                         'Browse and manage your files',
-                        style: GoogleFonts.inter(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                          color: const Color(0xFF64748B),
-                        ),
+                        style: AppTheme.caption,
                       ),
                     ],
                   ),
                 ),
 
-                const SizedBox(height: 12),
+                const SizedBox(height: AppTheme.spacingM),
 
                 // List-only layout
                 Expanded(
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingS),
                     child: LayoutBuilder(
                       builder: (context, constraints) {
                         final double width = constraints.maxWidth;

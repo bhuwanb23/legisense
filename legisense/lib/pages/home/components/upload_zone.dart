@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import '../../../theme/app_theme.dart';
 
 class UploadZone extends StatefulWidget {
   const UploadZone({super.key});
@@ -16,23 +16,23 @@ class _UploadZoneState extends State<UploadZone> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      margin: const EdgeInsets.symmetric(horizontal: AppTheme.spacingM, vertical: AppTheme.spacingM),
       child: Container(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(AppTheme.spacingL),
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(16),
+          color: AppTheme.backgroundWhite.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(AppTheme.radiusL),
           border: Border.all(
             color: _isDragOver 
-                ? const Color(0xFF3B82F6) 
-                : const Color(0xFF93C5FD),
+                ? AppTheme.primaryBlueLight 
+                : AppTheme.secondaryBlueLight,
             width: 2,
             style: BorderStyle.solid,
           ),
           boxShadow: _isDragOver
               ? [
                   BoxShadow(
-                    color: const Color(0xFF3B82F6).withValues(alpha: 0.3),
+                    color: AppTheme.primaryBlueLight.withValues(alpha: 0.3),
                     blurRadius: 20,
                     spreadRadius: 2,
                   ),
@@ -53,7 +53,7 @@ class _UploadZoneState extends State<UploadZone> {
               height: 64,
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
-                  colors: [Color(0xFF3B82F6), Color(0xFF4F46E5)],
+                  colors: [AppTheme.primaryBlueLight, AppTheme.primaryBlue],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
@@ -68,49 +68,41 @@ class _UploadZoneState extends State<UploadZone> {
                 .animate()
                 .scale(
                   begin: const Offset(0.8, 0.8),
-                  duration: 600.ms,
+                  duration: AppTheme.animationMedium,
                   curve: Curves.elasticOut,
                 )
-                .fadeIn(duration: 800.ms, delay: 200.ms),
+                .fadeIn(duration: AppTheme.animationSlow, delay: 200.ms),
             
-            const SizedBox(height: 16),
+            const SizedBox(height: AppTheme.spacingM),
             
             // Title and Description
             Text(
               'Upload Your Contract',
-              style: GoogleFonts.inter(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: const Color(0xFF1F2937),
-              ),
+              style: AppTheme.heading4,
             )
                 .animate()
                 .slideY(
                   begin: 0.3,
-                  duration: 600.ms,
+                  duration: AppTheme.animationMedium,
                   curve: Curves.easeOut,
                 )
-                .fadeIn(duration: 800.ms, delay: 400.ms),
+                .fadeIn(duration: AppTheme.animationSlow, delay: 400.ms),
             
-            const SizedBox(height: 8),
+            const SizedBox(height: AppTheme.spacingS),
             
             Text(
               'Drag and drop files here or click to browse',
-              style: GoogleFonts.inter(
-                fontSize: 14,
-                fontWeight: FontWeight.w400,
-                color: const Color(0xFF6B7280),
-              ),
+              style: AppTheme.bodySmall,
             )
                 .animate()
                 .slideY(
                   begin: 0.3,
-                  duration: 600.ms,
+                  duration: AppTheme.animationMedium,
                   curve: Curves.easeOut,
                 )
-                .fadeIn(duration: 800.ms, delay: 600.ms),
+                .fadeIn(duration: AppTheme.animationSlow, delay: 600.ms),
             
-            const SizedBox(height: 24),
+            const SizedBox(height: AppTheme.spacingL),
             
             // Action Buttons
             Column(
@@ -128,11 +120,11 @@ class _UploadZoneState extends State<UploadZone> {
                       );
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF3B82F6),
+                      backgroundColor: AppTheme.primaryBlueLight,
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      padding: const EdgeInsets.symmetric(vertical: AppTheme.spacingM),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(AppTheme.radiusM),
                       ),
                       elevation: 8,
                     ),
@@ -143,13 +135,10 @@ class _UploadZoneState extends State<UploadZone> {
                           FontAwesomeIcons.upload,
                           size: 16,
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: AppTheme.spacingS),
                         Text(
                           'Upload Contract',
-                          style: GoogleFonts.inter(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
+                          style: AppTheme.buttonPrimary,
                         ),
                       ],
                     ),
@@ -158,12 +147,12 @@ class _UploadZoneState extends State<UploadZone> {
                     .animate()
                     .scale(
                       begin: const Offset(0.9, 0.9),
-                      duration: 600.ms,
+                      duration: AppTheme.animationMedium,
                       curve: Curves.elasticOut,
                     )
-                    .fadeIn(duration: 800.ms, delay: 800.ms),
+                    .fadeIn(duration: AppTheme.animationSlow, delay: 800.ms),
                 
-                const SizedBox(height: 12),
+                const SizedBox(height: AppTheme.spacingM),
                 
                 // Sample Document Button
                 SizedBox(
@@ -178,14 +167,14 @@ class _UploadZoneState extends State<UploadZone> {
                       );
                     },
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFF374151),
+                      foregroundColor: AppTheme.textPrimary,
                       side: BorderSide(
-                        color: Colors.white.withValues(alpha: 0.3),
+                        color: AppTheme.backgroundWhite.withValues(alpha: 0.3),
                         width: 1,
                       ),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      padding: const EdgeInsets.symmetric(vertical: AppTheme.spacingM),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(AppTheme.radiusM),
                       ),
                     ),
                     child: Row(
@@ -195,13 +184,10 @@ class _UploadZoneState extends State<UploadZone> {
                           FontAwesomeIcons.fileLines,
                           size: 16,
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: AppTheme.spacingS),
                         Text(
                           'Use Sample Document',
-                          style: GoogleFonts.inter(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                          ),
+                          style: AppTheme.buttonSecondary,
                         ),
                       ],
                     ),
@@ -210,10 +196,10 @@ class _UploadZoneState extends State<UploadZone> {
                     .animate()
                     .scale(
                       begin: const Offset(0.9, 0.9),
-                      duration: 600.ms,
+                      duration: AppTheme.animationMedium,
                       curve: Curves.elasticOut,
                     )
-                    .fadeIn(duration: 800.ms, delay: 1000.ms),
+                    .fadeIn(duration: AppTheme.animationSlow, delay: 1000.ms),
               ],
             ),
           ],

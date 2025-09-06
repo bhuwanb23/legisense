@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../components/main_header.dart';
+import '../../theme/app_theme.dart';
 import 'components/profile_avatar.dart';
 import 'components/user_info_section.dart';
 import 'components/info_card.dart';
@@ -17,7 +18,7 @@ class ProfilePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: AppTheme.backgroundLight,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: EdgeInsets.zero,
@@ -26,11 +27,11 @@ class ProfilePage extends StatelessWidget {
             children: [
               const MainHeader(title: 'Profile'),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
+                padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingL),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SizedBox(height: 24),
+                    const SizedBox(height: AppTheme.spacingL),
                     // Profile Avatar
                     Center(
                       child: ProfileAvatar(
@@ -39,7 +40,7 @@ class ProfilePage extends StatelessWidget {
                         showRing: true,
                       ),
                     ),
-                    const SizedBox(height: 32),
+                    const SizedBox(height: AppTheme.spacingXL),
                     // User Info Section
                     UserInfoSection(
                       name: 'Demo User',
@@ -49,7 +50,7 @@ class ProfilePage extends StatelessWidget {
                         // TODO: Implement edit profile
                       },
                     ),
-                    const SizedBox(height: 32),
+                    const SizedBox(height: AppTheme.spacingXL),
                     // Personal Information Card
                     InfoCard(
                       title: 'Personal Information',
@@ -150,7 +151,7 @@ class ProfilePage extends StatelessWidget {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 32),
+                    const SizedBox(height: AppTheme.spacingXL),
                     // Action Buttons
                     ActionButtons(
                       delay: 1200,
@@ -162,7 +163,7 @@ class ProfilePage extends StatelessWidget {
                       },
                       onLogout: onLogout,
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: AppTheme.spacingL),
                   ],
                 ),
               ),

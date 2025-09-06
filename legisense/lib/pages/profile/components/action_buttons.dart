@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import '../../../theme/app_theme.dart';
 
 class ActionButtons extends StatelessWidget {
   final VoidCallback? onEditProfile;
@@ -62,29 +62,12 @@ class ActionButtons extends StatelessWidget {
   }) {
     return Container(
       height: 56,
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [
-            Color(0xFF2563EB),
-            Color(0xFF3B82F6),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF2563EB).withValues(alpha: 0.3),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
+      decoration: AppTheme.primaryButtonDecoration,
       child: Material(
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppTheme.radiusM),
           child: Center(
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -94,14 +77,10 @@ class ActionButtons extends StatelessWidget {
                   color: Colors.white,
                   size: 18,
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: AppTheme.spacingS),
                 Text(
                   label,
-                  style: GoogleFonts.inter(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
+                  style: AppTheme.buttonPrimary,
                 ),
               ],
             ),
@@ -112,10 +91,10 @@ class ActionButtons extends StatelessWidget {
         .animate()
         .scale(
           begin: const Offset(0.9, 0.9),
-          duration: 600.ms,
+          duration: AppTheme.animationMedium,
           curve: Curves.elasticOut,
         )
-        .fadeIn(duration: 800.ms, delay: delay.ms);
+        .fadeIn(duration: AppTheme.animationSlow, delay: delay.ms);
   }
 
   Widget _buildSecondaryButton({
@@ -129,7 +108,7 @@ class ActionButtons extends StatelessWidget {
       height: 56,
       decoration: BoxDecoration(
         color: const Color(0xFFFEF2F2),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(AppTheme.radiusM),
         border: Border.all(
           color: const Color(0xFFFECACA),
           width: 1,
@@ -139,23 +118,21 @@ class ActionButtons extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(AppTheme.radiusM),
           child: Center(
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Icon(
                   icon,
-                  color: const Color(0xFFDC2626),
+                  color: AppTheme.errorRed,
                   size: 18,
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: AppTheme.spacingS),
                 Text(
                   label,
-                  style: GoogleFonts.inter(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: const Color(0xFFDC2626),
+                  style: AppTheme.buttonPrimary.copyWith(
+                    color: AppTheme.errorRed,
                   ),
                 ),
               ],
@@ -167,9 +144,9 @@ class ActionButtons extends StatelessWidget {
         .animate()
         .scale(
           begin: const Offset(0.9, 0.9),
-          duration: 600.ms,
+          duration: AppTheme.animationMedium,
           curve: Curves.elasticOut,
         )
-        .fadeIn(duration: 800.ms, delay: delay.ms);
+        .fadeIn(duration: AppTheme.animationSlow, delay: delay.ms);
   }
 }

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import '../../../theme/app_theme.dart';
 
 class RecentFiles extends StatelessWidget {
   const RecentFiles({super.key});
@@ -33,34 +33,30 @@ class RecentFiles extends StatelessWidget {
     ];
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      margin: const EdgeInsets.symmetric(horizontal: AppTheme.spacingM, vertical: AppTheme.spacingM),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             'Recent Files',
-            style: GoogleFonts.inter(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: const Color(0xFF1F2937),
-            ),
+            style: AppTheme.heading4,
           )
               .animate()
               .slideY(
                 begin: 0.3,
-                duration: 600.ms,
+                duration: AppTheme.animationMedium,
                 curve: Curves.easeOut,
               )
-              .fadeIn(duration: 800.ms, delay: 200.ms),
+              .fadeIn(duration: AppTheme.animationSlow, delay: 200.ms),
           
-          const SizedBox(height: 16),
+          const SizedBox(height: AppTheme.spacingM),
           
           ...recentFiles.asMap().entries.map((entry) {
             int index = entry.key;
             Map<String, dynamic> file = entry.value;
             
             return Padding(
-              padding: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.only(bottom: AppTheme.spacingM),
               child: _buildFileCard(
                 title: file['title'],
                 subtitle: file['subtitle'],
@@ -85,12 +81,12 @@ class RecentFiles extends StatelessWidget {
     required int delay,
   }) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(AppTheme.spacingM),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
+        color: AppTheme.backgroundWhite.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(AppTheme.radiusM),
         border: Border.all(
-          color: Colors.white.withValues(alpha: 0.2),
+          color: AppTheme.backgroundWhite.withValues(alpha: 0.2),
           width: 1,
         ),
         boxShadow: [
@@ -109,7 +105,7 @@ class RecentFiles extends StatelessWidget {
             height: 48,
             decoration: BoxDecoration(
               color: bgColor,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppTheme.radiusM),
             ),
             child: Icon(
               icon,
@@ -118,7 +114,7 @@ class RecentFiles extends StatelessWidget {
             ),
           ),
           
-          const SizedBox(width: 16),
+          const SizedBox(width: AppTheme.spacingM),
           
           // File Info
           Expanded(
@@ -127,20 +123,12 @@ class RecentFiles extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: GoogleFonts.inter(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: const Color(0xFF1F2937),
-                  ),
+                  style: AppTheme.bodyLarge,
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: AppTheme.spacingXS),
                 Text(
                   subtitle,
-                  style: GoogleFonts.inter(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w400,
-                    color: const Color(0xFF6B7280),
-                  ),
+                  style: AppTheme.bodySmall,
                 ),
               ],
             ),
@@ -152,7 +140,7 @@ class RecentFiles extends StatelessWidget {
             height: 32,
             decoration: BoxDecoration(
               color: Colors.transparent,
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(AppTheme.radiusS),
             ),
             child: Builder(
               builder: (context) => IconButton(
@@ -166,7 +154,7 @@ class RecentFiles extends StatelessWidget {
               },
               icon: const Icon(
                 FontAwesomeIcons.ellipsisVertical,
-                color: Color(0xFF9CA3AF),
+                color: AppTheme.textTertiary,
                 size: 16,
               ),
               padding: EdgeInsets.zero,
@@ -179,9 +167,9 @@ class RecentFiles extends StatelessWidget {
         .animate()
         .slideX(
           begin: 0.3,
-          duration: 600.ms,
+          duration: AppTheme.animationMedium,
           curve: Curves.easeOut,
         )
-        .fadeIn(duration: 800.ms, delay: delay.ms);
+        .fadeIn(duration: AppTheme.animationSlow, delay: delay.ms);
   }
 }

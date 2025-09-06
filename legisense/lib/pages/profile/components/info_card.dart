@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import '../../../theme/app_theme.dart';
 
 class InfoCard extends StatelessWidget {
   final String title;
@@ -21,56 +21,44 @@ class InfoCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.only(bottom: 20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+      decoration: AppTheme.cardDecoration,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: AppTheme.spacingM),
             decoration: BoxDecoration(
-              color: const Color(0xFF2563EB).withValues(alpha: 0.05),
+              color: AppTheme.primaryBlue.withValues(alpha: 0.05),
               borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(16),
-                topRight: Radius.circular(16),
+                topLeft: Radius.circular(AppTheme.radiusL),
+                topRight: Radius.circular(AppTheme.radiusL),
               ),
             ),
             child: Row(
               children: [
                 Text(
                   title,
-                  style: GoogleFonts.inter(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: const Color(0xFF2563EB),
+                  style: AppTheme.heading4.copyWith(
+                    color: AppTheme.primaryBlue,
                   ),
                 ),
                 const Spacer(),
                 if (onEdit != null)
                   Container(
                     decoration: BoxDecoration(
-                      color: const Color(0xFF2563EB).withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(8),
+                      color: AppTheme.primaryBlue.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(AppTheme.radiusS),
                     ),
                     child: Material(
                       color: Colors.transparent,
                       child: InkWell(
                         onTap: onEdit,
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(AppTheme.radiusS),
                         child: const Padding(
-                          padding: EdgeInsets.all(8),
+                          padding: EdgeInsets.all(AppTheme.spacingS),
                           child: Icon(
                             FontAwesomeIcons.penToSquare,
-                            color: Color(0xFF2563EB),
+                            color: AppTheme.primaryBlue,
                             size: 14,
                           ),
                         ),
@@ -91,9 +79,9 @@ class InfoCard extends StatelessWidget {
                     _buildField(field, index),
                     if (index < fields.length - 1)
                       Container(
-                        margin: const EdgeInsets.symmetric(vertical: 16),
+                        margin: const EdgeInsets.symmetric(vertical: AppTheme.spacingM),
                         height: 1,
-                        color: const Color(0xFFE5E7EB),
+                        color: AppTheme.borderLight,
                       ),
                   ],
                 );
@@ -106,10 +94,10 @@ class InfoCard extends StatelessWidget {
         .animate()
         .slideY(
           begin: 0.3,
-          duration: 600.ms,
+          duration: AppTheme.animationMedium,
           curve: Curves.easeOut,
         )
-        .fadeIn(duration: 800.ms, delay: delay.ms);
+        .fadeIn(duration: AppTheme.animationSlow, delay: delay.ms);
   }
 
   Widget _buildField(InfoField field, int index) {
@@ -119,56 +107,47 @@ class InfoCard extends StatelessWidget {
         Container(
           width: 40,
           height: 40,
-          decoration: BoxDecoration(
-            color: const Color(0xFF2563EB).withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(8),
-          ),
+          decoration: AppTheme.iconContainerSmallDecoration,
           child: Icon(
             field.icon,
-            color: const Color(0xFF2563EB),
+            color: AppTheme.primaryBlue,
             size: 16,
           ),
         ),
-        const SizedBox(width: 16),
+        const SizedBox(width: AppTheme.spacingM),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 field.label,
-                style: GoogleFonts.inter(
-                  fontSize: 14,
+                style: AppTheme.bodySmall.copyWith(
+                  color: AppTheme.textSecondary,
                   fontWeight: FontWeight.w500,
-                  color: const Color(0xFF6B7280),
                 ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: AppTheme.spacingXS),
               if (field.isEditable)
                 Container(
                   decoration: BoxDecoration(
                     border: Border.all(
-                      color: const Color(0xFFE5E7EB),
+                      color: AppTheme.borderLight,
                       width: 1,
                     ),
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(AppTheme.radiusS),
                   ),
                   child: TextFormField(
                     initialValue: field.value,
-                    style: GoogleFonts.inter(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                      color: const Color(0xFF1F2937),
-                    ),
+                    style: AppTheme.bodyLarge,
                     decoration: InputDecoration(
                       border: InputBorder.none,
                       contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 12,
+                        horizontal: AppTheme.spacingM,
+                        vertical: AppTheme.spacingM,
                       ),
                       hintText: field.hint,
-                      hintStyle: GoogleFonts.inter(
-                        fontSize: 16,
-                        color: const Color(0xFF9CA3AF),
+                      hintStyle: AppTheme.bodyLarge.copyWith(
+                        color: AppTheme.textTertiary,
                       ),
                     ),
                   ),
@@ -176,11 +155,7 @@ class InfoCard extends StatelessWidget {
               else
                 Text(
                   field.value,
-                  style: GoogleFonts.inter(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                    color: const Color(0xFF1F2937),
-                  ),
+                  style: AppTheme.bodyLarge,
                 ),
             ],
           ),
@@ -190,10 +165,10 @@ class InfoCard extends StatelessWidget {
         .animate()
         .slideX(
           begin: 0.2,
-          duration: 400.ms,
+          duration: AppTheme.animationFast,
           curve: Curves.easeOut,
         )
-        .fadeIn(duration: 600.ms, delay: (delay + 200 + (index * 100)).ms);
+        .fadeIn(duration: AppTheme.animationMedium, delay: (delay + 200 + (index * 100)).ms);
   }
 }
 
