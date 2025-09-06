@@ -20,13 +20,13 @@ class InfoCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 20),
+      margin: const EdgeInsets.only(bottom: AppTheme.spacingM),
       decoration: AppTheme.cardDecoration,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: AppTheme.spacingM),
+            padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingM, vertical: AppTheme.spacingS),
             decoration: BoxDecoration(
               color: AppTheme.primaryBlue.withValues(alpha: 0.05),
               borderRadius: const BorderRadius.only(
@@ -67,9 +67,9 @@ class InfoCard extends StatelessWidget {
                   ),
               ],
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(20),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(AppTheme.spacingM),
             child: Column(
               children: fields.asMap().entries.map((entry) {
                 final index = entry.key;
@@ -77,12 +77,12 @@ class InfoCard extends StatelessWidget {
                 return Column(
                   children: [
                     _buildField(field, index),
-                    if (index < fields.length - 1)
-                      Container(
-                        margin: const EdgeInsets.symmetric(vertical: AppTheme.spacingM),
-                        height: 1,
-                        color: AppTheme.borderLight,
-                      ),
+                          if (index < fields.length - 1)
+                            Container(
+                              margin: const EdgeInsets.symmetric(vertical: AppTheme.spacingS),
+                              height: 1,
+                              color: AppTheme.borderLight,
+                            ),
                   ],
                 );
               }).toList(),
@@ -101,19 +101,19 @@ class InfoCard extends StatelessWidget {
   }
 
   Widget _buildField(InfoField field, int index) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          width: 40,
-          height: 40,
-          decoration: AppTheme.iconContainerSmallDecoration,
-          child: Icon(
-            field.icon,
-            color: AppTheme.primaryBlue,
-            size: 16,
-          ),
-        ),
+    return         Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 32,
+              height: 32,
+              decoration: AppTheme.iconContainerSmallDecoration,
+              child: Icon(
+                field.icon,
+                color: AppTheme.primaryBlue,
+                size: 14,
+              ),
+            ),
         const SizedBox(width: AppTheme.spacingM),
         Expanded(
           child: Column(

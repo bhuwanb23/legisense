@@ -31,7 +31,7 @@ class ActionButtons extends StatelessWidget {
                 delay: delay,
               ),
             ),
-            const SizedBox(width: 16),
+            const SizedBox(width: AppTheme.spacingS),
             Expanded(
               child: _buildPrimaryButton(
                 icon: FontAwesomeIcons.shield,
@@ -42,7 +42,7 @@ class ActionButtons extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: AppTheme.spacingS),
         if (onLogout != null)
           _buildSecondaryButton(
             icon: FontAwesomeIcons.rightFromBracket,
@@ -61,7 +61,7 @@ class ActionButtons extends StatelessWidget {
     required int delay,
   }) {
     return Container(
-      height: 56,
+      height: 48,
       decoration: AppTheme.primaryButtonDecoration,
       child: Material(
         color: Colors.transparent,
@@ -105,7 +105,7 @@ class ActionButtons extends StatelessWidget {
   }) {
     return Container(
       width: double.infinity,
-      height: 56,
+      height: 48,
       decoration: BoxDecoration(
         color: const Color(0xFFFEF2F2),
         borderRadius: BorderRadius.circular(AppTheme.radiusM),

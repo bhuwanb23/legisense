@@ -20,7 +20,7 @@ class UserInfoSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(AppTheme.spacingL),
+      padding: const EdgeInsets.all(AppTheme.spacingM),
       decoration: AppTheme.cardDecoration,
       child: Column(
         children: [
@@ -32,7 +32,7 @@ class UserInfoSection extends StatelessWidget {
                   children: [
                     Text(
                       name,
-                      style: AppTheme.heading1.copyWith(
+                      style: AppTheme.heading2.copyWith(
                         color: AppTheme.primaryBlueDark,
                       ),
                     )
