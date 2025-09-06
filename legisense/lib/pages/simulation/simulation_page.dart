@@ -31,105 +31,105 @@ class SimulationPage extends StatelessWidget {
               // Animated background elements
               _buildAnimatedBackground(),
               
-              // Main content with fixed layout
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Global Main Header with enhanced animation
-                  const MainHeader(title: 'Simulation')
-                      .animate()
-                      .slideY(
-                        begin: -0.5,
-                        duration: AppTheme.animationSlow,
-                        curve: Curves.elasticOut,
-                      )
-                      .fadeIn(duration: AppTheme.animationSlow),
+              // Main content with natural scrolling
+              SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Global Main Header with enhanced animation
+                    const MainHeader(title: 'Simulation')
+                        .animate()
+                        .slideY(
+                          begin: -0.5,
+                          duration: AppTheme.animationSlow,
+                          curve: Curves.elasticOut,
+                        )
+                        .fadeIn(duration: AppTheme.animationSlow),
 
-                  // Enhanced subtitle section
-                  Container(
-                    margin: const EdgeInsets.symmetric(horizontal: AppTheme.spacingM, vertical: AppTheme.spacingS),
-                    padding: const EdgeInsets.all(AppTheme.spacingM),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.8),
-                      borderRadius: BorderRadius.circular(AppTheme.radiusM),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.05),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(AppTheme.spacingS),
-                          decoration: BoxDecoration(
-                            color: AppTheme.primaryBlue.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(AppTheme.radiusS),
+                    // Enhanced subtitle section
+                    Container(
+                      margin: const EdgeInsets.symmetric(horizontal: AppTheme.spacingM, vertical: AppTheme.spacingS),
+                      padding: const EdgeInsets.all(AppTheme.spacingM),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.8),
+                        borderRadius: BorderRadius.circular(AppTheme.radiusM),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
                           ),
-                          child: const Icon(
-                            Icons.play_arrow, 
-                            size: 16, 
-                            color: AppTheme.primaryBlue,
-                          ),
-                        ),
-                        const SizedBox(width: AppTheme.spacingM),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Legal Practice Simulations',
-                                style: AppTheme.heading4.copyWith(
-                                  color: AppTheme.textPrimary,
-                                ),
-                              ),
-                              const SizedBox(height: AppTheme.spacingXS),
-                              Text(
-                                'Select a document to start simulation',
-                                style: AppTheme.bodySmall.copyWith(
-                                  color: AppTheme.textSecondary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: AppTheme.spacingM,
-                            vertical: AppTheme.spacingXS,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppTheme.warningOrange.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(AppTheme.radiusXL),
-                            border: Border.all(
-                              color: AppTheme.warningOrange.withValues(alpha: 0.3),
-                              width: 1,
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(AppTheme.spacingS),
+                            decoration: BoxDecoration(
+                              color: AppTheme.primaryBlue.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(AppTheme.radiusS),
+                            ),
+                            child: const Icon(
+                              Icons.play_arrow, 
+                              size: 16, 
+                              color: AppTheme.primaryBlue,
                             ),
                           ),
-                          child: Text(
-                            'Interactive',
-                            style: AppTheme.caption.copyWith(
-                              color: AppTheme.warningOrange,
-                              fontWeight: FontWeight.w600,
+                          const SizedBox(width: AppTheme.spacingM),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Legal Practice Simulations',
+                                  style: AppTheme.heading4.copyWith(
+                                    color: AppTheme.textPrimary,
+                                  ),
+                                ),
+                                const SizedBox(height: AppTheme.spacingXS),
+                                Text(
+                                  'Select a document to start simulation',
+                                  style: AppTheme.bodySmall.copyWith(
+                                    color: AppTheme.textSecondary,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                  )
-                      .animate()
-                      .slideX(
-                        begin: -0.3,
-                        duration: AppTheme.animationSlow,
-                        curve: Curves.easeOut,
-                      )
-                      .fadeIn(duration: AppTheme.animationSlow, delay: 200.ms),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: AppTheme.spacingM,
+                              vertical: AppTheme.spacingXS,
+                            ),
+                            decoration: BoxDecoration(
+                              color: AppTheme.warningOrange.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(AppTheme.radiusXL),
+                              border: Border.all(
+                                color: AppTheme.warningOrange.withOpacity(0.3),
+                                width: 1,
+                              ),
+                            ),
+                            child: Text(
+                              'Interactive',
+                              style: AppTheme.caption.copyWith(
+                                color: AppTheme.warningOrange,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                        .animate()
+                        .slideX(
+                          begin: -0.3,
+                          duration: AppTheme.animationSlow,
+                          curve: Curves.easeOut,
+                        )
+                        .fadeIn(duration: AppTheme.animationSlow, delay: 200.ms),
 
-                  // Document List Section - Fixed height with internal scrolling
-                  Expanded(
-                    child:                     DocumentListSection(
+                    // Document List Section - Natural height with page scrolling
+                    DocumentListSection(
                       onDocumentTap: (documentId, documentTitle) {
                         Navigator.of(context).push(
                           MaterialPageRoute(
@@ -148,8 +148,11 @@ class SimulationPage extends StatelessWidget {
                           curve: Curves.easeOut,
                         )
                         .fadeIn(duration: AppTheme.animationSlow, delay: 200.ms),
-                  ),
-                ],
+                    
+                    // Add bottom padding for better scrolling experience
+                    const SizedBox(height: AppTheme.spacingXL),
+                  ],
+                ),
               ),
             ],
           ),
@@ -169,7 +172,7 @@ class SimulationPage extends StatelessWidget {
             width: 60,
             height: 60,
             decoration: BoxDecoration(
-              color: AppTheme.primaryBlue.withValues(alpha: 0.05),
+              color: AppTheme.primaryBlue.withOpacity(0.05),
               borderRadius: BorderRadius.circular(30),
             ),
           )
@@ -195,7 +198,7 @@ class SimulationPage extends StatelessWidget {
             width: 45,
             height: 45,
             decoration: BoxDecoration(
-              color: AppTheme.successGreen.withValues(alpha: 0.05),
+              color: AppTheme.successGreen.withOpacity(0.05),
               shape: BoxShape.circle,
             ),
           )
@@ -214,7 +217,7 @@ class SimulationPage extends StatelessWidget {
             width: 35,
             height: 35,
             decoration: BoxDecoration(
-              color: AppTheme.warningOrange.withValues(alpha: 0.05),
+              color: AppTheme.warningOrange.withOpacity(0.05),
               borderRadius: BorderRadius.circular(18),
             ),
           )
@@ -242,7 +245,7 @@ class SimulationPage extends StatelessWidget {
               width: 8,
               height: 8,
               decoration: BoxDecoration(
-                color: AppTheme.primaryBlue.withValues(alpha: 0.2),
+                color: AppTheme.primaryBlue.withOpacity(0.2),
                 shape: BoxShape.circle,
               ),
             )

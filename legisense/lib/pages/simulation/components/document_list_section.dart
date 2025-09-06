@@ -36,7 +36,7 @@ class DocumentListSection extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(AppTheme.spacingS),
                   decoration: BoxDecoration(
-                    color: AppTheme.primaryBlue.withValues(alpha: 0.1),
+                    color: AppTheme.primaryBlue.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(AppTheme.radiusS),
                   ),
                   child: const Icon(
@@ -46,23 +46,26 @@ class DocumentListSection extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: AppTheme.spacingM),
-                Text(
-                  'Available Documents',
-                  style: AppTheme.heading4.copyWith(
-                    color: AppTheme.textPrimary,
+                Expanded(
+                  child: Text(
+                    'Available Documents',
+                    style: AppTheme.heading4.copyWith(
+                      color: AppTheme.textPrimary,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                const Spacer(),
+                const SizedBox(width: AppTheme.spacingS),
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: AppTheme.spacingM,
                     vertical: AppTheme.spacingXS,
                   ),
                   decoration: BoxDecoration(
-                    color: AppTheme.successGreen.withValues(alpha: 0.1),
+                    color: AppTheme.successGreen.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(AppTheme.radiusXL),
                     border: Border.all(
-                      color: AppTheme.successGreen.withValues(alpha: 0.3),
+                      color: AppTheme.successGreen.withOpacity(0.3),
                       width: 1,
                     ),
                   ),
@@ -78,12 +81,13 @@ class DocumentListSection extends StatelessWidget {
             ),
           ),
           const Divider(height: 1, color: AppTheme.borderLight),
-          // Document list takes remaining space and scrolls internally
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(AppTheme.spacingM),
-              itemCount: kSampleDocuments.length,
-              itemBuilder: (context, index) {
+          // Document list with natural height - no internal scrolling
+          ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(AppTheme.spacingM),
+            itemCount: kSampleDocuments.length,
+            itemBuilder: (context, index) {
                 final document = kSampleDocuments[index];
                 return Container(
                   margin: const EdgeInsets.only(bottom: AppTheme.spacingS),
@@ -114,7 +118,7 @@ class DocumentListSection extends StatelessWidget {
                             Container(
                               padding: const EdgeInsets.all(AppTheme.spacingS),
                               decoration: BoxDecoration(
-                                color: AppTheme.primaryBlue.withValues(alpha: 0.1),
+                                color: AppTheme.primaryBlue.withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(AppTheme.radiusS),
                               ),
                               child: const Icon(
@@ -162,7 +166,6 @@ class DocumentListSection extends StatelessWidget {
                 );
               },
             ),
-          ),
         ],
       ),
     );

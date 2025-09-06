@@ -39,6 +39,8 @@ dependencies:
   flutter_svg: ^2.0.10+1
   font_awesome_flutter: ^10.7.0
   image_picker: ^1.0.7
+  camera: ^0.10.5+9
+  permission_handler: ^11.3.1
 
 dev_dependencies:
   flutter_test:

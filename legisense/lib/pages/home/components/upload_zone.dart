@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'dart:io';
 import '../../../theme/app_theme.dart';
 
 class UploadZone extends StatefulWidget {
@@ -12,6 +15,237 @@ class UploadZone extends StatefulWidget {
 
 class _UploadZoneState extends State<UploadZone> {
   final bool _isDragOver = false;
+  final ImagePicker _picker = ImagePicker();
+  bool _isLoading = false;
+
+  Future<void> _requestCameraPermission() async {
+    final status = await Permission.camera.request();
+    if (status != PermissionStatus.granted) {
+      _showPermissionDialog();
+    }
+  }
+
+  void _showPermissionDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Camera Permission Required'),
+          content: const Text(
+            'This app needs camera permission to capture document images. Please enable it in settings.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                openAppSettings();
+              },
+              child: const Text('Settings'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _captureImage() async {
+    try {
+      setState(() {
+        _isLoading = true;
+      });
+
+      // Request camera permission
+      await _requestCameraPermission();
+      
+      final XFile? image = await _picker.pickImage(
+        source: ImageSource.camera,
+        imageQuality: 85,
+        maxWidth: 1920,
+        maxHeight: 1080,
+      );
+
+      if (image != null) {
+        _processImage(image);
+      }
+    } catch (e) {
+      _showErrorDialog('Failed to capture image: $e');
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _pickImageFromGallery() async {
+    try {
+      setState(() {
+        _isLoading = true;
+      });
+
+      final XFile? image = await _picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 85,
+        maxWidth: 1920,
+        maxHeight: 1080,
+      );
+
+      if (image != null) {
+        _processImage(image);
+      }
+    } catch (e) {
+      _showErrorDialog('Failed to pick image: $e');
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  void _processImage(XFile image) {
+    // Here you would typically process the image
+    // For now, we'll just show a success message
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Image captured: ${image.name}'),
+        backgroundColor: AppTheme.successGreen,
+        duration: const Duration(seconds: 3),
+        action: SnackBarAction(
+          label: 'View',
+          textColor: Colors.white,
+          onPressed: () {
+            // Navigate to image preview or document processing
+            _showImagePreview(image);
+          },
+        ),
+      ),
+    );
+  }
+
+  void _showImagePreview(XFile image) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return Dialog(
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Captured Image',
+                  style: AppTheme.heading4,
+                ),
+                const SizedBox(height: 16),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.file(
+                    File(image.path),
+                    width: 300,
+                    height: 400,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: const Text('Cancel'),
+                    ),
+                    ElevatedButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                        // Process the document here
+                        _processDocument(image);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppTheme.primaryBlue,
+                        foregroundColor: Colors.white,
+                      ),
+                      child: const Text('Process Document'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _processDocument(XFile image) {
+    // This is where you would implement document processing logic
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Document processing started...'),
+        backgroundColor: AppTheme.primaryBlue,
+        duration: Duration(seconds: 2),
+      ),
+    );
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Error'),
+          content: Text(message),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showImageSourceDialog() {
+    showModalBottomSheet(
+      context: context,
+      builder: (BuildContext context) {
+        return Container(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Select Image Source',
+                style: AppTheme.heading4,
+              ),
+              const SizedBox(height: 16),
+              ListTile(
+                leading: const Icon(FontAwesomeIcons.camera, color: AppTheme.primaryBlue),
+                title: const Text('Take Photo'),
+                subtitle: const Text('Capture document with camera'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  _captureImage();
+                },
+              ),
+              ListTile(
+                leading: const Icon(FontAwesomeIcons.image, color: AppTheme.primaryBlue),
+                title: const Text('Choose from Gallery'),
+                subtitle: const Text('Select document from gallery'),
+                onTap: () {
+                  Navigator.of(context).pop();
+                  _pickImageFromGallery();
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -77,7 +311,7 @@ class _UploadZoneState extends State<UploadZone> {
             
             // Title and Description
             Text(
-              'Upload Your Contract',
+              'Capture Your Document',
               style: AppTheme.heading4,
             )
                 .animate()
@@ -91,7 +325,7 @@ class _UploadZoneState extends State<UploadZone> {
             const SizedBox(height: AppTheme.spacingS),
             
             Text(
-              'Drag and drop files here or click to browse',
+              'Take a photo or select from gallery to process your document',
               style: AppTheme.bodySmall,
             )
                 .animate()
@@ -111,14 +345,7 @@ class _UploadZoneState extends State<UploadZone> {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Uploading... (stub action)'),
-                          duration: Duration(seconds: 2),
-                        ),
-                      );
-                    },
+                    onPressed: _isLoading ? null : _showImageSourceDialog,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.primaryBlueLight,
                       foregroundColor: Colors.white,
@@ -128,20 +355,39 @@ class _UploadZoneState extends State<UploadZone> {
                       ),
                       elevation: 8,
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(
-                          FontAwesomeIcons.upload,
-                          size: 16,
-                        ),
-                        const SizedBox(width: AppTheme.spacingS),
-                        Text(
-                          'Upload Contract',
-                          style: AppTheme.buttonPrimary,
-                        ),
-                      ],
-                    ),
+                    child: _isLoading
+                        ? Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                ),
+                              ),
+                              const SizedBox(width: AppTheme.spacingS),
+                              Text(
+                                'Processing...',
+                                style: AppTheme.buttonPrimary,
+                              ),
+                            ],
+                          )
+                        : Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(
+                                FontAwesomeIcons.camera,
+                                size: 16,
+                              ),
+                              const SizedBox(width: AppTheme.spacingS),
+                              Text(
+                                'Capture Document',
+                                style: AppTheme.buttonPrimary,
+                              ),
+                            ],
+                          ),
                   ),
                 )
                     .animate()
@@ -158,14 +404,7 @@ class _UploadZoneState extends State<UploadZone> {
                 SizedBox(
                   width: double.infinity,
                   child: OutlinedButton(
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Using sample document...'),
-                          duration: Duration(seconds: 2),
-                        ),
-                      );
-                    },
+                    onPressed: _isLoading ? null : _pickImageFromGallery,
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppTheme.textPrimary,
                       side: BorderSide(
@@ -181,12 +420,12 @@ class _UploadZoneState extends State<UploadZone> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         const Icon(
-                          FontAwesomeIcons.fileLines,
+                          FontAwesomeIcons.image,
                           size: 16,
                         ),
                         const SizedBox(width: AppTheme.spacingS),
                         Text(
-                          'Use Sample Document',
+                          'Choose from Gallery',
                           style: AppTheme.buttonSecondary,
                         ),
                       ],

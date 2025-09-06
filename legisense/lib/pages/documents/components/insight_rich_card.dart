@@ -31,23 +31,28 @@ class InsightRichCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      color: iconBgColor ?? const Color(0xFFEFF6FF),
-                      borderRadius: BorderRadius.circular(16),
+              Expanded(
+                child: Row(
+                  children: [
+                    Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: iconBgColor ?? const Color(0xFFEFF6FF),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Icon(icon, size: 16, color: iconColor ?? const Color(0xFF16A34A)),
                     ),
-                    child: Icon(icon, size: 16, color: iconColor ?? const Color(0xFF16A34A)),
-                  ),
-                  const SizedBox(width: 12),
-                  Text(
-                    title,
-                    style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF111827)),
-                  ),
-                ],
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w600, color: const Color(0xFF111827)),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
               ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
