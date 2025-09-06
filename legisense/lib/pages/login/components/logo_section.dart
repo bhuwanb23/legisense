@@ -10,7 +10,7 @@ class LogoSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // Logo with scale balanced icon
+        // Logo with actual logo image
         Container(
           width: 80,
           height: 80,
@@ -19,16 +19,28 @@ class LogoSection extends StatelessWidget {
             borderRadius: BorderRadius.circular(40),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.1),
+                color: Colors.black.withOpacity(0.1),
                 blurRadius: 20,
                 offset: const Offset(0, 10),
               ),
             ],
           ),
-          child: const Icon(
-            FontAwesomeIcons.scaleBalanced,
-            size: 32,
-            color: Color(0xFF2563EB), // blue-600
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(40),
+            child: Image.asset(
+              'assets/images/logo.png',
+              width: 80,
+              height: 80,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) {
+                // Fallback to icon if image fails to load
+                return const Icon(
+                  FontAwesomeIcons.scaleBalanced,
+                  size: 32,
+                  color: Color(0xFF2563EB), // blue-600
+                );
+              },
+            ),
           ),
         )
             .animate()

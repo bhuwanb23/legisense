@@ -31,24 +31,55 @@ class MainHeader extends StatelessWidget {
       child: Row(
         children: [
           // Logo + Name
-          Flexible(
+          Expanded(
             child: Row(
               children: [
+                // Logo with proper error handling
                 Container(
                   width: isSmallScreen ? 32 : 40,
                   height: isSmallScreen ? 32 : 40,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF2563EB).withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(isSmallScreen ? 8 : 12),
                   ),
-                  child: Icon(
-                    FontAwesomeIcons.scaleBalanced,
-                    color: const Color(0xFF2563EB),
-                    size: isSmallScreen ? 14 : 18,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(isSmallScreen ? 8 : 12),
+                    child: Container(
+                      width: isSmallScreen ? 32 : 40,
+                      height: isSmallScreen ? 32 : 40,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(isSmallScreen ? 8 : 12),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(isSmallScreen ? 8 : 12),
+                        child: Image(
+                          image: AssetImage('assets/logo.png'),
+                          width: isSmallScreen ? 32 : 40,
+                          height: isSmallScreen ? 32 : 40,
+                          fit: BoxFit.contain,
+                          errorBuilder: (context, error, stackTrace) {
+                            print('AssetImage loading error: $error');
+                            return Container(
+                              width: isSmallScreen ? 32 : 40,
+                              height: isSmallScreen ? 32 : 40,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF2563EB).withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(isSmallScreen ? 8 : 12),
+                              ),
+                              child: Icon(
+                                FontAwesomeIcons.scaleBalanced,
+                                color: const Color(0xFF2563EB),
+                                size: isSmallScreen ? 14 : 18,
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
                   ),
                 ),
                 SizedBox(width: isSmallScreen ? 8 : 12),
-                Flexible(
+                Expanded(
+                  flex: 3, // Give more space to the title
                   child: Text(
                     title,
                     style: GoogleFonts.inter(
@@ -64,7 +95,7 @@ class MainHeader extends StatelessWidget {
             ),
           ),
 
-          const Spacer(),
+          const SizedBox(width: 8),
 
           // Notification bell
           Material(
