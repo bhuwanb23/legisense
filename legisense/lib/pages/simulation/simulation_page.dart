@@ -3,7 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../theme/app_theme.dart';
 import '../../components/main_header.dart';
 import 'components/components.dart';
-import 'simulation_details.dart';
+import 'enhanced_simulation_details.dart';
 
 class SimulationPage extends StatelessWidget {
   const SimulationPage({super.key});
@@ -129,11 +129,11 @@ class SimulationPage extends StatelessWidget {
 
                   // Document List Section - Fixed height with internal scrolling
                   Expanded(
-                    child: DocumentListSection(
+                    child:                     DocumentListSection(
                       onDocumentTap: (documentId, documentTitle) {
                         Navigator.of(context).push(
                           MaterialPageRoute(
-                            builder: (context) => SimulationDetailsPage(
+                            builder: (context) => EnhancedSimulationDetailsPage(
                               documentId: documentId,
                               documentTitle: documentTitle,
                             ),

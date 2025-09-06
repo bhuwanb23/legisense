@@ -34,28 +34,17 @@ class MainHeader extends StatelessWidget {
           Flexible(
             child: Row(
               children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(isSmallScreen ? 8 : 12),
-                  child: Image.asset(
-                    'assets/images/Wordmark Logo with Upload Arrow and Magnifying Glass.png',
-                    width: isSmallScreen ? 32 : 40,
-                    height: isSmallScreen ? 32 : 40,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stack) {
-                      return Container(
-                        width: isSmallScreen ? 32 : 40,
-                        height: isSmallScreen ? 32 : 40,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF2563EB).withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(isSmallScreen ? 8 : 12),
-                        ),
-                        child: Icon(
-                          FontAwesomeIcons.scaleBalanced,
-                          color: const Color(0xFF2563EB),
-                          size: isSmallScreen ? 14 : 18,
-                        ),
-                      );
-                    },
+                Container(
+                  width: isSmallScreen ? 32 : 40,
+                  height: isSmallScreen ? 32 : 40,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF2563EB).withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(isSmallScreen ? 8 : 12),
+                  ),
+                  child: Icon(
+                    FontAwesomeIcons.scaleBalanced,
+                    color: const Color(0xFF2563EB),
+                    size: isSmallScreen ? 14 : 18,
                   ),
                 ),
                 SizedBox(width: isSmallScreen ? 8 : 12),
