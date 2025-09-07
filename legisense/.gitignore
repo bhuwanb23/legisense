@@ -1,4 +1,5 @@
 # Miscellaneous
+/assets/docs
 *.class
 *.log
 *.pyc
