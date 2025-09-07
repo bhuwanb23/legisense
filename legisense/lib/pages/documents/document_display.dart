@@ -68,32 +68,5 @@ class DocumentDisplayPanel extends StatelessWidget {
   }
 }
 
-class _StatsGrid extends StatelessWidget {
-  const _StatsGrid();
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: const [
-        Expanded(
-          child: StatsMetric(
-            value: '94%',
-            label: 'Customer Satisfaction',
-            bgColor: Color(0xFFEFF6FF),
-            valueColor: Color(0xFF3B82F6),
-          ),
-        ),
-        SizedBox(width: 12),
-        Expanded(
-          child: StatsMetric(
-            value: '+15%',
-            label: 'Revenue Growth',
-            bgColor: Color(0xFFF0FDF4),
-            valueColor: Color(0xFF16A34A),
-          ),
-        ),
-      ],
-    );
-  }
-}
+// Removed unused _StatsGrid demo widget
 
