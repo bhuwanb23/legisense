@@ -17,6 +17,44 @@ class ParsedDocumentsRepository {
 
   List<SampleDocument> get uploadedDocs => List.unmodifiable(_uploadedDocs);
 
+  Future<List<Map<String, dynamic>>> fetchDocuments() async {
+    final uri = Uri.parse('$baseUrl/api/documents/');
+    final res = await http.get(uri);
+    if (res.statusCode != 200) {
+      throw HttpException('List failed (${res.statusCode}): ${res.body}');
+    }
+    final Map<String, dynamic> data = json.decode(res.body) as Map<String, dynamic>;
+    final List<dynamic> results = (data['results'] ?? []) as List<dynamic>;
+    return results.cast<Map<String, dynamic>>();
+  }
+
+  Future<SampleDocument> fetchDocumentDetail(int id) async {
+    final uri = Uri.parse('$baseUrl/api/documents/$id/');
+    final res = await http.get(uri);
+    if (res.statusCode != 200) {
+      throw HttpException('Detail failed (${res.statusCode}): ${res.body}');
+    }
+    final Map<String, dynamic> data = json.decode(res.body) as Map<String, dynamic>;
+    final String title = (data['file_name'] ?? 'Document').toString();
+    final int numPages = (data['num_pages'] ?? 0) as int;
+    final List<dynamic> pages = (data['pages'] ?? []) as List<dynamic>;
+    final List<String> textBlocks = pages
+        .map((e) => (e as Map<String, dynamic>)['text']?.toString() ?? '')
+        .where((t) => t.isNotEmpty)
+        .toList(growable: false);
+
+    return SampleDocument(
+      id: 'server-$id',
+      title: title,
+      meta: 'PDF • $numPages page${numPages == 1 ? '' : 's'}',
+      ext: 'pdf',
+      tldr: '',
+      textBlocks: textBlocks,
+      imageUrls: const [],
+      insights: const [],
+    );
+  }
+
   /// Uploads a PDF file to Django parser endpoint and returns a SampleDocument.
   ///
   /// The Django endpoint is expected to return JSON like:

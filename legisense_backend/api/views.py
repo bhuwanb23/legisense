@@ -4,6 +4,7 @@ import tempfile
 from django.http import JsonResponse, HttpRequest
 from django.views.decorators.csrf import csrf_exempt
 from django.core.files.base import ContentFile
+from django.shortcuts import get_object_or_404
 
 from .models import ParsedDocument
 from documents.pdf_document_parser import extract_pdf_text
@@ -70,3 +71,21 @@ def parse_pdf_view(request: HttpRequest):
     response["file_url"] = doc.uploaded_file.url if doc.uploaded_file else None
     return JsonResponse(response)
 
+
+def list_parsed_docs_view(request: HttpRequest):
+    if request.method != "GET":
+        return JsonResponse({"error": "Method not allowed"}, status=405)
+    qs = ParsedDocument.objects.order_by("-created_at").values("id", "file_name", "num_pages", "created_at")
+    return JsonResponse({"results": list(qs)})
+
+
+def parsed_doc_detail_view(request: HttpRequest, pk: int):
+    if request.method != "GET":
+        return JsonResponse({"error": "Method not allowed"}, status=405)
+    doc = get_object_or_404(ParsedDocument, pk=pk)
+    data = dict(doc.payload)
+    data["id"] = doc.id
+    data["file_name"] = doc.file_name
+    data["num_pages"] = doc.num_pages
+    data["file_url"] = doc.uploaded_file.url if doc.uploaded_file else None
+    return JsonResponse(data)

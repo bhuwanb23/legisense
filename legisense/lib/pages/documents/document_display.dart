@@ -37,51 +37,26 @@ class DocumentDisplayPanel extends StatelessWidget {
                 width: double.infinity,
                 child: Padding(
                   padding: const EdgeInsets.all(16),
-                  child: (document ?? kSampleDocuments.first).textBlocks.isEmpty
+                  child: (document == null || document!.textBlocks.isEmpty)
                       ? Center(
                           child: Text(
                             'Select a document to preview',
                             style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF9CA3AF)),
                           ),
                         )
-                      : ListView(
-                          children: [
-                            DocPageCard(
-                              title: 'Financial Report Q3 2024',
-                              paragraphs: [
-                                'This quarterly financial report presents a comprehensive overview of our company\'s performance during the third quarter of 2024. The document includes detailed analysis of revenue streams, expenditure patterns, and strategic initiatives that have shaped our financial landscape.',
-                                'Key highlights include a 15% increase in revenue compared to the previous quarter, driven primarily by our digital transformation initiatives and expanded market presence in emerging sectors.',
-                              ],
-                              sections: [
-                                Container(
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFF3F4F6),
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                  padding: const EdgeInsets.all(12),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text('Revenue Breakdown', style: GoogleFonts.inter(fontWeight: FontWeight.w600, color: const Color(0xFF1F2937))),
-                                      const SizedBox(height: 8),
-                                      Text('• Product Sales: \$2.4M (60%)\n• Services: \$1.2M (30%)\n• Licensing: \$400K (10%)', style: GoogleFonts.inter(fontSize: 13, height: 1.6, color: const Color(0xFF374151))),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 12),
-                            DocPageCard(
-                              title: 'Market Analysis',
-                              paragraphs: [
-                                'Our market position has strengthened significantly, with increased brand recognition and customer satisfaction scores reaching an all-time high of 94%. The competitive landscape analysis reveals opportunities for further expansion.',
-                              ],
-                              sections: const [
-                                SizedBox(height: 8),
-                                _StatsGrid(),
-                              ],
-                            ),
-                          ],
+                      : ListView.builder(
+                          itemCount: document!.textBlocks.length,
+                          itemBuilder: (context, index) {
+                            final pageText = document!.textBlocks[index];
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: DocPageCard(
+                                title: 'Page ${index + 1}',
+                                paragraphs: [pageText],
+                                sections: const [],
+                              ),
+                            );
+                          },
                         ),
                 ),
               ),

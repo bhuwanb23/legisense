@@ -4,6 +4,7 @@ import 'document_display.dart';
 import 'document_analysis.dart';
 import 'components/components.dart';
 import 'data/sample_documents.dart';
+import '../../api/parsed_documents_repository.dart';
 import '../../components/bottom_nav_bar.dart';
 import '../home/home_page.dart';
 import '../simulation/simulation_page.dart';
@@ -57,11 +58,35 @@ class _DocumentViewDetailState extends State<DocumentViewDetail> {
 
   @override
   Widget build(BuildContext context) {
-    final SampleDocument? current = widget.docId == null
-        ? null
-        : ([...kUploadedDocuments, ...kSampleDocuments]
-            .firstWhere((d) => d.id == widget.docId, orElse: () => kSampleDocuments.first));
+    if (widget.docId != null && widget.docId!.startsWith('server-')) {
+      final int id = int.parse(widget.docId!.split('-').last);
+      final repo = ParsedDocumentsRepository(baseUrl: const String.fromEnvironment('LEGISENSE_API_BASE', defaultValue: 'http://10.0.2.2:8000'));
+      return FutureBuilder<SampleDocument>(
+        future: repo.fetchDocumentDetail(id),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState != ConnectionState.done) {
+            return const Scaffold(
+              backgroundColor: Color(0xFFF8FAFC),
+              body: Center(child: CircularProgressIndicator()),
+            );
+          }
+          if (snapshot.hasError) {
+            return Scaffold(
+              backgroundColor: const Color(0xFFF8FAFC),
+              body: Center(child: Text('Failed to load document: ${snapshot.error}')),
+            );
+          }
+          final current = snapshot.data;
+          return _buildScaffold(current);
+        },
+      );
+    }
 
+    final SampleDocument? current = null;
+    return _buildScaffold(current);
+  }
+
+  Widget _buildScaffold(SampleDocument? current) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
