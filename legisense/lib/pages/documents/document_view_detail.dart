@@ -59,7 +59,8 @@ class _DocumentViewDetailState extends State<DocumentViewDetail> {
   Widget build(BuildContext context) {
     final SampleDocument? current = widget.docId == null
         ? null
-        : kSampleDocuments.firstWhere((d) => d.id == widget.docId, orElse: () => kSampleDocuments.first);
+        : ([...kUploadedDocuments, ...kSampleDocuments]
+            .firstWhere((d) => d.id == widget.docId, orElse: () => kSampleDocuments.first));
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),

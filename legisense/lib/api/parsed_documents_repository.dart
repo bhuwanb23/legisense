@@ -1,0 +1,67 @@
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:http/http.dart' as http;
+
+import '../pages/documents/data/sample_documents.dart';
+
+/// Simple in-memory repository that uploads a PDF to the backend and stores
+/// the parsed result as a `SampleDocument`-compatible object for display.
+class ParsedDocumentsRepository {
+  ParsedDocumentsRepository({required this.baseUrl});
+
+  final String baseUrl; // e.g., http://localhost:8000
+
+  /// List of documents parsed in this session.
+  final List<SampleDocument> _uploadedDocs = [];
+
+  List<SampleDocument> get uploadedDocs => List.unmodifiable(_uploadedDocs);
+
+  /// Uploads a PDF file to Django parser endpoint and returns a SampleDocument.
+  ///
+  /// The Django endpoint is expected to return JSON like:
+  /// {
+  ///   "file": "path-or-name",
+  ///   "num_pages": 3,
+  ///   "pages": [{"page_number": 1, "text": "..."}, ...],
+  ///   "full_text": "..."
+  /// }
+  Future<SampleDocument> uploadAndParsePdf({required File pdfFile}) async {
+    final uri = Uri.parse('$baseUrl/api/parse-pdf/');
+
+    final request = http.MultipartRequest('POST', uri)
+      ..files.add(await http.MultipartFile.fromPath('file', pdfFile.path));
+
+    final response = await http.Response.fromStream(await request.send());
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw HttpException('Upload failed (${response.statusCode}): ${response.body}');
+    }
+
+    final Map<String, dynamic> data = json.decode(response.body) as Map<String, dynamic>;
+    final String filePath = (data['file'] ?? pdfFile.path).toString();
+    final String title = filePath.split(Platform.pathSeparator).last;
+    final int numPages = (data['num_pages'] ?? 0) as int;
+    final List<dynamic> pages = (data['pages'] ?? []) as List<dynamic>;
+
+    final List<String> textBlocks = pages
+        .map((e) => (e as Map<String, dynamic>)['text']?.toString() ?? '')
+        .where((t) => t.isNotEmpty)
+        .toList(growable: false);
+
+    final SampleDocument doc = SampleDocument(
+      id: 'uploaded-${DateTime.now().millisecondsSinceEpoch}',
+      title: title,
+      meta: 'PDF • $numPages page${numPages == 1 ? '' : 's'} • just now',
+      ext: 'pdf',
+      tldr: '',
+      textBlocks: textBlocks,
+      imageUrls: const [],
+      insights: const [],
+    );
+
+    _uploadedDocs.insert(0, doc);
+    return doc;
+  }
+}
+
+

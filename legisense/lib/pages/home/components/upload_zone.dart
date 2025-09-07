@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:file_picker/file_picker.dart';
+import 'dart:io';
+import '../../../api/parsed_documents_repository.dart';
+import '../../documents/documents_page.dart';
+import '../../documents/data/sample_documents.dart';
 import '../../../theme/app_theme.dart';
 
 class UploadZone extends StatefulWidget {
@@ -14,41 +18,93 @@ class UploadZone extends StatefulWidget {
 class _UploadZoneState extends State<UploadZone> {
   final bool _isDragOver = false;
   bool _isLoading = false;
+  late final ParsedDocumentsRepository _repo;
+  String _loadingLabel = 'Opening picker...';
+  String? _apiBaseOverride;
+
+  @override
+  void initState() {
+    super.initState();
+    // TODO: Replace with your backend base URL
+    final String base = _apiBaseOverride ?? const String.fromEnvironment('LEGISENSE_API_BASE', defaultValue: 'http://10.0.2.2:8000');
+    _repo = ParsedDocumentsRepository(baseUrl: base);
+  }
   Future<void> _pickDocument() async {
     try {
       setState(() {
         _isLoading = true;
+        _loadingLabel = 'Opening picker...';
       });
 
-      final FilePickerResult? result = await FilePicker.platform.pickFiles(
+      // Dev override: if a local Windows file exists at the given path, use it
+      // immediately (useful when testing from emulator/device that can't reach
+      // the PC file picker). If the file doesn't exist, fall back to picker.
+      final String devPath = r'C:\Users\Bhuwan\Downloads\sample_text.pdf';
+      File? selectedFile;
+      if (File(devPath).existsSync()) {
+        selectedFile = File(devPath);
+      }
+
+      final FilePickerResult? result = selectedFile == null
+          ? await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: const ['pdf', 'doc', 'docx', 'ppt', 'pptx'],
         withData: false,
         allowMultiple: false,
-      );
+      )
+          : null;
 
-      if (result != null && result.files.isNotEmpty) {
-        final PlatformFile file = result.files.single;
-        _processDocumentFromPath(file.path ?? file.name);
+      if (selectedFile != null || (result != null && result.files.isNotEmpty)) {
+        if (selectedFile == null) {
+          final PlatformFile file = result!.files.single;
+          if (file.extension?.toLowerCase() != 'pdf') {
+            _showErrorDialog('Only PDF is supported for parsing at the moment.');
+            return;
+          }
+          final String? path = file.path;
+          if (path == null) {
+            _showErrorDialog('File path unavailable.');
+            return;
+          }
+          selectedFile = File(path);
+        }
+
+        // Ensure extension is PDF for backend parsing
+        final String lower = selectedFile!.path.toLowerCase();
+        if (!lower.endsWith('.pdf')) {
+          _showErrorDialog('Only PDF is supported for parsing at the moment.');
+          return;
+        }
+        setState(() {
+          _loadingLabel = 'Uploading...';
+        });
+        final parsed = await _repo.uploadAndParsePdf(pdfFile: selectedFile!);
+        // Also reflect in global uploaded list for documents page
+        kUploadedDocuments.insert(0, parsed);
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('PDF processed successfully'),
+            backgroundColor: AppTheme.successGreen,
+            duration: Duration(seconds: 2),
+          ),
+        );
+        // Navigate to documents page to view it
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const DocumentsPage()),
+        );
       }
     } catch (e) {
-      _showErrorDialog('Failed to pick document: $e');
+      _showConnectivityHelp('Failed to pick document: $e');
     } finally {
       setState(() {
         _isLoading = false;
+        _loadingLabel = 'Opening picker...';
       });
     }
   }
 
-  void _processDocumentFromPath(String pathOrName) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Document selected: $pathOrName'),
-        backgroundColor: AppTheme.successGreen,
-        duration: const Duration(seconds: 3),
-      ),
-    );
-  }
+  
 
   void _showErrorDialog(String message) {
     showDialog(
@@ -66,6 +122,79 @@ class _UploadZoneState extends State<UploadZone> {
         );
       },
     );
+  }
+
+  void _showConnectivityHelp(String message) {
+    final TextEditingController controller = TextEditingController(text: _repo.baseUrl);
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Connection problem'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('$message\n\nCurrent base URL: ${_repo.baseUrl}'),
+                const SizedBox(height: 12),
+                const Text('Quick fixes:'),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  children: [
+                    OutlinedButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                        _retryWithBase('http://10.0.2.2:8000');
+                      },
+                      child: const Text('Use 10.0.2.2'),
+                    ),
+                    OutlinedButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                        _retryWithBase('http://127.0.0.1:8000');
+                      },
+                      child: const Text('Use 127.0.0.1'),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                const Text('Custom base URL (e.g., http://192.168.x.y:8000):'),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: controller,
+                  decoration: const InputDecoration(border: OutlineInputBorder(), hintText: 'http://192.168.x.y:8000'),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final String value = controller.text.trim();
+                Navigator.of(context).pop();
+                _retryWithBase(value);
+              },
+              child: const Text('Retry with URL'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _retryWithBase(String base) async {
+    if (base.isEmpty) return;
+    setState(() {
+      _apiBaseOverride = base;
+      _repo = ParsedDocumentsRepository(baseUrl: base);
+    });
+    await _pickDocument();
   }
   
 
@@ -191,7 +320,7 @@ class _UploadZoneState extends State<UploadZone> {
                               ),
                               const SizedBox(width: AppTheme.spacingS),
                               Text(
-                                'Opening picker...',
+                                _loadingLabel,
                                 style: AppTheme.buttonPrimary,
                               ),
                             ],

@@ -115,4 +115,8 @@ final List<SampleDocument> kSampleDocuments = [
   ),
 ];
 
+/// A global, mutable collection that can be appended to at runtime for
+/// uploaded/parsed documents. The UI can show `kSampleDocuments + uploaded`.
+final List<SampleDocument> kUploadedDocuments = [];
+
 

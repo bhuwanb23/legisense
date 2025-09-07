@@ -8,7 +8,7 @@ class DocumentListPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final documents = kSampleDocuments;
+    final documents = [...kUploadedDocuments, ...kSampleDocuments];
 
     return Container(
       decoration: const BoxDecoration(
