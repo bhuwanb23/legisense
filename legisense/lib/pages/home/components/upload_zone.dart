@@ -25,7 +25,7 @@ class _UploadZoneState extends State<UploadZone> {
   @override
   void initState() {
     super.initState();
-    // TODO: Replace with your backend base URL
+    // Backend base URL (override via LEGISENSE_API_BASE at build/runtime)
     final String base = _apiBaseOverride ?? const String.fromEnvironment('LEGISENSE_API_BASE', defaultValue: 'http://10.0.2.2:8000');
     _repo = ParsedDocumentsRepository(baseUrl: base);
   }
@@ -70,7 +70,7 @@ class _UploadZoneState extends State<UploadZone> {
         }
 
         // Ensure extension is PDF for backend parsing
-        final String lower = selectedFile!.path.toLowerCase();
+        final String lower = selectedFile.path.toLowerCase();
         if (!lower.endsWith('.pdf')) {
           _showErrorDialog('Only PDF is supported for parsing at the moment.');
           return;
@@ -78,7 +78,7 @@ class _UploadZoneState extends State<UploadZone> {
         setState(() {
           _loadingLabel = 'Uploading...';
         });
-        final parsed = await _repo.uploadAndParsePdf(pdfFile: selectedFile!);
+        final parsed = await _repo.uploadAndParsePdf(pdfFile: selectedFile);
         // Also reflect in global uploaded list for documents page
         kUploadedDocuments.insert(0, parsed);
         if (!mounted) return;

@@ -3,6 +3,7 @@ import tempfile
 
 from django.http import JsonResponse, HttpRequest
 from django.views.decorators.csrf import csrf_exempt
+from django.core.files.base import ContentFile
 
 from .models import ParsedDocument
 from documents.pdf_document_parser import extract_pdf_text
@@ -33,11 +34,39 @@ def parse_pdf_view(request: HttpRequest):
         except Exception:
             pass
 
-    doc = ParsedDocument.objects.create(
+    # Fallback: if parser returned no page texts, synthesize from full_text
+    try:
+        pages = data.get("pages") or []
+        if not pages:
+            full_text = (data.get("full_text") or "").strip()
+            if full_text:
+                # Split by form-feed if present; otherwise make a single page
+                candidates = [p for p in full_text.split("\f") if p.strip()]
+                if not candidates:
+                    candidates = [full_text]
+                data["pages"] = [
+                    {"page_number": i + 1, "text": txt}
+                    for i, txt in enumerate(candidates)
+                ]
+                data["num_pages"] = len(data["pages"])  # keep num_pages consistent
+    except Exception:
+        # If anything goes wrong in fallback, keep original data as-is
+        pass
+
+    # Create DB record and also persist the uploaded file into MEDIA_ROOT
+    doc = ParsedDocument(
         file_name=Path(data.get("file") or uploaded_file.name).name,
         num_pages=int(data.get("num_pages") or 0),
         payload=data,
     )
+    # Attach uploaded file contents
+    uploaded_file.seek(0)
+    doc.uploaded_file.save(uploaded_file.name, ContentFile(uploaded_file.read()), save=False)
+    doc.save()
 
-    return JsonResponse(data)
+    # Include id and stored file URL for client convenience
+    response = dict(data)
+    response["id"] = doc.id
+    response["file_url"] = doc.uploaded_file.url if doc.uploaded_file else None
+    return JsonResponse(response)
 

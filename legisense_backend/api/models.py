@@ -9,6 +9,7 @@ class ParsedDocument(models.Model):
     """
 
     file_name = models.CharField(max_length=255)
+    uploaded_file = models.FileField(upload_to='uploads/pdfs/', blank=True, null=True)
     num_pages = models.PositiveIntegerField(default=0)
     payload = models.JSONField()
     created_at = models.DateTimeField(auto_now_add=True)
