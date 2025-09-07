@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../theme/app_theme.dart';
 import '../../components/bottom_nav_bar.dart';
+import '../../main.dart';
 import 'components/components.dart';
 
 class EnhancedSimulationDetailsPage extends StatefulWidget {
@@ -215,18 +216,40 @@ class _EnhancedSimulationDetailsPageState extends State<EnhancedSimulationDetail
       bottomNavigationBar: BottomNavBar(
         currentIndex: _currentPageIndex,
         onTap: (index) {
-          // Navigate back to main app and switch to the selected tab
-          Navigator.of(context).pop(); // Go back to simulation page first
-          
-          // Then navigate to the selected page
           if (index != 2) { // If not simulation page
-            // We need to communicate with the parent widget to change the tab
-            // For now, we'll just pop back to the simulation page
-            // The user can then use the bottom nav from there
+            // Change the page index first, then navigate back
+            navigateToPage(index);
+            
+            // Navigate back to root
+            Navigator.of(context).popUntil((route) => route.isFirst);
+            
+            // Show a message indicating navigation
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Navigating to ${_getPageName(index)}...'),
+                backgroundColor: const Color(0xFF2563EB),
+                duration: const Duration(seconds: 1),
+              ),
+            );
           }
         },
       ),
     );
+  }
+
+  String _getPageName(int index) {
+    switch (index) {
+      case 0:
+        return 'Home';
+      case 1:
+        return 'Documents';
+      case 2:
+        return 'Simulation';
+      case 3:
+        return 'Profile';
+      default:
+        return 'Unknown';
+    }
   }
 
   Widget _buildAnimatedBackground() {

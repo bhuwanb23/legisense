@@ -51,11 +51,11 @@ class SimulationPage extends StatelessWidget {
                       margin: const EdgeInsets.symmetric(horizontal: AppTheme.spacingM, vertical: AppTheme.spacingS),
                       padding: const EdgeInsets.all(AppTheme.spacingM),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.8),
+                        color: Colors.white.withValues(alpha: 0.8),
                         borderRadius: BorderRadius.circular(AppTheme.radiusM),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
+                            color: Colors.black.withValues(alpha: 0.05),
                             blurRadius: 10,
                             offset: const Offset(0, 4),
                           ),
@@ -66,7 +66,7 @@ class SimulationPage extends StatelessWidget {
                           Container(
                             padding: const EdgeInsets.all(AppTheme.spacingS),
                             decoration: BoxDecoration(
-                              color: AppTheme.primaryBlue.withOpacity(0.1),
+                              color: AppTheme.primaryBlue.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(AppTheme.radiusS),
                             ),
                             child: const Icon(
@@ -102,10 +102,10 @@ class SimulationPage extends StatelessWidget {
                               vertical: AppTheme.spacingXS,
                             ),
                             decoration: BoxDecoration(
-                              color: AppTheme.warningOrange.withOpacity(0.1),
+                              color: AppTheme.warningOrange.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(AppTheme.radiusXL),
                               border: Border.all(
-                                color: AppTheme.warningOrange.withOpacity(0.3),
+                                color: AppTheme.warningOrange.withValues(alpha: 0.3),
                                 width: 1,
                               ),
                             ),
@@ -172,7 +172,7 @@ class SimulationPage extends StatelessWidget {
             width: 60,
             height: 60,
             decoration: BoxDecoration(
-              color: AppTheme.primaryBlue.withOpacity(0.05),
+              color: AppTheme.primaryBlue.withValues(alpha: 0.05),
               borderRadius: BorderRadius.circular(30),
             ),
           )
@@ -198,7 +198,7 @@ class SimulationPage extends StatelessWidget {
             width: 45,
             height: 45,
             decoration: BoxDecoration(
-              color: AppTheme.successGreen.withOpacity(0.05),
+              color: AppTheme.successGreen.withValues(alpha: 0.05),
               shape: BoxShape.circle,
             ),
           )
@@ -217,7 +217,7 @@ class SimulationPage extends StatelessWidget {
             width: 35,
             height: 35,
             decoration: BoxDecoration(
-              color: AppTheme.warningOrange.withOpacity(0.05),
+              color: AppTheme.warningOrange.withValues(alpha: 0.05),
               borderRadius: BorderRadius.circular(18),
             ),
           )
@@ -245,7 +245,7 @@ class SimulationPage extends StatelessWidget {
               width: 8,
               height: 8,
               decoration: BoxDecoration(
-                color: AppTheme.primaryBlue.withOpacity(0.2),
+                color: AppTheme.primaryBlue.withValues(alpha: 0.2),
                 shape: BoxShape.circle,
               ),
             )

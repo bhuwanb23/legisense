@@ -57,7 +57,6 @@ class MainHeader extends StatelessWidget {
                           height: isSmallScreen ? 32 : 40,
                           fit: BoxFit.contain,
                           errorBuilder: (context, error, stackTrace) {
-                            print('AssetImage loading error: $error');
                             return Container(
                               width: isSmallScreen ? 32 : 40,
                               height: isSmallScreen ? 32 : 40,
