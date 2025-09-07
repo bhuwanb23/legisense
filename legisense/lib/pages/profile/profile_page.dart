@@ -38,6 +38,18 @@ class _ProfilePageState extends State<ProfilePage> {
   // Avatar
   File? _selectedImage;
 
+  // Lightweight loading state for timeline
+  bool _loadingTimeline = true;
+
+  @override
+  void initState() {
+    super.initState();
+    Future.delayed(const Duration(milliseconds: 800), () {
+      if (!mounted) return;
+      setState(() => _loadingTimeline = false);
+    });
+  }
+
   // Camera tap functionality
   Future<void> _onCameraTap() async {
     try {
@@ -307,6 +319,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
+    if (_loadingTimeline) {}
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
