@@ -32,14 +32,14 @@ class QuickActions extends StatelessWidget {
     ];
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             'Quick Actions',
             style: GoogleFonts.inter(
-              fontSize: 18,
+              fontSize: 16,
               fontWeight: FontWeight.w600,
               color: const Color(0xFF1F2937),
             ),
@@ -52,13 +52,13 @@ class QuickActions extends StatelessWidget {
               )
               .fadeIn(duration: 800.ms),
           
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           
           Row(
             children: actions.map((action) {
               return Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 6),
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
                   child: _buildActionCard(
                     context,
                     icon: action['icon'],
@@ -92,7 +92,7 @@ class QuickActions extends StatelessWidget {
         );
       },
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: Colors.white.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(12),
@@ -112,8 +112,8 @@ class QuickActions extends StatelessWidget {
           children: [
             // Icon Container
             Container(
-              width: 40,
-              height: 40,
+              width: 34,
+              height: 34,
               decoration: BoxDecoration(
                 gradient: gradient,
                 borderRadius: BorderRadius.circular(10),
@@ -121,17 +121,17 @@ class QuickActions extends StatelessWidget {
               child: Icon(
                 icon,
                 color: Colors.white,
-                size: 18,
+                size: 16,
               ),
             ),
             
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             
             // Title
             Text(
               title,
               style: GoogleFonts.inter(
-                fontSize: 14,
+                fontSize: 13,
                 fontWeight: FontWeight.w500,
                 color: const Color(0xFF374151),
               ),

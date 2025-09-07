@@ -250,9 +250,9 @@ class _UploadZoneState extends State<UploadZone> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: AppTheme.spacingM, vertical: AppTheme.spacingM),
+      margin: const EdgeInsets.symmetric(horizontal: AppTheme.spacingS + 6, vertical: AppTheme.spacingS + 6),
       child: Container(
-        padding: const EdgeInsets.all(AppTheme.spacingL),
+        padding: const EdgeInsets.all(AppTheme.spacingM),
         decoration: BoxDecoration(
           color: AppTheme.backgroundWhite.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(AppTheme.radiusL),
@@ -283,20 +283,20 @@ class _UploadZoneState extends State<UploadZone> {
           children: [
             // Upload Icon
             Container(
-              width: 64,
-              height: 64,
+              width: 54,
+              height: 54,
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
                   colors: [AppTheme.primaryBlueLight, AppTheme.primaryBlue],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
-                borderRadius: BorderRadius.circular(32),
+                borderRadius: BorderRadius.circular(27),
               ),
               child: const Icon(
                 FontAwesomeIcons.cloudArrowUp,
                 color: Colors.white,
-                size: 24,
+                size: 20,
               ),
             )
                 .animate()
@@ -307,7 +307,7 @@ class _UploadZoneState extends State<UploadZone> {
                 )
                 .fadeIn(duration: AppTheme.animationSlow, delay: 200.ms),
             
-            const SizedBox(height: AppTheme.spacingM),
+            const SizedBox(height: AppTheme.spacingS + 6),
             
             // Title and Description
             Text(
@@ -322,7 +322,7 @@ class _UploadZoneState extends State<UploadZone> {
                 )
                 .fadeIn(duration: AppTheme.animationSlow, delay: 400.ms),
             
-            const SizedBox(height: AppTheme.spacingS),
+            const SizedBox(height: AppTheme.spacingXS + 2),
             
             Text(
               'Take a photo or select from gallery to process your document',
@@ -336,7 +336,7 @@ class _UploadZoneState extends State<UploadZone> {
                 )
                 .fadeIn(duration: AppTheme.animationSlow, delay: 600.ms),
             
-            const SizedBox(height: AppTheme.spacingL),
+            const SizedBox(height: AppTheme.spacingM),
             
             // Action Buttons
             Column(
@@ -349,7 +349,7 @@ class _UploadZoneState extends State<UploadZone> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.primaryBlueLight,
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: AppTheme.spacingM),
+                      padding: const EdgeInsets.symmetric(vertical: AppTheme.spacingS + 6),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(AppTheme.radiusM),
                       ),
@@ -360,8 +360,8 @@ class _UploadZoneState extends State<UploadZone> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               const SizedBox(
-                                width: 16,
-                                height: 16,
+                                width: 14,
+                                height: 14,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
                                   valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
@@ -379,7 +379,7 @@ class _UploadZoneState extends State<UploadZone> {
                             children: [
                               const Icon(
                                 FontAwesomeIcons.camera,
-                                size: 16,
+                                size: 14,
                               ),
                               const SizedBox(width: AppTheme.spacingS),
                               Text(
@@ -398,7 +398,7 @@ class _UploadZoneState extends State<UploadZone> {
                     )
                     .fadeIn(duration: AppTheme.animationSlow, delay: 800.ms),
                 
-                const SizedBox(height: AppTheme.spacingM),
+                const SizedBox(height: AppTheme.spacingS + 6),
                 
                 // Sample Document Button
                 SizedBox(
@@ -411,7 +411,7 @@ class _UploadZoneState extends State<UploadZone> {
                         color: AppTheme.backgroundWhite.withValues(alpha: 0.3),
                         width: 1,
                       ),
-                      padding: const EdgeInsets.symmetric(vertical: AppTheme.spacingM),
+                      padding: const EdgeInsets.symmetric(vertical: AppTheme.spacingS + 6),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(AppTheme.radiusM),
                       ),
@@ -421,7 +421,7 @@ class _UploadZoneState extends State<UploadZone> {
                       children: [
                         const Icon(
                           FontAwesomeIcons.image,
-                          size: 16,
+                          size: 14,
                         ),
                         const SizedBox(width: AppTheme.spacingS),
                         Text(

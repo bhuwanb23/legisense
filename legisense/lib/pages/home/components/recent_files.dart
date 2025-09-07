@@ -33,7 +33,7 @@ class RecentFiles extends StatelessWidget {
     ];
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: AppTheme.spacingM, vertical: AppTheme.spacingM),
+      margin: const EdgeInsets.symmetric(horizontal: AppTheme.spacingS + 6, vertical: AppTheme.spacingS + 6),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -49,14 +49,14 @@ class RecentFiles extends StatelessWidget {
               )
               .fadeIn(duration: AppTheme.animationSlow, delay: 200.ms),
           
-          const SizedBox(height: AppTheme.spacingM),
+          const SizedBox(height: AppTheme.spacingS + 6),
           
           ...recentFiles.asMap().entries.map((entry) {
             int index = entry.key;
             Map<String, dynamic> file = entry.value;
             
             return Padding(
-              padding: const EdgeInsets.only(bottom: AppTheme.spacingM),
+              padding: const EdgeInsets.only(bottom: AppTheme.spacingS + 6),
               child: _buildFileCard(
                 title: file['title'],
                 subtitle: file['subtitle'],
@@ -81,7 +81,7 @@ class RecentFiles extends StatelessWidget {
     required int delay,
   }) {
     return Container(
-      padding: const EdgeInsets.all(AppTheme.spacingM),
+      padding: const EdgeInsets.all(AppTheme.spacingS + 6),
       decoration: BoxDecoration(
         color: AppTheme.backgroundWhite.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(AppTheme.radiusM),
@@ -101,8 +101,8 @@ class RecentFiles extends StatelessWidget {
         children: [
           // File Icon
           Container(
-            width: 48,
-            height: 48,
+            width: 42,
+            height: 42,
             decoration: BoxDecoration(
               color: bgColor,
               borderRadius: BorderRadius.circular(AppTheme.radiusM),
@@ -110,7 +110,7 @@ class RecentFiles extends StatelessWidget {
             child: Icon(
               icon,
               color: color,
-              size: 20,
+              size: 18,
             ),
           ),
           
@@ -123,7 +123,7 @@ class RecentFiles extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: AppTheme.bodyLarge,
+                  style: AppTheme.bodyMedium,
                 ),
                 const SizedBox(height: AppTheme.spacingXS),
                 Text(
@@ -136,8 +136,8 @@ class RecentFiles extends StatelessWidget {
           
           // More Options Button
           Container(
-            width: 32,
-            height: 32,
+            width: 28,
+            height: 28,
             decoration: BoxDecoration(
               color: Colors.transparent,
               borderRadius: BorderRadius.circular(AppTheme.radiusS),
@@ -155,7 +155,7 @@ class RecentFiles extends StatelessWidget {
               icon: const Icon(
                 FontAwesomeIcons.ellipsisVertical,
                 color: AppTheme.textTertiary,
-                size: 16,
+                size: 14,
               ),
               padding: EdgeInsets.zero,
             ),

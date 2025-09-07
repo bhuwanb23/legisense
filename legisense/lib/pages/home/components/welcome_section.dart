@@ -8,14 +8,14 @@ class WelcomeSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingM),
-      margin: const EdgeInsets.only(bottom: AppTheme.spacingXL),
+      padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingS + 6),
+      margin: const EdgeInsets.only(bottom: AppTheme.spacingL),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             'Welcome back to Legisense',
-            style: AppTheme.heading2,
+            style: AppTheme.heading3,
           )
               .animate()
               .slideX(
@@ -25,11 +25,11 @@ class WelcomeSection extends StatelessWidget {
               )
               .fadeIn(duration: AppTheme.animationSlow),
           
-          const SizedBox(height: AppTheme.spacingS),
+          const SizedBox(height: AppTheme.spacingS - 2),
           
           Text(
             "Let's simplify your documents",
-            style: AppTheme.subtitle,
+            style: AppTheme.bodySmall,
           )
               .animate()
               .slideX(
