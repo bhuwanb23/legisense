@@ -2,21 +2,57 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'components/components.dart';
 import 'data/sample_documents.dart';
+import '../../api/parsed_documents_repository.dart';
 
-class AnalysisPanel extends StatelessWidget {
+class AnalysisPanel extends StatefulWidget {
   const AnalysisPanel({super.key, this.document});
 
   final SampleDocument? document;
 
   @override
-  Widget build(BuildContext context) {
-    final sampleBullets = <String>[
-      'This agreement covers a 12-month rental.',
-      'Rent due on the 1st of each month.',
-      '30-day termination notice by landlord.',
-      'Tenant responsible for late fees.',
-    ];
+  State<AnalysisPanel> createState() => _AnalysisPanelState();
+}
 
+class _AnalysisPanelState extends State<AnalysisPanel> {
+  Map<String, dynamic>? analysis;
+  bool loading = false;
+  String? error;
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    setState(() {
+      loading = true;
+      error = null;
+    });
+    try {
+      // If this is a server document id like 'server-123', extract numeric id
+      final String? idStr = widget.document?.id;
+      if (idStr != null && idStr.startsWith('server-')) {
+        final int id = int.parse(idStr.split('-').last);
+        final repo = ParsedDocumentsRepository(baseUrl: const String.fromEnvironment('LEGISENSE_API_BASE', defaultValue: 'http://10.0.2.2:8000'));
+        final data = await repo.fetchAnalysis(id);
+        setState(() {
+          analysis = data;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        error = e.toString();
+      });
+    } finally {
+      setState(() {
+        loading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
       color: Colors.white,
       child: Column(
@@ -35,106 +71,87 @@ class AnalysisPanel extends StatelessWidget {
           ),
           const Divider(height: 1, color: Color(0xFFE5E7EB)),
           Expanded(
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-              children: [
-                // 1. TL;DR Bullets
-                TldrBullets(bullets: sampleBullets),
-                const SizedBox(height: 16),
-
-                // 2. Clause Breakdown
-                const ListHeader(title: 'Clause Breakdown'),
-                const SizedBox(height: 12),
-                const ClauseBreakdownCard(
-                  title: 'Payment Terms',
-                  icon: Icons.payments_rounded,
-                  originalSnippet: 'Rent must be paid by the 1st of each month via bank transfer.',
-                  explanation: 'You need to pay rent on the 1st every month. Other methods may not be accepted.',
-                  risk: ClauseRisk.medium,
-                ),
-                const SizedBox(height: 10),
-                const ClauseBreakdownCard(
-                  title: 'Termination / Exit',
-                  icon: Icons.logout_rounded,
-                  originalSnippet: 'Landlord may terminate the lease with 30 days notice.',
-                  explanation: 'The landlord can end the agreement with a 30-day notice period.',
-                  risk: ClauseRisk.high,
-                ),
-                const SizedBox(height: 10),
-                const ClauseBreakdownCard(
-                  title: 'Liability & Damages',
-                  icon: Icons.gavel_rounded,
-                  originalSnippet: 'Tenant is responsible for all repairs during tenancy.',
-                  explanation: 'Repairs are on you, which is unusual. Typically the landlord pays for structural fixes.',
-                  risk: ClauseRisk.high,
-                ),
-                const SizedBox(height: 10),
-                const ClauseBreakdownCard(
-                  title: 'Confidentiality',
-                  icon: Icons.lock_rounded,
-                  originalSnippet: 'Tenant shall not disclose any information pertaining to property security systems.',
-                  explanation: 'Do not share alarm codes or security details with others.',
-                  risk: ClauseRisk.low,
-                ),
-                const SizedBox(height: 10),
-                const ClauseBreakdownCard(
-                  title: 'Dispute Resolution',
-                  icon: Icons.balance_rounded,
-                  originalSnippet: 'Any disputes shall be resolved through arbitration.',
-                  explanation: 'Conflicts go to arbitration rather than court. This can limit appeal options.',
-                  risk: ClauseRisk.medium,
-                ),
-                const SizedBox(height: 10),
-                const ClauseBreakdownCard(
-                  title: 'Renewal / Extension',
-                  icon: Icons.autorenew_rounded,
-                  originalSnippet: 'Lease may be renewed upon mutual agreement 30 days before expiration.',
-                  explanation: 'You and the landlord must agree at least 30 days before the end to renew.',
-                  risk: ClauseRisk.low,
-                ),
-
-                const SizedBox(height: 16),
-                const ListHeader(title: 'Risk Flags & Warnings'),
-                const SizedBox(height: 12),
-                const RiskFlagsList(items: [
-                  RiskFlagItem(
-                    text: 'Tenant is responsible for all repairs (High Risk – usually landlord’s duty).',
-                    level: 'high',
-                    why: 'Industry norms place structural and major repairs on the landlord. This can be costly for tenants.',
-                  ),
-                  RiskFlagItem(
-                    text: 'Early termination penalty is very high compared to standard (Medium Risk).',
-                    level: 'medium',
-                    why: 'Typical penalties are 1–2 months rent. Excessive penalties can be negotiated down.',
-                  ),
-                ]),
-
-                const SizedBox(height: 16),
-                const ListHeader(title: 'Comparative Context'),
-                const SizedBox(height: 12),
-                const ComparativeContextCard(
-                  label: 'Notice Period',
-                  standard: '60 days',
-                  contract: '15 days',
-                  assessment: 'Risky',
-                ),
-
-                const SizedBox(height: 16),
-                const ListHeader(title: 'Suggested Questions'),
-                const SizedBox(height: 12),
-                const SuggestedQuestions(questions: [
-                  'What happens if I pay late?',
-                  'Can the landlord increase rent?',
-                  'What are my exit options?',
-                ]),
-
-                const SizedBox(height: 20),
-                const SimulationCta(),
-              ],
-            ),
+            child: loading
+                ? const Center(child: CircularProgressIndicator())
+                : error != null
+                    ? Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text('Failed to load analysis', style: GoogleFonts.inter(color: const Color(0xFF991B1B))),
+                            const SizedBox(height: 8),
+                            Text(error!, style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF991B1B))),
+                            const SizedBox(height: 12),
+                            OutlinedButton(onPressed: _load, child: const Text('Retry')),
+                          ],
+                        ),
+                      )
+                    : _buildAnalysisView(),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildAnalysisView() {
+    final Map<String, dynamic> a = analysis ?? {};
+    final List<dynamic> tldr = (a['tldr_bullets'] ?? []) as List<dynamic>;
+    final List<dynamic> clauses = (a['clauses'] ?? []) as List<dynamic>;
+    final List<dynamic> flags = (a['risk_flags'] ?? []) as List<dynamic>;
+    final List<dynamic> comp = (a['comparative_context'] ?? []) as List<dynamic>;
+    final List<dynamic> qs = (a['suggested_questions'] ?? []) as List<dynamic>;
+
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+      children: [
+        if (tldr.isNotEmpty) ...[
+          TldrBullets(bullets: tldr.cast<String>()),
+          const SizedBox(height: 16),
+        ],
+
+        const ListHeader(title: 'Clause Breakdown'),
+        const SizedBox(height: 12),
+        ...clauses.map((c) {
+          final String title = (c['category'] ?? 'Clause').toString();
+          final String snippet = (c['original_snippet'] ?? '').toString();
+          final String explanation = (c['explanation'] ?? '').toString();
+          final String risk = (c['risk'] ?? 'low').toString();
+          final ClauseRisk r = risk == 'high' ? ClauseRisk.high : risk == 'medium' ? ClauseRisk.medium : ClauseRisk.low;
+          final IconData icon = Icons.article_outlined;
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: ClauseBreakdownCard(title: title, icon: icon, originalSnippet: snippet, explanation: explanation, risk: r),
+          );
+        }),
+
+        const SizedBox(height: 16),
+        const ListHeader(title: 'Risk Flags & Warnings'),
+        const SizedBox(height: 12),
+        RiskFlagsList(
+          items: flags.map((f) => RiskFlagItem(text: (f['text'] ?? '').toString(), level: (f['level'] ?? 'low').toString(), why: (f['why'] ?? '').toString())).cast<RiskFlagItem>().toList(),
+        ),
+
+        const SizedBox(height: 16),
+        const ListHeader(title: 'Comparative Context'),
+        const SizedBox(height: 12),
+        ...comp.map((cc) => Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: ComparativeContextCard(
+                label: (cc['label'] ?? '').toString(),
+                standard: (cc['standard'] ?? '').toString(),
+                contract: (cc['contract'] ?? '').toString(),
+                assessment: (cc['assessment'] ?? '').toString(),
+              ),
+            )),
+
+        const SizedBox(height: 16),
+        const ListHeader(title: 'Suggested Questions'),
+        const SizedBox(height: 12),
+        SuggestedQuestions(questions: qs.cast<String>()),
+
+        const SizedBox(height: 20),
+        const SimulationCta(),
+      ],
     );
   }
 }

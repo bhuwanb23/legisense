@@ -81,6 +81,17 @@ class _UploadZoneState extends State<UploadZone> {
         final parsed = await _repo.uploadAndParsePdf(pdfFile: selectedFile);
         // Also reflect in global uploaded list for documents page
         kUploadedDocuments.insert(0, parsed);
+        // Ensure: wait briefly for analysis to be available before navigating
+        try {
+          final String idStr = parsed.id;
+          if (idStr.startsWith('server-')) {
+            final int serverId = int.parse(idStr.split('-').last);
+            setState(() {
+              _loadingLabel = 'Analyzing document...';
+            });
+            await _repo.waitForAnalysis(serverId, timeout: const Duration(seconds: 20), interval: const Duration(seconds: 2));
+          }
+        } catch (_) {}
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(

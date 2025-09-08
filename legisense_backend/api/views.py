@@ -6,8 +6,9 @@ from django.views.decorators.csrf import csrf_exempt
 from django.core.files.base import ContentFile
 from django.shortcuts import get_object_or_404
 
-from .models import ParsedDocument
+from .models import ParsedDocument, DocumentAnalysis
 from documents.pdf_document_parser import extract_pdf_text
+from ai_models.run_analysis import call_openrouter_for_analysis
 
 
 @csrf_exempt
@@ -69,6 +70,27 @@ def parse_pdf_view(request: HttpRequest):
     response = dict(data)
     response["id"] = doc.id
     response["file_url"] = doc.uploaded_file.url if doc.uploaded_file else None
+
+    # Trigger analysis synchronously (simple implementation)
+    try:
+        meta = {"file_name": doc.file_name, "num_pages": doc.num_pages}
+        pages = [p.get("text", "") for p in data.get("pages", [])]
+        analysis_payload = call_openrouter_for_analysis(pages, meta)
+        DocumentAnalysis.objects.update_or_create(
+            document=doc,
+            defaults={
+                "status": "success" if analysis_payload else "failed",
+                "output_json": analysis_payload or {},
+                "model": "openrouter",
+            },
+        )
+    except Exception as exc:  # noqa: BLE001
+        DocumentAnalysis.objects.update_or_create(
+            document=doc,
+            defaults={"status": "failed", "error": str(exc)},
+        )
+
+    response["analysis_available"] = DocumentAnalysis.objects.filter(document=doc, status="success").exists()
     return JsonResponse(response)
 
 
@@ -88,4 +110,14 @@ def parsed_doc_detail_view(request: HttpRequest, pk: int):
     data["file_name"] = doc.file_name
     data["num_pages"] = doc.num_pages
     data["file_url"] = doc.uploaded_file.url if doc.uploaded_file else None
+    data["analysis_available"] = hasattr(doc, "analysis") and doc.analysis.status == "success"
     return JsonResponse(data)
+
+
+def parsed_doc_analysis_view(request: HttpRequest, pk: int):
+    if request.method != "GET":
+        return JsonResponse({"error": "Method not allowed"}, status=405)
+    doc = get_object_or_404(ParsedDocument, pk=pk)
+    if not hasattr(doc, "analysis") or doc.analysis.status != "success":
+        return JsonResponse({"error": "Analysis not available"}, status=404)
+    return JsonResponse({"id": doc.id, "analysis": doc.analysis.output_json})
