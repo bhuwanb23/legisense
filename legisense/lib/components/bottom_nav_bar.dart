@@ -31,11 +31,13 @@ class BottomNavBar extends StatelessWidget {
           ),
         ),
         child: SafeArea(
+          top: false,
+          bottom: true,
           child: Container(
             height: isSmallScreen ? 65 : 75,
             padding: EdgeInsets.symmetric(
-              horizontal: isSmallScreen ? 2 : 4, 
-              vertical: isSmallScreen ? 4 : 6,
+              horizontal: isSmallScreen ? 2 : 4,
+              vertical: isSmallScreen ? 0 : 2,
             ),
             child: LayoutBuilder(
               builder: (context, constraints) {
