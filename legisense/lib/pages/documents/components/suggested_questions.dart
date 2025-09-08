@@ -53,7 +53,14 @@ class _QuestionChipState extends State<_QuestionChip> {
               children: [
                 const Icon(Icons.help_outline_rounded, size: 16, color: Color(0xFF475569)),
                 const SizedBox(width: 6),
-                Text(widget.text, style: GoogleFonts.inter(fontSize: 13, color: const Color(0xFF0F172A))),
+                Flexible(
+                  child: Text(
+                    widget.text,
+                    style: GoogleFonts.inter(fontSize: 13, color: const Color(0xFF0F172A)),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                  ),
+                ),
               ],
             ),
           ),

@@ -45,10 +45,27 @@ class _AnalysisPanelState extends State<AnalysisPanel> {
           final message = e.toString();
           final bool isPending = message.contains('404') || message.contains('Analysis not available');
           if (isPending) {
-            final data = await repo.waitForAnalysis(id, timeout: const Duration(seconds: 30), interval: const Duration(seconds: 2));
-            setState(() {
-              analysis = data;
-            });
+            final DateTime deadline = DateTime.now().add(const Duration(seconds: 30));
+            Map<String, dynamic>? polled;
+            while (DateTime.now().isBefore(deadline) && mounted) {
+              await Future.delayed(const Duration(seconds: 2));
+              try {
+                final Map<String, dynamic> d = await repo.fetchAnalysis(id);
+                polled = d;
+                break;
+              } catch (_) {
+                // keep polling until timeout
+              }
+            }
+            if (polled != null) {
+              setState(() {
+                analysis = polled;
+              });
+            } else {
+              setState(() {
+                error = 'Analysis not available';
+              });
+            }
           } else {
             rethrow;
           }

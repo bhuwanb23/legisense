@@ -31,23 +31,43 @@ class ComparativeContextCard extends StatelessWidget {
         children: [
           Text(label, style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w700, color: const Color(0xFF0F172A))),
           const SizedBox(height: 10),
-          Row(
-            children: [
-              _metric('Standard', standard),
-              const SizedBox(width: 12),
-              const Icon(Icons.compare_arrows, color: Color(0xFF64748B), size: 18),
-              const SizedBox(width: 12),
-              _metric('Contract', contract),
-              const Spacer(),
-              Container(
-                decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(999)),
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                child: Text(
-                  assessment,
-                  style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700, color: color),
-                ),
-              ),
-            ],
+          LayoutBuilder(
+            builder: (context, constraints) {
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Flexible(child: _metric('Standard', standard)),
+                        const SizedBox(width: 12),
+                        const Icon(Icons.compare_arrows, color: Color(0xFF64748B), size: 18),
+                        const SizedBox(width: 12),
+                        Flexible(child: _metric('Contract', contract)),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  ConstrainedBox(
+                    constraints: BoxConstraints(maxWidth: constraints.maxWidth * 0.4),
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerRight,
+                      child: Container(
+                        decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(999)),
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        child: Text(
+                          assessment,
+                          style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700, color: color),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
           ),
         ],
       ),

@@ -67,28 +67,7 @@ class ParsedDocumentsRepository {
     return analysis;
   }
 
-  /// Polls the backend until analysis is available or timeout occurs.
-  Future<Map<String, dynamic>> waitForAnalysis(int id, {Duration timeout = const Duration(seconds: 20), Duration interval = const Duration(seconds: 2)}) async {
-    final DateTime start = DateTime.now();
-    HttpException? lastError;
-    while (DateTime.now().difference(start) < timeout) {
-      try {
-        final data = await fetchAnalysis(id);
-        if (data.isNotEmpty) {
-          return data;
-        }
-      } catch (e) {
-        // If 404, keep waiting; any other error save and continue
-        if (e is HttpException && e.message.contains('404')) {
-          lastError = e;
-        } else {
-          lastError = e is HttpException ? e : HttpException(e.toString());
-        }
-      }
-      await Future.delayed(interval);
-    }
-    throw lastError ?? HttpException('Timed out waiting for analysis');
-  }
+  // Removed continuous polling to prevent repeated calls
 
   /// Uploads a PDF file to Django parser endpoint and returns a SampleDocument.
   ///
