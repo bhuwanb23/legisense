@@ -5,6 +5,8 @@ import 'document_analysis.dart';
 import 'components/components.dart';
 import 'data/sample_documents.dart';
 import '../../api/parsed_documents_repository.dart';
+import '../../components/bottom_nav_bar.dart';
+import '../../main.dart';
 
 class DocumentViewDetail extends StatefulWidget {
   const DocumentViewDetail({super.key, required this.title, required this.meta, this.docId});
@@ -19,6 +21,14 @@ class DocumentViewDetail extends StatefulWidget {
 
 class _DocumentViewDetailState extends State<DocumentViewDetail> {
   int _tabIndex = 0; // 0 = Text, 1 = Analysis
+  int _currentPageIndex = 1; // Documents page index
+
+  void _onPageChanged(int index) {
+    if (index == _currentPageIndex) return;
+    // Switch the root tab and pop back to the root so the persistent navbar remains
+    navigateToPage(index);
+    Navigator.of(context).popUntil((route) => route.isFirst);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -51,9 +61,9 @@ class _DocumentViewDetailState extends State<DocumentViewDetail> {
   }
 
   Widget _buildScaffold(SampleDocument? current) {
-    return Container(
-      color: const Color(0xFFF8FAFC),
-      child: Column(
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC),
+      body: Column(
         children: [
           // Custom App Bar
           Container(
@@ -112,6 +122,10 @@ class _DocumentViewDetailState extends State<DocumentViewDetail> {
                 : AnalysisPanel(document: current),
           ),
         ],
+      ),
+      bottomNavigationBar: BottomNavBar(
+        currentIndex: _currentPageIndex,
+        onTap: _onPageChanged,
       ),
     );
   }

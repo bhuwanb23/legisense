@@ -85,18 +85,34 @@ class _AppWrapperState extends State<AppWrapper> {
     }
 
     return Scaffold(
-      body: IndexedStack(
-        index: currentPageIndex,
+      body: Stack(
         children: [
-          const HomePage(),
-          const DocumentsPage(),
-          const SimulationPage(),
-          ProfilePage(onLogout: handleLogout),
+          // Main content area
+          IndexedStack(
+            index: currentPageIndex,
+            children: [
+              const HomePage(),
+              const DocumentsPage(),
+              const SimulationPage(),
+              ProfilePage(onLogout: handleLogout),
+            ],
+          ),
+          
+          // Bottom Navigation Bar - Always on top with elevation
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: Material(
+              elevation: 10,
+              shadowColor: Colors.black.withValues(alpha: 0.1),
+              child: BottomNavBar(
+                currentIndex: currentPageIndex,
+                onTap: onPageChanged,
+              ),
+            ),
+          ),
         ],
-      ),
-        bottomNavigationBar: BottomNavBar(
-        currentIndex: currentPageIndex,
-        onTap: onPageChanged,
       ),
     );
   }
