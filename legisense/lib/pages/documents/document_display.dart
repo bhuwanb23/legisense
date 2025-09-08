@@ -479,18 +479,25 @@ class _DocumentDisplayPanelState extends State<DocumentDisplayPanel>
       return const SizedBox.shrink();
     }
     
-    final progress = (widget.document!.textBlocks.length > 1) 
+    final rawProgress = (widget.document!.textBlocks.length > 1) 
         ? (_currentPageIndex + 1) / widget.document!.textBlocks.length 
         : 1.0;
     
     return Container(
       height: 3,
       margin: const EdgeInsets.symmetric(horizontal: AppTheme.spacingL),
-      child: LinearProgressIndicator(
-        value: progress,
-        backgroundColor: AppTheme.borderLight,
-        valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryBlue),
-        borderRadius: BorderRadius.circular(2),
+      child: TweenAnimationBuilder<double>(
+        tween: Tween(begin: 0.0, end: rawProgress),
+        duration: const Duration(milliseconds: 350),
+        curve: Curves.easeInOut,
+        builder: (context, value, child) {
+          return LinearProgressIndicator(
+            value: value,
+            backgroundColor: AppTheme.borderLight,
+            valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryBlue),
+            borderRadius: BorderRadius.circular(2),
+          );
+        },
       ),
     );
   }

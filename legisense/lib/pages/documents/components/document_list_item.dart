@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-class DocumentListItem extends StatelessWidget {
+class DocumentListItem extends StatefulWidget {
   const DocumentListItem({super.key, required this.title, required this.meta, required this.onTap});
 
   final String title;
@@ -9,89 +9,119 @@ class DocumentListItem extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
+  State<DocumentListItem> createState() => _DocumentListItemState();
+}
+
+class _DocumentListItemState extends State<DocumentListItem> {
+  bool _hover = false;
+
+  @override
   Widget build(BuildContext context) {
-    final _FilePresentation pres = _filePresentationFromTitle(title);
+    final _FilePresentation pres = _filePresentationFromTitle(widget.title);
 
-    return InkWell(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        child: Row(
-          children: [
-            // Leading file badge
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: pres.bg,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(pres.icon, size: 18, color: pres.fg),
-            ),
-            const SizedBox(width: 12),
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hover = true),
+      onExit: (_) => setState(() => _hover = false),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        curve: Curves.easeOut,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: _hover
+              ? [BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 12, offset: const Offset(0, 4))]
+              : null,
+        ),
+        child: InkWell(
+          onTap: widget.onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            child: Row(
+              children: [
+                // Leading file badge
+                AnimatedScale(
+                  duration: const Duration(milliseconds: 160),
+                  scale: _hover ? 1.05 : 1.0,
+                  child: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: pres.bg,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(pres.icon, size: 18, color: pres.fg),
+                  ),
+                ),
+                const SizedBox(width: 12),
 
-            // Title + meta
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
+                // Title + meta
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(
-                        child: Text(
-                          title,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.inter(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: const Color(0xFF111827),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              widget.title,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.inter(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: const Color(0xFF111827),
+                              ),
+                            ),
                           ),
-                        ),
+                          const SizedBox(width: 8),
+                          // Extension chip
+                          AnimatedContainer(
+                            duration: const Duration(milliseconds: 160),
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: pres.chipBg,
+                              borderRadius: BorderRadius.circular(9999),
+                              border: Border.all(color: pres.chipBorder),
+                              boxShadow: _hover
+                                  ? [BoxShadow(color: pres.chipBorder.withValues(alpha: 0.5), blurRadius: 6, offset: const Offset(0, 2))]
+                                  : null,
+                            ),
+                            child: Text(
+                              pres.ext.toUpperCase(),
+                              style: GoogleFonts.inter(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                                color: pres.chipFg,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(width: 8),
-                      // Extension chip
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: pres.chipBg,
-                          borderRadius: BorderRadius.circular(9999),
-                          border: Border.all(color: pres.chipBorder),
-                        ),
-                        child: Text(
-                          pres.ext.toUpperCase(),
-                          style: GoogleFonts.inter(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                            color: pres.chipFg,
-                          ),
-                        ),
+                      const SizedBox(height: 4),
+                      Text(
+                        widget.meta,
+                        style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF6B7280)),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    meta,
-                    style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF6B7280)),
-                  ),
-                ],
-              ),
-            ),
+                ),
 
-            // Trailing arrow
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF3F4F6),
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: const Icon(
-                Icons.arrow_forward_ios,
-                size: 14,
-                color: Color(0xFF6B7280),
-              ),
+                // Trailing arrow
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 160),
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: _hover ? const Color(0xFFE5E7EB) : const Color(0xFFF3F4F6),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: const Icon(
+                    Icons.arrow_forward_ios,
+                    size: 14,
+                    color: Color(0xFF6B7280),
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );

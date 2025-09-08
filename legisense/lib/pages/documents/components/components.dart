@@ -8,4 +8,10 @@ export 'tldr_summary.dart';
 export 'insight_rich_card.dart';
 export 'doc_page_card.dart';
 export 'stats_metric.dart';
+export 'tldr_bullets.dart';
+export 'clause_breakdown_card.dart';
+export 'risk_flags_list.dart';
+export 'comparative_context_card.dart';
+export 'suggested_questions.dart';
+export 'simulation_cta.dart';
 

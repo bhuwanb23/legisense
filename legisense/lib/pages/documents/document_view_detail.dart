@@ -21,7 +21,7 @@ class DocumentViewDetail extends StatefulWidget {
 
 class _DocumentViewDetailState extends State<DocumentViewDetail> {
   int _tabIndex = 0; // 0 = Text, 1 = Analysis
-  int _currentPageIndex = 1; // Documents page index
+  final int _currentPageIndex = 1; // Documents page index
 
   void _onPageChanged(int index) {
     if (index == _currentPageIndex) return;
