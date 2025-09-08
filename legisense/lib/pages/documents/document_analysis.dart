@@ -35,10 +35,24 @@ class _AnalysisPanelState extends State<AnalysisPanel> {
       if (idStr != null && idStr.startsWith('server-')) {
         final int id = int.parse(idStr.split('-').last);
         final repo = ParsedDocumentsRepository(baseUrl: const String.fromEnvironment('LEGISENSE_API_BASE', defaultValue: 'http://10.0.2.2:8000'));
-        final data = await repo.fetchAnalysis(id);
-        setState(() {
-          analysis = data;
-        });
+        try {
+          final data = await repo.fetchAnalysis(id);
+          setState(() {
+            analysis = data;
+          });
+        } catch (e) {
+          // If analysis not ready yet (404), wait/poll for it
+          final message = e.toString();
+          final bool isPending = message.contains('404') || message.contains('Analysis not available');
+          if (isPending) {
+            final data = await repo.waitForAnalysis(id, timeout: const Duration(seconds: 30), interval: const Duration(seconds: 2));
+            setState(() {
+              analysis = data;
+            });
+          } else {
+            rethrow;
+          }
+        }
       }
     } catch (e) {
       setState(() {

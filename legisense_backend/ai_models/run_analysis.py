@@ -9,7 +9,7 @@ from .api.openrouter_api import OpenRouterClient
 from .parse_json.validator import validate_and_normalize
 
 
-PROMPTS_DIR = Path(__file__).resolve().parent.parent / "prompts"
+PROMPTS_DIR = Path(__file__).resolve().parent / "prompts"
 
 
 def load_prompt_text() -> str:

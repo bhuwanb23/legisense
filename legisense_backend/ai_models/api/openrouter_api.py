@@ -15,7 +15,7 @@ class OpenRouterClient:
         self.api_key = api_key or os.getenv("OPENROUTER_API_KEY", "")
         if not self.api_key:
             raise RuntimeError("OPENROUTER_API_KEY is not set")
-        self.model = model or os.getenv("OPENROUTER_MODEL", "openai/gpt-4o-mini")
+        self.model = model or os.getenv("OPENROUTER_MODEL", "openrouter/sonoma-dusk-alpha")
         self.base_url = "https://openrouter.ai/api/v1/chat/completions"
 
     def create_chat_completion(self, messages: List[Dict[str, str]], temperature: float = 0.2, max_tokens: int = 2000, response_format: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:

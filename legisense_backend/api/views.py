@@ -121,3 +121,32 @@ def parsed_doc_analysis_view(request: HttpRequest, pk: int):
     if not hasattr(doc, "analysis") or doc.analysis.status != "success":
         return JsonResponse({"error": "Analysis not available"}, status=404)
     return JsonResponse({"id": doc.id, "analysis": doc.analysis.output_json})
+
+
+@csrf_exempt
+def parsed_doc_analyze_view(request: HttpRequest, pk: int):
+    """(Re)run analysis for a given document and persist result."""
+    if request.method != "POST":
+        return JsonResponse({"error": "Method not allowed"}, status=405)
+    doc = get_object_or_404(ParsedDocument, pk=pk)
+    payload = doc.payload or {}
+    pages = [p.get("text", "") for p in payload.get("pages", [])]
+    meta = {"file_name": doc.file_name, "num_pages": doc.num_pages}
+    try:
+        analysis_payload = call_openrouter_for_analysis(pages, meta)
+        obj, _ = DocumentAnalysis.objects.update_or_create(
+            document=doc,
+            defaults={
+                "status": "success" if analysis_payload else "failed",
+                "output_json": analysis_payload or {},
+                "model": "openrouter",
+                "error": "" if analysis_payload else "empty response",
+            },
+        )
+        return JsonResponse({"status": obj.status, "analysis": obj.output_json})
+    except Exception as exc:  # noqa: BLE001
+        obj, _ = DocumentAnalysis.objects.update_or_create(
+            document=doc,
+            defaults={"status": "failed", "error": str(exc)},
+        )
+        return JsonResponse({"error": str(exc)}, status=500)
