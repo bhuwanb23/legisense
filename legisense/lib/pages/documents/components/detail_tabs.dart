@@ -26,25 +26,28 @@ class DetailTabs extends StatelessWidget {
   Expanded _tab(String label, int value) {
     final bool selected = index == value;
     return Expanded(
-      child: InkWell(
-        onTap: () => onChange(value),
-        child: Container(
-          height: 48,
-          alignment: Alignment.center,
-          decoration: BoxDecoration(
-            border: Border(
-              bottom: BorderSide(
-                color: selected ? const Color(0xFF2563EB) : Colors.transparent,
-                width: 2,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => onChange(value),
+          child: Container(
+            height: 48,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              border: Border(
+                bottom: BorderSide(
+                  color: selected ? const Color(0xFF2563EB) : Colors.transparent,
+                  width: 2,
+                ),
               ),
             ),
-          ),
-          child: Text(
-            label,
-            style: GoogleFonts.inter(
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-              color: selected ? const Color(0xFF2563EB) : const Color(0xFF6B7280),
+            child: Text(
+              label,
+              style: GoogleFonts.inter(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: selected ? const Color(0xFF2563EB) : const Color(0xFF6B7280),
+              ),
             ),
           ),
         ),

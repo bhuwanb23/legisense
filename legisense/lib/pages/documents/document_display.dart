@@ -87,9 +87,7 @@ class _DocumentDisplayPanelState extends State<DocumentDisplayPanel>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppTheme.backgroundLight,
-      body: Container(
+    return Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
@@ -118,7 +116,6 @@ class _DocumentDisplayPanelState extends State<DocumentDisplayPanel>
             ),
           ],
         ),
-      ),
     );
   }
 
@@ -984,7 +981,7 @@ class _DocumentDisplayPanelState extends State<DocumentDisplayPanel>
     if (widget.document == null) return '';
     final totalChars = widget.document!.textBlocks
         .fold(0, (sum, block) => sum + block.length);
-    if (totalChars < 1000) return '${totalChars} characters';
+    if (totalChars < 1000) return '$totalChars characters';
     return '${(totalChars / 1000).toStringAsFixed(1)}k characters';
   }
 }

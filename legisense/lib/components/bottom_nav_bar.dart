@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import '../utils/responsive.dart';
 
 class BottomNavBar extends StatelessWidget {
@@ -18,78 +17,74 @@ class BottomNavBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final isSmallScreen = ResponsiveHelper.isSmallScreen(context);
     
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 20,
-            offset: const Offset(0, -5),
+    return Material(
+      elevation: 4,
+      shadowColor: Colors.black.withValues(alpha: 0.1),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border(
+            top: BorderSide(
+              color: Colors.grey.withValues(alpha: 0.1),
+              width: 0.5,
+            ),
           ),
-        ],
-      ),
-      child: SafeArea(
-        child: Container(
-          height: isSmallScreen ? 65 : 75,
-          padding: EdgeInsets.symmetric(
-            horizontal: isSmallScreen ? 2 : 4, 
-            vertical: isSmallScreen ? 4 : 6,
-          ),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final availableWidth = constraints.maxWidth;
-              final itemWidth = availableWidth / 4;
-              
-              return Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  _buildNavItem(
-                    icon: FontAwesomeIcons.house,
-                    label: 'Home',
-                    index: 0,
-                    isActive: currentIndex == 0,
-                    isSmallScreen: isSmallScreen,
-                    width: itemWidth,
-                  ),
-                  _buildNavItem(
-                    icon: FontAwesomeIcons.fileLines,
-                    label: 'Documents',
-                    index: 1,
-                    isActive: currentIndex == 1,
-                    isSmallScreen: isSmallScreen,
-                    width: itemWidth,
-                  ),
-                  _buildNavItem(
-                    icon: FontAwesomeIcons.play,
-                    label: 'Simulation',
-                    index: 2,
-                    isActive: currentIndex == 2,
-                    isSmallScreen: isSmallScreen,
-                    width: itemWidth,
-                  ),
-                  _buildNavItem(
-                    icon: FontAwesomeIcons.user,
-                    label: 'Profile',
-                    index: 3,
-                    isActive: currentIndex == 3,
-                    isSmallScreen: isSmallScreen,
-                    width: itemWidth,
-                  ),
-                ],
-              );
-            },
+        ),
+        child: SafeArea(
+          child: Container(
+            height: isSmallScreen ? 65 : 75,
+            padding: EdgeInsets.symmetric(
+              horizontal: isSmallScreen ? 2 : 4, 
+              vertical: isSmallScreen ? 4 : 6,
+            ),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final availableWidth = constraints.maxWidth;
+                final itemWidth = availableWidth / 4;
+                
+                return Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    _buildNavItem(
+                      icon: FontAwesomeIcons.house,
+                      label: 'Home',
+                      index: 0,
+                      isActive: currentIndex == 0,
+                      isSmallScreen: isSmallScreen,
+                      width: itemWidth,
+                    ),
+                    _buildNavItem(
+                      icon: FontAwesomeIcons.fileLines,
+                      label: 'Documents',
+                      index: 1,
+                      isActive: currentIndex == 1,
+                      isSmallScreen: isSmallScreen,
+                      width: itemWidth,
+                    ),
+                    _buildNavItem(
+                      icon: FontAwesomeIcons.play,
+                      label: 'Simulation',
+                      index: 2,
+                      isActive: currentIndex == 2,
+                      isSmallScreen: isSmallScreen,
+                      width: itemWidth,
+                    ),
+                    _buildNavItem(
+                      icon: FontAwesomeIcons.user,
+                      label: 'Profile',
+                      index: 3,
+                      isActive: currentIndex == 3,
+                      isSmallScreen: isSmallScreen,
+                      width: itemWidth,
+                    ),
+                  ],
+                );
+              },
+            ),
           ),
         ),
       ),
-    )
-        .animate()
-        .slideY(
-          begin: 1.0,
-          duration: 600.ms,
-          curve: Curves.easeOut,
-        )
-        .fadeIn(duration: 800.ms);
+    );
   }
 
   Widget _buildNavItem({
@@ -102,47 +97,51 @@ class BottomNavBar extends StatelessWidget {
   }) {
     return SizedBox(
       width: width,
-      child: GestureDetector(
-        onTap: () => onTap(index),
-        child: Container(
-          padding: EdgeInsets.symmetric(
-            horizontal: isSmallScreen ? 2 : 4, 
-            vertical: isSmallScreen ? 4 : 6,
-          ),
-          decoration: BoxDecoration(
-            color: isActive 
-                ? const Color(0xFF2563EB)
-                : Colors.transparent,
-            borderRadius: BorderRadius.circular(isSmallScreen ? 6 : 8),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                icon,
-                size: isSmallScreen ? 14 : 16,
-                color: isActive 
-                    ? Colors.white
-                    : const Color(0xFF2563EB),
-              ),
-              
-              SizedBox(height: isSmallScreen ? 1 : 2),
-              
-              Text(
-                label,
-                style: GoogleFonts.inter(
-                  fontSize: isSmallScreen ? 8 : 9,
-                  fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => onTap(index),
+          borderRadius: BorderRadius.circular(isSmallScreen ? 6 : 8),
+          child: Container(
+            padding: EdgeInsets.symmetric(
+              horizontal: isSmallScreen ? 2 : 4, 
+              vertical: isSmallScreen ? 4 : 6,
+            ),
+            decoration: BoxDecoration(
+              color: isActive 
+                  ? const Color(0xFF2563EB)
+                  : Colors.transparent,
+              borderRadius: BorderRadius.circular(isSmallScreen ? 6 : 8),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  icon,
+                  size: isSmallScreen ? 14 : 16,
                   color: isActive 
                       ? Colors.white
                       : const Color(0xFF2563EB),
                 ),
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
+                
+                SizedBox(height: isSmallScreen ? 1 : 2),
+                
+                Text(
+                  label,
+                  style: GoogleFonts.inter(
+                    fontSize: isSmallScreen ? 8 : 9,
+                    fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
+                    color: isActive 
+                        ? Colors.white
+                        : const Color(0xFF2563EB),
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
           ),
         ),
       ),
