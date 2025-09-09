@@ -3,8 +3,15 @@ import 'document_view_detail.dart';
 import 'components/components.dart';
 import '../../api/parsed_documents_repository.dart';
 
-class DocumentListPanel extends StatelessWidget {
+class DocumentListPanel extends StatefulWidget {
   const DocumentListPanel({super.key});
+
+  @override
+  State<DocumentListPanel> createState() => _DocumentListPanelState();
+}
+
+class _DocumentListPanelState extends State<DocumentListPanel> {
+  String _query = '';
 
   @override
   Widget build(BuildContext context) {
@@ -17,7 +24,7 @@ class DocumentListPanel extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const ListHeader(title: 'Document List'),
-          const SearchField(),
+          SearchField(onChanged: (v) => setState(() => _query = v)),
 
           const Divider(height: 1, color: Color(0xFFE5E7EB)),
 
@@ -32,7 +39,14 @@ class DocumentListPanel extends StatelessWidget {
                 if (snapshot.hasError) {
                   return _ErrorCard(error: snapshot.error.toString());
                 }
-                final list = snapshot.data ?? const [];
+                final String q = _query.trim().toLowerCase();
+                List<Map<String, dynamic>> list = (snapshot.data ?? const <Map<String, dynamic>>[]);
+                if (q.isNotEmpty) {
+                  list = list.where((e) {
+                    final name = (e['file_name'] ?? '').toString().toLowerCase();
+                    return name.contains(q);
+                  }).toList();
+                }
                 if (list.isEmpty) {
                   return const _EmptyStateCard();
                 }

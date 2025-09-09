@@ -3,7 +3,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'dart:io';
 import '../../../theme/app_theme.dart';
 
-class AvatarSection extends StatelessWidget {
+class AvatarSection extends StatefulWidget {
   final String? imageUrl;
   final File? selectedImage;
   final String initials;
@@ -24,6 +24,13 @@ class AvatarSection extends StatelessWidget {
   });
 
   @override
+  State<AvatarSection> createState() => _AvatarSectionState();
+}
+
+class _AvatarSectionState extends State<AvatarSection> {
+  bool _cameraPressed = false;
+
+  @override
   Widget build(BuildContext context) {
     return Column(
       children: [
@@ -41,10 +48,10 @@ class AvatarSection extends StatelessWidget {
                   width: 4,
                 ),
               ),
-              child: selectedImage != null
+              child: widget.selectedImage != null
                   ? ClipOval(
                       child: Image.file(
-                        selectedImage!,
+                        widget.selectedImage!,
                         width: 80,
                         height: 80,
                         fit: BoxFit.cover,
@@ -53,10 +60,10 @@ class AvatarSection extends StatelessWidget {
                         },
                       ),
                     )
-                  : imageUrl != null
+                  : widget.imageUrl != null
                       ? ClipOval(
                           child: Image.network(
-                            imageUrl!,
+                            widget.imageUrl!,
                             width: 80,
                             height: 80,
                             fit: BoxFit.cover,
@@ -71,26 +78,39 @@ class AvatarSection extends StatelessWidget {
             Positioned(
               bottom: -4,
               right: -4,
-              child: GestureDetector(
-                onTap: onCameraTap,
-                child: Container(
-                  width: 32,
-                  height: 32,
-                  decoration: BoxDecoration(
-                    color: AppTheme.primaryBlue,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.1),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
+              child: Listener(
+                onPointerDown: (_) => setState(() => _cameraPressed = true),
+                onPointerUp: (_) => setState(() => _cameraPressed = false),
+                onPointerCancel: (_) => setState(() => _cameraPressed = false),
+                child: GestureDetector(
+                  onTap: widget.onCameraTap,
+                  child: AnimatedScale(
+                    scale: _cameraPressed ? 0.92 : 1.0,
+                    duration: const Duration(milliseconds: 120),
+                    curve: Curves.easeOut,
+                    child: Material(
+                      color: Colors.transparent,
+                      child: Ink(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: AppTheme.primaryBlue,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.1),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          FontAwesomeIcons.camera,
+                          size: 12,
+                          color: Colors.white,
+                        ),
                       ),
-                    ],
-                  ),
-                  child: const Icon(
-                    FontAwesomeIcons.camera,
-                    size: 12,
-                    color: Colors.white,
+                    ),
                   ),
                 ),
               ),
@@ -102,7 +122,7 @@ class AvatarSection extends StatelessWidget {
         
         // Name
         Text(
-          name,
+          widget.name,
           style: AppTheme.heading3.copyWith(
             color: AppTheme.textPrimary,
             fontWeight: FontWeight.bold,
@@ -114,7 +134,7 @@ class AvatarSection extends StatelessWidget {
         
         // Email
         Text(
-          email,
+          widget.email,
           style: AppTheme.bodyMedium.copyWith(
             color: AppTheme.textSecondary,
           ),
@@ -125,7 +145,7 @@ class AvatarSection extends StatelessWidget {
         
         // Role
         Text(
-          role,
+          widget.role,
           style: AppTheme.bodyMedium.copyWith(
             color: AppTheme.primaryBlue,
             fontWeight: FontWeight.w500,
@@ -139,7 +159,7 @@ class AvatarSection extends StatelessWidget {
   Widget _buildInitialsAvatar() {
     return Center(
       child: Text(
-        initials,
+        widget.initials,
         style: AppTheme.heading2.copyWith(
           color: AppTheme.primaryBlue,
           fontWeight: FontWeight.bold,

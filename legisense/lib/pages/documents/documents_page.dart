@@ -35,8 +35,8 @@ class DocumentsPage extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Spacer so content starts below fixed header
-                  const SizedBox(height: 104),
+                  // Reduced spacer so content sits closer to the fixed header
+                  const SizedBox(height: 72),
 
                   // Removed heading card for a cleaner look
 

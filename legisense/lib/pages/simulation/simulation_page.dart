@@ -2,11 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../theme/app_theme.dart';
 import '../../components/main_header.dart';
+import '../documents/components/components.dart' show SearchField;
 import 'components/components.dart';
 import 'enhanced_simulation_details.dart';
 
-class SimulationPage extends StatelessWidget {
+class SimulationPage extends StatefulWidget {
   const SimulationPage({super.key});
+
+  @override
+  State<SimulationPage> createState() => _SimulationPageState();
+}
+
+class _SimulationPageState extends State<SimulationPage> {
+  String _query = '';
 
   @override
   Widget build(BuildContext context) {
@@ -36,12 +44,13 @@ class SimulationPage extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SizedBox(height: 104),
+                    const SizedBox(height: 156),
 
                     // Removed heading card for a cleaner look
 
                     // Document List Section - Natural height with page scrolling
                     DocumentListSection(
+                      searchQuery: _query,
                       onDocumentTap: (documentId, documentTitle) {
                         Navigator.of(context).push(
                           MaterialPageRoute(
@@ -76,7 +85,28 @@ class SimulationPage extends StatelessWidget {
                   bottom: false,
                   child: Container(
                     color: Colors.white,
-                    child: const MainHeader(title: 'Simulation'),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const MainHeader(title: 'Simulation'),
+                        // Fixed compact search bar under header
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: const [
+                                BoxShadow(color: Color(0x1A000000), blurRadius: 10, offset: Offset(0, 4)),
+                              ],
+                            ),
+                            child: SearchField(
+                              onChanged: (v) => setState(() => _query = v),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),

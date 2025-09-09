@@ -6,10 +6,12 @@ import '../../../api/parsed_documents_repository.dart';
 
 class DocumentListSection extends StatelessWidget {
   final Function(String documentId, String documentTitle)? onDocumentTap;
+  final String searchQuery;
   
   const DocumentListSection({
     super.key,
     this.onDocumentTap,
+    this.searchQuery = '',
   });
 
   @override
@@ -32,7 +34,6 @@ class DocumentListSection extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const ListHeader(title: 'Document List'),
-          const SearchField(),
           const Divider(height: 1, color: Color(0xFFE5E7EB)),
           // Match documents page: server-backed list (natural height within parent scroll)
           FutureBuilder<List<Map<String, dynamic>>>(
@@ -44,7 +45,14 @@ class DocumentListSection extends StatelessWidget {
               if (snapshot.hasError) {
                 return _ErrorCard(error: snapshot.error.toString());
               }
-              final list = snapshot.data ?? const [];
+              List<Map<String, dynamic>> list = (snapshot.data ?? const <Map<String, dynamic>>[]);
+              final String q = searchQuery.trim().toLowerCase();
+              if (q.isNotEmpty) {
+                list = list.where((e) {
+                  final name = (e['file_name'] ?? '').toString().toLowerCase();
+                  return name.contains(q);
+                }).toList();
+              }
               if (list.isEmpty) {
                 return const _EmptyStateCard();
               }

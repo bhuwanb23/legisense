@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../../theme/app_theme.dart';
 
-class PersonalInfoCard extends StatelessWidget {
+class PersonalInfoCard extends StatefulWidget {
   final String fullName;
   final String phoneNumber;
   final String location;
@@ -21,9 +21,25 @@ class PersonalInfoCard extends StatelessWidget {
   });
 
   @override
+  State<PersonalInfoCard> createState() => _PersonalInfoCardState();
+}
+
+class _PersonalInfoCardState extends State<PersonalInfoCard> {
+  bool _pressed = false;
+
+  void _setPressed(bool v) => setState(() => _pressed = v);
+
+  @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
+    return Listener(
+      onPointerDown: (_) => _setPressed(true),
+      onPointerUp: (_) => _setPressed(false),
+      onPointerCancel: (_) => _setPressed(false),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        curve: Curves.easeOut,
+        transform: Matrix4.identity()..translate(0.0, _pressed ? -1.5 : 0.0),
+        decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(AppTheme.radiusM),
         border: Border.all(
@@ -32,9 +48,9 @@ class PersonalInfoCard extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
+            color: Colors.black.withValues(alpha: _pressed ? 0.08 : 0.05),
+            blurRadius: _pressed ? 10 : 4,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -71,29 +87,30 @@ class PersonalInfoCard extends StatelessWidget {
               children: [
                 _buildFormField(
                   label: 'Full Name',
-                  value: fullName,
+                  value: widget.fullName,
                   icon: FontAwesomeIcons.user,
-                  onChanged: onNameChanged,
+                  onChanged: widget.onNameChanged,
                 ),
                 const SizedBox(height: AppTheme.spacingM),
                 _buildFormField(
                   label: 'Phone Number',
-                  value: phoneNumber,
+                  value: widget.phoneNumber,
                   icon: FontAwesomeIcons.phone,
-                  onChanged: onPhoneChanged,
+                  onChanged: widget.onPhoneChanged,
                 ),
                 const SizedBox(height: AppTheme.spacingM),
                 _buildFormField(
                   label: 'Location',
-                  value: location,
+                  value: widget.location,
                   icon: FontAwesomeIcons.locationDot,
-                  onChanged: onLocationChanged,
+                  onChanged: widget.onLocationChanged,
                 ),
               ],
             ),
           ),
         ],
       ),
+    ),
     );
   }
 
