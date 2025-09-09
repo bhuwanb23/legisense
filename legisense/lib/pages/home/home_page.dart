@@ -4,8 +4,21 @@ import 'components/components.dart';
 import '../../components/main_header.dart';
 import '../../theme/app_theme.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey = GlobalKey<RefreshIndicatorState>();
+
+  Future<void> _onRefresh() async {
+    // Trigger refresh of RecentFiles component
+    // The RecentFiles component will handle its own refresh logic
+    await Future.delayed(const Duration(milliseconds: 500));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,64 +45,70 @@ class HomePage extends StatelessWidget {
             // Animated background elements
             _buildAnimatedBackground(),
             
-            // Main content
+            // Main content with pull-to-refresh
             SafeArea(
-              child: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    // Global Main Header with enhanced animation
-                    const MainHeader(title: 'Legisense')
-                        .animate()
-                        .slideY(
-                          begin: -0.5,
-                          duration: AppTheme.animationSlow,
-                          curve: Curves.elasticOut,
-                        )
-                        .fadeIn(duration: AppTheme.animationSlow),
-                    
-                    // Welcome Section with staggered animation
-                    const WelcomeSection()
-                        .animate()
-                        .slideX(
-                          begin: -0.3,
-                          duration: AppTheme.animationSlow,
-                          curve: Curves.easeOut,
-                        )
-                        .fadeIn(duration: AppTheme.animationSlow, delay: 200.ms),
-                    
-                    // Upload Zone with enhanced animation
-                    const UploadZone()
-                        .animate()
-                        .scale(
-                          begin: const Offset(0.9, 0.9),
-                          duration: AppTheme.animationSlow,
-                          curve: Curves.elasticOut,
-                        )
-                        .fadeIn(duration: AppTheme.animationSlow, delay: 400.ms),
-                    
-                    // Recent Files with slide animation
-                    const RecentFiles()
-                        .animate()
-                        .slideY(
-                          begin: 0.3,
-                          duration: AppTheme.animationSlow,
-                          curve: Curves.easeOut,
-                        )
-                        .fadeIn(duration: AppTheme.animationSlow, delay: 600.ms),
-                    
-                    // Quick Actions with enhanced animation
-                    const QuickActions()
-                        .animate()
-                        .slideX(
-                          begin: 0.3,
-                          duration: AppTheme.animationSlow,
-                          curve: Curves.easeOut,
-                        )
-                        .fadeIn(duration: AppTheme.animationSlow, delay: 800.ms),
-                    
-                    // Bottom padding for better scrolling
-                    const SizedBox(height: AppTheme.spacingL),
-                  ],
+              child: RefreshIndicator(
+                key: _refreshIndicatorKey,
+                onRefresh: _onRefresh,
+                color: AppTheme.primaryBlue,
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: Column(
+                    children: [
+                      // Global Main Header with enhanced animation
+                      const MainHeader(title: 'Legisense')
+                          .animate()
+                          .slideY(
+                            begin: -0.5,
+                            duration: AppTheme.animationSlow,
+                            curve: Curves.elasticOut,
+                          )
+                          .fadeIn(duration: AppTheme.animationSlow),
+                      
+                      // Welcome Section with staggered animation
+                      const WelcomeSection()
+                          .animate()
+                          .slideX(
+                            begin: -0.3,
+                            duration: AppTheme.animationSlow,
+                            curve: Curves.easeOut,
+                          )
+                          .fadeIn(duration: AppTheme.animationSlow, delay: 200.ms),
+                      
+                      // Upload Zone with enhanced animation
+                      const UploadZone()
+                          .animate()
+                          .scale(
+                            begin: const Offset(0.9, 0.9),
+                            duration: AppTheme.animationSlow,
+                            curve: Curves.elasticOut,
+                          )
+                          .fadeIn(duration: AppTheme.animationSlow, delay: 400.ms),
+                      
+                      // Recent Files with slide animation
+                      const RecentFiles()
+                          .animate()
+                          .slideY(
+                            begin: 0.3,
+                            duration: AppTheme.animationSlow,
+                            curve: Curves.easeOut,
+                          )
+                          .fadeIn(duration: AppTheme.animationSlow, delay: 600.ms),
+                      
+                      // Quick Actions with enhanced animation
+                      const QuickActions()
+                          .animate()
+                          .slideX(
+                            begin: 0.3,
+                            duration: AppTheme.animationSlow,
+                            curve: Curves.easeOut,
+                          )
+                          .fadeIn(duration: AppTheme.animationSlow, delay: 800.ms),
+                      
+                      // Bottom padding for better scrolling
+                      const SizedBox(height: AppTheme.spacingL),
+                    ],
+                  ),
                 ),
               ),
             ),

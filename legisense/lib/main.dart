@@ -87,15 +87,24 @@ class _AppWrapperState extends State<AppWrapper> {
     return Scaffold(
       body: Stack(
         children: [
-          // Main content area
-          IndexedStack(
-            index: currentPageIndex,
-            children: [
-              const HomePage(),
-              const DocumentsPage(),
-              const SimulationPage(),
-              ProfilePage(onLogout: handleLogout),
-            ],
+          // Main content area with bottom padding to account for navbar
+          Positioned(
+            left: 0,
+            right: 0,
+            top: 0,
+            bottom: 0,
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 75), // Account for navbar height
+              child: IndexedStack(
+                index: currentPageIndex,
+                children: [
+                  const HomePage(),
+                  const DocumentsPage(),
+                  const SimulationPage(),
+                  ProfilePage(onLogout: handleLogout),
+                ],
+              ),
+            ),
           ),
           
           // Bottom Navigation Bar - Always on top with elevation
