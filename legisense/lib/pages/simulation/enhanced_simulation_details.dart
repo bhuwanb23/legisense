@@ -33,6 +33,21 @@ class _EnhancedSimulationDetailsPageState extends State<EnhancedSimulationDetail
     };
   }
 
+  Widget _section(Widget child) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 12, offset: const Offset(0, 4)),
+        ],
+      ),
+      padding: const EdgeInsets.all(16),
+      child: child,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -58,124 +73,172 @@ class _EnhancedSimulationDetailsPageState extends State<EnhancedSimulationDetail
               
               // Main content with scrolling below fixed header
               SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SizedBox(height: 128 - 16),
+                    const SizedBox(height: 120),
 
-                    const SizedBox(height: 24),
-
-                    // Enhanced Scenario Controls
-                    EnhancedScenarioControls(
-                      selectedScenario: _selectedScenario,
-                      onScenarioChanged: (scenario) {
-                        setState(() {
-                          _selectedScenario = scenario;
-                          _parameters['scenario'] = scenario;
-                        });
-                      },
-                      onParametersChanged: (parameters) {
-                        setState(() {
-                          _parameters = parameters;
-                        });
-                      },
+                    // Enhanced Scenario Controls section
+                    _section(
+                      EnhancedScenarioControls(
+                        selectedScenario: _selectedScenario,
+                        onScenarioChanged: (scenario) {
+                          setState(() {
+                            _selectedScenario = scenario;
+                            _parameters['scenario'] = scenario;
+                          });
+                        },
+                        onParametersChanged: (parameters) {
+                          setState(() {
+                            _parameters = parameters;
+                          });
+                        },
+                      ),
                     )
                         .animate()
-                        .slideX(
-                          begin: -0.3,
-                          duration: AppTheme.animationSlow,
-                          curve: Curves.easeOut,
-                        )
-                        .fadeIn(duration: AppTheme.animationSlow, delay: 200.ms),
+                        .slideX(begin: -0.2, duration: AppTheme.animationSlow, curve: Curves.easeOut)
+                        .fadeIn(duration: AppTheme.animationSlow, delay: 150.ms),
 
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 16),
 
-                    // Interactive Timeline View
-                    TimelineView(
-                      scenario: _selectedScenario,
-                      documentTitle: widget.documentTitle,
+                    // Legend + Timeline section
+                    _section(
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const LegendBar(),
+                          const SizedBox(height: 12),
+                          TimelineView(
+                            scenario: _selectedScenario,
+                            documentTitle: widget.documentTitle,
+                          ),
+                        ],
+                      ),
                     )
                         .animate()
-                        .slideY(
-                          begin: 0.3,
-                          duration: AppTheme.animationSlow,
-                          curve: Curves.easeOut,
-                        )
-                        .fadeIn(duration: AppTheme.animationSlow, delay: 400.ms),
+                        .slideY(begin: 0.2, duration: AppTheme.animationSlow, curve: Curves.easeOut)
+                        .fadeIn(duration: AppTheme.animationSlow, delay: 300.ms),
 
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 16),
 
-                    // Risk Alerts
-                    RiskAlerts(
-                      scenario: _selectedScenario,
-                      documentTitle: widget.documentTitle,
+                    // Jurisdiction notice section
+                    _section(
+                      JurisdictionNotice(
+                        jurisdiction: 'Maharashtra, India',
+                        message:
+                            'Even though contract says 15-day eviction, local law requires 30 days. Timeline and outcomes adjusted accordingly.',
+                      ),
                     )
                         .animate()
-                        .slideX(
-                          begin: 0.3,
-                          duration: AppTheme.animationSlow,
-                          curve: Curves.easeOut,
-                        )
+                        .slideX(begin: -0.15, duration: AppTheme.animationSlow, curve: Curves.easeOut)
+                        .fadeIn(duration: AppTheme.animationSlow, delay: 375.ms),
+
+                    const SizedBox(height: 16),
+
+                    // Penalty & Liability Forecast
+                    _section(
+                      PenaltyForecastPanel(
+                        documentTitle: widget.documentTitle,
+                        parameters: _parameters,
+                      ),
+                    )
+                        .animate()
+                        .slideY(begin: 0.15, duration: AppTheme.animationSlow, curve: Curves.easeOut)
+                        .fadeIn(duration: AppTheme.animationSlow, delay: 420.ms),
+
+                    const SizedBox(height: 16),
+
+                    // Termination / Exit Comparison
+                    _section(
+                      ComparisonPanel(documentTitle: widget.documentTitle),
+                    )
+                        .animate()
+                        .slideX(begin: 0.15, duration: AppTheme.animationSlow, curve: Curves.easeOut)
+                        .fadeIn(duration: AppTheme.animationSlow, delay: 480.ms),
+
+                    const SizedBox(height: 16),
+
+                    // Long-term forecast
+                    _section(
+                      LongTermForecastChart(
+                        documentTitle: widget.documentTitle,
+                        parameters: _parameters,
+                      ),
+                    )
+                        .animate()
+                        .slideY(begin: 0.15, duration: AppTheme.animationSlow, curve: Curves.easeOut)
+                        .fadeIn(duration: AppTheme.animationSlow, delay: 540.ms),
+
+                    // Risk Alerts section
+                    _section(
+                      RiskAlerts(
+                        scenario: _selectedScenario,
+                        documentTitle: widget.documentTitle,
+                      ),
+                    )
+                        .animate()
+                        .slideX(begin: 0.2, duration: AppTheme.animationSlow, curve: Curves.easeOut)
+                        .fadeIn(duration: AppTheme.animationSlow, delay: 450.ms),
+
+                    const SizedBox(height: 16),
+
+                    // Narrative Outcome Cards section
+                    _section(
+                      NarrativeOutcomeCards(
+                        scenario: _selectedScenario,
+                        parameters: _parameters,
+                      ),
+                    )
+                        .animate()
+                        .slideY(begin: 0.2, duration: AppTheme.animationSlow, curve: Curves.easeOut)
                         .fadeIn(duration: AppTheme.animationSlow, delay: 600.ms),
 
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 16),
 
-                    // Narrative Outcome Cards
-                    NarrativeOutcomeCards(
-                      scenario: _selectedScenario,
-                      parameters: _parameters,
+                    // Export + Next Steps section
+                    _section(
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const ExportOptions(),
+                          const SizedBox(height: 12),
+                          NextStepsCTA(
+                            documentTitle: widget.documentTitle,
+                            onBackToAnalysis: () => Navigator.of(context).pop(),
+                            onSaveSimulation: () {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Simulation saved for ${widget.documentTitle}!'),
+                                  backgroundColor: const Color(0xFF10B981),
+                                ),
+                              );
+                            },
+                            onExportReport: () {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Report exported for ${widget.documentTitle}!'),
+                                  backgroundColor: const Color(0xFF10B981),
+                                ),
+                              );
+                            },
+                            onShareResults: () {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Results shared for ${widget.documentTitle}!'),
+                                  backgroundColor: const Color(0xFF8B5CF6),
+                                ),
+                              );
+                            },
+                          ),
+                        ],
+                      ),
                     )
                         .animate()
-                        .slideY(
-                          begin: 0.3,
-                          duration: AppTheme.animationSlow,
-                          curve: Curves.easeOut,
-                        )
-                        .fadeIn(duration: AppTheme.animationSlow, delay: 800.ms),
+                        .slideY(begin: 0.2, duration: AppTheme.animationSlow, curve: Curves.easeOut)
+                        .fadeIn(duration: AppTheme.animationSlow, delay: 750.ms),
 
-                    const SizedBox(height: 24),
-
-                    // Next Steps CTA
-                    NextStepsCTA(
-                      documentTitle: widget.documentTitle,
-                      onBackToAnalysis: () {
-                        Navigator.of(context).pop();
-                      },
-                      onSaveSimulation: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Simulation saved for ${widget.documentTitle}!'),
-                            backgroundColor: const Color(0xFF10B981),
-                          ),
-                        );
-                      },
-                      onExportReport: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Report exported for ${widget.documentTitle}!'),
-                            backgroundColor: const Color(0xFF10B981),
-                          ),
-                        );
-                      },
-                      onShareResults: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Results shared for ${widget.documentTitle}!'),
-                            backgroundColor: const Color(0xFF8B5CF6),
-                          ),
-                        );
-                      },
-                    )
-                        .animate()
-                        .slideY(
-                          begin: 0.3,
-                          duration: AppTheme.animationSlow,
-                          curve: Curves.easeOut,
-                        )
-                        .fadeIn(duration: AppTheme.animationSlow, delay: 1000.ms),
-
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 8),
                   ],
                 ),
               ),
@@ -193,21 +256,7 @@ class _EnhancedSimulationDetailsPageState extends State<EnhancedSimulationDetail
                       documentTitle: widget.documentTitle,
                       documentVersion: 'V2.1',
                       onBackPressed: () => Navigator.of(context).pop(),
-                      availableDocuments: {
-                        widget.documentTitle,
-                        'Loan Agreement - Standard',
-                        'Service Contract - Premium',
-                        'Employment Agreement - Executive',
-                        'Partnership Agreement - Tech',
-                      }.toList(),
-                      onDocumentSwitch: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Document switching feature coming soon!'),
-                            backgroundColor: Color(0xFF2563EB),
-                          ),
-                        );
-                      },
+                      availableDocuments: const [], // hide switch document dropdown
                     ),
                   ),
                 ),

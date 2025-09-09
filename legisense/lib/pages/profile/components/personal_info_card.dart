@@ -38,7 +38,7 @@ class _PersonalInfoCardState extends State<PersonalInfoCard> {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
         curve: Curves.easeOut,
-        transform: Matrix4.identity()..translate(0.0, _pressed ? -1.5 : 0.0),
+        transform: Matrix4.translationValues(0.0, _pressed ? -1.5 : 0.0, 0.0),
         decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(AppTheme.radiusM),

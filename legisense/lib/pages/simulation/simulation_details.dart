@@ -45,89 +45,109 @@ class _SimulationDetailsPageState extends State<SimulationDetailsPage> {
               
               // Main content with scrolling below fixed header
               SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SizedBox(height: 128 - 16),
-
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 120),
 
                     // Scenario Controls
-                    ScenarioControls(
-                      selectedScenario: _selectedScenario,
-                      onScenarioChanged: (scenario) {
-                        setState(() {
-                          _selectedScenario = scenario;
-                        });
-                      },
+                    _section(
+                      ScenarioControls(
+                        selectedScenario: _selectedScenario,
+                        onScenarioChanged: (scenario) {
+                          setState(() {
+                            _selectedScenario = scenario;
+                          });
+                        },
+                      ),
                     )
                         .animate()
                         .slideX(
-                          begin: -0.3,
+                          begin: -0.2,
                           duration: AppTheme.animationSlow,
                           curve: Curves.easeOut,
                         )
-                        .fadeIn(duration: AppTheme.animationSlow, delay: 200.ms),
+                        .fadeIn(duration: AppTheme.animationSlow, delay: 150.ms),
 
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 16),
 
-                    // Interactive Flowchart
-                    InteractiveFlowchart(
-                      scenario: _selectedScenario,
+                    // Legend + Flowchart
+                    _section(
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const LegendBar(),
+                          const SizedBox(height: 12),
+                          InteractiveFlowchart(
+                            scenario: _selectedScenario,
+                          ),
+                        ],
+                      ),
                     )
                         .animate()
                         .slideY(
-                          begin: 0.3,
+                          begin: 0.2,
                           duration: AppTheme.animationSlow,
                           curve: Curves.easeOut,
                         )
-                        .fadeIn(duration: AppTheme.animationSlow, delay: 400.ms),
+                        .fadeIn(duration: AppTheme.animationSlow, delay: 300.ms),
 
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 16),
 
                     // Outcome Cards
-                    OutcomeCards(
-                      scenario: _selectedScenario,
+                    _section(
+                      OutcomeCards(
+                        scenario: _selectedScenario,
+                      ),
                     )
                         .animate()
                         .slideY(
-                          begin: 0.3,
+                          begin: 0.2,
+                          duration: AppTheme.animationSlow,
+                          curve: Curves.easeOut,
+                        )
+                        .fadeIn(duration: AppTheme.animationSlow, delay: 450.ms),
+
+                    const SizedBox(height: 16),
+
+                    // Export options + Actions
+                    _section(
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const ExportOptions(),
+                          const SizedBox(height: 12),
+                          ActionButtons(
+                            onRunSimulation: () {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Simulation started for ${widget.documentTitle}!'),
+                                  backgroundColor: const Color(0xFF2563EB),
+                                ),
+                              );
+                            },
+                            onExportReport: () {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Report exported for ${widget.documentTitle}!'),
+                                  backgroundColor: const Color(0xFF16A34A),
+                                ),
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                    )
+                        .animate()
+                        .slideY(
+                          begin: 0.2,
                           duration: AppTheme.animationSlow,
                           curve: Curves.easeOut,
                         )
                         .fadeIn(duration: AppTheme.animationSlow, delay: 600.ms),
 
-                    const SizedBox(height: 24),
-
-                    // Action Buttons
-                    ActionButtons(
-                      onRunSimulation: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Simulation started for ${widget.documentTitle}!'),
-                            backgroundColor: const Color(0xFF2563EB),
-                          ),
-                        );
-                      },
-                      onExportReport: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text('Report exported for ${widget.documentTitle}!'),
-                            backgroundColor: const Color(0xFF16A34A),
-                          ),
-                        );
-                      },
-                    )
-                        .animate()
-                        .slideY(
-                          begin: 0.3,
-                          duration: AppTheme.animationSlow,
-                          curve: Curves.easeOut,
-                        )
-                        .fadeIn(duration: AppTheme.animationSlow, delay: 800.ms),
-
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 8),
                   ],
                 ),
               ),
@@ -153,6 +173,21 @@ class _SimulationDetailsPageState extends State<SimulationDetailsPage> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _section(Widget child) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 12, offset: const Offset(0, 4)),
+        ],
+      ),
+      padding: const EdgeInsets.all(16),
+      child: child,
     );
   }
 
