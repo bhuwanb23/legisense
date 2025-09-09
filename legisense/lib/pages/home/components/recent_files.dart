@@ -4,6 +4,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../../theme/app_theme.dart';
 import '../../../api/parsed_documents_repository.dart';
 import '../../../main.dart';
+import '../../documents/document_view_detail.dart';
 
 class RecentFiles extends StatefulWidget {
   const RecentFiles({super.key});
@@ -24,10 +25,10 @@ class _RecentFilesState extends State<RecentFiles> {
   }
 
   Future<void> _loadRecentFiles() async {
-    // Try different possible backend URLs
+    // Try different possible backend URLs (prioritize Android emulator)
     List<String> possibleUrls = [
+      'http://10.0.2.2:8000', // Android emulator (try this first)
       'http://localhost:8000',
-      'http://10.0.2.2:8000', // Android emulator
       'http://127.0.0.1:8000',
     ];
     
@@ -105,7 +106,7 @@ class _RecentFilesState extends State<RecentFiles> {
     // If we get here, all URLs failed
     print('DEBUG: All connection attempts failed');
     setState(() {
-      error = 'Could not connect to backend server.\nTried: ${possibleUrls.join(', ')}\nLast error: $lastError';
+      error = 'Could not connect to backend server.\nTried: ${possibleUrls.join(', ')}\nLast error: $lastError\n\nPlease ensure the Django server is running on your computer.';
       isLoading = false;
     });
   }
@@ -214,7 +215,15 @@ class _RecentFilesState extends State<RecentFiles> {
     return GestureDetector(
       onTap: () {
         // Navigate to document detail page
-        Navigator.of(context).pushNamed('/document-detail', arguments: id);
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => DocumentViewDetail(
+              title: title,
+              meta: subtitle,
+              docId: 'server-$id',
+            ),
+          ),
+        );
       },
       child: Container(
         padding: const EdgeInsets.all(AppTheme.spacingS + 6),
@@ -398,7 +407,15 @@ class _RecentFilesState extends State<RecentFiles> {
               title: const Text('View Document'),
               onTap: () {
                 Navigator.pop(context);
-                Navigator.of(context).pushNamed('/document-detail', arguments: id);
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => DocumentViewDetail(
+                      title: title,
+                      meta: 'PDF Document',
+                      docId: 'server-$id',
+                    ),
+                  ),
+                );
               },
             ),
             ListTile(
@@ -406,7 +423,15 @@ class _RecentFilesState extends State<RecentFiles> {
               title: const Text('View Analysis'),
               onTap: () {
                 Navigator.pop(context);
-                Navigator.of(context).pushNamed('/document-analysis', arguments: id);
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => DocumentViewDetail(
+                      title: title,
+                      meta: 'PDF Document',
+                      docId: 'server-$id',
+                    ),
+                  ),
+                );
               },
             ),
             ListTile(
