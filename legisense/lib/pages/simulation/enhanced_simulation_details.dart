@@ -56,40 +56,13 @@ class _EnhancedSimulationDetailsPageState extends State<EnhancedSimulationDetail
               // Animated background elements
               _buildAnimatedBackground(),
               
-              // Main content with scrolling
+              // Main content with scrolling below fixed header
               SingleChildScrollView(
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Document Header
-                    DocumentHeader(
-                      documentTitle: widget.documentTitle,
-                      documentVersion: 'V2.1',
-                      onBackPressed: () => Navigator.of(context).pop(),
-                      availableDocuments: {
-                        widget.documentTitle, // Include current document
-                        'Loan Agreement - Standard',
-                        'Service Contract - Premium',
-                        'Employment Agreement - Executive',
-                        'Partnership Agreement - Tech',
-                      }.toList(), // Remove duplicates
-                      onDocumentSwitch: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Document switching feature coming soon!'),
-                            backgroundColor: Color(0xFF2563EB),
-                          ),
-                        );
-                      },
-                    )
-                        .animate()
-                        .slideY(
-                          begin: -0.5,
-                          duration: AppTheme.animationSlow,
-                          curve: Curves.elasticOut,
-                        )
-                        .fadeIn(duration: AppTheme.animationSlow),
+                    const SizedBox(height: 128 - 16),
 
                     const SizedBox(height: 24),
 
@@ -204,6 +177,39 @@ class _EnhancedSimulationDetailsPageState extends State<EnhancedSimulationDetail
 
                     const SizedBox(height: 24),
                   ],
+                ),
+              ),
+
+              // Fixed header pinned at the very top-most layer (over content)
+              Positioned(
+                left: 0,
+                right: 0,
+                top: 0,
+                child: SafeArea(
+                  bottom: false,
+                  child: Container(
+                    color: Colors.white,
+                    child: DocumentHeader(
+                      documentTitle: widget.documentTitle,
+                      documentVersion: 'V2.1',
+                      onBackPressed: () => Navigator.of(context).pop(),
+                      availableDocuments: {
+                        widget.documentTitle,
+                        'Loan Agreement - Standard',
+                        'Service Contract - Premium',
+                        'Employment Agreement - Executive',
+                        'Partnership Agreement - Tech',
+                      }.toList(),
+                      onDocumentSwitch: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Document switching feature coming soon!'),
+                            backgroundColor: Color(0xFF2563EB),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
                 ),
               ),
             ],

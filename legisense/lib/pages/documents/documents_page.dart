@@ -35,20 +35,13 @@ class DocumentsPage extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // Global Main Header
-                  const MainHeader(title: 'Documents')
-                      .animate()
-                      .slideY(
-                        begin: -0.3,
-                        duration: AppTheme.animationSlow,
-                        curve: Curves.easeOut,
-                      )
-                      .fadeIn(duration: AppTheme.animationSlow),
+                  // Spacer so content starts below fixed header
+                  const SizedBox(height: 104),
 
                   // Enhanced subtitle section
                   Container(
-                    margin: const EdgeInsets.symmetric(horizontal: AppTheme.spacingM, vertical: AppTheme.spacingS),
-                    padding: const EdgeInsets.all(AppTheme.spacingM),
+                    margin: const EdgeInsets.symmetric(horizontal: AppTheme.spacingM, vertical: AppTheme.spacingXS),
+                    padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingM, vertical: AppTheme.spacingS),
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.8),
                       borderRadius: BorderRadius.circular(AppTheme.radiusM),
@@ -81,14 +74,15 @@ class DocumentsPage extends StatelessWidget {
                             children: [
                               Text(
                                 'Document Management',
-                                style: AppTheme.heading4.copyWith(
+                                style: AppTheme.bodyMedium.copyWith(
                                   color: AppTheme.textPrimary,
+                                  fontWeight: FontWeight.w600,
                                 ),
                               ),
                               const SizedBox(height: AppTheme.spacingXS),
                               Text(
                                 'Browse, analyze, and manage your legal documents',
-                                style: AppTheme.bodySmall.copyWith(
+                                style: AppTheme.caption.copyWith(
                                   color: AppTheme.textSecondary,
                                 ),
                               ),
@@ -97,12 +91,12 @@ class DocumentsPage extends StatelessWidget {
                         ),
                         Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: AppTheme.spacingM,
-                            vertical: AppTheme.spacingXS,
+                            horizontal: AppTheme.spacingS,
+                            vertical: 4,
                           ),
                           decoration: BoxDecoration(
                             color: AppTheme.successGreen.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(AppTheme.radiusXL),
+                            borderRadius: BorderRadius.circular(AppTheme.radiusM),
                             border: Border.all(
                               color: AppTheme.successGreen.withValues(alpha: 0.3),
                               width: 1,
@@ -160,6 +154,20 @@ class DocumentsPage extends StatelessWidget {
                       )
                       .fadeIn(duration: AppTheme.animationSlow, delay: 400.ms),
                 ],
+              ),
+
+              // Fixed header pinned at the very top-most layer (over content)
+              Positioned(
+                left: 0,
+                right: 0,
+                top: 0,
+                child: SafeArea(
+                  bottom: false,
+                  child: Container(
+                    color: Colors.white,
+                    child: const MainHeader(title: 'Documents'),
+                  ),
+                ),
               ),
             ],
           ),

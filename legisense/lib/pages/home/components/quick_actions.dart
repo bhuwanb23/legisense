@@ -78,8 +78,7 @@ class QuickActions extends StatelessWidget {
                 begin: 0.3,
                 duration: 600.ms,
                 curve: Curves.easeOut,
-              )
-              .fadeIn(duration: 800.ms),
+              ),
           
           const SizedBox(height: 12),
           
@@ -88,7 +87,7 @@ class QuickActions extends StatelessWidget {
             physics: const NeverScrollableScrollPhysics(),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 2,
-              childAspectRatio: 1.2,
+              childAspectRatio: 1.0,
               crossAxisSpacing: 8,
               mainAxisSpacing: 8,
             ),
@@ -123,7 +122,7 @@ class QuickActions extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: Colors.white.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(16),
@@ -141,11 +140,12 @@ class QuickActions extends StatelessWidget {
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
             // Icon Container
             Container(
-              width: 40,
-              height: 40,
+              width: 36,
+              height: 36,
               decoration: BoxDecoration(
                 gradient: gradient,
                 borderRadius: BorderRadius.circular(12),
@@ -153,11 +153,11 @@ class QuickActions extends StatelessWidget {
               child: Icon(
                 icon,
                 color: Colors.white,
-                size: 18,
+                size: 16,
               ),
             ),
             
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             
             // Title
             Text(
@@ -168,9 +168,11 @@ class QuickActions extends StatelessWidget {
                 color: const Color(0xFF1F2937),
               ),
               textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
             
-            const SizedBox(height: 2),
+            const SizedBox(height: 1),
             
             // Subtitle
             Text(
@@ -193,7 +195,6 @@ class QuickActions extends StatelessWidget {
           begin: const Offset(0.9, 0.9),
           duration: 600.ms,
           curve: Curves.elasticOut,
-        )
-        .fadeIn(duration: 800.ms, delay: delay.ms);
+        );
   }
 }

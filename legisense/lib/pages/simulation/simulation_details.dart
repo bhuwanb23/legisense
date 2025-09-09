@@ -43,25 +43,13 @@ class _SimulationDetailsPageState extends State<SimulationDetailsPage> {
               // Animated background elements
               _buildAnimatedBackground(),
               
-              // Main content with scrolling
+              // Main content with scrolling below fixed header
               SingleChildScrollView(
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Simulation Header
-                    SimulationHeader(
-                      title: 'Contract Simulation',
-                      subtitle: '${widget.documentTitle} - V2.1',
-                      onBackPressed: () => Navigator.of(context).pop(),
-                    )
-                        .animate()
-                        .slideY(
-                          begin: -0.5,
-                          duration: AppTheme.animationSlow,
-                          curve: Curves.elasticOut,
-                        )
-                        .fadeIn(duration: AppTheme.animationSlow),
+                    const SizedBox(height: 128 - 16),
 
                     const SizedBox(height: 24),
 
@@ -141,6 +129,24 @@ class _SimulationDetailsPageState extends State<SimulationDetailsPage> {
 
                     const SizedBox(height: 24),
                   ],
+                ),
+              ),
+
+              // Fixed header pinned at the very top-most layer (over content)
+              Positioned(
+                left: 0,
+                right: 0,
+                top: 0,
+                child: SafeArea(
+                  bottom: false,
+                  child: Container(
+                    color: Colors.white,
+                    child: SimulationHeader(
+                      title: 'Contract Simulation',
+                      subtitle: '${widget.documentTitle} - V2.1',
+                      onBackPressed: () => Navigator.of(context).pop(),
+                    ),
+                  ),
                 ),
               ),
             ],

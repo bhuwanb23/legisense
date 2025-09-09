@@ -41,13 +41,13 @@ class _RecentFilesState extends State<RecentFiles> {
           error = null;
         });
 
-        print('DEBUG: Trying to connect to $baseUrl');
+        debugPrint('DEBUG: Trying to connect to $baseUrl');
         final repository = ParsedDocumentsRepository(baseUrl: baseUrl);
         final documents = await repository.fetchDocuments();
         
-        print('DEBUG: Successfully connected to $baseUrl');
-        print('DEBUG: Fetched ${documents.length} documents');
-        print('DEBUG: Documents: $documents');
+        debugPrint('DEBUG: Successfully connected to $baseUrl');
+        debugPrint('DEBUG: Fetched ${documents.length} documents');
+        debugPrint('DEBUG: Documents: $documents');
         
         // Convert to display format and take only recent 3
         final files = documents.take(3).map((doc) {
@@ -97,14 +97,14 @@ class _RecentFilesState extends State<RecentFiles> {
         });
         return; // Success, exit the loop
       } catch (e) {
-        print('DEBUG: Failed to connect to $baseUrl: $e');
+        debugPrint('DEBUG: Failed to connect to $baseUrl: $e');
         lastError = 'Failed to connect to $baseUrl: ${e.toString()}';
         continue; // Try next URL
       }
     }
     
     // If we get here, all URLs failed
-    print('DEBUG: All connection attempts failed');
+    debugPrint('DEBUG: All connection attempts failed');
     setState(() {
       error = 'Could not connect to backend server.\nTried: ${possibleUrls.join(', ')}\nLast error: $lastError\n\nPlease ensure the Django server is running on your computer.';
       isLoading = false;
@@ -151,8 +151,7 @@ class _RecentFilesState extends State<RecentFiles> {
                     begin: 0.3,
                     duration: AppTheme.animationMedium,
                     curve: Curves.easeOut,
-                  )
-                  .fadeIn(duration: AppTheme.animationSlow, delay: 200.ms),
+                  ),
               
               if (recentFiles.isNotEmpty)
                 TextButton(
@@ -312,8 +311,7 @@ class _RecentFilesState extends State<RecentFiles> {
           begin: 0.3,
           duration: AppTheme.animationMedium,
           curve: Curves.easeOut,
-        )
-        .fadeIn(duration: AppTheme.animationSlow, delay: delay.ms);
+        );
   }
 
   Widget _buildLoadingState() {

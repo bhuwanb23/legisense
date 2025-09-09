@@ -31,25 +31,17 @@ class SimulationPage extends StatelessWidget {
               // Animated background elements
               _buildAnimatedBackground(),
               
-              // Main content with natural scrolling
+              // Main content with natural scrolling below fixed header
               SingleChildScrollView(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Global Main Header with enhanced animation
-                    const MainHeader(title: 'Simulation')
-                        .animate()
-                        .slideY(
-                          begin: -0.5,
-                          duration: AppTheme.animationSlow,
-                          curve: Curves.elasticOut,
-                        )
-                        .fadeIn(duration: AppTheme.animationSlow),
+                    const SizedBox(height: 104),
 
                     // Enhanced subtitle section
                     Container(
-                      margin: const EdgeInsets.symmetric(horizontal: AppTheme.spacingM, vertical: AppTheme.spacingS),
-                      padding: const EdgeInsets.all(AppTheme.spacingM),
+                      margin: const EdgeInsets.symmetric(horizontal: AppTheme.spacingM, vertical: AppTheme.spacingXS),
+                      padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingM, vertical: AppTheme.spacingS),
                       decoration: BoxDecoration(
                         color: Colors.white.withValues(alpha: 0.8),
                         borderRadius: BorderRadius.circular(AppTheme.radiusM),
@@ -82,14 +74,15 @@ class SimulationPage extends StatelessWidget {
                               children: [
                                 Text(
                                   'Legal Practice Simulations',
-                                  style: AppTheme.heading4.copyWith(
+                                  style: AppTheme.bodyMedium.copyWith(
                                     color: AppTheme.textPrimary,
+                                    fontWeight: FontWeight.w600,
                                   ),
                                 ),
                                 const SizedBox(height: AppTheme.spacingXS),
                                 Text(
                                   'Select a document to start simulation',
-                                  style: AppTheme.bodySmall.copyWith(
+                                  style: AppTheme.caption.copyWith(
                                     color: AppTheme.textSecondary,
                                   ),
                                 ),
@@ -98,12 +91,12 @@ class SimulationPage extends StatelessWidget {
                           ),
                           Container(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: AppTheme.spacingM,
-                              vertical: AppTheme.spacingXS,
+                              horizontal: AppTheme.spacingS,
+                              vertical: 4,
                             ),
                             decoration: BoxDecoration(
                               color: AppTheme.warningOrange.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(AppTheme.radiusXL),
+                              borderRadius: BorderRadius.circular(AppTheme.radiusM),
                               border: Border.all(
                                 color: AppTheme.warningOrange.withValues(alpha: 0.3),
                                 width: 1,
@@ -152,6 +145,20 @@ class SimulationPage extends StatelessWidget {
                     // Add bottom padding for better scrolling experience
                     const SizedBox(height: AppTheme.spacingXL),
                   ],
+                ),
+              ),
+
+              // Fixed header pinned at the very top-most layer (over content)
+              Positioned(
+                left: 0,
+                right: 0,
+                top: 0,
+                child: SafeArea(
+                  bottom: false,
+                  child: Container(
+                    color: Colors.white,
+                    child: const MainHeader(title: 'Simulation'),
+                  ),
                 ),
               ),
             ],

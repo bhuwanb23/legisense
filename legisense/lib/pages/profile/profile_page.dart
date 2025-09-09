@@ -341,21 +341,13 @@ class _ProfilePageState extends State<ProfilePage> {
               // Animated background elements
               _buildAnimatedBackground(),
               
-              // Main content
+              // Main content below fixed header
               SingleChildScrollView(
                 padding: EdgeInsets.zero,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Global Main Header with enhanced animation
-                    const MainHeader(title: 'Profile')
-                        .animate()
-                        .slideY(
-                          begin: -0.5,
-                          duration: AppTheme.animationSlow,
-                          curve: Curves.elasticOut,
-                        )
-                        .fadeIn(duration: AppTheme.animationSlow),
+                    const SizedBox(height: 128),
                     
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingL),
@@ -475,6 +467,20 @@ class _ProfilePageState extends State<ProfilePage> {
                       ),
                     ),
                   ],
+                ),
+              ),
+
+              // Fixed header pinned at the very top-most layer (over content)
+              Positioned(
+                left: 0,
+                right: 0,
+                top: 0,
+                child: SafeArea(
+                  bottom: false,
+                  child: Container(
+                    color: Colors.white,
+                    child: const MainHeader(title: 'Profile'),
+                  ),
                 ),
               ),
             ],

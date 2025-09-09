@@ -13,6 +13,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey = GlobalKey<RefreshIndicatorState>();
+  static const double _fixedHeaderHeight = 112; // increased to ensure content starts below header
 
   Future<void> _onRefresh() async {
     // Trigger refresh of RecentFiles component
@@ -45,7 +46,7 @@ class _HomePageState extends State<HomePage> {
             // Animated background elements
             _buildAnimatedBackground(),
             
-            // Main content with pull-to-refresh
+            // Main content with pull-to-refresh (offset below header)
             SafeArea(
               child: RefreshIndicator(
                 key: _refreshIndicatorKey,
@@ -55,15 +56,7 @@ class _HomePageState extends State<HomePage> {
                   physics: const AlwaysScrollableScrollPhysics(),
                   child: Column(
                     children: [
-                      // Global Main Header with enhanced animation
-                      const MainHeader(title: 'Legisense')
-                          .animate()
-                          .slideY(
-                            begin: -0.5,
-                            duration: AppTheme.animationSlow,
-                            curve: Curves.elasticOut,
-                          )
-                          .fadeIn(duration: AppTheme.animationSlow),
+                      const SizedBox(height: _fixedHeaderHeight + 16),
                       
                       // Welcome Section with staggered animation
                       const WelcomeSection()
@@ -73,7 +66,7 @@ class _HomePageState extends State<HomePage> {
                             duration: AppTheme.animationSlow,
                             curve: Curves.easeOut,
                           )
-                          .fadeIn(duration: AppTheme.animationSlow, delay: 200.ms),
+                          ,
                       
                       // Upload Zone with enhanced animation
                       const UploadZone()
@@ -83,7 +76,7 @@ class _HomePageState extends State<HomePage> {
                             duration: AppTheme.animationSlow,
                             curve: Curves.elasticOut,
                           )
-                          .fadeIn(duration: AppTheme.animationSlow, delay: 400.ms),
+                          ,
                       
                       // Recent Files with slide animation
                       const RecentFiles()
@@ -93,7 +86,7 @@ class _HomePageState extends State<HomePage> {
                             duration: AppTheme.animationSlow,
                             curve: Curves.easeOut,
                           )
-                          .fadeIn(duration: AppTheme.animationSlow, delay: 600.ms),
+                          ,
                       
                       // Quick Actions with enhanced animation
                       const QuickActions()
@@ -103,12 +96,26 @@ class _HomePageState extends State<HomePage> {
                             duration: AppTheme.animationSlow,
                             curve: Curves.easeOut,
                           )
-                          .fadeIn(duration: AppTheme.animationSlow, delay: 800.ms),
+                          ,
                       
                       // Bottom padding for better scrolling
                       const SizedBox(height: AppTheme.spacingL),
                     ],
                   ),
+                ),
+              ),
+            ),
+
+            // Fixed header pinned at the very top-most layer (over content)
+            Positioned(
+              left: 0,
+              right: 0,
+              top: 0,
+              child: SafeArea(
+                bottom: false,
+                child: Container(
+                  color: Colors.white,
+                  child: const MainHeader(title: 'Legisense'),
                 ),
               ),
             ),

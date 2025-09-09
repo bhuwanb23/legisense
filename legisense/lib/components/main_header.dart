@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../utils/responsive.dart';
+import '../pages/notifications/notifications_page.dart';
 
 class MainHeader extends StatelessWidget {
   final String title;
@@ -25,8 +26,18 @@ class MainHeader extends StatelessWidget {
         isSmallScreen ? 16 : (isLargeScreen ? 32 : 24), 
         12
       ),
-      decoration: const BoxDecoration(
-        color: Colors.transparent,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF000000).withValues(alpha: 0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+        border: const Border(
+          bottom: BorderSide(color: Color(0xFFE5E7EB), width: 1),
+        ),
       ),
       child: Row(
         children: [
@@ -100,7 +111,11 @@ class MainHeader extends StatelessWidget {
           Material(
             color: Colors.transparent,
             child: InkWell(
-              onTap: onBellPressed,
+              onTap: onBellPressed ?? () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const NotificationsPage()),
+                );
+              },
               borderRadius: BorderRadius.circular(isSmallScreen ? 8 : 12),
               child: Container(
                 width: isSmallScreen ? 32 : 40,
