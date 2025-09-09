@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../../theme/app_theme.dart';
-import '../../documents/data/sample_documents.dart';
+import '../../documents/components/components.dart';
+import '../../documents/document_view_detail.dart';
+import '../../../api/parsed_documents_repository.dart';
 
 class DocumentListSection extends StatelessWidget {
   final Function(String documentId, String documentTitle)? onDocumentTap;
@@ -14,10 +14,11 @@ class DocumentListSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final repo = ParsedDocumentsRepository(baseUrl: const String.fromEnvironment('LEGISENSE_API_BASE', defaultValue: 'http://10.0.2.2:8000'));
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: AppTheme.spacingM, vertical: AppTheme.spacingS),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.9),
+        color: Colors.white.withValues(alpha: 1.0),
         borderRadius: BorderRadius.circular(AppTheme.radiusM),
         boxShadow: [
           BoxShadow(
@@ -30,151 +31,68 @@ class DocumentListSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Padding(
-            padding: const EdgeInsets.all(AppTheme.spacingM),
-            child: Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(AppTheme.spacingS),
-                  decoration: BoxDecoration(
-                    color: AppTheme.primaryBlue.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(AppTheme.radiusS),
-                  ),
-                  child: const Icon(
-                    FontAwesomeIcons.folderOpen,
-                    size: 16,
-                    color: AppTheme.primaryBlue,
-                  ),
-                ),
-                const SizedBox(width: AppTheme.spacingM),
-                Expanded(
-                  child: Text(
-                    'Available Documents',
-                    style: AppTheme.heading4.copyWith(
-                      color: AppTheme.textPrimary,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                const SizedBox(width: AppTheme.spacingS),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppTheme.spacingM,
-                    vertical: AppTheme.spacingXS,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppTheme.successGreen.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(AppTheme.radiusXL),
-                    border: Border.all(
-                      color: AppTheme.successGreen.withValues(alpha: 0.3),
-                      width: 1,
-                    ),
-                  ),
-                  child: Text(
-                    '${kSampleDocuments.length} Files',
-                    style: AppTheme.caption.copyWith(
-                      color: AppTheme.successGreen,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const Divider(height: 1, color: AppTheme.borderLight),
-          // Document list with natural height - no internal scrolling
-          ListView.separated(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: kSampleDocuments.length,
-            separatorBuilder: (_, __) => const Divider(height: 1, color: Color(0xFFF3F4F6)),
-            itemBuilder: (context, index) {
-              final document = kSampleDocuments[index];
-              final pres = _filePresentationFromTitle(document.title);
-              
-              return InkWell(
-                onTap: () => onDocumentTap?.call(document.id, document.title),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                  child: Row(
-                    children: [
-                      // Leading file badge
-                      Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: pres.bg,
-                          borderRadius: BorderRadius.circular(10),
+          const ListHeader(title: 'Document List'),
+          const SearchField(),
+          const Divider(height: 1, color: Color(0xFFE5E7EB)),
+          // Match documents page: server-backed list (natural height within parent scroll)
+          FutureBuilder<List<Map<String, dynamic>>>(
+            future: repo.fetchDocuments(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState != ConnectionState.done) {
+                return const _LoadingListSkeleton();
+              }
+              if (snapshot.hasError) {
+                return _ErrorCard(error: snapshot.error.toString());
+              }
+              final list = snapshot.data ?? const [];
+              if (list.isEmpty) {
+                return const _EmptyStateCard();
+              }
+              return ListView.separated(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: list.length,
+                separatorBuilder: (_, __) => const Divider(height: 1, color: Color(0xFFF3F4F6)),
+                itemBuilder: (context, index) {
+                  final item = list[index];
+                  final String title = (item['file_name'] ?? 'Document').toString();
+                  final int pages = (item['num_pages'] ?? 0) as int;
+                  final String meta = 'PDF • $pages page${pages == 1 ? '' : 's'}';
+                  final int id = (item['id'] as int);
+                  return TweenAnimationBuilder<double>(
+                    tween: Tween(begin: 0, end: 1),
+                    duration: Duration(milliseconds: 300 + index * 60),
+                    curve: Curves.easeOutCubic,
+                    builder: (context, value, child) {
+                      return Opacity(
+                        opacity: value,
+                        child: Transform.translate(
+                          offset: Offset(0, (1 - value) * 12),
+                          child: child,
                         ),
-                        child: Icon(pres.icon, size: 18, color: pres.fg),
-                      ),
-                      const SizedBox(width: 12),
-
-                      // Title + meta
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    document.title,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: GoogleFonts.inter(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600,
-                                      color: const Color(0xFF111827),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                // Extension chip
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                  decoration: BoxDecoration(
-                                    color: pres.chipBg,
-                                    borderRadius: BorderRadius.circular(9999),
-                                    border: Border.all(color: pres.chipBorder),
-                                  ),
-                                  child: Text(
-                                    pres.ext.toUpperCase(),
-                                    style: GoogleFonts.inter(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w700,
-                                      color: pres.chipFg,
-                                    ),
-                                  ),
-                                ),
-                              ],
+                      );
+                    },
+                    child: DocumentListItem(
+                      title: title,
+                      meta: meta,
+                      onTap: () {
+                        if (onDocumentTap != null) {
+                          onDocumentTap!("server-$id", title);
+                        } else {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => DocumentViewDetail(
+                                title: title,
+                                meta: meta,
+                                docId: 'server-$id',
+                              ),
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              document.meta,
-                              style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF6B7280)),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      // Trailing arrow
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF3F4F6),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: const Icon(
-                          Icons.arrow_forward_ios,
-                          size: 14,
-                          color: Color(0xFF6B7280),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                          );
+                        }
+                      },
+                    ),
+                  );
+                },
               );
             },
           ),
@@ -184,65 +102,145 @@ class DocumentListSection extends StatelessWidget {
   }
 }
 
-class _FilePresentation {
-  const _FilePresentation({required this.icon, required this.bg, required this.fg, required this.ext, required this.chipBg, required this.chipFg, required this.chipBorder});
-  final IconData icon;
-  final Color bg;
-  final Color fg;
-  final String ext;
-  final Color chipBg;
-  final Color chipFg;
-  final Color chipBorder;
+// Local copies of list UI helpers to match documents page
+class _LoadingListSkeleton extends StatefulWidget {
+  const _LoadingListSkeleton();
+
+  @override
+  State<_LoadingListSkeleton> createState() => _LoadingListSkeletonState();
 }
 
-_FilePresentation _filePresentationFromTitle(String title) {
-  final lower = title.toLowerCase();
-  String ext = '';
-  final dot = lower.lastIndexOf('.');
-  if (dot != -1 && dot < lower.length - 1) {
-    ext = lower.substring(dot + 1);
+class _LoadingListSkeletonState extends State<_LoadingListSkeleton> with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _pulse;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(vsync: this, duration: const Duration(milliseconds: 1200))..repeat(reverse: true);
+    _pulse = Tween(begin: 0.6, end: 1.0).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
   }
-  switch (ext) {
-    case 'pdf':
-      return const _FilePresentation(
-        icon: Icons.picture_as_pdf,
-        bg: Color(0xFFFEE2E2),
-        fg: Color(0xFFDC2626),
-        ext: 'pdf',
-        chipBg: Color(0xFFFFF1F2),
-        chipFg: Color(0xFFB91C1C),
-        chipBorder: Color(0xFFFECACA),
-      );
-    case 'doc':
-    case 'docx':
-      return const _FilePresentation(
-        icon: Icons.description,
-        bg: Color(0xFFDBEAFE),
-        fg: Color(0xFF2563EB),
-        ext: 'docx',
-        chipBg: Color(0xFFEFF6FF),
-        chipFg: Color(0xFF1D4ED8),
-        chipBorder: Color(0xFFBFDBFE),
-      );
-    case 'txt':
-      return const _FilePresentation(
-        icon: Icons.notes,
-        bg: Color(0xFFF3F4F6),
-        fg: Color(0xFF6B7280),
-        ext: 'txt',
-        chipBg: Color(0xFFF9FAFB),
-        chipFg: Color(0xFF4B5563),
-        chipBorder: Color(0xFFE5E7EB),
-      );
-    default:
-      return const _FilePresentation(
-        icon: Icons.insert_drive_file,
-        bg: Color(0xFFEFF6FF),
-        fg: Color(0xFF2563EB),
-        ext: 'file',
-        chipBg: Color(0xFFF3F4F6),
-        chipFg: Color(0xFF374151),
-        chipBorder: Color(0xFFE5E7EB),
-      );
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.separated(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: 6,
+      separatorBuilder: (_, __) => const Divider(height: 1, color: Color(0xFFF3F4F6)),
+      itemBuilder: (context, index) {
+        return FadeTransition(
+          opacity: _pulse,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Row(
+              children: const [
+                _SkeletonBox(width: 36, height: 36, radius: 8),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _SkeletonBox(width: 160, height: 12, radius: 6),
+                      SizedBox(height: 6),
+                      _SkeletonBox(width: 100, height: 10, radius: 6),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _SkeletonBox extends StatelessWidget {
+  const _SkeletonBox({required this.width, required this.height, required this.radius});
+  final double width;
+  final double height;
+  final double radius;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: width,
+      height: height,
+      decoration: BoxDecoration(
+        color: const Color(0xFFF1F5F9),
+        borderRadius: BorderRadius.circular(radius),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+    );
+  }
+}
+
+class _EmptyStateCard extends StatelessWidget {
+  const _EmptyStateCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Container(
+        margin: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFE5E7EB)),
+          boxShadow: [
+            BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 12, offset: const Offset(0, 4)),
+          ],
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: const [
+            Icon(Icons.inbox_rounded, color: Color(0xFF64748B)),
+            SizedBox(width: 8),
+            Text('No documents uploaded yet', style: TextStyle(color: Color(0xFF334155))),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ErrorCard extends StatelessWidget {
+  const _ErrorCard({required this.error});
+  final String error;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Container(
+        margin: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFEE2E2),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFFCA5A5)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.error_outline_rounded, color: Color(0xFFDC2626)),
+            const SizedBox(width: 8),
+            Flexible(
+              child: Text(
+                'Failed to load documents: $error',
+                style: const TextStyle(color: Color(0xFF991B1B)),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

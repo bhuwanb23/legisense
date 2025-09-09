@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+// import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'document_list.dart';
 import '../../components/main_header.dart';
@@ -38,88 +38,7 @@ class DocumentsPage extends StatelessWidget {
                   // Spacer so content starts below fixed header
                   const SizedBox(height: 104),
 
-                  // Enhanced subtitle section
-                  Container(
-                    margin: const EdgeInsets.symmetric(horizontal: AppTheme.spacingM, vertical: AppTheme.spacingXS),
-                    padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingM, vertical: AppTheme.spacingS),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.8),
-                      borderRadius: BorderRadius.circular(AppTheme.radiusM),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.05),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(AppTheme.spacingS),
-                          decoration: BoxDecoration(
-                            color: AppTheme.primaryBlue.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(AppTheme.radiusS),
-                          ),
-                          child: const Icon(
-                            FontAwesomeIcons.folderOpen, 
-                            size: 16, 
-                            color: AppTheme.primaryBlue,
-                          ),
-                        ),
-                        const SizedBox(width: AppTheme.spacingM),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Document Management',
-                                style: AppTheme.bodyMedium.copyWith(
-                                  color: AppTheme.textPrimary,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              const SizedBox(height: AppTheme.spacingXS),
-                              Text(
-                                'Browse, analyze, and manage your legal documents',
-                                style: AppTheme.caption.copyWith(
-                                  color: AppTheme.textSecondary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: AppTheme.spacingS,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppTheme.successGreen.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(AppTheme.radiusM),
-                            border: Border.all(
-                              color: AppTheme.successGreen.withValues(alpha: 0.3),
-                              width: 1,
-                            ),
-                          ),
-                          child: Text(
-                            'Active',
-                            style: AppTheme.caption.copyWith(
-                              color: AppTheme.successGreen,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  )
-                      .animate()
-                      .slideX(
-                        begin: -0.3,
-                        duration: AppTheme.animationSlow,
-                        curve: Curves.easeOut,
-                      )
-                      .fadeIn(duration: AppTheme.animationSlow, delay: 200.ms),
+                  // Removed heading card for a cleaner look
 
                   // Enhanced list layout
                   Expanded(
