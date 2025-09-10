@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:ui' as ui;
 import 'dart:math' as math;
 import 'pages/login/login.dart';
 import 'pages/home/home_page.dart';
@@ -188,8 +189,9 @@ class _AnimatedIntroState extends State<AnimatedIntro>
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
+              Color(0xFF0F172A), // Slate-900
               Color(0xFF1E3A8A), // Indigo-800
-              Color(0xFF60A5FA), // Blue-400
+              Color(0xFF312E81), // Indigo-900
             ],
           ),
         ),
@@ -203,6 +205,18 @@ class _AnimatedIntroState extends State<AnimatedIntro>
                   final t = _bgController.value * 2 * 3.1415926535;
                   return CustomPaint(
                     painter: _BlobPainter(time: t),
+                  );
+                },
+              ),
+            ),
+            // Subtle particle layer
+            Positioned.fill(
+              child: AnimatedBuilder(
+                animation: _bgController,
+                builder: (context, _) {
+                  final t = _bgController.value * 2 * 3.1415926535;
+                  return CustomPaint(
+                    painter: _ParticlesPainter(time: t),
                   );
                 },
               ),
@@ -230,29 +244,57 @@ class _AnimatedIntroState extends State<AnimatedIntro>
                         },
                       ),
                     ),
-                    // Logo (static alpha via color)
+                    // Logo (frosted glass card + gradient icon)
                     TweenAnimationBuilder<double>(
                       duration: const Duration(milliseconds: 950),
                       curve: Curves.easeOutCubic,
                       tween: Tween(begin: 0.0, end: 1.0),
                       builder: (context, t, child) {
-                        final bg = Colors.white.withValues(alpha: 0.08 + 0.04 * t);
-                        final br = Colors.white.withValues(alpha: 0.18 + 0.07 * t);
+                        final bg = Colors.white.withValues(alpha: 0.10 + 0.06 * t);
+                        final br = Colors.white.withValues(alpha: 0.25 + 0.10 * t);
                         return Transform.translate(
                           offset: Offset(0, (1 - t) * 16),
                           child: Container(
-                            width: 96,
-                            height: 96,
                             decoration: BoxDecoration(
-                              color: bg,
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: br, width: 1),
+                              borderRadius: BorderRadius.circular(24),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.blueAccent.withValues(alpha: 0.18 * t),
+                                  blurRadius: 30,
+                                  spreadRadius: 2,
+                                ),
+                              ],
                             ),
-                            child: Center(
-                              child: Icon(
-                                Icons.gavel_rounded,
-                                size: 44,
-                                color: Colors.white.withValues(alpha: 0.95),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(24),
+                              child: BackdropFilter(
+                                filter: ui.ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                                child: Container(
+                                  width: 100,
+                                  height: 100,
+                                  decoration: BoxDecoration(
+                                    color: bg,
+                                    borderRadius: BorderRadius.circular(24),
+                                    border: Border.all(color: br, width: 1),
+                                  ),
+                                  child: Center(
+                                    child: ShaderMask(
+                                      shaderCallback: (rect) => const LinearGradient(
+                                        colors: [
+                                          Color(0xFF93C5FD), // blue-300
+                                          Color(0xFFA78BFA), // violet-300
+                                          Color(0xFFFCA5A5), // rose-300
+                                        ],
+                                      ).createShader(rect),
+                                      blendMode: BlendMode.srcIn,
+                                      child: const Icon(
+                                        Icons.gavel_rounded,
+                                        size: 48,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                                ),
                               ),
                             ),
                           ),
@@ -266,13 +308,21 @@ class _AnimatedIntroState extends State<AnimatedIntro>
                       curve: Curves.easeOut,
                       tween: Tween(begin: 0.0, end: 1.0),
                       builder: (context, t, child) {
-                        return Text(
+                        return _GradientText(
                           'Legisense',
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: t.clamp(0.0, 1.0)),
-                            fontSize: 28,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 0.5,
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              Colors.white.withValues(alpha: 0.95 * t),
+                              const Color(0xFF93C5FD).withValues(alpha: 0.95 * t),
+                              const Color(0xFFA78BFA).withValues(alpha: 0.95 * t),
+                            ],
+                          ),
+                          style: const TextStyle(
+                            fontSize: 30,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0.6,
                           ),
                         );
                       },
@@ -286,10 +336,12 @@ class _AnimatedIntroState extends State<AnimatedIntro>
                       builder: (context, t, child) {
                         return Text(
                           'AI-powered legal document insight',
+                          textAlign: TextAlign.center,
                           style: TextStyle(
                             color: Colors.white.withValues(alpha: 0.9 * t.clamp(0.0, 1.0)),
                             fontSize: 14,
                             fontWeight: FontWeight.w400,
+                            letterSpacing: 0.2,
                           ),
                         );
                       },
@@ -384,5 +436,53 @@ void navigateToPage(int pageIndex) {
         appWrapperState.onPageChanged(pageIndex);
       }
     }
+  }
+}
+
+class _ParticlesPainter extends CustomPainter {
+  final double time;
+  _ParticlesPainter({required this.time});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..isAntiAlias = true
+      ..style = PaintingStyle.fill;
+
+    final width = size.width;
+    final height = size.height;
+
+    // Gently moving, twinkling particles
+    const int particleCount = 60;
+    for (int i = 0; i < particleCount; i++) {
+      final seed = i * 0.47;
+      final px = (math.sin(time * 0.6 + seed) * 0.45 + 0.5) * width;
+      final py = (math.cos(time * 0.55 + seed * 1.3) * 0.45 + 0.5) * height;
+      final base = (math.sin(time * 1.2 + seed * 2.0) * 0.5 + 0.5);
+      final alpha = 0.06 + 0.12 * base;
+      final radius = 0.6 + 1.8 * base;
+      paint.color = Colors.white.withValues(alpha: alpha);
+      canvas.drawCircle(Offset(px, py), radius, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _ParticlesPainter oldDelegate) => oldDelegate.time != time;
+}
+
+class _GradientText extends StatelessWidget {
+  final String text;
+  final Gradient gradient;
+  final TextStyle style;
+
+  const _GradientText(this.text, {required this.gradient, required this.style});
+
+  @override
+  Widget build(BuildContext context) {
+    return ShaderMask(
+      shaderCallback: (bounds) => gradient.createShader(Offset.zero & bounds.size),
+      blendMode: BlendMode.srcIn,
+      child: Text(text, style: style),
+    );
   }
 }
