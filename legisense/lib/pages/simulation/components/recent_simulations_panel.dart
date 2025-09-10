@@ -15,7 +15,7 @@ class RecentSimulationsPanel extends StatelessWidget {
       children: [
         Text('Recent Simulations', style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w700)),
         const SizedBox(height: 8),
-        ...items.take(3).map((e) => _tile(e)).toList(),
+        ...items.take(3).map((e) => _tile(e)),
       ],
     );
   }

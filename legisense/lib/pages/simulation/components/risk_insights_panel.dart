@@ -12,7 +12,7 @@ class RiskInsightsPanel extends StatelessWidget {
       children: [
         const Text('Insights & Risk Alerts', style: TextStyle(fontWeight: FontWeight.w700)),
         const SizedBox(height: 8),
-        ...items.map((e) => _row(e)).toList(),
+        ...items.map((e) => _row(e)),
       ],
     );
   }

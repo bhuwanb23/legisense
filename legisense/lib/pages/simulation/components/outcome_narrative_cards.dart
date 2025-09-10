@@ -15,7 +15,7 @@ class OutcomeNarrativeCards extends StatelessWidget {
       children: [
         Text('Generated Outcomes', style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w700)),
         const SizedBox(height: 8),
-        ...items.map((t) => _card(t)).toList(),
+        ...items.map((t) => _card(t)),
       ],
     );
   }

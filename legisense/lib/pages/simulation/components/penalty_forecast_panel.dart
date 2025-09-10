@@ -43,7 +43,7 @@ class PenaltyForecastPanel extends StatelessWidget {
               children: [
                 _tableHeader(context),
                 const Divider(height: 1),
-                ...rows.map((r) => _tableRow(context, r)).toList(),
+                ...rows.map((r) => _tableRow(context, r)),
               ],
             ),
           ),
