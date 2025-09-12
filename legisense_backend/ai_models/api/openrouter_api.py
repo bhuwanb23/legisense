@@ -10,16 +10,41 @@ class OpenRouterClient:
     """Minimal OpenRouter chat completions client.
 
     Reads API key from OPENROUTER_API_KEY and supports custom model selection.
+    Also falls back to repo-level files: ./api_keys or ./.env (OPENROUTER_API_KEY line).
     """
 
     def __init__(self, api_key: Optional[str] = None, model: Optional[str] = None):
         key = api_key or os.getenv("OPENROUTER_API_KEY", "")
         if not key:
             try:
-                base_dir = Path(__file__).resolve().parents[2]
-                key_file = base_dir / "api_keys"
-                if key_file.exists():
-                    key = key_file.read_text(encoding="utf-8").strip()
+                # Resolve important directories
+                this_file = Path(__file__).resolve()
+                backend_dir = this_file.parents[2]
+                repo_root = this_file.parents[3]
+
+                def read_key_from_files(base: Path) -> str:
+                    # Try api_keys file
+                    k = ""
+                    key_file = base / "api_keys"
+                    if key_file.exists():
+                        k = key_file.read_text(encoding="utf-8").strip()
+                    # Try .env file
+                    if not k:
+                        env_file = base / ".env"
+                        if env_file.exists():
+                            for line in env_file.read_text(encoding="utf-8").splitlines():
+                                line = line.strip()
+                                if not line or line.startswith("#"):
+                                    continue
+                                if line.startswith("OPENROUTER_API_KEY="):
+                                    k = line.split("=", 1)[1].strip().strip('"').strip("'")
+                                    break
+                    return k
+
+                # Prefer repo root, then backend directory
+                key = read_key_from_files(repo_root)
+                if not key:
+                    key = read_key_from_files(backend_dir)
             except Exception:
                 pass
         self.api_key = key
@@ -32,7 +57,7 @@ class OpenRouterClient:
         headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json",
-            "HTTP-Referer": os.getenv("OPENROUTER_REFERRER", "http://localhost:8000"),
+            "HTTP-Referer": os.getenv("OPENROUTER_REFERRER", "https://example.com"),
             "X-Title": os.getenv("OPENROUTER_APP_TITLE", "Legisense"),
         }
         payload: Dict[str, Any] = {
@@ -44,8 +69,16 @@ class OpenRouterClient:
         if response_format is not None:
             payload["response_format"] = response_format
 
-        # Simple debug print to verify model/key presence in logs
-        print(json.dumps({"openrouter_request": {"model": self.model, "has_key": bool(self.api_key)}}))
+        # Debug info: model, key presence, key prefix and length
+        key_prefix = (self.api_key or "")[:10]
+        print(json.dumps({
+            "openrouter_request": {
+                "model": self.model,
+                "has_key": bool(self.api_key),
+                "key_prefix": key_prefix,
+                "key_length": len(self.api_key or ""),
+            }
+        }))
 
         resp = requests.post(self.base_url, headers=headers, data=json.dumps(payload), timeout=90)
         if resp.status_code >= 400:

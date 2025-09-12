@@ -120,17 +120,35 @@ class DocumentListSection extends StatelessWidget {
                               ),
                               const SizedBox(width: 8),
                               ElevatedButton.icon(
-                                onPressed: () {
-                                  if (onSimulate != null) {
-                                    onSimulate!("server-$id", title);
-                                  } else {
-                                    Navigator.of(context).push(
-                                      MaterialPageRoute(
-                                        builder: (context) => EnhancedSimulationDetailsPage(
-                                          documentId: "server-$id",
-                                          documentTitle: title,
+                                onPressed: () async {
+                                  // Trigger backend simulation and show loader while waiting
+                                  showDialog(
+                                    context: context,
+                                    barrierDismissible: false,
+                                    builder: (_) => const Center(child: CircularProgressIndicator()),
+                                  );
+                                  try {
+                                    final result = await repo.simulateDocument(id: id);
+                                    if (!context.mounted) return;
+                                    Navigator.of(context).pop(); // close loader
+                                    // After successful simulation, either use callback or default navigation
+                                    if (onSimulate != null) {
+                                      onSimulate!("server-$id", title);
+                                    } else {
+                                      Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                          builder: (context) => EnhancedSimulationDetailsPage(
+                                            documentId: "server-$id",
+                                            documentTitle: title,
+                                          ),
                                         ),
-                                      ),
+                                      );
+                                    }
+                                  } catch (e) {
+                                    if (!context.mounted) return;
+                                    Navigator.of(context).pop(); // close loader
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text('Simulation failed: $e')),
                                     );
                                   }
                                 },

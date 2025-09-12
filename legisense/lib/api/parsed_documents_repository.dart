@@ -116,6 +116,18 @@ class ParsedDocumentsRepository {
     // (not displayed right now)
     return doc;
   }
+
+  /// Trigger server-side simulation generation and persistence.
+  /// Returns a map with at least { "status": "ok", "session_id": <int> } on success.
+  Future<Map<String, dynamic>> simulateDocument({required int id}) async {
+    final uri = Uri.parse('$baseUrl/api/documents/$id/simulate/');
+    final res = await http.post(uri, headers: {"Content-Type": "application/json"});
+    if (res.statusCode != 200) {
+      throw HttpException('Simulate failed (${res.statusCode}): ${res.body}');
+    }
+    final Map<String, dynamic> data = json.decode(res.body) as Map<String, dynamic>;
+    return data;
+  }
 }
 
 
