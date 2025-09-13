@@ -7,11 +7,13 @@ import 'scenario_controls.dart';
 class RiskAlerts extends StatelessWidget {
   final SimulationScenario scenario;
   final String documentTitle;
-  
+  final Map<String, dynamic>? simulationData;
+
   const RiskAlerts({
     super.key,
     required this.scenario,
     required this.documentTitle,
+    this.simulationData,
   });
 
   @override

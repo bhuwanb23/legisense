@@ -2,19 +2,17 @@ import 'package:flutter/material.dart';
 
 class ComparisonPanel extends StatelessWidget {
   final String documentTitle;
+  final Map<String, dynamic>? simulationData;
 
   const ComparisonPanel({
     super.key,
     required this.documentTitle,
+    this.simulationData,
   });
 
   @override
   Widget build(BuildContext context) {
-    final List<_ExitScenario> scenarios = const [
-      _ExitScenario(label: 'Exit at 6 months', penalty: '₹25,000', risk: 'Medium', benefitsLost: 'Partial'),
-      _ExitScenario(label: 'Exit at 12 months', penalty: '₹12,000', risk: 'Low', benefitsLost: 'Minimal'),
-      _ExitScenario(label: 'Full term', penalty: '₹0', risk: 'Low', benefitsLost: 'None'),
-    ];
+    final List<_ExitScenario> scenarios = _getExitScenarios();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -30,59 +28,64 @@ class ComparisonPanel extends StatelessWidget {
         LayoutBuilder(
           builder: (context, constraints) {
             final bool vertical = constraints.maxWidth < 700;
-            return Wrap(
-              spacing: 12,
-              runSpacing: 12,
-              children: scenarios.map((s) {
-                final double cardWidth = vertical
-                    ? constraints.maxWidth
-                    : (constraints.maxWidth - 24) / 3; // 12 spacing * 2 approx
-                return SizedBox(
-                  width: cardWidth,
-                  child: _ScenarioCard(
-                    scenario: s,
-                  ),
-                );
-              }).toList(),
-            );
+            return vertical
+                ? Column(
+                    children: scenarios.map((s) => _buildScenarioCard(context, s)).toList(),
+                  )
+                : Row(
+                    children: scenarios.map((s) => Expanded(child: _buildScenarioCard(context, s))).toList(),
+                  );
           },
         ),
       ],
     );
   }
-}
 
-class _ScenarioCard extends StatelessWidget {
-  final _ExitScenario scenario;
-
-  const _ScenarioCard({
-    required this.scenario,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    Color border = Colors.grey.withValues(alpha: 0.2);
+  Widget _buildScenarioCard(BuildContext context, _ExitScenario scenario) {
+    final Color bgColor = _getRiskColor(scenario.risk).withValues(alpha: 0.1);
+    final Color borderColor = _getRiskColor(scenario.risk);
+    
     return Container(
-      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.all(4),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: bgColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: border),
+        border: Border.all(color: borderColor, width: 1.5),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(scenario.label, style: Theme.of(context).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w700)),
+          Text(
+            scenario.label,
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFF111827),
+                ),
+          ),
           const SizedBox(height: 8),
-          _row(context, 'Estimated penalty', scenario.penalty),
-          _row(context, 'Risk of lawsuit', scenario.risk),
-          _row(context, 'Benefits lost', scenario.benefitsLost),
+          _buildKeyValue('Penalty', scenario.penalty, context),
+          _buildKeyValue('Risk Level', scenario.risk, context),
+          _buildKeyValue('Benefits Lost', scenario.benefitsLost, context),
         ],
       ),
     );
   }
 
-  Widget _row(BuildContext context, String k, String v) {
+  Color _getRiskColor(String risk) {
+    switch (risk.toLowerCase()) {
+      case 'high':
+        return const Color(0xFFEF4444);
+      case 'medium':
+        return const Color(0xFFF59E0B);
+      case 'low':
+        return const Color(0xFF10B981);
+      default:
+        return const Color(0xFF6B7280);
+    }
+  }
+
+  Widget _buildKeyValue(String k, String v, BuildContext context) {
     TextStyle? ks = Theme.of(context).textTheme.bodySmall?.copyWith(color: const Color(0xFF6B7280));
     TextStyle? vs = Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600);
     return Padding(
@@ -95,6 +98,31 @@ class _ScenarioCard extends StatelessWidget {
       ),
     );
   }
+
+  List<_ExitScenario> _getExitScenarios() {
+    // Use real simulation data if available, otherwise fall back to mock data
+    if (simulationData != null) {
+      final exitData = simulationData!['exit_comparisons'] as List<dynamic>?;
+      if (exitData != null && exitData.isNotEmpty) {
+        return exitData.map((item) {
+          final data = item as Map<String, dynamic>;
+          return _ExitScenario(
+            label: data['label'] as String? ?? 'Exit Scenario',
+            penalty: data['penalty_text'] as String? ?? '₹0',
+            risk: data['risk_level'] as String? ?? 'Low',
+            benefitsLost: data['benefits_lost'] as String? ?? 'None',
+          );
+        }).toList();
+      }
+    }
+    
+    // Fall back to mock data
+    return const [
+      _ExitScenario(label: 'Exit at 6 months', penalty: '₹25,000', risk: 'Medium', benefitsLost: 'Partial'),
+      _ExitScenario(label: 'Exit at 12 months', penalty: '₹12,000', risk: 'Low', benefitsLost: 'Minimal'),
+      _ExitScenario(label: 'Full term', penalty: '₹0', risk: 'Low', benefitsLost: 'None'),
+    ];
+  }
 }
 
 class _ExitScenario {
@@ -104,5 +132,3 @@ class _ExitScenario {
   final String benefitsLost;
   const _ExitScenario({required this.label, required this.penalty, required this.risk, required this.benefitsLost});
 }
-
-

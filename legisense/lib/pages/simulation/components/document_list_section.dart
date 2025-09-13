@@ -121,17 +121,25 @@ class DocumentListSection extends StatelessWidget {
                               const SizedBox(width: 8),
                               ElevatedButton.icon(
                                 onPressed: () async {
-                                  // Trigger backend simulation and show loader while waiting
+                                  // Trigger backend simulation and show beautiful loader
                                   showDialog(
                                     context: context,
                                     barrierDismissible: false,
-                                    builder: (_) => const Center(child: CircularProgressIndicator()),
+                                    builder: (_) => _buildBeautifulLoader(context),
                                   );
                                   try {
+                                    // Step 1: Trigger simulation
                                     final result = await repo.simulateDocument(id: id);
                                     if (!context.mounted) return;
+                                    
+                                    // Step 2: Fetch the generated simulation data
+                                    final sessionId = result['session_id'] as int;
+                                    final simulationData = await repo.fetchSimulationData(sessionId: sessionId);
+                                    
+                                    if (!context.mounted) return;
                                     Navigator.of(context).pop(); // close loader
-                                    // After successful simulation, either use callback or default navigation
+                                    
+                                    // Step 3: Navigate to enhanced page with real data
                                     if (onSimulate != null) {
                                       onSimulate!("server-$id", title);
                                     } else {
@@ -140,6 +148,7 @@ class DocumentListSection extends StatelessWidget {
                                           builder: (context) => EnhancedSimulationDetailsPage(
                                             documentId: "server-$id",
                                             documentTitle: title,
+                                            simulationData: simulationData,
                                           ),
                                         ),
                                       );
@@ -147,9 +156,7 @@ class DocumentListSection extends StatelessWidget {
                                   } catch (e) {
                                     if (!context.mounted) return;
                                     Navigator.of(context).pop(); // close loader
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(content: Text('Simulation failed: $e')),
-                                    );
+                                    _showErrorDialog(context, e.toString());
                                   }
                                 },
                                 icon: const Icon(Icons.play_arrow_rounded, size: 18),
@@ -164,6 +171,212 @@ class DocumentListSection extends StatelessWidget {
                 },
               );
             },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBeautifulLoader(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      child: Container(
+        padding: const EdgeInsets.all(32),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.1),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Animated icon
+            TweenAnimationBuilder<double>(
+              tween: Tween(begin: 0.0, end: 1.0),
+              duration: const Duration(seconds: 2),
+              builder: (context, value, child) {
+                return Transform.scale(
+                  scale: 0.8 + (0.2 * value),
+                  child: Container(
+                    width: 80,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          const Color(0xFF6366F1),
+                          const Color(0xFF8B5CF6),
+                          const Color(0xFFEC4899),
+                        ],
+                        stops: [0.0, 0.5, 1.0],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.analytics_rounded,
+                      color: Colors.white,
+                      size: 40,
+                    ),
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 24),
+            
+            // Title
+            Text(
+              'Generating Simulation',
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: const Color(0xFF111827),
+              ),
+            ),
+            const SizedBox(height: 8),
+            
+            // Subtitle
+            Text(
+              'Analyzing document and creating realistic scenarios...',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: const Color(0xFF6B7280),
+              ),
+            ),
+            const SizedBox(height: 32),
+            
+            // Animated progress indicator
+            SizedBox(
+              width: 200,
+              child: Column(
+                children: [
+                  TweenAnimationBuilder<double>(
+                    tween: Tween(begin: 0.0, end: 1.0),
+                    duration: const Duration(seconds: 3),
+                    builder: (context, value, child) {
+                      return LinearProgressIndicator(
+                        value: value,
+                        backgroundColor: const Color(0xFFE5E7EB),
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          const Color(0xFF6366F1),
+                        ),
+                        borderRadius: BorderRadius.circular(10),
+                        minHeight: 8,
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  // Animated dots
+                  TweenAnimationBuilder<double>(
+                    tween: Tween(begin: 0.0, end: 1.0),
+                    duration: const Duration(seconds: 1),
+                    builder: (context, value, child) {
+                      return Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: List.generate(3, (index) {
+                          final delay = index * 0.2;
+                          final animationValue = (value - delay).clamp(0.0, 1.0);
+                          return Container(
+                            margin: const EdgeInsets.symmetric(horizontal: 4),
+                            child: Transform.scale(
+                              scale: 0.5 + (0.5 * animationValue),
+                              child: Container(
+                                width: 8,
+                                height: 8,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF6366F1),
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                            ),
+                          );
+                        }),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showErrorDialog(BuildContext context, String error) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFEE2E2),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: const Icon(
+                Icons.error_outline_rounded,
+                color: Color(0xFFDC2626),
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Text('Simulation Failed'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Unable to generate simulation data. This could be due to:',
+              style: TextStyle(fontWeight: FontWeight.w500),
+            ),
+            const SizedBox(height: 12),
+            const Text('• Network connectivity issues'),
+            const Text('• Server processing error'),
+            const Text('• Document analysis failure'),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF3F4F6),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                error,
+                style: const TextStyle(
+                  fontFamily: 'monospace',
+                  fontSize: 12,
+                  color: Color(0xFF6B7280),
+                ),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Close'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              // Retry simulation
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF6366F1),
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Retry'),
           ),
         ],
       ),
@@ -312,4 +525,5 @@ class _ErrorCard extends StatelessWidget {
       ),
     );
   }
+
 }

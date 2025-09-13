@@ -7,11 +7,13 @@ import 'scenario_controls.dart';
 class TimelineView extends StatefulWidget {
   final SimulationScenario scenario;
   final String documentTitle;
+  final Map<String, dynamic>? simulationData;
   
   const TimelineView({
     super.key,
     required this.scenario,
     required this.documentTitle,
+    this.simulationData,
   });
 
   @override
@@ -122,7 +124,7 @@ class _TimelineViewState extends State<TimelineView> {
   }
 
   Widget _buildInteractiveTimeline() {
-    final timelineData = _getTimelineDataForScenario(widget.scenario);
+    final timelineData = _getTimelineData();
     
     return Column(
       children: timelineData.asMap().entries.map((entry) {
@@ -346,6 +348,99 @@ class _TimelineViewState extends State<TimelineView> {
         _expandedNodes.add(index);
       }
     });
+  }
+
+  List<TimelineNode> _getTimelineData() {
+    // Use real simulation data if available, otherwise fall back to mock data
+    if (widget.simulationData != null) {
+      final timelineData = widget.simulationData!['timeline'] as List<dynamic>?;
+      if (timelineData != null && timelineData.isNotEmpty) {
+        return timelineData.map((item) {
+          final data = item as Map<String, dynamic>;
+          return TimelineNode(
+            title: data['title'] as String? ?? 'Timeline Event',
+            description: data['description'] as String? ?? 'Event description',
+            detailedDescription: data['detailed_description'] as String? ?? 'Detailed analysis of this timeline event.',
+            icon: _getIconForOrder(data['order'] as int? ?? 0),
+            iconColor: _getIconColorForOrder(data['order'] as int? ?? 0),
+            backgroundColor: _getBackgroundColorForOrder(data['order'] as int? ?? 0),
+            borderColor: _getBorderColorForOrder(data['order'] as int? ?? 0),
+            risks: (data['risks'] as List<dynamic>?)?.cast<String>() ?? [],
+          );
+        }).toList();
+      }
+    }
+    
+    // Fall back to mock data based on scenario
+    return _getTimelineDataForScenario(widget.scenario);
+  }
+
+  IconData _getIconForOrder(int order) {
+    switch (order) {
+      case 1:
+        return FontAwesomeIcons.penToSquare;
+      case 2:
+        return FontAwesomeIcons.dollarSign;
+      case 3:
+        return FontAwesomeIcons.clock;
+      case 4:
+        return FontAwesomeIcons.triangleExclamation;
+      case 5:
+        return FontAwesomeIcons.gavel;
+      default:
+        return FontAwesomeIcons.circleCheck;
+    }
+  }
+
+  Color _getIconColorForOrder(int order) {
+    switch (order) {
+      case 1:
+        return const Color(0xFF2563EB);
+      case 2:
+        return const Color(0xFF10B981);
+      case 3:
+        return const Color(0xFFF59E0B);
+      case 4:
+        return const Color(0xFFEF4444);
+      case 5:
+        return const Color(0xFFEF4444);
+      default:
+        return const Color(0xFF10B981);
+    }
+  }
+
+  Color _getBackgroundColorForOrder(int order) {
+    switch (order) {
+      case 1:
+        return const Color(0xFFEFF6FF);
+      case 2:
+        return const Color(0xFFECFDF5);
+      case 3:
+        return const Color(0xFFFFF7ED);
+      case 4:
+        return const Color(0xFFFEF2F2);
+      case 5:
+        return const Color(0xFFFEF2F2);
+      default:
+        return const Color(0xFFECFDF5);
+    }
+  }
+
+  Color _getBorderColorForOrder(int order) {
+    switch (order) {
+      case 1:
+        return const Color(0xFF2563EB);
+      case 2:
+        return const Color(0xFF10B981);
+      case 3:
+        return const Color(0xFFF59E0B);
+      case 4:
+        return const Color(0xFFEF4444);
+      case 5:
+        return const Color(0xFFEF4444);
+      default:
+        return const Color(0xFF10B981);
+    }
   }
 
   List<TimelineNode> _getTimelineDataForScenario(SimulationScenario scenario) {

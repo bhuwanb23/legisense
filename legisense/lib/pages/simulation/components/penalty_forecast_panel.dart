@@ -3,21 +3,19 @@ import 'package:flutter/material.dart';
 class PenaltyForecastPanel extends StatelessWidget {
   final String documentTitle;
   final Map<String, dynamic> parameters;
+  final Map<String, dynamic>? simulationData;
 
   const PenaltyForecastPanel({
     super.key,
     required this.documentTitle,
     required this.parameters,
+    this.simulationData,
   });
 
   @override
   Widget build(BuildContext context) {
     final Color headerColor = const Color(0xFF111827);
-    final List<Map<String, dynamic>> rows = [
-      {'month': 'Month 1', 'base': 12000, 'fees': 500, 'penalties': 0, 'total': 12500},
-      {'month': 'Month 3', 'base': 12000, 'fees': 1500, 'penalties': 2500, 'total': 16000},
-      {'month': 'Month 6', 'base': 12000, 'fees': 2600, 'penalties': 6200, 'total': 20800},
-    ];
+    final List<Map<String, dynamic>> rows = _getPenaltyForecastData();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -148,6 +146,32 @@ class PenaltyForecastPanel extends StatelessWidget {
       flex: flex,
       child: Text(text, style: style, textAlign: align),
     );
+  }
+
+  List<Map<String, dynamic>> _getPenaltyForecastData() {
+    // Use real simulation data if available, otherwise fall back to mock data
+    if (simulationData != null) {
+      final penaltyData = simulationData!['penalty_forecast'] as List<dynamic>?;
+      if (penaltyData != null && penaltyData.isNotEmpty) {
+        return penaltyData.map((item) {
+          final data = item as Map<String, dynamic>;
+          return {
+            'month': data['label'] as String? ?? 'Month',
+            'base': (data['base_amount'] as num?)?.toInt() ?? 0,
+            'fees': (data['fees_amount'] as num?)?.toInt() ?? 0,
+            'penalties': (data['penalties_amount'] as num?)?.toInt() ?? 0,
+            'total': (data['total_amount'] as num?)?.toInt() ?? 0,
+          };
+        }).toList();
+      }
+    }
+    
+    // Fall back to mock data
+    return [
+      {'month': 'Month 1', 'base': 12000, 'fees': 500, 'penalties': 0, 'total': 12500},
+      {'month': 'Month 3', 'base': 12000, 'fees': 1500, 'penalties': 2500, 'total': 16000},
+      {'month': 'Month 6', 'base': 12000, 'fees': 2600, 'penalties': 6200, 'total': 20800},
+    ];
   }
 }
 

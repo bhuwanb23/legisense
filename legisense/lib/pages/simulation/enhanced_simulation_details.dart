@@ -6,11 +6,13 @@ import 'components/components.dart';
 class EnhancedSimulationDetailsPage extends StatefulWidget {
   final String documentId;
   final String documentTitle;
+  final Map<String, dynamic>? simulationData;
   
   const EnhancedSimulationDetailsPage({
     super.key,
     required this.documentId,
     required this.documentTitle,
+    this.simulationData,
   });
 
   @override
@@ -20,17 +22,45 @@ class EnhancedSimulationDetailsPage extends StatefulWidget {
 class _EnhancedSimulationDetailsPageState extends State<EnhancedSimulationDetailsPage> {
   SimulationScenario _selectedScenario = SimulationScenario.normal;
   Map<String, dynamic> _parameters = {};
+  Map<String, dynamic>? _simulationData;
 
   @override
   void initState() {
     super.initState();
-    _parameters = {
-      'scenario': _selectedScenario,
-      'missedPayments': 0,
-      'earlyTermination': false,
-      'delayDays': 0,
-      'interestRate': 2.0,
-    };
+    _simulationData = widget.simulationData;
+    
+    // Initialize parameters from simulation data or use defaults
+    if (_simulationData != null) {
+      final sessionData = _simulationData!['session'] as Map<String, dynamic>?;
+      if (sessionData != null) {
+        _selectedScenario = _parseScenario(sessionData['scenario'] as String?);
+        _parameters = Map<String, dynamic>.from(sessionData['parameters'] as Map<String, dynamic>? ?? {});
+      }
+    }
+    
+    // Set defaults if no simulation data
+    if (_parameters.isEmpty) {
+      _parameters = {
+        'scenario': _selectedScenario,
+        'missedPayments': 0,
+        'earlyTermination': false,
+        'delayDays': 0,
+        'interestRate': 2.0,
+      };
+    }
+  }
+
+  SimulationScenario _parseScenario(String? scenario) {
+    switch (scenario?.toLowerCase()) {
+      case 'missedpayment':
+      case 'missed_payment':
+        return SimulationScenario.missedPayment;
+      case 'earlytermination':
+      case 'early_termination':
+        return SimulationScenario.earlyTermination;
+      default:
+        return SimulationScenario.normal;
+    }
   }
 
   Widget _section(Widget child) {
@@ -112,6 +142,7 @@ class _EnhancedSimulationDetailsPageState extends State<EnhancedSimulationDetail
                           TimelineView(
                             scenario: _selectedScenario,
                             documentTitle: widget.documentTitle,
+                            simulationData: _simulationData,
                           ),
                         ],
                       ),
@@ -125,8 +156,8 @@ class _EnhancedSimulationDetailsPageState extends State<EnhancedSimulationDetail
                     // Jurisdiction notice section
                     _section(
                       JurisdictionNotice(
-                        jurisdiction: 'Maharashtra, India',
-                        message:
+                        jurisdiction: _simulationData?['session']?['jurisdiction'] ?? 'Maharashtra, India',
+                        message: _simulationData?['session']?['jurisdiction_note'] ?? 
                             'Even though contract says 15-day eviction, local law requires 30 days. Timeline and outcomes adjusted accordingly.',
                       ),
                     )
@@ -141,6 +172,7 @@ class _EnhancedSimulationDetailsPageState extends State<EnhancedSimulationDetail
                       PenaltyForecastPanel(
                         documentTitle: widget.documentTitle,
                         parameters: _parameters,
+                        simulationData: _simulationData,
                       ),
                     )
                         .animate()
@@ -151,7 +183,10 @@ class _EnhancedSimulationDetailsPageState extends State<EnhancedSimulationDetail
 
                     // Termination / Exit Comparison
                     _section(
-                      ComparisonPanel(documentTitle: widget.documentTitle),
+                      ComparisonPanel(
+                        documentTitle: widget.documentTitle,
+                        simulationData: _simulationData,
+                      ),
                     )
                         .animate()
                         .slideX(begin: 0.15, duration: AppTheme.animationSlow, curve: Curves.easeOut)
@@ -164,6 +199,7 @@ class _EnhancedSimulationDetailsPageState extends State<EnhancedSimulationDetail
                       LongTermForecastChart(
                         documentTitle: widget.documentTitle,
                         parameters: _parameters,
+                        simulationData: _simulationData,
                       ),
                     )
                         .animate()
@@ -175,6 +211,7 @@ class _EnhancedSimulationDetailsPageState extends State<EnhancedSimulationDetail
                       RiskAlerts(
                         scenario: _selectedScenario,
                         documentTitle: widget.documentTitle,
+                        simulationData: _simulationData,
                       ),
                     )
                         .animate()
@@ -188,6 +225,7 @@ class _EnhancedSimulationDetailsPageState extends State<EnhancedSimulationDetail
                       NarrativeOutcomeCards(
                         scenario: _selectedScenario,
                         parameters: _parameters,
+                        simulationData: _simulationData,
                       ),
                     )
                         .animate()

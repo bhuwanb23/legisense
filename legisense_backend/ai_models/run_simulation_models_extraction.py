@@ -12,32 +12,28 @@ REPO_ROOT = BACKEND_DIR.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.append(str(REPO_ROOT))
 
-from legisense_backend.ai_models.api.openrouter_api import OpenRouterClient
-from legisense_backend.ai_models.parse_simulation_models_json import parse_models_json, ParseError
+from ai_models.api.openrouter_api import OpenRouterClient
 
 
-def run_extraction() -> Dict[str, Any]:
+def run_extraction(document_content: str = "") -> Dict[str, Any]:
     base_dir = BACKEND_DIR
-    models_path = base_dir / "api" / "models_db" / "simulation.py"
-    prompt_path = base_dir / "ai_models" / "prompts" / "simulation_models_extraction_prompt.txt"
+    prompt_path = base_dir / "ai_models" / "prompts" / "document_simulation_prompt.txt"
     out_dir = base_dir / "ai_models" / "output"
     out_dir.mkdir(parents=True, exist_ok=True)
     out_file = out_dir / "simulation_models.json"
 
-    models_text = models_path.read_text(encoding="utf-8")
     prompt_text = prompt_path.read_text(encoding="utf-8")
+    
+    # If no document content provided, use a generic fallback
+    if not document_content.strip():
+        document_content = "Generic legal document for simulation purposes."
 
     system_msg = {
         "role": "system",
-        "content": "You are a precise code analyst that outputs only strict JSON when asked."
+        "content": "You are a legal document analysis AI that generates realistic simulation data based on document content. Always return valid JSON."
     }
 
-    user_content = (
-        prompt_text
-        + "\n\n--- FILE START ---\n"
-        + models_text
-        + "\n--- FILE END ---\n"
-    )
+    user_content = f"{prompt_text}\n\nDocument Content:\n{document_content}"
 
     user_msg = {"role": "user", "content": user_content}
 
@@ -56,9 +52,19 @@ def run_extraction() -> Dict[str, Any]:
     # Persist raw JSON
     out_file.write_text(content, encoding="utf-8")
 
-    # Validate
-    obj: Dict[str, Any] = parse_models_json(content)
-    return obj
+    # Parse and validate JSON
+    try:
+        obj: Dict[str, Any] = json.loads(content)
+        # Basic validation - check if it has the expected structure
+        if not isinstance(obj, dict):
+            raise ValueError("Response is not a JSON object")
+        if "session" not in obj:
+            raise ValueError("Missing 'session' key in response")
+        return obj
+    except json.JSONDecodeError as e:
+        raise ValueError(f"Invalid JSON response: {e}")
+    except Exception as e:
+        raise ValueError(f"Validation error: {e}")
 
 
 def main() -> None:
@@ -66,10 +72,11 @@ def main() -> None:
     # Simple success summary
     print(json.dumps({
         "status": "ok",
-        "models_count": len(obj.get("models", [])),
-        "enums_count": len(obj.get("enums", [])),
-        "relationships_count": len(obj.get("relationships", [])),
-        "file": obj.get("file"),
+        "session_title": obj.get("session", {}).get("title", "Unknown"),
+        "timeline_events": len(obj.get("timeline", [])),
+        "penalty_forecasts": len(obj.get("penalty_forecast", [])),
+        "exit_scenarios": len(obj.get("exit_comparisons", [])),
+        "risk_alerts": len(obj.get("risk_alerts", [])),
     }, indent=2))
 
 

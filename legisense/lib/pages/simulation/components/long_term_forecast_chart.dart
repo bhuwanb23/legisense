@@ -3,11 +3,13 @@ import 'package:flutter/material.dart';
 class LongTermForecastChart extends StatelessWidget {
   final String documentTitle;
   final Map<String, dynamic> parameters;
+  final Map<String, dynamic>? simulationData;
 
   const LongTermForecastChart({
     super.key,
     required this.documentTitle,
     required this.parameters,
+    this.simulationData,
   });
 
   @override

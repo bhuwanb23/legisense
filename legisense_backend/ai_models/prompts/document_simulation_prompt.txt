@@ -1,0 +1,83 @@
+You are a legal document analysis AI. Analyze the provided legal document and generate realistic simulation data for a legal compliance scenario.
+
+Based on the document content, create a comprehensive simulation that includes:
+
+1. **Timeline Events**: Key milestones and deadlines mentioned in the document
+2. **Penalty Forecasts**: Potential financial penalties for non-compliance
+3. **Exit Scenarios**: Different ways to terminate or exit the agreement
+4. **Risk Alerts**: Important warnings and compliance risks
+5. **Narrative Outcomes**: Story-based scenarios showing what happens in different situations
+6. **Long-term Forecasts**: Projected outcomes over time
+
+Requirements:
+- Make the simulation realistic and relevant to the document content
+- Use appropriate legal terminology and financial figures
+- Include specific dates, amounts, and conditions from the document
+- Create 3-5 timeline events, 2-3 exit scenarios, and 2-4 risk alerts
+- Use Indian Rupees (₹) for financial amounts
+- Make scenarios practical and actionable
+
+Output a single JSON object with this exact structure:
+
+{
+  "session": {
+    "title": "Simulation for [Document Name]",
+    "scenario": "normal",
+    "parameters": {
+      "scenario": "normal",
+      "missedPayments": 0,
+      "earlyTermination": false,
+      "delayDays": 0,
+      "interestRate": 2.0
+    }
+  },
+  "timeline": [
+    {
+      "order": 1,
+      "title": "Event Title",
+      "description": "Detailed description",
+      "date": "2024-01-15",
+      "status": "completed"
+    }
+  ],
+  "penalty_forecast": [
+    {
+      "month": 1,
+      "amount": 5000,
+      "description": "Late payment penalty"
+    }
+  ],
+  "exit_comparisons": [
+    {
+      "label": "Exit at 6 months",
+      "penalty_text": "₹25,000",
+      "risk_level": "Medium",
+      "benefits_lost": "Partial"
+    }
+  ],
+  "narratives": [
+    {
+      "title": "Scenario Title",
+      "subtitle": "Brief description",
+      "narrative": "Detailed narrative of what happens",
+      "severity": "medium",
+      "key_points": ["Point 1", "Point 2"],
+      "financial_impact": "₹10,000"
+    }
+  ],
+  "long_term": [
+    {
+      "index": 1,
+      "label": "Year 1",
+      "value": 100000
+    }
+  ],
+  "risk_alerts": [
+    {
+      "level": "high",
+      "message": "Important risk warning"
+    }
+  ]
+}
+
+Return ONLY the JSON object, no other text.

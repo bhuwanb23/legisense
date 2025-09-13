@@ -7,11 +7,13 @@ import 'scenario_controls.dart';
 class NarrativeOutcomeCards extends StatelessWidget {
   final SimulationScenario scenario;
   final Map<String, dynamic>? parameters;
+  final Map<String, dynamic>? simulationData;
   
   const NarrativeOutcomeCards({
     super.key,
     required this.scenario,
     this.parameters,
+    this.simulationData,
   });
 
   @override

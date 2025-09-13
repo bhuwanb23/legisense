@@ -1,0 +1,148 @@
+{
+  "session": {
+    "title": "Simulation for Professional Services Agreement",
+    "scenario": "normal",
+    "parameters": {
+      "scenario": "normal",
+      "missedPayments": 0,
+      "earlyTermination": false,
+      "delayDays": 0,
+      "interestRate": 2.0
+    }
+  },
+  "timeline": [
+    {
+      "order": 1,
+      "title": "Agreement Effective Date",
+      "description": "Agreement takes effect contingent upon prior approval by COMMISSION governing board. CONSULTANT commences work after notification to proceed by COMMISSION's Contract Manager.",
+      "date": "2024-06-01",
+      "status": "pending"
+    },
+    {
+      "order": 2,
+      "title": "First Progress Report and Invoice Submission",
+      "description": "CONSULTANT submits first written progress report with itemized invoice within 45 calendar days after performance of work, including labor details, expenses, and progress report.",
+      "date": "2024-07-15",
+      "status": "pending"
+    },
+    {
+      "order": 3,
+      "title": "Monthly Progress Payment Due",
+      "description": "COMMISSION makes progress payment no less than monthly in arrears based on satisfactory services and actual allowable incurred costs, including pro rata fixed fee if applicable.",
+      "date": "2024-07-31",
+      "status": "pending"
+    },
+    {
+      "order": 4,
+      "title": "Insurance Certificate Renewal",
+      "description": "CONSULTANT provides new Certificate of Insurance if coverage expires, with at least 30 days prior notice, subject to COMMISSION approval.",
+      "date": "2025-05-01",
+      "status": "pending"
+    },
+    {
+      "order": 5,
+      "title": "Agreement End Date",
+      "description": "Agreement ends unless earlier terminated or extended by contract amendment.",
+      "date": "2025-05-31",
+      "status": "pending"
+    }
+  ],
+  "penalty_forecast": [
+    {
+      "month": 1,
+      "amount": 10000,
+      "description": "Late payment penalty for invoice submission beyond 45 days, plus potential interest at 2% per month on overdue amounts."
+    },
+    {
+      "month": 2,
+      "amount": 20000,
+      "description": "Additional penalties for continued non-compliance with insurance requirements or missed milestones, plus reprocurement costs if terminated for default."
+    },
+    {
+      "month": 3,
+      "amount": 50000,
+      "description": "Severe penalties for breach of agreement terms, including indemnification claims and legal fees, up to ₹1,000,000 for professional liability issues."
+    }
+  ],
+  "exit_comparisons": [
+    {
+      "label": "Termination for Convenience by COMMISSION",
+      "penalty_text": "₹0 (no penalty, but CONSULTANT receives allowable costs incurred)",
+      "risk_level": "Low",
+      "benefits_lost": "Full payment for work done"
+    },
+    {
+      "label": "Termination for Default by COMMISSION",
+      "penalty_text": "₹100,000+ (reprocurement costs and damages)",
+      "risk_level": "High",
+      "benefits_lost": "All future payments and reputation damage"
+    },
+    {
+      "label": "Termination by CONSULTANT with 120-day notice",
+      "penalty_text": "₹50,000 (reprocurement costs)",
+      "risk_level": "Medium",
+      "benefits_lost": "Partial payment and potential blacklisting"
+    }
+  ],
+  "narratives": [
+    {
+      "title": "Timely Performance and Compliance",
+      "subtitle": "Ideal scenario with all milestones met",
+      "narrative": "CONSULTANT submits progress reports and invoices on time, COMMISSION approves payments promptly, and the project completes successfully by the end date. All insurance and legal requirements are maintained, resulting in full payment of ₹500,000 and positive relationship for future contracts.",
+      "severity": "low",
+      "key_points": ["On-time deliverables", "Proper documentation", "Adherence to laws"],
+      "financial_impact": "₹0 (no penalties)"
+    },
+    {
+      "title": "Late Invoice Submission",
+      "subtitle": "CONSULTANT misses 45-day invoice deadline",
+      "narrative": "CONSULTANT submits invoice 60 days after work performance, triggering COMMISSION's right to delay payment. Interest accrues at 2% per month on overdue amounts. Repeated delays may lead to termination for default under Section 4.B, incurring reprocurement costs of ₹50,000.",
+      "severity": "medium",
+      "key_points": ["Missed deadline", "Payment delay", "Risk of termination"],
+      "financial_impact": "₹10,000 (interest and penalties)"
+    },
+    {
+      "title": "Insurance Lapse",
+      "subtitle": "CONSULTANT fails to renew insurance coverage",
+      "narrative": "CONSULTANT's insurance expires without renewal or notice, violating Section 6.B.5. COMMISSION issues a 10-day cure notice. If not resolved, COMMISSION terminates the agreement, and CONSULTANT faces penalties up to ₹100,000 for breach and additional insured claims.",
+      "severity": "high",
+      "key_points": ["Insurance non-compliance", "Termination risk", "Indemnification liabilities"],
+      "financial_impact": "₹100,000"
+    }
+  ],
+  "long_term": [
+    {
+      "index": 1,
+      "label": "Year 1",
+      "value": 500000
+    },
+    {
+      "index": 2,
+      "label": "Year 2",
+      "value": 0
+    },
+    {
+      "index": 3,
+      "label": "Year 3",
+      "value": -50000
+    }
+  ],
+  "risk_alerts": [
+    {
+      "level": "high",
+      "message": "Failure to maintain required insurance coverage may result in immediate termination and significant financial penalties under Section 6.B.5."
+    },
+    {
+      "level": "medium",
+      "message": "Late submission of invoices beyond 45 days can lead to payment delays, interest charges, and potential termination under Section 2.E."
+    },
+    {
+      "level": "high",
+      "message": "Non-compliance with equal employment opportunity laws under Section 8 may result in contract cancellation and ineligibility for future agreements."
+    },
+    {
+      "level": "medium",
+      "message": "Unauthorized subcontracting or changes to key personnel without COMMISSION approval breaches Section 1.C and 20, risking termination and penalties."
+    }
+  ]
+}

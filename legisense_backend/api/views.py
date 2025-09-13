@@ -163,30 +163,41 @@ def parsed_doc_simulate_view(request: HttpRequest, pk: int):
 
     doc = get_object_or_404(ParsedDocument, pk=pk)
 
-    # Run extraction (LLM) to produce a structured JSON
+    # Run extraction (LLM) to produce a structured JSON based on document content
     try:
         from ai_models.run_simulation_models_extraction import run_extraction
-        extracted = run_extraction()
+        # Pass document content to the extraction
+        document_content = doc.payload.get('full_text', '') if doc.payload else ''
+        print(f"🔍 Document content length: {len(document_content)}")
+        print(f"🔍 Document content preview: {document_content[:200]}...")
+        extracted = run_extraction(document_content=document_content)
+        print(f"🤖 LLM extracted data: {extracted}")
     except Exception as exc:  # noqa: BLE001
-        # Graceful fallback: continue with a minimal payload so UX flow still works
-        extracted = {}
+        # Return error instead of mock data
+        print(f"❌ Simulation extraction failed: {exc}")
+        return JsonResponse({
+            "error": "Simulation generation failed",
+            "message": "Unable to generate simulation data. Please try again later.",
+            "details": str(exc)
+        }, status=500)
 
-    # Map extracted JSON to our import payload shape
+    # Map extracted JSON to our import payload shape using LLM data
+    session_data = extracted.get("session", {})
     session_payload = {
         "document_id": doc.id,
         "session": {
-            "title": f"Simulation for {doc.file_name}",
-            "scenario": "normal",
-            "parameters": {"source": "llm_extraction"},
-            "jurisdiction": "",
-            "jurisdiction_note": "",
+            "title": session_data.get("title", f"Simulation for {doc.file_name}"),
+            "scenario": session_data.get("scenario", "normal"),
+            "parameters": session_data.get("parameters", {"source": "llm_extraction"}),
+            "jurisdiction": session_data.get("jurisdiction", ""),
+            "jurisdiction_note": session_data.get("jurisdiction_note", ""),
         },
-        "timeline": [],
-        "penalty_forecast": [],
-        "exit_comparisons": [],
-        "narratives": [],
-        "long_term": [],
-        "risk_alerts": [],
+        "timeline": extracted.get("timeline", []),
+        "penalty_forecast": extracted.get("penalty_forecast", []),
+        "exit_comparisons": extracted.get("exit_comparisons", []),
+        "narratives": extracted.get("narratives", []),
+        "long_term": extracted.get("long_term", []),
+        "risk_alerts": extracted.get("risk_alerts", []),
     }
 
     # Try to infer some defaults from enums/relationships if provided (best-effort)
@@ -267,11 +278,11 @@ def import_simulation_view(request: HttpRequest):
     for row in payload.get("penalty_forecast", []) or []:
         SimulationPenaltyForecast.objects.create(
             session=session,
-            label=str(row.get("label", ""))[:64],
-            base_amount=row.get("base_amount") or 0,
-            fees_amount=row.get("fees_amount") or 0,
-            penalties_amount=row.get("penalties_amount") or 0,
-            total_amount=row.get("total_amount") or 0,
+            label=str(row.get("label", f"Month {row.get('month', 1)}"))[:64],
+            base_amount=0,  # LLM doesn't provide base_amount
+            fees_amount=0,  # LLM doesn't provide fees_amount
+            penalties_amount=float(row.get("amount", 0)),
+            total_amount=float(row.get("amount", 0)),
         )
 
     for item in payload.get("exit_comparisons", []) or []:
@@ -291,7 +302,7 @@ def import_simulation_view(request: HttpRequest):
             narrative=str(item.get("narrative", "")),
             severity=str(item.get("severity", "low"))[:16],
             key_points=item.get("key_points") or [],
-            financial_impact=item.get("financial_impact") or [],
+            financial_impact=[item.get("financial_impact", "")] if isinstance(item.get("financial_impact"), str) else (item.get("financial_impact") or []),
         )
 
     for item in payload.get("long_term", []) or []:
@@ -310,3 +321,107 @@ def import_simulation_view(request: HttpRequest):
         )
 
     return JsonResponse({"status": "ok", "session_id": session.id})
+
+
+def simulation_detail_view(request: HttpRequest, pk: int):
+    """Fetch simulation session and all related data."""
+    if request.method != "GET":
+        return JsonResponse({"error": "Method not allowed"}, status=405)
+
+    from .models import (
+        SimulationSession,
+        SimulationTimelineNode,
+        SimulationPenaltyForecast,
+        SimulationExitComparison,
+        SimulationNarrativeOutcome,
+        SimulationLongTermPoint,
+        SimulationRiskAlert,
+    )
+
+    session = get_object_or_404(SimulationSession, pk=pk)
+
+    # Fetch all related data
+    timeline_nodes = SimulationTimelineNode.objects.filter(session=session).order_by('order')
+    penalty_forecasts = SimulationPenaltyForecast.objects.filter(session=session).order_by('id')
+    exit_comparisons = SimulationExitComparison.objects.filter(session=session).order_by('id')
+    narratives = SimulationNarrativeOutcome.objects.filter(session=session).order_by('id')
+    long_term_points = SimulationLongTermPoint.objects.filter(session=session).order_by('index')
+    risk_alerts = SimulationRiskAlert.objects.filter(session=session).order_by('id')
+
+    # Build response
+    response_data = {
+        "session": {
+            "id": session.id,
+            "title": session.title,
+            "scenario": session.scenario,
+            "parameters": session.parameters,
+            "jurisdiction": session.jurisdiction,
+            "jurisdiction_note": session.jurisdiction_note,
+            "created_at": session.created_at.isoformat(),
+        },
+        "timeline": [
+            {
+                "id": node.id,
+                "order": node.order,
+                "title": node.title,
+                "description": node.description,
+                "detailed_description": node.detailed_description,
+                "risks": node.risks,
+            }
+            for node in timeline_nodes
+        ],
+        "penalty_forecast": [
+            {
+                "id": forecast.id,
+                "label": forecast.label,
+                "base_amount": float(forecast.base_amount),
+                "fees_amount": float(forecast.fees_amount),
+                "penalties_amount": float(forecast.penalties_amount),
+                "total_amount": float(forecast.total_amount),
+            }
+            for forecast in penalty_forecasts
+        ],
+        "exit_comparisons": [
+            {
+                "id": comp.id,
+                "label": comp.label,
+                "penalty_text": comp.penalty_text,
+                "risk_level": comp.risk_level,
+                "benefits_lost": comp.benefits_lost,
+            }
+            for comp in exit_comparisons
+        ],
+        "narratives": [
+            {
+                "id": narrative.id,
+                "title": narrative.title,
+                "subtitle": narrative.subtitle,
+                "narrative": narrative.narrative,
+                "severity": narrative.severity,
+                "key_points": narrative.key_points,
+                "financial_impact": narrative.financial_impact,
+            }
+            for narrative in narratives
+        ],
+        "long_term": [
+            {
+                "id": point.id,
+                "index": point.index,
+                "label": point.label,
+                "value": float(point.value),
+            }
+            for point in long_term_points
+        ],
+        "risk_alerts": [
+            {
+                "id": alert.id,
+                "level": alert.level,
+                "message": alert.message,
+            }
+            for alert in risk_alerts
+        ],
+    }
+
+    return JsonResponse(response_data)
+
+
