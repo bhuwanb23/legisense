@@ -22,16 +22,17 @@ class EnhancedSimulationDetailsPage extends StatefulWidget {
 class _EnhancedSimulationDetailsPageState extends State<EnhancedSimulationDetailsPage> {
   SimulationScenario _selectedScenario = SimulationScenario.normal;
   Map<String, dynamic> _parameters = {};
-  Map<String, dynamic>? _simulationData;
+  Map<String, dynamic>? _baseSimulationData; // Original LLM data
+  Map<String, dynamic>? _dynamicSimulationData; // Calculated data based on parameters
 
   @override
   void initState() {
     super.initState();
-    _simulationData = widget.simulationData;
+    _baseSimulationData = widget.simulationData;
     
     // Initialize parameters from simulation data or use defaults
-    if (_simulationData != null) {
-      final sessionData = _simulationData!['session'] as Map<String, dynamic>?;
+    if (_baseSimulationData != null) {
+      final sessionData = _baseSimulationData!['session'] as Map<String, dynamic>?;
       if (sessionData != null) {
         _selectedScenario = _parseScenario(sessionData['scenario'] as String?);
         _parameters = Map<String, dynamic>.from(sessionData['parameters'] as Map<String, dynamic>? ?? {});
@@ -48,6 +49,9 @@ class _EnhancedSimulationDetailsPageState extends State<EnhancedSimulationDetail
         'interestRate': 2.0,
       };
     }
+    
+    // Calculate initial dynamic data
+    _calculateDynamicData();
   }
 
   SimulationScenario _parseScenario(String? scenario) {
@@ -60,6 +64,141 @@ class _EnhancedSimulationDetailsPageState extends State<EnhancedSimulationDetail
         return SimulationScenario.earlyTermination;
       default:
         return SimulationScenario.normal;
+    }
+  }
+
+  void _calculateDynamicData() {
+    if (_baseSimulationData == null) {
+      _dynamicSimulationData = null;
+      return;
+    }
+
+    // Create a deep copy of the base data
+    _dynamicSimulationData = Map<String, dynamic>.from(_baseSimulationData!);
+    
+    // Apply parameter-based transformations
+    _applyParameterEffects();
+  }
+
+  void _applyParameterEffects() {
+    if (_dynamicSimulationData == null) return;
+
+    final scenario = _parameters['scenario'] as SimulationScenario;
+    final missedPayments = _parameters['missedPayments'] as int;
+    final earlyTermination = _parameters['earlyTermination'] as bool;
+    final delayDays = _parameters['delayDays'] as int;
+    final interestRate = _parameters['interestRate'] as double;
+
+    // Update session data
+    if (_dynamicSimulationData!['session'] != null) {
+      final session = Map<String, dynamic>.from(_dynamicSimulationData!['session']);
+      session['scenario'] = scenario.name;
+      session['parameters'] = _parameters;
+      _dynamicSimulationData!['session'] = session;
+    }
+
+    // Apply scenario-specific effects
+    switch (scenario) {
+      case SimulationScenario.missedPayment:
+        _applyMissedPaymentEffects(missedPayments, interestRate);
+        break;
+      case SimulationScenario.earlyTermination:
+        _applyEarlyTerminationEffects(earlyTermination, delayDays);
+        break;
+      case SimulationScenario.normal:
+        _applyNormalEffects();
+        break;
+    }
+  }
+
+  void _applyMissedPaymentEffects(int missedPayments, double interestRate) {
+    // Increase penalty forecasts based on missed payments
+    if (_dynamicSimulationData!['penalty_forecast'] != null) {
+      final forecasts = List<Map<String, dynamic>>.from(_dynamicSimulationData!['penalty_forecast']);
+      for (int i = 0; i < forecasts.length; i++) {
+        final forecast = Map<String, dynamic>.from(forecasts[i]);
+        final baseAmount = (forecast['amount'] as num? ?? 0).toDouble();
+        final penaltyMultiplier = 1.0 + (missedPayments * 0.5); // 50% increase per missed payment
+        final interestMultiplier = 1.0 + (interestRate / 100.0);
+        forecast['amount'] = (baseAmount * penaltyMultiplier * interestMultiplier).round();
+        forecasts[i] = forecast;
+      }
+      _dynamicSimulationData!['penalty_forecast'] = forecasts;
+    }
+
+    // Add risk alerts for missed payments
+    if (_dynamicSimulationData!['risk_alerts'] != null) {
+      final alerts = List<Map<String, dynamic>>.from(_dynamicSimulationData!['risk_alerts']);
+      if (missedPayments > 0) {
+        alerts.add({
+          'level': missedPayments > 3 ? 'high' : 'medium',
+          'message': '⚠️ $missedPayments missed payment${missedPayments > 1 ? 's' : ''} detected. Penalties and interest charges apply.',
+        });
+      }
+      _dynamicSimulationData!['risk_alerts'] = alerts;
+    }
+
+    // Update narratives to reflect missed payments
+    if (_dynamicSimulationData!['narratives'] != null) {
+      final narratives = List<Map<String, dynamic>>.from(_dynamicSimulationData!['narratives']);
+      for (int i = 0; i < narratives.length; i++) {
+        final narrative = Map<String, dynamic>.from(narratives[i]);
+        if (missedPayments > 0) {
+          narrative['title'] = '${narrative['title']} (With $missedPayments Missed Payment${missedPayments > 1 ? 's' : ''})';
+          narrative['severity'] = missedPayments > 2 ? 'high' : 'medium';
+        }
+        narratives[i] = narrative;
+      }
+      _dynamicSimulationData!['narratives'] = narratives;
+    }
+  }
+
+  void _applyEarlyTerminationEffects(bool earlyTermination, int delayDays) {
+    if (!earlyTermination) return;
+
+    // Increase exit comparison penalties
+    if (_dynamicSimulationData!['exit_comparisons'] != null) {
+      final comparisons = List<Map<String, dynamic>>.from(_dynamicSimulationData!['exit_comparisons']);
+      for (int i = 0; i < comparisons.length; i++) {
+        final comparison = Map<String, dynamic>.from(comparisons[i]);
+        final penaltyText = comparison['penalty_text'] as String? ?? '';
+        if (penaltyText.contains('₹')) {
+          // Extract and increase penalty amount
+          final regex = RegExp(r'₹([\d,]+)');
+          final match = regex.firstMatch(penaltyText);
+          if (match != null) {
+            final amount = int.tryParse(match.group(1)?.replaceAll(',', '') ?? '0') ?? 0;
+            final increasedAmount = (amount * 1.5).round(); // 50% increase for early termination
+            comparison['penalty_text'] = penaltyText.replaceAll(match.group(0)!, '₹${increasedAmount.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}');
+            comparison['risk_level'] = 'high';
+          }
+        }
+        comparisons[i] = comparison;
+      }
+      _dynamicSimulationData!['exit_comparisons'] = comparisons;
+    }
+
+    // Add delay-based effects
+    if (delayDays > 0) {
+      if (_dynamicSimulationData!['risk_alerts'] != null) {
+        final alerts = List<Map<String, dynamic>>.from(_dynamicSimulationData!['risk_alerts']);
+        alerts.add({
+          'level': delayDays > 30 ? 'high' : 'medium',
+          'message': '⏰ Early termination with $delayDays day${delayDays > 1 ? 's' : ''} delay. Additional penalties may apply.',
+        });
+        _dynamicSimulationData!['risk_alerts'] = alerts;
+      }
+    }
+  }
+
+  void _applyNormalEffects() {
+    // Reset to base values for normal scenario
+    _dynamicSimulationData = Map<String, dynamic>.from(_baseSimulationData!);
+    if (_dynamicSimulationData!['session'] != null) {
+      final session = Map<String, dynamic>.from(_dynamicSimulationData!['session']);
+      session['scenario'] = 'normal';
+      session['parameters'] = _parameters;
+      _dynamicSimulationData!['session'] = session;
     }
   }
 
@@ -111,19 +250,64 @@ class _EnhancedSimulationDetailsPageState extends State<EnhancedSimulationDetail
 
                     // Enhanced Scenario Controls section
                     _section(
-                      EnhancedScenarioControls(
-                        selectedScenario: _selectedScenario,
-                        onScenarioChanged: (scenario) {
-                          setState(() {
-                            _selectedScenario = scenario;
-                            _parameters['scenario'] = scenario;
-                          });
-                        },
-                        onParametersChanged: (parameters) {
-                          setState(() {
-                            _parameters = parameters;
-                          });
-                        },
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Dynamic indicator
+                          if (_parameters['scenario'] != SimulationScenario.normal || 
+                              _parameters['missedPayments'] > 0 || 
+                              _parameters['earlyTermination'] == true ||
+                              _parameters['delayDays'] > 0)
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              margin: const EdgeInsets.only(bottom: 16),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF8B5CF6).withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: const Color(0xFF8B5CF6).withValues(alpha: 0.3),
+                                  width: 1,
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.auto_awesome,
+                                    color: const Color(0xFF8B5CF6),
+                                    size: 16,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      'Dynamic simulation active - Parameters affecting outcomes',
+                                      style: TextStyle(
+                                        color: const Color(0xFF8B5CF6),
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          EnhancedScenarioControls(
+                            selectedScenario: _selectedScenario,
+                            onScenarioChanged: (scenario) {
+                              setState(() {
+                                _selectedScenario = scenario;
+                                _parameters['scenario'] = scenario;
+                                _calculateDynamicData(); // Recalculate with new scenario
+                              });
+                            },
+                            onParametersChanged: (parameters) {
+                              setState(() {
+                                _parameters = parameters;
+                                _calculateDynamicData(); // Recalculate with new parameters
+                              });
+                            },
+                          ),
+                        ],
                       ),
                     )
                         .animate()
@@ -142,7 +326,7 @@ class _EnhancedSimulationDetailsPageState extends State<EnhancedSimulationDetail
                           TimelineView(
                             scenario: _selectedScenario,
                             documentTitle: widget.documentTitle,
-                            simulationData: _simulationData,
+                            simulationData: _dynamicSimulationData,
                           ),
                         ],
                       ),
@@ -156,8 +340,8 @@ class _EnhancedSimulationDetailsPageState extends State<EnhancedSimulationDetail
                     // Jurisdiction notice section
                     _section(
                       JurisdictionNotice(
-                        jurisdiction: _simulationData?['session']?['jurisdiction'] ?? 'Maharashtra, India',
-                        message: _simulationData?['session']?['jurisdiction_note'] ?? 
+                        jurisdiction: _dynamicSimulationData?['session']?['jurisdiction'] ?? 'Maharashtra, India',
+                        message: _dynamicSimulationData?['session']?['jurisdiction_note'] ?? 
                             'Even though contract says 15-day eviction, local law requires 30 days. Timeline and outcomes adjusted accordingly.',
                       ),
                     )
@@ -172,7 +356,7 @@ class _EnhancedSimulationDetailsPageState extends State<EnhancedSimulationDetail
                       PenaltyForecastPanel(
                         documentTitle: widget.documentTitle,
                         parameters: _parameters,
-                        simulationData: _simulationData,
+                        simulationData: _dynamicSimulationData,
                       ),
                     )
                         .animate()
@@ -185,7 +369,7 @@ class _EnhancedSimulationDetailsPageState extends State<EnhancedSimulationDetail
                     _section(
                       ComparisonPanel(
                         documentTitle: widget.documentTitle,
-                        simulationData: _simulationData,
+                        simulationData: _dynamicSimulationData,
                       ),
                     )
                         .animate()
@@ -199,7 +383,7 @@ class _EnhancedSimulationDetailsPageState extends State<EnhancedSimulationDetail
                       LongTermForecastChart(
                         documentTitle: widget.documentTitle,
                         parameters: _parameters,
-                        simulationData: _simulationData,
+                        simulationData: _dynamicSimulationData,
                       ),
                     )
                         .animate()
@@ -211,7 +395,7 @@ class _EnhancedSimulationDetailsPageState extends State<EnhancedSimulationDetail
                       RiskAlerts(
                         scenario: _selectedScenario,
                         documentTitle: widget.documentTitle,
-                        simulationData: _simulationData,
+                        simulationData: _dynamicSimulationData,
                       ),
                     )
                         .animate()
@@ -225,7 +409,7 @@ class _EnhancedSimulationDetailsPageState extends State<EnhancedSimulationDetail
                       NarrativeOutcomeCards(
                         scenario: _selectedScenario,
                         parameters: _parameters,
-                        simulationData: _simulationData,
+                        simulationData: _dynamicSimulationData,
                       ),
                     )
                         .animate()
@@ -234,43 +418,9 @@ class _EnhancedSimulationDetailsPageState extends State<EnhancedSimulationDetail
 
                     const SizedBox(height: 16),
 
-                    // Export + Next Steps section
+                    // Export section
                     _section(
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          ExportOptions(documentTitle: widget.documentTitle),
-                          const SizedBox(height: 12),
-                          NextStepsCTA(
-                            documentTitle: widget.documentTitle,
-                            onBackToAnalysis: () => Navigator.of(context).pop(),
-                            onSaveSimulation: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('Simulation saved for ${widget.documentTitle}!'),
-                                  backgroundColor: const Color(0xFF10B981),
-                                ),
-                              );
-                            },
-                            onExportReport: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('Report exported for ${widget.documentTitle}!'),
-                                  backgroundColor: const Color(0xFF10B981),
-                                ),
-                              );
-                            },
-                            onShareResults: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('Results shared for ${widget.documentTitle}!'),
-                                  backgroundColor: const Color(0xFF8B5CF6),
-                                ),
-                              );
-                            },
-                          ),
-                        ],
-                      ),
+                      ExportOptions(documentTitle: widget.documentTitle),
                     )
                         .animate()
                         .slideY(begin: 0.2, duration: AppTheme.animationSlow, curve: Curves.easeOut)
