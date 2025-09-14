@@ -14,135 +14,135 @@
     {
       "order": 1,
       "title": "Agreement Effective Date",
-      "description": "Agreement takes effect upon approval by COMMISSION governing board and notification to proceed by Contract Manager.",
-      "date": "2024-06-01",
+      "description": "Agreement takes effect contingent upon prior approval by COMMISSION governing board. CONSULTANT commences work after notification to proceed by Contract Manager.",
+      "date": "2024-07-01",
       "status": "pending"
     },
     {
       "order": 2,
       "title": "First Progress Report and Invoice Submission",
-      "description": "CONSULTANT must submit first written progress report with invoice within 45 days of work performance.",
-      "date": "2024-07-15",
+      "description": "CONSULTANT submits first written progress report with itemized invoice within 45 days of work performance, including labor details, expenses, and cumulative charges.",
+      "date": "2024-08-15",
       "status": "pending"
     },
     {
       "order": 3,
       "title": "Mid-Term Review",
-      "description": "COMMISSION conducts mid-term performance review based on progress reports and deliverables.",
-      "date": "2024-09-30",
+      "description": "COMMISSION conducts interim audit and review of CONSULTANT's performance, compliance with milestones, and insurance maintenance.",
+      "date": "2024-12-15",
       "status": "pending"
     },
     {
       "order": 4,
       "title": "Final Deliverable Submission",
-      "description": "CONSULTANT submits all final deliverables for acceptance by Contract Manager.",
-      "date": "2024-12-15",
+      "description": "CONSULTANT submits all deliverables, final progress report, and final invoice within 60 days after acceptance of work by Contract Manager.",
+      "date": "2025-06-30",
       "status": "pending"
     },
     {
       "order": 5,
-      "title": "Final Invoice Submission Deadline",
-      "description": "CONSULTANT must submit final invoice within 60 days of work acceptance.",
-      "date": "2025-02-13",
+      "title": "Agreement End Date",
+      "description": "Agreement terminates unless extended by contract amendment or earlier termination occurs.",
+      "date": "2025-06-30",
       "status": "pending"
     }
   ],
   "penalty_forecast": [
     {
-      "month": 1,
-      "amount": 50000,
-      "description": "Late payment penalty for invoice submission beyond 45-day window"
+      "label": "Month 1",
+      "base_amount": 100000,
+      "fees_amount": 5000,
+      "penalties_amount": 0,
+      "total_amount": 105000,
+      "description": "Initial payment with processing fees and reimbursable expenses as per Fee Schedule"
     },
     {
-      "month": 3,
-      "amount": 100000,
-      "description": "Penalty for exceeding milestone cost estimates without approval"
+      "label": "Month 3",
+      "base_amount": 100000,
+      "fees_amount": 7500,
+      "penalties_amount": 25000,
+      "total_amount": 132500,
+      "description": "Accumulated late fees for delayed invoice submission and penalties for missed milestones without approval"
     },
     {
-      "month": 6,
-      "amount": 200000,
-      "description": "Termination for default penalties including reprocurement costs"
+      "label": "Month 6",
+      "base_amount": 100000,
+      "fees_amount": 10000,
+      "penalties_amount": 50000,
+      "total_amount": 160000,
+      "description": "Maximum penalty scenario including reprocurement costs for default termination and indemnification claims"
     }
   ],
   "exit_comparisons": [
     {
       "label": "Termination for Convenience by COMMISSION",
-      "penalty_text": "₹0 (only allowable costs paid)",
+      "penalty_text": "₹0 (Allowable costs incurred paid)",
       "risk_level": "Low",
-      "benefits_lost": "None"
+      "benefits_lost": "None; CONSULTANT receives payment for work done"
     },
     {
       "label": "Termination for Default by COMMISSION",
-      "penalty_text": "₹150000+ (reprocurement costs and damages)",
+      "penalty_text": "₹100,000+ (Reprocurement costs and damages)",
       "risk_level": "High",
-      "benefits_lost": "Full"
+      "benefits_lost": "Full; CONSULTANT liable for all reasonable costs including reprocurement"
     },
     {
       "label": "Termination by CONSULTANT with 120-day notice",
-      "penalty_text": "₹100000+ (reprocurement costs)",
+      "penalty_text": "₹75,000 (Reprocurement costs and damages)",
       "risk_level": "Medium",
-      "benefits_lost": "Partial"
+      "benefits_lost": "Partial; CONSULTANT liable for costs but avoids some penalties"
     }
   ],
   "narratives": [
     {
-      "title": "Late Invoice Submission Scenario",
-      "subtitle": "CONSULTANT misses 45-day invoice deadline",
-      "narrative": "CONSULTANT performs work in June but fails to submit invoice by July 15 deadline. COMMISSION delays payment and issues written notice. After 10 days without cure, COMMISSION may terminate agreement under Section 4.B. CONSULTANT incurs reprocurement costs and loses future business opportunities.",
-      "severity": "medium",
-      "key_points": ["45-day invoice submission requirement", "10-day cure period", "Termination for default risk"],
-      "financial_impact": "₹50000"
-    },
-    {
-      "title": "Insurance Lapse Scenario",
+      "title": "Default Termination Due to Insurance Lapse",
       "subtitle": "CONSULTANT fails to maintain required insurance coverage",
-      "narrative": "CONSULTANT's commercial general liability insurance expires during contract term without renewal. COMMISSION discovers lapse during routine audit and immediately terminates agreement under Section 6.B.5. CONSULTANT is liable for all costs incurred due to termination and may face legal action for breach.",
+      "narrative": "CONSULTANT's commercial general liability insurance expires without renewal or notice. COMMISSION issues a 10-day cure notice, but CONSULTANT does not rectify. COMMISSION terminates for default, invoking reprocurement costs of ₹100,000 for new consultant services, plus indemnification for any damages incurred during the lapse.",
       "severity": "high",
-      "key_points": ["Insurance must be maintained throughout term", "30-day notice requirement for expiration", "Immediate termination right"],
-      "financial_impact": "₹200000"
+      "key_points": ["Insurance maintenance is critical", "10-day cure period for breaches", "Reprocurement costs apply"],
+      "financial_impact": "₹100,000"
     },
     {
-      "title": "Successful Project Completion",
-      "subtitle": "All milestones met on time and within budget",
-      "narrative": "CONSULTANT submits all progress reports and invoices on schedule, maintains required insurance, and delivers all work products by December 15. COMMISSION accepts work and processes final payment within 60 days. CONSULTANT receives full compensation and establishes good standing for future contracts.",
-      "severity": "low",
-      "key_points": ["Timely invoice submission", "Progress report compliance", "Work product delivery"],
-      "financial_impact": "₹0"
+      "title": "Late Invoice Submission Penalties",
+      "subtitle": "CONSULTANT submits invoices beyond 45-day deadline",
+      "narrative": "CONSULTANT delays invoice submission by 15 days, missing the 45-day deadline. COMMISSION imposes late fees of ₹5,000 per occurrence and delays payment until compliance. Repeated delays trigger higher penalties and risk of termination for breach.",
+      "severity": "medium",
+      "key_points": ["Invoices must be submitted within 45 days", "Late fees accumulate", "Payment delays affect cash flow"],
+      "financial_impact": "₹5,000"
     }
   ],
   "long_term": [
     {
       "index": 1,
       "label": "Year 1",
-      "value": 1000000
+      "value": 1200000,
+      "description": "Total contract value with base payments, fees, and estimated reimbursables"
     },
     {
       "index": 2,
       "label": "Year 2",
-      "value": 0
+      "value": 2400000,
+      "description": "Cumulative costs if agreement extended, including inflation adjustments and additional services"
     },
     {
       "index": 3,
       "label": "Year 3",
-      "value": 0
+      "value": 3600000,
+      "description": "Maximum exposure including potential penalties, reprocurement, and legal costs from disputes"
     }
   ],
   "risk_alerts": [
     {
       "level": "high",
-      "message": "Failure to maintain required insurance coverage allows immediate termination without cure period"
+      "message": "Failure to maintain required insurance coverage can lead to immediate termination for default and significant financial penalties."
     },
     {
       "level": "medium",
-      "message": "Late invoice submission beyond 45-day window may result in payment delays and termination risk"
+      "message": "Delayed invoice submission beyond 45 days results in late fees and potential payment holds, impacting cash flow."
     },
     {
       "level": "high",
-      "message": "Unauthorized subcontracting or personnel changes without written approval constitutes material breach"
-    },
-    {
-      "level": "medium",
-      "message": "Exceeding milestone cost estimates without prior written approval triggers financial penalties"
+      "message": "Non-compliance with indemnification clauses exposes CONSULTANT to unlimited liability for damages, legal fees, and government claims."
     }
   ]
 }

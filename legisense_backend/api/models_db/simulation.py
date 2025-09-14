@@ -105,6 +105,7 @@ class SimulationLongTermPoint(models.Model):
     index = models.PositiveIntegerField(default=0)  # month index or sequence
     label = models.CharField(max_length=64, blank=True, default="")  # optional display label
     value = models.DecimalField(max_digits=12, decimal_places=2)
+    description = models.CharField(max_length=255, blank=True, default="")  # optional description
 
     class Meta:
         ordering = ["index", "id"]

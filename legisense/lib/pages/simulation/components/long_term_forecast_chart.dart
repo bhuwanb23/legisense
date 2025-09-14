@@ -14,12 +14,8 @@ class LongTermForecastChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Placeholder dataset: cumulative costs over years
-    final List<_Point> data = const [
-      _Point('Year 1', 40000),
-      _Point('Year 2', 90000),
-      _Point('Year 3', 120000),
-    ];
+    // Use real simulation data if available, otherwise fall back to mock data
+    final List<_Point> data = _getLongTermData();
 
     double maxVal = data.map((e) => e.value).reduce((a, b) => a > b ? a : b).toDouble();
 
@@ -90,11 +86,43 @@ class LongTermForecastChart extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          'If auto-renew isn\'t canceled, projected extra over 3 years ≈ ₹1.2 lakh.',
+          _getSummaryText(data),
           style: Theme.of(context).textTheme.bodySmall?.copyWith(color: const Color(0xFF374151)),
         ),
       ],
     );
+  }
+
+  List<_Point> _getLongTermData() {
+    // Use real simulation data if available, otherwise fall back to mock data
+    if (simulationData != null) {
+      final longTermData = simulationData!['long_term'] as List<dynamic>?;
+      if (longTermData != null && longTermData.isNotEmpty) {
+        return longTermData.map((item) {
+          final data = item as Map<String, dynamic>;
+          return _Point(
+            data['label'] as String? ?? 'Period',
+            (data['value'] as num?)?.toInt() ?? 0,
+          );
+        }).toList();
+      }
+    }
+    
+    // Fall back to mock data
+    return const [
+      _Point('Year 1', 40000),
+      _Point('Year 2', 90000),
+      _Point('Year 3', 120000),
+    ];
+  }
+
+  String _getSummaryText(List<_Point> data) {
+    if (data.isEmpty) return 'No long-term forecast data available.';
+    
+    final maxValue = data.map((e) => e.value).reduce((a, b) => a > b ? a : b);
+    final maxValueFormatted = (maxValue / 100000).toStringAsFixed(1);
+    
+    return 'If auto-renew isn\'t canceled, projected extra over ${data.length} years ≈ ₹$maxValueFormatted lakh.';
   }
 }
 

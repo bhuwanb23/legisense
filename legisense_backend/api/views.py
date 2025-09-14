@@ -279,10 +279,10 @@ def import_simulation_view(request: HttpRequest):
         SimulationPenaltyForecast.objects.create(
             session=session,
             label=str(row.get("label", f"Month {row.get('month', 1)}"))[:64],
-            base_amount=0,  # LLM doesn't provide base_amount
-            fees_amount=0,  # LLM doesn't provide fees_amount
-            penalties_amount=float(row.get("amount", 0)),
-            total_amount=float(row.get("amount", 0)),
+            base_amount=float(row.get("base_amount", 0)),
+            fees_amount=float(row.get("fees_amount", 0)),
+            penalties_amount=float(row.get("penalties_amount", 0)),
+            total_amount=float(row.get("total_amount", 0)),
         )
 
     for item in payload.get("exit_comparisons", []) or []:
@@ -311,6 +311,7 @@ def import_simulation_view(request: HttpRequest):
             index=int(item.get("index") or 0),
             label=str(item.get("label", ""))[:64],
             value=item.get("value") or 0,
+            description=str(item.get("description", ""))[:255],
         )
 
     for item in payload.get("risk_alerts", []) or []:
@@ -409,6 +410,7 @@ def simulation_detail_view(request: HttpRequest, pk: int):
                 "index": point.index,
                 "label": point.label,
                 "value": float(point.value),
+                "description": point.description,
             }
             for point in long_term_points
         ],

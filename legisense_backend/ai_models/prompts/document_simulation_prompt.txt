@@ -16,6 +16,9 @@ Requirements:
 - Create 3-5 timeline events, 2-3 exit scenarios, and 2-4 risk alerts
 - Use Indian Rupees (₹) for financial amounts
 - Make scenarios practical and actionable
+- For penalty_forecast: Provide detailed breakdown with base_amount, fees_amount, penalties_amount, and total_amount
+- For long_term: Provide cumulative cost projections over multiple time periods (years/months)
+- Ensure all financial amounts are realistic and based on document terms
 
 Output a single JSON object with this exact structure:
 
@@ -42,9 +45,28 @@ Output a single JSON object with this exact structure:
   ],
   "penalty_forecast": [
     {
-      "month": 1,
-      "amount": 5000,
-      "description": "Late payment penalty"
+      "label": "Month 1",
+      "base_amount": 12000,
+      "fees_amount": 500,
+      "penalties_amount": 0,
+      "total_amount": 12500,
+      "description": "Initial payment with processing fees"
+    },
+    {
+      "label": "Month 3", 
+      "base_amount": 12000,
+      "fees_amount": 1500,
+      "penalties_amount": 2500,
+      "total_amount": 16000,
+      "description": "Accumulated late fees and penalties"
+    },
+    {
+      "label": "Month 6",
+      "base_amount": 12000,
+      "fees_amount": 2600,
+      "penalties_amount": 6200,
+      "total_amount": 20800,
+      "description": "Maximum penalty scenario"
     }
   ],
   "exit_comparisons": [
@@ -69,7 +91,20 @@ Output a single JSON object with this exact structure:
     {
       "index": 1,
       "label": "Year 1",
-      "value": 100000
+      "value": 40000,
+      "description": "First year cumulative costs"
+    },
+    {
+      "index": 2,
+      "label": "Year 2", 
+      "value": 90000,
+      "description": "Second year with compound effects"
+    },
+    {
+      "index": 3,
+      "label": "Year 3",
+      "value": 120000,
+      "description": "Third year maximum exposure"
     }
   ],
   "risk_alerts": [

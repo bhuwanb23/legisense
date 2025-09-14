@@ -42,8 +42,9 @@ class SimulationTimelineNodeAdmin(admin.ModelAdmin):
 
 @admin.register(SimulationPenaltyForecast)
 class SimulationPenaltyForecastAdmin(admin.ModelAdmin):
-    list_display = ("id", "session", "label", "total_amount")
+    list_display = ("id", "session", "label", "base_amount", "fees_amount", "penalties_amount", "total_amount")
     list_filter = ("session",)
+    search_fields = ("label",)
 
 
 @admin.register(SimulationExitComparison)
@@ -60,8 +61,9 @@ class SimulationNarrativeOutcomeAdmin(admin.ModelAdmin):
 
 @admin.register(SimulationLongTermPoint)
 class SimulationLongTermPointAdmin(admin.ModelAdmin):
-    list_display = ("id", "session", "index", "value")
+    list_display = ("id", "session", "index", "label", "value", "description")
     list_filter = ("session",)
+    search_fields = ("label", "description")
 
 
 @admin.register(SimulationRiskAlert)
