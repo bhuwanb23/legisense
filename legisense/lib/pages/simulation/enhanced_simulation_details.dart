@@ -239,7 +239,7 @@ class _EnhancedSimulationDetailsPageState extends State<EnhancedSimulationDetail
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const ExportOptions(),
+                          ExportOptions(documentTitle: widget.documentTitle),
                           const SizedBox(height: 12),
                           NextStepsCTA(
                             documentTitle: widget.documentTitle,

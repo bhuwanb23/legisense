@@ -4,7 +4,6 @@ import '../../theme/app_theme.dart';
 import '../../components/main_header.dart';
 import '../documents/components/components.dart' show SearchField;
 import 'components/components.dart';
-import '../documents/document_view_detail.dart';
 import 'enhanced_simulation_details.dart';
 
 class SimulationPage extends StatefulWidget {
@@ -58,19 +57,6 @@ class _SimulationPageState extends State<SimulationPage> {
                             builder: (context) => EnhancedSimulationDetailsPage(
                               documentId: documentId,
                               documentTitle: documentTitle,
-                            ),
-                          ),
-                        );
-                      },
-                      onViewDetails: (documentId, documentTitle) {
-                        // route to read-only document details page
-                        // Reuse existing DocumentViewDetail from documents module
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => DocumentViewDetail(
-                              title: documentTitle,
-                              meta: '',
-                              docId: documentId,
                             ),
                           ),
                         );

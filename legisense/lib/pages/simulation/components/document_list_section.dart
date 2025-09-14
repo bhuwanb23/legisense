@@ -1,21 +1,18 @@
 import 'package:flutter/material.dart';
 import '../../../theme/app_theme.dart';
 import '../../documents/components/components.dart';
-import '../../documents/document_view_detail.dart';
 import '../enhanced_simulation_details.dart';
 import '../../../api/parsed_documents_repository.dart';
 
 class DocumentListSection extends StatelessWidget {
   final Function(String documentId, String documentTitle)? onDocumentTap; // legacy single-tap (kept for compatibility)
   final Function(String documentId, String documentTitle)? onSimulate;
-  final Function(String documentId, String documentTitle)? onViewDetails;
   final String searchQuery;
   
   const DocumentListSection({
     super.key,
     this.onDocumentTap,
     this.onSimulate,
-    this.onViewDetails,
     this.searchQuery = '',
   });
 
@@ -99,26 +96,6 @@ class DocumentListSection extends StatelessWidget {
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.end,
                             children: [
-                              OutlinedButton.icon(
-                                onPressed: () {
-                                  if (onViewDetails != null) {
-                                    onViewDetails!("server-$id", title);
-                                  } else {
-                                    Navigator.of(context).push(
-                                      MaterialPageRoute(
-                                        builder: (_) => DocumentViewDetail(
-                                          title: title,
-                                          meta: meta,
-                                          docId: 'server-$id',
-                                        ),
-                                      ),
-                                    );
-                                  }
-                                },
-                                icon: const Icon(Icons.description, size: 16),
-                                label: const Text('Details'),
-                              ),
-                              const SizedBox(width: 8),
                               ElevatedButton.icon(
                                 onPressed: () async {
                                   // Trigger backend simulation and show beautiful loader
