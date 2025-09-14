@@ -150,11 +150,14 @@ class PenaltyForecastPanel extends StatelessWidget {
 
   List<Map<String, dynamic>> _getPenaltyForecastData() {
     // Use real simulation data if available, otherwise fall back to mock data
+    print('🔍 PenaltyForecastPanel - simulationData: $simulationData');
     if (simulationData != null) {
       final penaltyData = simulationData!['penalty_forecast'] as List<dynamic>?;
+      print('🔍 PenaltyForecastPanel - penaltyData: $penaltyData');
       if (penaltyData != null && penaltyData.isNotEmpty) {
-        return penaltyData.map((item) {
+        final result = penaltyData.map((item) {
           final data = item as Map<String, dynamic>;
+          print('🔍 PenaltyForecastPanel - processing item: $data');
           return {
             'month': data['label'] as String? ?? 'Month',
             'base': (data['base_amount'] as num?)?.toInt() ?? 0,
@@ -163,10 +166,13 @@ class PenaltyForecastPanel extends StatelessWidget {
             'total': (data['total_amount'] as num?)?.toInt() ?? 0,
           };
         }).toList();
+        print('🔍 PenaltyForecastPanel - returning real data: $result');
+        return result;
       }
     }
     
     // Fall back to mock data
+    print('🔍 PenaltyForecastPanel - using fallback mock data');
     return [
       {'month': 'Month 1', 'base': 12000, 'fees': 500, 'penalties': 0, 'total': 12500},
       {'month': 'Month 3', 'base': 12000, 'fees': 1500, 'penalties': 2500, 'total': 16000},

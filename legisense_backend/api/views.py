@@ -183,6 +183,8 @@ def parsed_doc_simulate_view(request: HttpRequest, pk: int):
 
     # Map extracted JSON to our import payload shape using LLM data
     session_data = extracted.get("session", {})
+    print(f"🔍 Backend - extracted penalty_forecast: {extracted.get('penalty_forecast', [])}")
+    print(f"🔍 Backend - extracted long_term: {extracted.get('long_term', [])}")
     session_payload = {
         "document_id": doc.id,
         "session": {
@@ -199,6 +201,8 @@ def parsed_doc_simulate_view(request: HttpRequest, pk: int):
         "long_term": extracted.get("long_term", []),
         "risk_alerts": extracted.get("risk_alerts", []),
     }
+    print(f"🔍 Backend - session_payload penalty_forecast: {session_payload['penalty_forecast']}")
+    print(f"🔍 Backend - session_payload long_term: {session_payload['long_term']}")
 
     # Try to infer some defaults from enums/relationships if provided (best-effort)
     # For now, we leave those arrays empty unless you want me to create mock data from the model definitions.
@@ -276,6 +280,7 @@ def import_simulation_view(request: HttpRequest):
         )
 
     for row in payload.get("penalty_forecast", []) or []:
+        print(f"🔍 Backend - storing penalty_forecast row: {row}")
         SimulationPenaltyForecast.objects.create(
             session=session,
             label=str(row.get("label", f"Month {row.get('month', 1)}"))[:64],
@@ -306,6 +311,7 @@ def import_simulation_view(request: HttpRequest):
         )
 
     for item in payload.get("long_term", []) or []:
+        print(f"🔍 Backend - storing long_term item: {item}")
         SimulationLongTermPoint.objects.create(
             session=session,
             index=int(item.get("index") or 0),
@@ -350,6 +356,8 @@ def simulation_detail_view(request: HttpRequest, pk: int):
     risk_alerts = SimulationRiskAlert.objects.filter(session=session).order_by('id')
 
     # Build response
+    print(f"🔍 Backend - penalty_forecasts from DB: {[{'label': f.label, 'base_amount': f.base_amount, 'fees_amount': f.fees_amount, 'penalties_amount': f.penalties_amount, 'total_amount': f.total_amount} for f in penalty_forecasts]}")
+    print(f"🔍 Backend - long_term_points from DB: {[{'label': p.label, 'value': p.value, 'description': p.description} for p in long_term_points]}")
     response_data = {
         "session": {
             "id": session.id,

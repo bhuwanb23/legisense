@@ -29,6 +29,7 @@ class _EnhancedSimulationDetailsPageState extends State<EnhancedSimulationDetail
   void initState() {
     super.initState();
     _baseSimulationData = widget.simulationData;
+    print('🔍 EnhancedSimulationDetailsPage - widget.simulationData: ${widget.simulationData}');
     
     // Initialize parameters from simulation data or use defaults
     if (_baseSimulationData != null) {
@@ -52,6 +53,7 @@ class _EnhancedSimulationDetailsPageState extends State<EnhancedSimulationDetail
     
     // Calculate initial dynamic data
     _calculateDynamicData();
+    print('🔍 EnhancedSimulationDetailsPage - _dynamicSimulationData: $_dynamicSimulationData');
   }
 
   SimulationScenario _parseScenario(String? scenario) {

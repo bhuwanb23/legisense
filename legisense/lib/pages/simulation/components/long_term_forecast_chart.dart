@@ -95,20 +95,26 @@ class LongTermForecastChart extends StatelessWidget {
 
   List<_Point> _getLongTermData() {
     // Use real simulation data if available, otherwise fall back to mock data
+    print('🔍 LongTermForecastChart - simulationData: $simulationData');
     if (simulationData != null) {
       final longTermData = simulationData!['long_term'] as List<dynamic>?;
+      print('🔍 LongTermForecastChart - longTermData: $longTermData');
       if (longTermData != null && longTermData.isNotEmpty) {
-        return longTermData.map((item) {
+        final result = longTermData.map((item) {
           final data = item as Map<String, dynamic>;
+          print('🔍 LongTermForecastChart - processing item: $data');
           return _Point(
             data['label'] as String? ?? 'Period',
             (data['value'] as num?)?.toInt() ?? 0,
           );
         }).toList();
+        print('🔍 LongTermForecastChart - returning real data: $result');
+        return result;
       }
     }
     
     // Fall back to mock data
+    print('🔍 LongTermForecastChart - using fallback mock data');
     return const [
       _Point('Year 1', 40000),
       _Point('Year 2', 90000),
