@@ -76,6 +76,21 @@ class _EnhancedSimulationDetailsPageState extends State<EnhancedSimulationDetail
     // Create a deep copy of the base data
     _dynamicSimulationData = Map<String, dynamic>.from(_baseSimulationData!);
     
+    // Normalize scenario inside parameters to enum if it arrived as String from backend
+    if (_dynamicSimulationData!['session'] != null) {
+      final session = Map<String, dynamic>.from(_dynamicSimulationData!['session']);
+      final params = Map<String, dynamic>.from(session['parameters'] as Map<String, dynamic>? ?? {});
+      final dynamic incomingScenario = params['scenario'];
+      final SimulationScenario normalized = incomingScenario is SimulationScenario
+          ? incomingScenario
+          : _parseScenario(incomingScenario?.toString());
+      params['scenario'] = normalized;
+      session['parameters'] = params;
+      _dynamicSimulationData!['session'] = session;
+      _parameters = params; // keep local copy in sync
+      _selectedScenario = normalized; // sync current selection
+    }
+
     // Apply parameter-based transformations
     _applyParameterEffects();
   }
@@ -83,7 +98,9 @@ class _EnhancedSimulationDetailsPageState extends State<EnhancedSimulationDetail
   void _applyParameterEffects() {
     if (_dynamicSimulationData == null) return;
 
-    final scenario = _parameters['scenario'] as SimulationScenario;
+    final dynamic scenarioRaw = _parameters['scenario'];
+    final SimulationScenario scenario =
+        scenarioRaw is SimulationScenario ? scenarioRaw : _parseScenario(scenarioRaw?.toString());
     final missedPayments = _parameters['missedPayments'] as int;
     final earlyTermination = _parameters['earlyTermination'] as bool;
     final delayDays = _parameters['delayDays'] as int;

@@ -92,8 +92,17 @@ class ComparisonPanel extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         children: [
-          Expanded(child: Text(k, style: ks)),
-          Text(v, style: vs),
+          Expanded(child: Text(k, style: ks, maxLines: 1, overflow: TextOverflow.ellipsis)),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              v,
+              style: vs,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.right,
+            ),
+          ),
         ],
       ),
     );

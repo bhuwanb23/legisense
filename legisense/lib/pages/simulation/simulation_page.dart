@@ -4,7 +4,6 @@ import '../../theme/app_theme.dart';
 import '../../components/main_header.dart';
 import '../documents/components/components.dart' show SearchField;
 import 'components/components.dart';
-import 'enhanced_simulation_details.dart';
 
 class SimulationPage extends StatefulWidget {
   const SimulationPage({super.key});
@@ -51,16 +50,6 @@ class _SimulationPageState extends State<SimulationPage> {
                     // Document List Section - Natural height with page scrolling
                     DocumentListSection(
                       searchQuery: _query,
-                      onSimulate: (documentId, documentTitle) {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) => EnhancedSimulationDetailsPage(
-                              documentId: documentId,
-                              documentTitle: documentTitle,
-                            ),
-                          ),
-                        );
-                      },
                     )
                         .animate()
                         .slideY(

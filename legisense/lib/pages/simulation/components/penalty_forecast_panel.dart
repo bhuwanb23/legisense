@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:math' as math;
 
 class PenaltyForecastPanel extends StatelessWidget {
   final String documentTitle;
@@ -16,6 +17,12 @@ class PenaltyForecastPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final Color headerColor = const Color(0xFF111827);
     final List<Map<String, dynamic>> rows = _getPenaltyForecastData();
+    // Determine the maximum total to scale bars safely, avoiding overflow
+    final double maxTotal = rows.isEmpty
+        ? 0
+        : rows
+            .map((r) => (r['total'] as num).toDouble())
+            .fold<double>(0, (prev, v) => math.max(prev, v));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -61,7 +68,8 @@ class PenaltyForecastPanel extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: rows.map((r) {
                   final double total = (r['total'] as num).toDouble();
-                  final double h = (total / 22000.0) * maxBarHeight;
+                  final double denominator = maxTotal <= 0 ? 1.0 : maxTotal;
+                  final double h = ((total / denominator) * maxBarHeight).clamp(0.0, maxBarHeight);
                   return Expanded(
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 6),
