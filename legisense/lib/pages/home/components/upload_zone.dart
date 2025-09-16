@@ -8,6 +8,8 @@ import '../../documents/documents_page.dart';
 import '../../documents/data/sample_documents.dart';
 import '../../../theme/app_theme.dart';
 import '../../../utils/responsive.dart';
+import '../../profile/language/language_scope.dart';
+import '../language/strings.dart';
 
 class UploadZone extends StatefulWidget {
   const UploadZone({super.key});
@@ -32,9 +34,11 @@ class _UploadZoneState extends State<UploadZone> {
   }
   Future<void> _pickDocument() async {
     try {
+      final lang = LanguageScope.maybeOf(context)?.language ?? AppLanguage.en;
+      final i18n = HomeI18n.mapFor(lang);
       setState(() {
         _isLoading = true;
-        _loadingLabel = 'Opening picker...';
+        _loadingLabel = i18n['upload.loading.openPicker'] ?? 'Opening picker...';
       });
 
       // Dev override: if a local Windows file exists at the given path, use it
@@ -54,17 +58,22 @@ class _UploadZoneState extends State<UploadZone> {
         allowMultiple: false,
       )
           : null;
+      if (!mounted) return;
 
       if (selectedFile != null || (result != null && result.files.isNotEmpty)) {
         if (selectedFile == null) {
           final PlatformFile file = result!.files.single;
           if (file.extension?.toLowerCase() != 'pdf') {
-            _showErrorDialog('Only PDF is supported for parsing at the moment.');
+            final i18n = HomeI18n.mapFor(LanguageScope.maybeOf(context)?.language ?? AppLanguage.en);
+            if (!mounted) return;
+            _showErrorDialog(i18n['upload.error.onlyPdf'] ?? 'Only PDF is supported for parsing at the moment.');
             return;
           }
           final String? path = file.path;
           if (path == null) {
-            _showErrorDialog('File path unavailable.');
+            final i18n = HomeI18n.mapFor(LanguageScope.maybeOf(context)?.language ?? AppLanguage.en);
+            if (!mounted) return;
+            _showErrorDialog(i18n['upload.error.pathUnavailable'] ?? 'File path unavailable.');
             return;
           }
           selectedFile = File(path);
@@ -73,11 +82,14 @@ class _UploadZoneState extends State<UploadZone> {
         // Ensure extension is PDF for backend parsing
         final String lower = selectedFile.path.toLowerCase();
         if (!lower.endsWith('.pdf')) {
-          _showErrorDialog('Only PDF is supported for parsing at the moment.');
+          final i18n = HomeI18n.mapFor(LanguageScope.maybeOf(context)?.language ?? AppLanguage.en);
+          if (!mounted) return;
+          _showErrorDialog(i18n['upload.error.onlyPdf'] ?? 'Only PDF is supported for parsing at the moment.');
           return;
         }
         setState(() {
-          _loadingLabel = 'Uploading...';
+          final i18n = HomeI18n.mapFor(LanguageScope.maybeOf(context)?.language ?? AppLanguage.en);
+          _loadingLabel = i18n['upload.loading.uploading'] ?? 'Uploading...';
         });
         final parsed = await _repo.uploadAndParsePdf(pdfFile: selectedFile);
         // Also reflect in global uploaded list for documents page
@@ -94,11 +106,12 @@ class _UploadZoneState extends State<UploadZone> {
           }
         } catch (_) {}
         if (!mounted) return;
+        final i18n = HomeI18n.mapFor(LanguageScope.maybeOf(context)?.language ?? AppLanguage.en);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('PDF processed successfully'),
+          SnackBar(
+            content: Text(i18n['upload.snackbar.success'] ?? 'PDF processed successfully'),
             backgroundColor: AppTheme.successGreen,
-            duration: Duration(seconds: 2),
+            duration: const Duration(seconds: 2),
           ),
         );
         // Navigate to documents page to view it
@@ -107,12 +120,18 @@ class _UploadZoneState extends State<UploadZone> {
         );
       }
     } catch (e) {
-      _showConnectivityHelp('Failed to pick document: $e');
+      final i18n = HomeI18n.mapFor(LanguageScope.maybeOf(context)?.language ?? AppLanguage.en);
+      if (mounted) {
+        _showConnectivityHelp('${i18n['upload.error.failedPick'] ?? 'Failed to pick document'}: $e');
+      }
     } finally {
-      setState(() {
-        _isLoading = false;
-        _loadingLabel = 'Opening picker...';
-      });
+      if (mounted) {
+        final i18n = HomeI18n.mapFor(LanguageScope.maybeOf(context)?.language ?? AppLanguage.en);
+        setState(() {
+          _isLoading = false;
+          _loadingLabel = i18n['upload.loading.openPicker'] ?? 'Opening picker...';
+        });
+      }
     }
   }
 
@@ -123,7 +142,7 @@ class _UploadZoneState extends State<UploadZone> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Error'),
+          title: Text('Error'),
           content: Text(message),
           actions: [
             TextButton(
@@ -141,8 +160,9 @@ class _UploadZoneState extends State<UploadZone> {
     showDialog(
       context: context,
       builder: (BuildContext context) {
+        final i18n = HomeI18n.mapFor(LanguageScope.maybeOf(context)?.language ?? AppLanguage.en);
         return AlertDialog(
-          title: const Text('Connection problem'),
+          title: Text(i18n['upload.connect.title'] ?? 'Connection problem'),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -150,7 +170,7 @@ class _UploadZoneState extends State<UploadZone> {
               children: [
                 Text('$message\n\nCurrent base URL: ${_repo.baseUrl}'),
                 const SizedBox(height: 12),
-                const Text('Quick fixes:'),
+                Text(i18n['upload.connect.quickFixes'] ?? 'Quick fixes:'),
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 8,
@@ -160,19 +180,19 @@ class _UploadZoneState extends State<UploadZone> {
                         Navigator.of(context).pop();
                         _retryWithBase('http://10.0.2.2:8000');
                       },
-                      child: const Text('Use 10.0.2.2'),
+                      child: Text(i18n['upload.connect.use10'] ?? 'Use 10.0.2.2'),
                     ),
                     OutlinedButton(
                       onPressed: () {
                         Navigator.of(context).pop();
                         _retryWithBase('http://127.0.0.1:8000');
                       },
-                      child: const Text('Use 127.0.0.1'),
+                      child: Text(i18n['upload.connect.use127'] ?? 'Use 127.0.0.1'),
                     ),
                   ],
                 ),
                 const SizedBox(height: 12),
-                const Text('Custom base URL (e.g., http://192.168.x.y:8000):'),
+                Text(i18n['upload.connect.customLabel'] ?? 'Custom base URL (e.g., http://192.168.x.y:8000):'),
                 const SizedBox(height: 8),
                 TextField(
                   controller: controller,
@@ -184,7 +204,7 @@ class _UploadZoneState extends State<UploadZone> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
+              child: Text(i18n['upload.connect.cancel'] ?? 'Cancel'),
             ),
             ElevatedButton(
               onPressed: () {
@@ -192,7 +212,7 @@ class _UploadZoneState extends State<UploadZone> {
                 Navigator.of(context).pop();
                 _retryWithBase(value);
               },
-              child: const Text('Retry with URL'),
+              child: Text(i18n['upload.connect.retry'] ?? 'Retry with URL'),
             ),
           ],
         );
@@ -213,6 +233,8 @@ class _UploadZoneState extends State<UploadZone> {
   @override
   Widget build(BuildContext context) {
     final isSmall = ResponsiveHelper.isSmallScreen(context);
+    final lang = LanguageScope.maybeOf(context)?.language ?? AppLanguage.en;
+    final i18n = HomeI18n.mapFor(lang);
     return Container(
       margin: EdgeInsets.symmetric(
         horizontal: ResponsiveHelper.getResponsivePadding(
@@ -288,7 +310,7 @@ class _UploadZoneState extends State<UploadZone> {
             
             // Title and Description
             Text(
-              'Upload a Document',
+              i18n['upload.title'] ?? 'Upload a Document',
               style: AppTheme.heading4,
             )
                 .animate()
@@ -302,7 +324,7 @@ class _UploadZoneState extends State<UploadZone> {
             SizedBox(height: isSmall ? AppTheme.spacingXS : AppTheme.spacingXS + 2),
             
             Text(
-              'Select a PDF, DOC/DOCX, or PPT/PPTX to process',
+              i18n['upload.subtitle'] ?? 'Select a PDF, DOC/DOCX, or PPT/PPTX to process',
               style: AppTheme.bodySmall,
             )
                 .animate()
@@ -362,7 +384,7 @@ class _UploadZoneState extends State<UploadZone> {
                               ),
                               SizedBox(width: isSmall ? AppTheme.spacingXS : AppTheme.spacingXS + 2),
                               Text(
-                                'Upload Document',
+                                i18n['upload.button.upload'] ?? 'Upload Document',
                                 style: AppTheme.buttonPrimary,
                               ),
                             ],
@@ -406,7 +428,7 @@ class _UploadZoneState extends State<UploadZone> {
                         ),
                         SizedBox(width: isSmall ? AppTheme.spacingXS : AppTheme.spacingS),
                         Text(
-                          'Browse Files',
+                          i18n['upload.button.browse'] ?? 'Browse Files',
                           style: AppTheme.buttonSecondary,
                         ),
                       ],

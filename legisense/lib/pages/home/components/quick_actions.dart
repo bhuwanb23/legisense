@@ -3,6 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../utils/responsive.dart';
+import '../../profile/language/language_scope.dart';
+import '../language/strings.dart';
 import '../../../main.dart';
 
 class QuickActions extends StatelessWidget {
@@ -10,11 +12,13 @@ class QuickActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final lang = LanguageScope.maybeOf(context)?.language ?? AppLanguage.en;
+    final i18n = HomeI18n.mapFor(lang);
     final List<Map<String, dynamic>> actions = [
       {
         'icon': FontAwesomeIcons.magnifyingGlass,
-        'title': 'Analyze',
-        'subtitle': 'Upload & analyze documents',
+        'title': i18n['quick.analyze.title'] ?? 'Analyze',
+        'subtitle': i18n['quick.analyze.subtitle'] ?? 'Upload & analyze documents',
         'gradient': const LinearGradient(
           colors: [Color(0xFFA855F7), Color(0xFFEC4899)],
           begin: Alignment.topLeft,
@@ -25,8 +29,8 @@ class QuickActions extends StatelessWidget {
       },
       {
         'icon': FontAwesomeIcons.clockRotateLeft,
-        'title': 'History',
-        'subtitle': 'View past analyses',
+        'title': i18n['quick.history.title'] ?? 'History',
+        'subtitle': i18n['quick.history.subtitle'] ?? 'View past analyses',
         'gradient': const LinearGradient(
           colors: [Color(0xFF10B981), Color(0xFF059669)],
           begin: Alignment.topLeft,
@@ -37,8 +41,8 @@ class QuickActions extends StatelessWidget {
       },
       {
         'icon': FontAwesomeIcons.play,
-        'title': 'Simulate',
-        'subtitle': 'Run scenarios',
+        'title': i18n['quick.simulate.title'] ?? 'Simulate',
+        'subtitle': i18n['quick.simulate.subtitle'] ?? 'Run scenarios',
         'gradient': const LinearGradient(
           colors: [Color(0xFF3B82F6), Color(0xFF1D4ED8)],
           begin: Alignment.topLeft,
@@ -49,8 +53,8 @@ class QuickActions extends StatelessWidget {
       },
       {
         'icon': FontAwesomeIcons.user,
-        'title': 'Profile',
-        'subtitle': 'Account settings',
+        'title': i18n['quick.profile.title'] ?? 'Profile',
+        'subtitle': i18n['quick.profile.subtitle'] ?? 'Account settings',
         'gradient': const LinearGradient(
           colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
           begin: Alignment.topLeft,
@@ -96,7 +100,7 @@ class QuickActions extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Quick Actions',
+            i18n['quick.title'] ?? 'Quick Actions',
             style: GoogleFonts.inter(
               fontSize: 16,
               fontWeight: FontWeight.w600,

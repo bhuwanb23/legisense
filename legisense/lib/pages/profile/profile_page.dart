@@ -6,6 +6,7 @@ import '../../components/main_header.dart';
 import '../../theme/app_theme.dart';
 import 'components/components.dart';
 // imports provided transitively by components/components.dart
+import '../../main.dart';
 
 class ProfilePage extends StatefulWidget {
   final VoidCallback? onLogout;
@@ -42,7 +43,7 @@ class _ProfilePageState extends State<ProfilePage> {
   // Lightweight loading state for timeline
   bool _loadingTimeline = true;
 
-  final LanguageController _languageController = LanguageController(AppLanguage.en);
+  final LanguageController _languageController = appLanguageController;
 
   @override
   void initState() {

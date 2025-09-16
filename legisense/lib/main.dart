@@ -7,6 +7,7 @@ import 'pages/documents/documents_page.dart';
 import 'pages/simulation/simulation_page.dart';
 import 'pages/profile/profile_page.dart';
 import 'components/bottom_nav_bar.dart';
+import 'pages/profile/language/language_scope.dart';
 
 // Global navigation key to access the main app state
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -18,20 +19,25 @@ void main() {
   runApp(const LegisenseApp());
 }
 
+final LanguageController appLanguageController = LanguageController(AppLanguage.en);
+
 class LegisenseApp extends StatelessWidget {
   const LegisenseApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Legisense',
-      navigatorKey: navigatorKey,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF1E3A8A)),
-        useMaterial3: true,
+    return LanguageScope(
+      controller: appLanguageController,
+      child: MaterialApp(
+        title: 'Legisense',
+        navigatorKey: navigatorKey,
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF1E3A8A)),
+          useMaterial3: true,
+        ),
+        home: const AppWrapper(),
+        debugShowCheckedModeBanner: false,
       ),
-      home: const AppWrapper(),
-      debugShowCheckedModeBanner: false,
     );
   }
 }
