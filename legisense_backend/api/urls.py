@@ -9,6 +9,7 @@ from .views import (
     parsed_doc_simulate_view,
     import_simulation_view,
     simulation_detail_view,
+    document_simulations_view,
 )
 
 urlpatterns = [
@@ -18,6 +19,7 @@ urlpatterns = [
     path('documents/<int:pk>/analysis/', parsed_doc_analysis_view, name='parsed_doc_analysis'),
     path('documents/<int:pk>/analyze/', parsed_doc_analyze_view, name='parsed_doc_analyze'),
     path('documents/<int:pk>/simulate/', parsed_doc_simulate_view, name='parsed_doc_simulate'),
+    path('documents/<int:pk>/simulations/', document_simulations_view, name='document_simulations'),
     path('simulations/import/', import_simulation_view, name='import_simulation'),
     path('simulations/<int:pk>/', simulation_detail_view, name='simulation_detail'),
 ]

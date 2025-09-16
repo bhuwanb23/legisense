@@ -163,6 +163,24 @@ def parsed_doc_simulate_view(request: HttpRequest, pk: int):
 
     doc = get_object_or_404(ParsedDocument, pk=pk)
 
+    # Check if document already has simulations
+    from .models import SimulationSession
+    existing_simulations = SimulationSession.objects.filter(document=doc).order_by('-created_at')
+    
+    if existing_simulations.exists():
+        # Return the most recent simulation session ID
+        latest_simulation = existing_simulations.first()
+        print(f"🔍 Found existing simulation for document {pk}: session_id={latest_simulation.id}")
+        return JsonResponse({
+            "status": "ok", 
+            "session_id": latest_simulation.id,
+            "cached": True,
+            "message": "Using existing simulation data"
+        })
+
+    # No existing simulation found, generate new one via LLM
+    print(f"🔍 No existing simulation found for document {pk}, generating new one...")
+    
     # Run extraction (LLM) to produce a structured JSON based on document content
     try:
         from ai_models.run_simulation_models_extraction import run_extraction
@@ -183,8 +201,6 @@ def parsed_doc_simulate_view(request: HttpRequest, pk: int):
 
     # Map extracted JSON to our import payload shape using LLM data
     session_data = extracted.get("session", {})
-    print(f"🔍 Backend - extracted penalty_forecast: {extracted.get('penalty_forecast', [])}")
-    print(f"🔍 Backend - extracted long_term: {extracted.get('long_term', [])}")
     session_payload = {
         "document_id": doc.id,
         "session": {
@@ -201,15 +217,22 @@ def parsed_doc_simulate_view(request: HttpRequest, pk: int):
         "long_term": extracted.get("long_term", []),
         "risk_alerts": extracted.get("risk_alerts", []),
     }
-    print(f"🔍 Backend - session_payload penalty_forecast: {session_payload['penalty_forecast']}")
-    print(f"🔍 Backend - session_payload long_term: {session_payload['long_term']}")
 
     # Try to infer some defaults from enums/relationships if provided (best-effort)
     # For now, we leave those arrays empty unless you want me to create mock data from the model definitions.
 
     # Persist via the same code path as manual import
     request._body = json.dumps(session_payload).encode("utf-8")  # type: ignore[attr-defined]
-    return import_simulation_view(request)
+    result = import_simulation_view(request)
+    
+    # If successful, add metadata to indicate this is a new simulation
+    if isinstance(result, JsonResponse) and result.status_code == 200:
+        response_data = json.loads(result.content.decode('utf-8'))
+        response_data['cached'] = False
+        response_data['message'] = 'New simulation generated'
+        return JsonResponse(response_data)
+    
+    return result
 
 
 @csrf_exempt
@@ -280,7 +303,6 @@ def import_simulation_view(request: HttpRequest):
         )
 
     for row in payload.get("penalty_forecast", []) or []:
-        print(f"🔍 Backend - storing penalty_forecast row: {row}")
         SimulationPenaltyForecast.objects.create(
             session=session,
             label=str(row.get("label", f"Month {row.get('month', 1)}"))[:64],
@@ -311,7 +333,6 @@ def import_simulation_view(request: HttpRequest):
         )
 
     for item in payload.get("long_term", []) or []:
-        print(f"🔍 Backend - storing long_term item: {item}")
         SimulationLongTermPoint.objects.create(
             session=session,
             index=int(item.get("index") or 0),
@@ -356,8 +377,6 @@ def simulation_detail_view(request: HttpRequest, pk: int):
     risk_alerts = SimulationRiskAlert.objects.filter(session=session).order_by('id')
 
     # Build response
-    print(f"🔍 Backend - penalty_forecasts from DB: {[{'label': f.label, 'base_amount': f.base_amount, 'fees_amount': f.fees_amount, 'penalties_amount': f.penalties_amount, 'total_amount': f.total_amount} for f in penalty_forecasts]}")
-    print(f"🔍 Backend - long_term_points from DB: {[{'label': p.label, 'value': p.value, 'description': p.description} for p in long_term_points]}")
     response_data = {
         "session": {
             "id": session.id,
@@ -432,6 +451,35 @@ def simulation_detail_view(request: HttpRequest, pk: int):
         ],
     }
 
+    return JsonResponse(response_data)
+
+
+def document_simulations_view(request: HttpRequest, pk: int):
+    """Check if a document has existing simulations."""
+    if request.method != "GET":
+        return JsonResponse({"error": "Method not allowed"}, status=405)
+
+    doc = get_object_or_404(ParsedDocument, pk=pk)
+    
+    from .models import SimulationSession
+    simulations = SimulationSession.objects.filter(document=doc).order_by('-created_at')
+    
+    response_data = {
+        "document_id": doc.id,
+        "has_simulations": simulations.exists(),
+        "simulation_count": simulations.count(),
+        "latest_simulation": None,
+    }
+    
+    if simulations.exists():
+        latest = simulations.first()
+        response_data["latest_simulation"] = {
+            "id": latest.id,
+            "title": latest.title,
+            "scenario": latest.scenario,
+            "created_at": latest.created_at.isoformat(),
+        }
+    
     return JsonResponse(response_data)
 
 

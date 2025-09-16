@@ -94,50 +94,152 @@ class DocumentListSection extends StatelessWidget {
                         Padding(
                           padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
                           child: Row(
-                            mainAxisAlignment: MainAxisAlignment.end,
                             children: [
-                              ElevatedButton.icon(
-                                onPressed: () async {
-                                  // Trigger backend simulation and show beautiful loader
-                                  showDialog(
-                                    context: context,
-                                    barrierDismissible: false,
-                                    builder: (_) => _buildBeautifulLoader(context),
-                                  );
-                                  try {
-                                    // Step 1: Trigger simulation
-                                    final result = await repo.simulateDocument(id: id);
-                                    if (!context.mounted) return;
-                                    
-                                    // Step 2: Fetch the generated simulation data
-                                    final sessionId = result['session_id'] as int;
-                                    final simulationData = await repo.fetchSimulationData(sessionId: sessionId);
-                                    
-                                    if (!context.mounted) return;
-                                    Navigator.of(context).pop(); // close loader
-                                    
-                                    // Step 3: Navigate to enhanced page with real data
-                                    if (onSimulate != null) {
-                                      onSimulate!("server-$id", title);
-                                    } else {
-                                      Navigator.of(context).push(
-                                        MaterialPageRoute(
-                                          builder: (context) => EnhancedSimulationDetailsPage(
-                                            documentId: "server-$id",
-                                            documentTitle: title,
-                                            simulationData: simulationData,
-                                          ),
+                              // Show simulation count if available
+                              Expanded(
+                                child: FutureBuilder<Map<String, dynamic>>(
+                                  future: repo.checkDocumentSimulations(documentId: id),
+                                  builder: (context, snapshot) {
+                                    final int simulationCount = snapshot.data?['simulation_count'] ?? 0;
+                                    if (simulationCount > 0) {
+                                      return Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFF10B981).withValues(alpha: 0.1),
+                                          borderRadius: BorderRadius.circular(12),
+                                          border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.3)),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            const Icon(Icons.analytics, size: 14, color: Color(0xFF10B981)),
+                                            const SizedBox(width: 4),
+                                            Flexible(
+                                              child: Text(
+                                                '$simulationCount simulation${simulationCount == 1 ? '' : 's'}',
+                                                style: const TextStyle(
+                                                  fontSize: 12,
+                                                  color: Color(0xFF10B981),
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ),
+                                          ],
                                         ),
                                       );
                                     }
-                                  } catch (e) {
-                                    if (!context.mounted) return;
-                                    Navigator.of(context).pop(); // close loader
-                                    _showErrorDialog(context, e.toString());
-                                  }
+                                    return const SizedBox.shrink();
+                                  },
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              FutureBuilder<Map<String, dynamic>>(
+                                future: repo.checkDocumentSimulations(documentId: id),
+                                builder: (context, snapshot) {
+                                  final bool hasSimulations = snapshot.data?['has_simulations'] == true;
+                                  
+                                  return ConstrainedBox(
+                                    constraints: const BoxConstraints(minWidth: 120),
+                                    child: ElevatedButton.icon(
+                                      onPressed: () async {
+                                        // Trigger backend simulation and show beautiful loader
+                                        showDialog(
+                                          context: context,
+                                          barrierDismissible: false,
+                                          builder: (_) => _buildBeautifulLoader(context, "Loading simulation..."),
+                                        );
+                                        try {
+                                          // Step 1: Trigger simulation (may return cached or new data)
+                                          final result = await repo.simulateDocument(id: id);
+                                          if (!context.mounted) return;
+                                          
+                                          // Check if this was a cached simulation
+                                          final bool isCached = result['cached'] == true;
+                                          final String message = result['message'] ?? '';
+                                          
+                                          // Step 2: Fetch the simulation data
+                                          final sessionId = result['session_id'] as int;
+                                          final simulationData = await repo.fetchSimulationData(sessionId: sessionId);
+                                          
+                                          if (!context.mounted) return;
+                                          Navigator.of(context).pop(); // close loader
+                                          
+                                          // Show appropriate message based on cache status
+                                          if (isCached) {
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              SnackBar(
+                                                content: Row(
+                                                  children: [
+                                                    const Icon(Icons.cached, color: Colors.white, size: 20),
+                                                    const SizedBox(width: 8),
+                                                    Expanded(
+                                                      child: Text(
+                                                        'Using existing simulation: $message',
+                                                        overflow: TextOverflow.ellipsis,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                                backgroundColor: const Color(0xFF10B981),
+                                                duration: const Duration(seconds: 3),
+                                              ),
+                                            );
+                                          } else {
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              SnackBar(
+                                                content: Row(
+                                                  children: [
+                                                    const Icon(Icons.analytics, color: Colors.white, size: 20),
+                                                    const SizedBox(width: 8),
+                                                    Expanded(
+                                                      child: Text(
+                                                        'New simulation generated: $message',
+                                                        overflow: TextOverflow.ellipsis,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                                backgroundColor: const Color(0xFF6366F1),
+                                                duration: const Duration(seconds: 3),
+                                              ),
+                                            );
+                                          }
+                                          
+                                          // Step 3: Navigate to enhanced page with real data
+                                          if (onSimulate != null) {
+                                            onSimulate!("server-$id", title);
+                                          } else {
+                                            Navigator.of(context).push(
+                                              MaterialPageRoute(
+                                                builder: (context) => EnhancedSimulationDetailsPage(
+                                                  documentId: "server-$id",
+                                                  documentTitle: title,
+                                                  simulationData: simulationData,
+                                                ),
+                                              ),
+                                            );
+                                          }
+                                        } catch (e) {
+                                          if (!context.mounted) return;
+                                          Navigator.of(context).pop(); // close loader
+                                          _showErrorDialog(context, e.toString());
+                                        }
+                                      },
+                                      icon: Icon(
+                                        hasSimulations ? Icons.cached : Icons.play_arrow_rounded, 
+                                        size: 18
+                                      ),
+                                      label: Text(hasSimulations ? 'View Simulation' : 'Simulate'),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: hasSimulations 
+                                          ? const Color(0xFF10B981) 
+                                          : const Color(0xFF6366F1),
+                                        foregroundColor: Colors.white,
+                                      ),
+                                    ),
+                                  );
                                 },
-                                icon: const Icon(Icons.play_arrow_rounded, size: 18),
-                                label: const Text('Simulate'),
                               ),
                             ],
                           ),
@@ -154,7 +256,7 @@ class DocumentListSection extends StatelessWidget {
     );
   }
 
-  Widget _buildBeautifulLoader(BuildContext context) {
+  Widget _buildBeautifulLoader(BuildContext context, [String? customMessage]) {
     return Dialog(
       backgroundColor: Colors.transparent,
       child: Container(
@@ -209,7 +311,7 @@ class DocumentListSection extends StatelessWidget {
             
             // Title
             Text(
-              'Generating Simulation',
+              customMessage ?? 'Generating Simulation',
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: const Color(0xFF111827),
@@ -219,7 +321,9 @@ class DocumentListSection extends StatelessWidget {
             
             // Subtitle
             Text(
-              'Analyzing document and creating realistic scenarios...',
+              customMessage != null 
+                ? 'Checking for existing data or generating new simulation...'
+                : 'Analyzing document and creating realistic scenarios...',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: const Color(0xFF6B7280),

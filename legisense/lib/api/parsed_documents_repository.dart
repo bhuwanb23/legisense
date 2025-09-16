@@ -140,6 +140,18 @@ class ParsedDocumentsRepository {
     final Map<String, dynamic> data = json.decode(res.body) as Map<String, dynamic>;
     return data;
   }
+
+  /// Check if a document has existing simulations.
+  /// Returns a map with simulation count and latest session info.
+  Future<Map<String, dynamic>> checkDocumentSimulations({required int documentId}) async {
+    final uri = Uri.parse('$baseUrl/api/documents/$documentId/simulations/');
+    final res = await http.get(uri);
+    if (res.statusCode != 200) {
+      throw HttpException('Simulation check failed (${res.statusCode}): ${res.body}');
+    }
+    final Map<String, dynamic> data = json.decode(res.body) as Map<String, dynamic>;
+    return data;
+  }
 }
 
 
