@@ -18,7 +18,7 @@ class NarrativeOutcomeCards extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final outcomes = _getNarrativeOutcomesForScenario(scenario, parameters);
+    final outcomes = _getNarrativeOutcomes(simulationData, scenario, parameters);
     
     return Container(
       decoration: BoxDecoration(
@@ -352,6 +352,34 @@ class NarrativeOutcomeCards extends StatelessWidget {
         .fadeIn(duration: 600.ms);
   }
 
+  List<NarrativeOutcome> _getNarrativeOutcomes(Map<String, dynamic>? simulationData, SimulationScenario scenario, Map<String, dynamic>? parameters) {
+    // Use real simulation data if available, otherwise fall back to scenario-based data
+    if (simulationData != null) {
+      final narrativesData = simulationData['narratives'] as List<dynamic>?;
+      if (narrativesData != null && narrativesData.isNotEmpty) {
+        return narrativesData.map((item) {
+          final data = item as Map<String, dynamic>;
+          return NarrativeOutcome(
+            title: data['title'] as String? ?? 'Narrative Outcome',
+            subtitle: data['subtitle'] as String? ?? 'Outcome description',
+            narrative: data['narrative'] as String? ?? 'Detailed narrative description.',
+            icon: _getIconForSeverity(data['severity'] as String? ?? 'low'),
+            iconColor: _getColorForSeverity(data['severity'] as String? ?? 'low'),
+            backgroundColor: _getBackgroundColorForSeverity(data['severity'] as String? ?? 'low'),
+            borderColor: _getBorderColorForSeverity(data['severity'] as String? ?? 'low'),
+            severityText: _getSeverityText(data['severity'] as String? ?? 'low'),
+            severityColor: _getColorForSeverity(data['severity'] as String? ?? 'low'),
+            keyPoints: (data['key_points'] as List<dynamic>?)?.cast<String>() ?? [],
+            financialImpact: (data['financial_impact'] as List<dynamic>?)?.cast<String>() ?? [],
+          );
+        }).toList();
+      }
+    }
+    
+    // Fall back to scenario-based data if no simulation data available
+    return _getNarrativeOutcomesForScenario(scenario, parameters);
+  }
+
   List<NarrativeOutcome> _getNarrativeOutcomesForScenario(SimulationScenario scenario, Map<String, dynamic>? parameters) {
     final missedPayments = parameters?['missedPayments'] ?? 0;
     final interestRate = parameters?['interestRate'] ?? 2.0;
@@ -481,6 +509,76 @@ class NarrativeOutcomeCards extends StatelessWidget {
             ],
           ),
         ];
+    }
+  }
+
+  IconData _getIconForSeverity(String severity) {
+    switch (severity.toLowerCase()) {
+      case 'critical':
+        return FontAwesomeIcons.triangleExclamation;
+      case 'high':
+        return FontAwesomeIcons.circleExclamation;
+      case 'medium':
+        return FontAwesomeIcons.circleInfo;
+      case 'low':
+      default:
+        return FontAwesomeIcons.circleCheck;
+    }
+  }
+
+  Color _getColorForSeverity(String severity) {
+    switch (severity.toLowerCase()) {
+      case 'critical':
+        return const Color(0xFFDC2626); // red-600
+      case 'high':
+        return const Color(0xFFEA580C); // orange-600
+      case 'medium':
+        return const Color(0xFFD97706); // amber-600
+      case 'low':
+      default:
+        return const Color(0xFF10B981); // emerald-500
+    }
+  }
+
+  Color _getBackgroundColorForSeverity(String severity) {
+    switch (severity.toLowerCase()) {
+      case 'critical':
+        return const Color(0xFFFEF2F2); // red-50
+      case 'high':
+        return const Color(0xFFFFF7ED); // orange-50
+      case 'medium':
+        return const Color(0xFFFFFBEB); // amber-50
+      case 'low':
+      default:
+        return const Color(0xFFECFDF5); // emerald-50
+    }
+  }
+
+  Color _getBorderColorForSeverity(String severity) {
+    switch (severity.toLowerCase()) {
+      case 'critical':
+        return const Color(0xFFDC2626); // red-600
+      case 'high':
+        return const Color(0xFFEA580C); // orange-600
+      case 'medium':
+        return const Color(0xFFD97706); // amber-600
+      case 'low':
+      default:
+        return const Color(0xFF10B981); // emerald-500
+    }
+  }
+
+  String _getSeverityText(String severity) {
+    switch (severity.toLowerCase()) {
+      case 'critical':
+        return 'CRITICAL RISK';
+      case 'high':
+        return 'HIGH RISK';
+      case 'medium':
+        return 'MEDIUM RISK';
+      case 'low':
+      default:
+        return 'LOW RISK';
     }
   }
 }

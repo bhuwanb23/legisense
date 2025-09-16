@@ -18,7 +18,7 @@ class RiskAlerts extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final alerts = _getRiskAlertsForScenario(scenario);
+    final alerts = _getRiskAlerts(simulationData, scenario);
     
     if (alerts.isEmpty) {
       return const SizedBox.shrink();
@@ -321,6 +321,35 @@ class RiskAlerts extends StatelessWidget {
         .fadeIn(duration: 600.ms);
   }
 
+  List<RiskAlert> _getRiskAlerts(Map<String, dynamic>? simulationData, SimulationScenario scenario) {
+    // Use real simulation data if available, otherwise fall back to scenario-based data
+    if (simulationData != null) {
+      final riskAlertsData = simulationData['risk_alerts'] as List<dynamic>?;
+      if (riskAlertsData != null && riskAlertsData.isNotEmpty) {
+        return riskAlertsData.map((item) {
+          final data = item as Map<String, dynamic>;
+          return RiskAlert(
+            title: _getTitleForRiskLevel(data['level'] as String? ?? 'info'),
+            description: data['message'] as String? ?? 'Risk alert description',
+            level: _getRiskLevel(data['level'] as String? ?? 'info'),
+            levelText: _getRiskLevelText(data['level'] as String? ?? 'info'),
+            levelIcon: _getRiskLevelIcon(data['level'] as String? ?? 'info'),
+            levelColor: _getRiskLevelColor(data['level'] as String? ?? 'info'),
+            icon: _getRiskLevelIcon(data['level'] as String? ?? 'info'),
+            iconColor: _getRiskLevelColor(data['level'] as String? ?? 'info'),
+            backgroundColor: _getRiskLevelBackgroundColor(data['level'] as String? ?? 'info'),
+            borderColor: _getRiskLevelBorderColor(data['level'] as String? ?? 'info'),
+            impact: ['Risk assessment based on contract terms'],
+            recommendation: 'Review contract terms and consider legal consultation.',
+          );
+        }).toList();
+      }
+    }
+    
+    // Fall back to scenario-based data if no simulation data available
+    return _getRiskAlertsForScenario(scenario);
+  }
+
   List<RiskAlert> _getRiskAlertsForScenario(SimulationScenario scenario) {
     switch (scenario) {
       case SimulationScenario.normal:
@@ -426,6 +455,122 @@ class RiskAlerts extends StatelessWidget {
             recommendation: 'Review asset protection strategies. Consider legal representation immediately.',
           ),
         ];
+    }
+  }
+
+  String _getTitleForRiskLevel(String level) {
+    switch (level.toLowerCase()) {
+      case 'critical':
+        return 'Critical Risk Alert';
+      case 'high':
+        return 'High Risk Alert';
+      case 'medium':
+        return 'Medium Risk Alert';
+      case 'warning':
+        return 'Warning Alert';
+      case 'info':
+      default:
+        return 'Information Alert';
+    }
+  }
+
+  RiskLevel _getRiskLevel(String level) {
+    switch (level.toLowerCase()) {
+      case 'critical':
+      case 'high':
+        return RiskLevel.high;
+      case 'medium':
+      case 'warning':
+        return RiskLevel.medium;
+      case 'info':
+      case 'low':
+      default:
+        return RiskLevel.low;
+    }
+  }
+
+  String _getRiskLevelText(String level) {
+    switch (level.toLowerCase()) {
+      case 'critical':
+        return 'CRITICAL';
+      case 'high':
+        return 'HIGH RISK';
+      case 'medium':
+        return 'MEDIUM RISK';
+      case 'warning':
+        return 'WARNING';
+      case 'info':
+      case 'low':
+      default:
+        return 'INFO';
+    }
+  }
+
+  IconData _getRiskLevelIcon(String level) {
+    switch (level.toLowerCase()) {
+      case 'critical':
+        return FontAwesomeIcons.triangleExclamation;
+      case 'high':
+        return FontAwesomeIcons.circleExclamation;
+      case 'medium':
+        return FontAwesomeIcons.circleInfo;
+      case 'warning':
+        return FontAwesomeIcons.triangleExclamation;
+      case 'info':
+      case 'low':
+      default:
+        return FontAwesomeIcons.circleInfo;
+    }
+  }
+
+  Color _getRiskLevelColor(String level) {
+    switch (level.toLowerCase()) {
+      case 'critical':
+        return const Color(0xFFDC2626); // red-600
+      case 'high':
+        return const Color(0xFFEA580C); // orange-600
+      case 'medium':
+        return const Color(0xFFD97706); // amber-600
+      case 'warning':
+        return const Color(0xFFD97706); // amber-600
+      case 'info':
+      case 'low':
+      default:
+        return const Color(0xFF2563EB); // blue-600
+    }
+  }
+
+  Color _getRiskLevelBackgroundColor(String level) {
+    switch (level.toLowerCase()) {
+      case 'critical':
+        return const Color(0xFFFEF2F2); // red-50
+      case 'high':
+        return const Color(0xFFFFF7ED); // orange-50
+      case 'medium':
+        return const Color(0xFFFFFBEB); // amber-50
+      case 'warning':
+        return const Color(0xFFFFFBEB); // amber-50
+      case 'info':
+      case 'low':
+      default:
+        return const Color(0xFFEFF6FF); // blue-50
+    }
+  }
+
+  Color _getRiskLevelBorderColor(String level) {
+    switch (level.toLowerCase()) {
+      case 'critical':
+        return const Color(0xFFDC2626); // red-600
+      case 'high':
+        return const Color(0xFFEA580C); // orange-600
+      case 'medium':
+        return const Color(0xFFD97706); // amber-600
+      case 'warning':
+        return const Color(0xFFD97706); // amber-600
+      case 'info':
+      case 'low':
+      default:
+        return const Color(0xFF2563EB); // blue-600
     }
   }
 }
