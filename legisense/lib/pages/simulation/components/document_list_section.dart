@@ -18,7 +18,7 @@ class DocumentListSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final repo = ParsedDocumentsRepository(baseUrl: const String.fromEnvironment('LEGISENSE_API_BASE', defaultValue: 'http://10.0.2.2:8000'));
+    final repo = ParsedDocumentsRepository(baseUrl: ApiConfig.baseUrl);
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: AppTheme.spacingM, vertical: AppTheme.spacingS),
       decoration: BoxDecoration(

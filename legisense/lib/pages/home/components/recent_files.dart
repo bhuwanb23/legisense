@@ -25,12 +25,8 @@ class _RecentFilesState extends State<RecentFiles> {
   }
 
   Future<void> _loadRecentFiles() async {
-    // Try different possible backend URLs (prioritize Android emulator)
-    List<String> possibleUrls = [
-      'http://10.0.2.2:8000', // Android emulator (try this first)
-      'http://localhost:8000',
-      'http://127.0.0.1:8000',
-    ];
+    // Use fixed Wi‑Fi IP as the backend base URL
+    List<String> possibleUrls = [ApiConfig.baseUrl];
     
     String? lastError;
     

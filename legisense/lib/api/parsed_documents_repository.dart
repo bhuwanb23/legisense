@@ -7,6 +7,14 @@ import '../pages/documents/data/sample_documents.dart';
 
 /// Simple in-memory repository that uploads a PDF to the backend and stores
 /// the parsed result as a `SampleDocument`-compatible object for display.
+class ApiConfig {
+  /// Resolves a sensible default base URL depending on environment.
+  /// Overridden to a fixed Wi‑Fi IP as requested.
+  static String get baseUrl {
+    return 'http://192.168.31.67:8000';
+  }
+}
+
 class ParsedDocumentsRepository {
   ParsedDocumentsRepository({required this.baseUrl});
 
