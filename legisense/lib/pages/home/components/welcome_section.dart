@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../theme/app_theme.dart';
+import '../../profile/language/language_scope.dart';
+import '../language/strings.dart';
 
 class WelcomeSection extends StatelessWidget {
   const WelcomeSection({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final greeting = _getGreeting();
-    final motivationalMessage = _getMotivationalMessage();
+    final controller = LanguageScope.maybeOf(context);
+    final i18n = HomeI18n.mapFor(controller?.language ?? AppLanguage.en);
+    final greeting = _getGreeting(i18n);
+    final motivationalMessage = _getMotivationalMessage(i18n);
     
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingS + 6),
@@ -46,26 +50,26 @@ class WelcomeSection extends StatelessWidget {
     );
   }
 
-  String _getGreeting() {
+  String _getGreeting(Map<String, String> i18n) {
     final hour = DateTime.now().hour;
     
     if (hour < 12) {
-      return 'Good morning! Welcome to Legisense';
+      return i18n['welcome.morning'] ?? 'Good morning! Welcome to Legisense';
     } else if (hour < 17) {
-      return 'Good afternoon! Welcome to Legisense';
+      return i18n['welcome.afternoon'] ?? 'Good afternoon! Welcome to Legisense';
     } else {
-      return 'Good evening! Welcome to Legisense';
+      return i18n['welcome.evening'] ?? 'Good evening! Welcome to Legisense';
     }
   }
 
-  String _getMotivationalMessage() {
+  String _getMotivationalMessage(Map<String, String> i18n) {
     final messages = [
-      "Let's simplify your documents and make legal analysis effortless",
-      "Transform complex contracts into clear insights",
-      "Your intelligent legal companion is ready to help",
-      "Discover hidden clauses and potential risks in your documents",
-      "Make informed decisions with AI-powered document analysis",
-      "Turn legal complexity into simple understanding",
+      i18n['welcome.msg1'] ?? "Let's simplify your documents and make legal analysis effortless",
+      i18n['welcome.msg2'] ?? 'Transform complex contracts into clear insights',
+      i18n['welcome.msg3'] ?? 'Your intelligent legal companion is ready to help',
+      i18n['welcome.msg4'] ?? 'Discover hidden clauses and potential risks in your documents',
+      i18n['welcome.msg5'] ?? 'Make informed decisions with AI-powered document analysis',
+      i18n['welcome.msg6'] ?? 'Turn legal complexity into simple understanding',
     ];
     
     // Use day of year to cycle through messages consistently

@@ -3,6 +3,8 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'components/components.dart';
 import '../../components/main_header.dart';
 import '../../theme/app_theme.dart';
+import '../profile/language/language_scope.dart';
+import 'language/strings.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -23,6 +25,8 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final scope = LanguageScope.maybeOf(context);
+    final i18n = HomeI18n.mapFor(scope?.language ?? AppLanguage.en);
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
@@ -115,7 +119,7 @@ class _HomePageState extends State<HomePage> {
                 bottom: false,
                 child: Container(
                   color: Colors.white,
-                  child: const MainHeader(title: 'Legisense'),
+                  child: MainHeader(title: i18n['home.header.title'] ?? 'Legisense'),
                 ),
               ),
             ),

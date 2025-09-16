@@ -27,6 +27,11 @@ class LanguageScope extends InheritedNotifier<LanguageController> {
     assert(scope != null, 'LanguageScope not found in context');
     return scope!.notifier!;
   }
+
+  static LanguageController? maybeOf(BuildContext context) {
+    final scope = context.dependOnInheritedWidgetOfExactType<LanguageScope>();
+    return scope?.notifier;
+  }
 }
 
 

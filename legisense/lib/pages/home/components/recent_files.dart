@@ -6,6 +6,8 @@ import '../../../api/parsed_documents_repository.dart';
 import '../../../utils/responsive.dart';
 import '../../../main.dart';
 import '../../documents/document_view_detail.dart';
+import '../../profile/language/language_scope.dart';
+import '../language/strings.dart';
 
 class RecentFiles extends StatefulWidget {
   const RecentFiles({super.key});
@@ -114,23 +116,31 @@ class _RecentFilesState extends State<RecentFiles> {
       final now = DateTime.now();
       final difference = now.difference(date);
       
+      final controller = LanguageScope.maybeOf(context);
+      final i18n = HomeI18n.mapFor(controller?.language ?? AppLanguage.en);
       if (difference.inDays > 0) {
-        return '${difference.inDays} day${difference.inDays == 1 ? '' : 's'} ago';
+        final n = difference.inDays;
+        return '$n ${n == 1 ? (i18n['recent.day'] ?? 'day') : (i18n['recent.days'] ?? 'days')} ${i18n['recent.ago'] ?? 'ago'}';
       } else if (difference.inHours > 0) {
-        return '${difference.inHours} hour${difference.inHours == 1 ? '' : 's'} ago';
+        final n = difference.inHours;
+        return '$n ${n == 1 ? (i18n['recent.hour'] ?? 'hour') : (i18n['recent.hours'] ?? 'hours')} ${i18n['recent.ago'] ?? 'ago'}';
       } else if (difference.inMinutes > 0) {
-        return '${difference.inMinutes} minute${difference.inMinutes == 1 ? '' : 's'} ago';
+        final n = difference.inMinutes;
+        return '$n ${n == 1 ? (i18n['recent.minute'] ?? 'minute') : (i18n['recent.minutes'] ?? 'minutes')} ${i18n['recent.ago'] ?? 'ago'}';
       } else {
-        return 'just now';
+        return i18n['recent.justNow'] ?? 'just now';
       }
     } catch (e) {
-      return 'recently';
+      final controller = LanguageScope.maybeOf(context);
+      final i18n = HomeI18n.mapFor(controller?.language ?? AppLanguage.en);
+      return i18n['recent.recently'] ?? 'recently';
     }
   }
 
   @override
   Widget build(BuildContext context) {
-
+    final controller = LanguageScope.maybeOf(context);
+    final i18n = HomeI18n.mapFor(controller?.language ?? AppLanguage.en);
     final isSmall = ResponsiveHelper.isSmallScreen(context);
     return Container(
       margin: EdgeInsets.symmetric(
@@ -154,7 +164,7 @@ class _RecentFilesState extends State<RecentFiles> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Recent Files',
+                i18n['recent.title'] ?? 'Recent Files',
                 style: AppTheme.heading4,
               )
                   .animate()
@@ -170,7 +180,7 @@ class _RecentFilesState extends State<RecentFiles> {
                     navigateToPage(1); // Navigate to Documents page
                   },
                   child: Text(
-                    'View All',
+                    i18n['recent.viewAll'] ?? 'View All',
                     style: AppTheme.bodySmall.copyWith(
                       color: AppTheme.primaryBlue,
                       fontWeight: FontWeight.w500,
@@ -351,7 +361,7 @@ class _RecentFilesState extends State<RecentFiles> {
           ),
           const SizedBox(height: AppTheme.spacingS),
           Text(
-            'Failed to load recent files',
+            HomeI18n.mapFor(LanguageScope.maybeOf(context)?.language ?? AppLanguage.en)['recent.failed'] ?? 'Failed to load recent files',
             style: AppTheme.bodyMedium.copyWith(color: AppTheme.errorRed),
           ),
           if (error != null) ...[
@@ -367,7 +377,7 @@ class _RecentFilesState extends State<RecentFiles> {
           const SizedBox(height: AppTheme.spacingS),
           ElevatedButton(
             onPressed: _loadRecentFiles,
-            child: const Text('Retry'),
+            child: Text(HomeI18n.mapFor(LanguageScope.maybeOf(context)?.language ?? AppLanguage.en)['recent.retry'] ?? 'Retry'),
           ),
         ],
       ),
@@ -386,12 +396,12 @@ class _RecentFilesState extends State<RecentFiles> {
           ),
           const SizedBox(height: AppTheme.spacingS),
           Text(
-            'No recent files',
+            HomeI18n.mapFor(LanguageScope.maybeOf(context)?.language ?? AppLanguage.en)['recent.emptyTitle'] ?? 'No recent files',
             style: AppTheme.bodyMedium.copyWith(color: AppTheme.textTertiary),
           ),
           const SizedBox(height: AppTheme.spacingXS),
           Text(
-            'Upload your first document to get started',
+            HomeI18n.mapFor(LanguageScope.maybeOf(context)?.language ?? AppLanguage.en)['recent.emptySubtitle'] ?? 'Upload your first document to get started',
             style: AppTheme.bodySmall.copyWith(color: AppTheme.textTertiary),
             textAlign: TextAlign.center,
           ),
@@ -416,14 +426,14 @@ class _RecentFilesState extends State<RecentFiles> {
             const SizedBox(height: AppTheme.spacingM),
             ListTile(
               leading: const Icon(FontAwesomeIcons.eye),
-              title: const Text('View Document'),
+              title: Text(HomeI18n.mapFor(LanguageScope.maybeOf(context)?.language ?? AppLanguage.en)['sheet.viewDoc'] ?? 'View Document'),
               onTap: () {
                 Navigator.pop(context);
                 Navigator.of(context).push(
                   MaterialPageRoute(
                     builder: (context) => DocumentViewDetail(
                       title: title,
-                      meta: 'PDF Document',
+                      meta: HomeI18n.mapFor(LanguageScope.maybeOf(context)?.language ?? AppLanguage.en)['meta.pdf'] ?? 'PDF Document',
                       docId: 'server-$id',
                     ),
                   ),
@@ -432,14 +442,14 @@ class _RecentFilesState extends State<RecentFiles> {
             ),
             ListTile(
               leading: const Icon(FontAwesomeIcons.chartLine),
-              title: const Text('View Analysis'),
+              title: Text(HomeI18n.mapFor(LanguageScope.maybeOf(context)?.language ?? AppLanguage.en)['sheet.viewAnalysis'] ?? 'View Analysis'),
               onTap: () {
                 Navigator.pop(context);
                 Navigator.of(context).push(
                   MaterialPageRoute(
                     builder: (context) => DocumentViewDetail(
                       title: title,
-                      meta: 'PDF Document',
+                      meta: HomeI18n.mapFor(LanguageScope.maybeOf(context)?.language ?? AppLanguage.en)['meta.pdf'] ?? 'PDF Document',
                       docId: 'server-$id',
                     ),
                   ),
@@ -448,11 +458,11 @@ class _RecentFilesState extends State<RecentFiles> {
             ),
             ListTile(
               leading: const Icon(FontAwesomeIcons.share),
-              title: const Text('Share'),
+              title: Text(HomeI18n.mapFor(LanguageScope.maybeOf(context)?.language ?? AppLanguage.en)['sheet.share'] ?? 'Share'),
               onTap: () {
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Share functionality coming soon')),
+                  SnackBar(content: Text('Share functionality coming soon')),
                 );
               },
             ),
