@@ -7,6 +7,7 @@ import '../../../api/parsed_documents_repository.dart';
 import '../../documents/documents_page.dart';
 import '../../documents/data/sample_documents.dart';
 import '../../../theme/app_theme.dart';
+import '../../../utils/responsive.dart';
 
 class UploadZone extends StatefulWidget {
   const UploadZone({super.key});
@@ -211,13 +212,27 @@ class _UploadZoneState extends State<UploadZone> {
 
   @override
   Widget build(BuildContext context) {
+    final isSmall = ResponsiveHelper.isSmallScreen(context);
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: AppTheme.spacingS + 6, vertical: AppTheme.spacingS + 6),
+      margin: EdgeInsets.symmetric(
+        horizontal: ResponsiveHelper.getResponsivePadding(
+          context,
+          small: AppTheme.spacingS,
+          medium: AppTheme.spacingS + 6,
+          large: AppTheme.spacingM,
+        ),
+        vertical: ResponsiveHelper.getResponsivePadding(
+          context,
+          small: AppTheme.spacingS,
+          medium: AppTheme.spacingS + 6,
+          large: AppTheme.spacingM,
+        ),
+      ),
       child: Container(
-        padding: const EdgeInsets.all(AppTheme.spacingM),
+        padding: EdgeInsets.all(isSmall ? AppTheme.spacingS : AppTheme.spacingM - 2),
         decoration: BoxDecoration(
           color: AppTheme.backgroundWhite.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(AppTheme.radiusL),
+          borderRadius: BorderRadius.circular(isSmall ? AppTheme.radiusM : AppTheme.radiusL),
           border: Border.all(
             color: _isDragOver 
                 ? AppTheme.primaryBlueLight 
@@ -245,20 +260,20 @@ class _UploadZoneState extends State<UploadZone> {
           children: [
             // Upload Icon
             Container(
-              width: 54,
-              height: 54,
+              width: isSmall ? 40 : 50,
+              height: isSmall ? 40 : 50,
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
                   colors: [AppTheme.primaryBlueLight, AppTheme.primaryBlue],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
-                borderRadius: BorderRadius.circular(27),
+                borderRadius: BorderRadius.circular(isSmall ? 20 : 25),
               ),
               child: const Icon(
                 FontAwesomeIcons.cloudArrowUp,
                 color: Colors.white,
-                size: 20,
+                size: 16,
               ),
             )
                 .animate()
@@ -269,7 +284,7 @@ class _UploadZoneState extends State<UploadZone> {
                 )
                 .fadeIn(duration: AppTheme.animationSlow, delay: 200.ms),
             
-            const SizedBox(height: AppTheme.spacingS + 6),
+            SizedBox(height: isSmall ? AppTheme.spacingXS + 2 : AppTheme.spacingS),
             
             // Title and Description
             Text(
@@ -284,7 +299,7 @@ class _UploadZoneState extends State<UploadZone> {
                 )
                 .fadeIn(duration: AppTheme.animationSlow, delay: 400.ms),
             
-            const SizedBox(height: AppTheme.spacingXS + 2),
+            SizedBox(height: isSmall ? AppTheme.spacingXS : AppTheme.spacingXS + 2),
             
             Text(
               'Select a PDF, DOC/DOCX, or PPT/PPTX to process',
@@ -298,7 +313,7 @@ class _UploadZoneState extends State<UploadZone> {
                 )
                 .fadeIn(duration: AppTheme.animationSlow, delay: 600.ms),
             
-            const SizedBox(height: AppTheme.spacingM),
+            SizedBox(height: isSmall ? AppTheme.spacingS : AppTheme.spacingM - 2),
             
             // Action Buttons
             Column(
@@ -311,9 +326,11 @@ class _UploadZoneState extends State<UploadZone> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.primaryBlueLight,
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: AppTheme.spacingS + 6),
+                      padding: EdgeInsets.symmetric(
+                        vertical: isSmall ? AppTheme.spacingS - 2 : AppTheme.spacingS + 2,
+                      ),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(AppTheme.radiusM),
+                        borderRadius: BorderRadius.circular(isSmall ? AppTheme.radiusS : AppTheme.radiusM),
                       ),
                       elevation: 8,
                     ),
@@ -321,15 +338,15 @@ class _UploadZoneState extends State<UploadZone> {
                         ? Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const SizedBox(
-                                width: 14,
-                                height: 14,
+                              SizedBox(
+                                width: isSmall ? 12 : 14,
+                                height: isSmall ? 12 : 14,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
                                   valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                                 ),
                               ),
-                              const SizedBox(width: AppTheme.spacingS),
+                              SizedBox(width: isSmall ? AppTheme.spacingXS : AppTheme.spacingXS + 2),
                               Text(
                                 _loadingLabel,
                                 style: AppTheme.buttonPrimary,
@@ -339,11 +356,11 @@ class _UploadZoneState extends State<UploadZone> {
                         : Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const Icon(
+                              Icon(
                                 FontAwesomeIcons.fileArrowUp,
-                                size: 14,
+                                size: isSmall ? 12 : 14,
                               ),
-                              const SizedBox(width: AppTheme.spacingS),
+                              SizedBox(width: isSmall ? AppTheme.spacingXS : AppTheme.spacingXS + 2),
                               Text(
                                 'Upload Document',
                                 style: AppTheme.buttonPrimary,
@@ -360,7 +377,7 @@ class _UploadZoneState extends State<UploadZone> {
                     )
                     .fadeIn(duration: AppTheme.animationSlow, delay: 800.ms),
                 
-                const SizedBox(height: AppTheme.spacingS + 6),
+                SizedBox(height: isSmall ? AppTheme.spacingXS + 2 : AppTheme.spacingS),
                 
                 // Secondary: Browse Files (same action)
                 SizedBox(
@@ -373,19 +390,21 @@ class _UploadZoneState extends State<UploadZone> {
                         color: AppTheme.backgroundWhite.withValues(alpha: 0.3),
                         width: 1,
                       ),
-                      padding: const EdgeInsets.symmetric(vertical: AppTheme.spacingS + 6),
+                      padding: EdgeInsets.symmetric(
+                        vertical: isSmall ? AppTheme.spacingS : AppTheme.spacingS + 6,
+                      ),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(AppTheme.radiusM),
+                        borderRadius: BorderRadius.circular(isSmall ? AppTheme.radiusS : AppTheme.radiusM),
                       ),
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(
+                        Icon(
                           FontAwesomeIcons.folderOpen,
-                          size: 14,
+                          size: isSmall ? 12 : 14,
                         ),
-                        const SizedBox(width: AppTheme.spacingS),
+                        SizedBox(width: isSmall ? AppTheme.spacingXS : AppTheme.spacingS),
                         Text(
                           'Browse Files',
                           style: AppTheme.buttonSecondary,

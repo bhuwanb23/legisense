@@ -256,7 +256,7 @@ class _DocumentDisplayPanelState extends State<DocumentDisplayPanel>
         children: [
           // Compact Header with File Info
           Padding(
-            padding: const EdgeInsets.fromLTRB(AppTheme.spacingM, AppTheme.spacingM, AppTheme.spacingM, AppTheme.spacingS),
+            padding: const EdgeInsets.fromLTRB(AppTheme.spacingM, AppTheme.spacingS + 2, AppTheme.spacingM, AppTheme.spacingXS + 2),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -290,7 +290,7 @@ class _DocumentDisplayPanelState extends State<DocumentDisplayPanel>
                                   style: AppTheme.heading4.copyWith(
                                     color: AppTheme.textPrimary,
                                     fontWeight: FontWeight.w600,
-                                    fontSize: 16,
+                                    fontSize: 15,
                                   ),
                                 ),
                                 if (widget.document != null) ...[
@@ -299,7 +299,7 @@ class _DocumentDisplayPanelState extends State<DocumentDisplayPanel>
                                     'tmpmzdho1yj.pdf',
                                     style: AppTheme.caption.copyWith(
                                       color: AppTheme.textSecondary,
-                                      fontSize: 11,
+                                      fontSize: 10.5,
                                     ),
                                   ),
                                 ],
@@ -317,7 +317,7 @@ class _DocumentDisplayPanelState extends State<DocumentDisplayPanel>
                 
                 // Compact Page Progress Info with FAB
                 if (widget.document != null) ...[
-                  const SizedBox(height: AppTheme.spacingS),
+                  const SizedBox(height: AppTheme.spacingXS + 2),
                   Row(
                     children: [
                       _buildCompactInfoPill(
@@ -484,8 +484,8 @@ class _DocumentDisplayPanelState extends State<DocumentDisplayPanel>
         : 1.0;
     
     return Container(
-      height: 3,
-      margin: const EdgeInsets.symmetric(horizontal: AppTheme.spacingL),
+      height: 2.5,
+      margin: const EdgeInsets.symmetric(horizontal: AppTheme.spacingM),
       child: TweenAnimationBuilder<double>(
         tween: Tween(begin: 0.0, end: rawProgress),
         duration: const Duration(milliseconds: 350),
@@ -509,10 +509,10 @@ class _DocumentDisplayPanelState extends State<DocumentDisplayPanel>
 
     return Column(
       children: [
-        // Current Page Content
+        // Current Page Content (more compact)
         Expanded(
           child: Container(
-            margin: const EdgeInsets.all(AppTheme.spacingL),
+            margin: const EdgeInsets.all(AppTheme.spacingM),
             child: _buildCurrentPageCard(),
           ),
         ),
@@ -558,11 +558,11 @@ class _DocumentDisplayPanelState extends State<DocumentDisplayPanel>
           key: ValueKey(_currentPageIndex),
           decoration: BoxDecoration(
             color: AppTheme.backgroundWhite,
-            borderRadius: BorderRadius.circular(AppTheme.radiusL),
+            borderRadius: BorderRadius.circular(AppTheme.radiusM),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.08),
-                blurRadius: 16,
+                blurRadius: 12,
                 offset: const Offset(0, 4),
               ),
             ],
@@ -571,9 +571,9 @@ class _DocumentDisplayPanelState extends State<DocumentDisplayPanel>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Compact Page Header
+              // Compact Page Header (smaller paddings and sizes)
               Container(
-                padding: const EdgeInsets.all(AppTheme.spacingM),
+                padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingS + 2, vertical: AppTheme.spacingXS + 2),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
@@ -591,18 +591,18 @@ class _DocumentDisplayPanelState extends State<DocumentDisplayPanel>
                 child: Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.all(6),
+                      padding: const EdgeInsets.all(5),
                       decoration: BoxDecoration(
                         color: AppTheme.primaryBlue.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Icon(
                         Icons.description,
-                        size: 14,
+                        size: 13,
                         color: AppTheme.primaryBlue,
                       ),
                     ),
-                    const SizedBox(width: AppTheme.spacingS),
+                    const SizedBox(width: AppTheme.spacingXS + 2),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -612,7 +612,7 @@ class _DocumentDisplayPanelState extends State<DocumentDisplayPanel>
                             style: AppTheme.bodyMedium.copyWith(
                               color: AppTheme.primaryBlue,
                               fontWeight: FontWeight.w600,
-                              fontSize: 14,
+                              fontSize: 12.5,
                             ),
                           ),
                           const SizedBox(height: 1),
@@ -620,7 +620,7 @@ class _DocumentDisplayPanelState extends State<DocumentDisplayPanel>
                             '${currentPageText.length} characters',
                             style: AppTheme.caption.copyWith(
                               color: AppTheme.textSecondary,
-                              fontSize: 10,
+                              fontSize: 9,
                             ),
                           ),
                         ],
@@ -629,7 +629,7 @@ class _DocumentDisplayPanelState extends State<DocumentDisplayPanel>
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 8,
-                        vertical: 4,
+                        vertical: 3,
                       ),
                       decoration: BoxDecoration(
                         color: AppTheme.primaryBlue,
@@ -647,7 +647,7 @@ class _DocumentDisplayPanelState extends State<DocumentDisplayPanel>
                         style: AppTheme.caption.copyWith(
                           color: Colors.white,
                           fontWeight: FontWeight.w600,
-                          fontSize: 10,
+                          fontSize: 9,
                         ),
                       ),
                     ),
@@ -658,7 +658,7 @@ class _DocumentDisplayPanelState extends State<DocumentDisplayPanel>
               // Compact Page Content
               Expanded(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(AppTheme.spacingM),
+                  padding: const EdgeInsets.fromLTRB(AppTheme.spacingS + 2, AppTheme.spacingXS + 2, AppTheme.spacingS + 2, AppTheme.spacingM),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -666,16 +666,17 @@ class _DocumentDisplayPanelState extends State<DocumentDisplayPanel>
                       Text(
                         currentPageText,
                         style: AppTheme.bodyMedium.copyWith(
-                          height: 1.6,
+                          height: 1.5,
                           color: AppTheme.textPrimary,
-                          letterSpacing: 0.1,
+                          letterSpacing: 0.03,
+                          fontSize: 12.5,
                         ),
                       ),
-                      const SizedBox(height: AppTheme.spacingM),
+                      const SizedBox(height: AppTheme.spacingXS + 2),
                       
                       // Compact Page Stats
                       Container(
-                        padding: const EdgeInsets.all(AppTheme.spacingS),
+                        padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingS, vertical: AppTheme.spacingXS + 2),
                         decoration: BoxDecoration(
                           color: AppTheme.backgroundLight,
                           borderRadius: BorderRadius.circular(8),

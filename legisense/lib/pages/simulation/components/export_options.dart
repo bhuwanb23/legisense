@@ -5,6 +5,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 import '../../../theme/app_theme.dart';
+import 'styles.dart';
 
 class ExportOptions extends StatelessWidget {
   const ExportOptions({
@@ -32,9 +33,9 @@ class ExportOptions extends StatelessWidget {
             color: AppTheme.textPrimary,
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 10),
         Wrap(
-          spacing: 12,
+          spacing: 10,
           runSpacing: 8,
           children: [
             _ExportButton(
@@ -225,18 +226,18 @@ class _ExportButton extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onPressed,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(SimStyles.radiusM),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
           decoration: BoxDecoration(
             color: color.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(SimStyles.radiusM),
             border: Border.all(color: color.withValues(alpha: 0.3)),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, size: 18, color: color),
+              Icon(icon, size: 16, color: color),
               const SizedBox(width: 8),
               Text(
                 label,

@@ -13,7 +13,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey = GlobalKey<RefreshIndicatorState>();
-  static const double _fixedHeaderHeight = 112; // increased to ensure content starts below header
+  static const double _fixedHeaderHeight = 96; // slightly smaller header offset
 
   Future<void> _onRefresh() async {
     // Trigger refresh of RecentFiles component
@@ -56,7 +56,7 @@ class _HomePageState extends State<HomePage> {
                   physics: const AlwaysScrollableScrollPhysics(),
                   child: Column(
                     children: [
-                      const SizedBox(height: _fixedHeaderHeight + 16),
+                      const SizedBox(height: _fixedHeaderHeight + 8),
                       
                       // Welcome Section with staggered animation
                       const WelcomeSection()
@@ -98,8 +98,8 @@ class _HomePageState extends State<HomePage> {
                           )
                           ,
                       
-                      // Bottom padding for better scrolling
-                      const SizedBox(height: AppTheme.spacingL),
+                      // Bottom padding for better scrolling (smaller)
+                      const SizedBox(height: AppTheme.spacingM),
                     ],
                   ),
                 ),

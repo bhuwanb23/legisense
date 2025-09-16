@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'styles.dart';
 
 class NextStepsCTA extends StatelessWidget {
   final VoidCallback? onBackToAnalysis;
@@ -22,68 +23,52 @@ class NextStepsCTA extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: const Color(0xFFE5E7EB),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+      decoration: SimStyles.sectionDecoration(),
       child: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: SimStyles.sectionPadding,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Header
-            Row(
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF10B981).withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(
-                    FontAwesomeIcons.arrowRight,
-                    color: Color(0xFF10B981),
-                    size: 20,
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(SimStyles.spaceS),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF10B981).withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(SimStyles.radiusM),
+                      ),
+                      child: const Icon(
+                        FontAwesomeIcons.arrowRight,
+                        color: Color(0xFF10B981),
+                        size: 18,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: SimStyles.spaceS),
+                Text(
+                  'Next Steps',
+                  style: GoogleFonts.inter(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF1F2937),
                   ),
                 ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Next Steps',
-                        style: GoogleFonts.inter(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w700,
-                          color: const Color(0xFF1F2937),
-                        ),
-                      ),
-                      Text(
-                        'Choose your next action',
-                        style: GoogleFonts.inter(
-                          fontSize: 14,
-                          color: const Color(0xFF6B7280),
-                        ),
-                      ),
-                    ],
+                Text(
+                  'Choose your next action',
+                  style: GoogleFonts.inter(
+                    fontSize: 13,
+                    color: const Color(0xFF6B7280),
                   ),
                 ),
               ],
             ),
             
-            const SizedBox(height: 20),
+            const SizedBox(height: SimStyles.spaceL),
             
             // Action Buttons Grid
             Column(
@@ -103,7 +88,7 @@ class NextStepsCTA extends StatelessWidget {
                         delay: 0,
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: SimStyles.spaceS),
                     Expanded(
                       child: _buildActionButton(
                         icon: FontAwesomeIcons.floppyDisk,
@@ -119,7 +104,7 @@ class NextStepsCTA extends StatelessWidget {
                   ],
                 ),
                 
-                const SizedBox(height: 12),
+                const SizedBox(height: SimStyles.spaceS),
                 
                 // Secondary Actions Row
                 Row(
@@ -136,7 +121,7 @@ class NextStepsCTA extends StatelessWidget {
                         delay: 200,
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: SimStyles.spaceS),
                     Expanded(
                       child: _buildActionButton(
                         icon: FontAwesomeIcons.share,
@@ -154,19 +139,15 @@ class NextStepsCTA extends StatelessWidget {
               ],
             ),
             
-            const SizedBox(height: 20),
+            const SizedBox(height: SimStyles.spaceL),
             
             // Quick Stats
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
+              padding: const EdgeInsets.all(SimStyles.spaceM),
+              decoration: SimStyles.insetCard(
                 color: const Color(0xFFF0F9FF),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: const Color(0xFF0EA5E9).withValues(alpha: 0.3),
-                  width: 1,
-                ),
+                borderColor: const Color(0xFF0EA5E9).withValues(alpha: 0.3),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -175,14 +156,14 @@ class NextStepsCTA extends StatelessWidget {
                     children: [
                       Icon(
                         FontAwesomeIcons.chartLine,
-                        size: 16,
+                        size: 14,
                         color: const Color(0xFF0EA5E9),
                       ),
                       const SizedBox(width: 8),
                       Text(
                         'Simulation Summary',
                         style: GoogleFonts.inter(
-                          fontSize: 14,
+                          fontSize: 13,
                           fontWeight: FontWeight.w600,
                           color: const Color(0xFF0EA5E9),
                         ),
@@ -235,10 +216,10 @@ class NextStepsCTA extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(SimStyles.spaceM),
         decoration: BoxDecoration(
           color: color.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(SimStyles.radiusM),
           border: Border.all(
             color: color.withValues(alpha: 0.3),
             width: 1,
@@ -247,8 +228,8 @@ class NextStepsCTA extends StatelessWidget {
         child: Column(
           children: [
             Container(
-              width: 40,
-              height: 40,
+              width: 36,
+              height: 36,
               decoration: BoxDecoration(
                 color: color,
                 shape: BoxShape.circle,
@@ -256,7 +237,7 @@ class NextStepsCTA extends StatelessWidget {
               child: Icon(
                 icon,
                 color: Colors.white,
-                size: 20,
+                size: 18,
               ),
             ),
             const SizedBox(height: 8),
@@ -299,14 +280,14 @@ class NextStepsCTA extends StatelessWidget {
       children: [
         Icon(
           icon,
-          size: 16,
+          size: 14,
           color: const Color(0xFF0EA5E9),
         ),
         const SizedBox(height: 4),
         Text(
           value,
           style: GoogleFonts.inter(
-            fontSize: 18,
+            fontSize: 16,
             fontWeight: FontWeight.w700,
             color: const Color(0xFF0EA5E9),
           ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'styles.dart';
 
 class DocumentHeader extends StatelessWidget {
   final String documentTitle;
@@ -30,23 +31,9 @@ class DocumentHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: const Color(0xFFE5E7EB),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+      decoration: SimStyles.sectionDecoration(),
       child: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: SimStyles.sectionPadding,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -57,8 +44,8 @@ class DocumentHeader extends StatelessWidget {
                 GestureDetector(
                   onTap: onBackPressed ?? () => Navigator.of(context).pop(),
                   child: Container(
-                    width: 40,
-                    height: 40,
+                    width: 36,
+                    height: 36,
                     decoration: BoxDecoration(
                       color: const Color(0xFFF3F4F6),
                       borderRadius: BorderRadius.circular(10),
@@ -71,7 +58,7 @@ class DocumentHeader extends StatelessWidget {
                   ),
                 ),
                 
-                const SizedBox(width: 16),
+                const SizedBox(width: 14),
                 
                 // Document Info
                 Expanded(
@@ -81,7 +68,7 @@ class DocumentHeader extends StatelessWidget {
                       Text(
                         'Document Analysis',
                         style: GoogleFonts.inter(
-                          fontSize: 14,
+                          fontSize: 13,
                           fontWeight: FontWeight.w500,
                           color: const Color(0xFF6B7280),
                         ),
@@ -90,7 +77,7 @@ class DocumentHeader extends StatelessWidget {
                       Text(
                         documentTitle,
                         style: GoogleFonts.inter(
-                          fontSize: 20,
+                          fontSize: 18,
                           fontWeight: FontWeight.w700,
                           color: const Color(0xFF1F2937),
                         ),
@@ -103,10 +90,10 @@ class DocumentHeader extends StatelessWidget {
                 
                 // Document Version Badge
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
                     color: const Color(0xFF2563EB).withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(16),
                   ),
                   child: Text(
                     documentVersion,

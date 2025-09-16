@@ -3,6 +3,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'simulation_scenario.dart';
+import 'styles.dart';
 
 class NarrativeOutcomeCards extends StatelessWidget {
   final SimulationScenario scenario;
@@ -21,94 +22,76 @@ class NarrativeOutcomeCards extends StatelessWidget {
     final outcomes = _getNarrativeOutcomes(simulationData, scenario, parameters);
     
     return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: const Color(0xFFE5E7EB),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+      decoration: SimStyles.sectionDecoration(),
       child: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: SimStyles.sectionPadding,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Header
-            Row(
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF8B5CF6).withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(
-                    FontAwesomeIcons.bookOpen,
-                    color: Color(0xFF8B5CF6),
-                    size: 20,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Narrative Outcomes',
-                        style: GoogleFonts.inter(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w700,
-                          color: const Color(0xFF1F2937),
-                        ),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(SimStyles.spaceS),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF8B5CF6).withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(SimStyles.radiusM),
                       ),
-                      Text(
-                        'Plain-English scenario explanations',
-                        style: GoogleFonts.inter(
-                          fontSize: 14,
-                          color: const Color(0xFF6B7280),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF8B5CF6).withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(
-                        FontAwesomeIcons.wandMagic,
-                        size: 12,
+                      child: const Icon(
+                        FontAwesomeIcons.bookOpen,
                         color: Color(0xFF8B5CF6),
+                        size: 18,
                       ),
-                      const SizedBox(width: 4),
-                      Text(
-                        'Storytelling Mode',
-                        style: GoogleFonts.inter(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: const Color(0xFF8B5CF6),
-                        ),
+                    ),
+                    const Spacer(),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: SimStyles.badgeDecoration(const Color(0xFF8B5CF6)),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            FontAwesomeIcons.wandMagic,
+                            size: 11,
+                            color: Color(0xFF8B5CF6),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Storytelling Mode',
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: const Color(0xFF8B5CF6),
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: SimStyles.spaceS),
+                Text(
+                  'Narrative Outcomes',
+                  style: GoogleFonts.inter(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF1F2937),
+                  ),
+                ),
+                Text(
+                  'Plain-English scenario explanations',
+                  style: GoogleFonts.inter(
+                    fontSize: 13,
+                    color: const Color(0xFF6B7280),
                   ),
                 ),
               ],
             ),
             
-            const SizedBox(height: 20),
+            const SizedBox(height: SimStyles.spaceL),
             
             // Narrative Cards
             ...outcomes.asMap().entries.map((entry) {
@@ -129,14 +112,14 @@ class NarrativeOutcomeCards extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: outcome.backgroundColor,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(SimStyles.radiusM),
         border: Border.all(
           color: outcome.borderColor,
           width: 1,
         ),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(SimStyles.spaceM),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -144,8 +127,8 @@ class NarrativeOutcomeCards extends StatelessWidget {
             Row(
               children: [
                 Container(
-                  width: 48,
-                  height: 48,
+                  width: 44,
+                  height: 44,
                   decoration: BoxDecoration(
                     color: outcome.iconColor,
                     shape: BoxShape.circle,
@@ -153,10 +136,10 @@ class NarrativeOutcomeCards extends StatelessWidget {
                   child: Icon(
                     outcome.icon,
                     color: Colors.white,
-                    size: 24,
+                    size: 20,
                   ),
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: SimStyles.spaceM),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -164,7 +147,7 @@ class NarrativeOutcomeCards extends StatelessWidget {
                       Text(
                         outcome.title,
                         style: GoogleFonts.inter(
-                          fontSize: 18,
+                          fontSize: 16,
                           fontWeight: FontWeight.w700,
                           color: const Color(0xFF1F2937),
                         ),
@@ -172,7 +155,7 @@ class NarrativeOutcomeCards extends StatelessWidget {
                       Text(
                         outcome.subtitle,
                         style: GoogleFonts.inter(
-                          fontSize: 14,
+                          fontSize: 13,
                           color: const Color(0xFF6B7280),
                         ),
                       ),
@@ -183,7 +166,7 @@ class NarrativeOutcomeCards extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: outcome.severityColor,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(SimStyles.radiusS),
                   ),
                   child: Text(
                     outcome.severityText,
@@ -197,20 +180,13 @@ class NarrativeOutcomeCards extends StatelessWidget {
               ],
             ),
             
-            const SizedBox(height: 16),
+            const SizedBox(height: SimStyles.spaceM),
             
             // Narrative Story
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.8),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: const Color(0xFFE5E7EB),
-                  width: 1,
-                ),
-              ),
+              padding: const EdgeInsets.all(SimStyles.spaceS),
+              decoration: SimStyles.insetCard(),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -218,25 +194,25 @@ class NarrativeOutcomeCards extends StatelessWidget {
                     children: [
                       Icon(
                         FontAwesomeIcons.quoteLeft,
-                        size: 16,
+                        size: 14,
                         color: outcome.iconColor,
                       ),
                       const SizedBox(width: 8),
                       Text(
                         'Scenario Story',
                         style: GoogleFonts.inter(
-                          fontSize: 14,
+                          fontSize: 13,
                           fontWeight: FontWeight.w600,
                           color: const Color(0xFF1F2937),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 10),
                   Text(
                     outcome.narrative,
                     style: GoogleFonts.inter(
-                      fontSize: 14,
+                      fontSize: 13,
                       color: const Color(0xFF4B5563),
                       height: 1.6,
                     ),
@@ -245,14 +221,14 @@ class NarrativeOutcomeCards extends StatelessWidget {
               ),
             ),
             
-            const SizedBox(height: 16),
+            const SizedBox(height: SimStyles.spaceM),
             
             // Key Points
             if (outcome.keyPoints.isNotEmpty) ...[
               Text(
                 'Key Points:',
                 style: GoogleFonts.inter(
-                  fontSize: 14,
+                  fontSize: 13,
                   fontWeight: FontWeight.w600,
                   color: const Color(0xFF1F2937),
                 ),
@@ -277,7 +253,7 @@ class NarrativeOutcomeCards extends StatelessWidget {
                       child: Text(
                         point,
                         style: GoogleFonts.inter(
-                          fontSize: 13,
+                          fontSize: 12,
                           color: const Color(0xFF4B5563),
                           height: 1.4,
                         ),
@@ -288,20 +264,16 @@ class NarrativeOutcomeCards extends StatelessWidget {
               )),
             ],
             
-            const SizedBox(height: 16),
+            const SizedBox(height: SimStyles.spaceM),
             
             // Financial Impact
             if (outcome.financialImpact.isNotEmpty) ...[
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFEF3C7).withValues(alpha: 0.5),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: const Color(0xFFF59E0B).withValues(alpha: 0.3),
-                    width: 1,
-                  ),
+                padding: const EdgeInsets.all(SimStyles.spaceS),
+                decoration: SimStyles.insetCard(
+                  color: const Color(0xFFFEF3C7).withValues(alpha: 0.6),
+                  borderColor: const Color(0xFFF59E0B).withValues(alpha: 0.3),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -310,14 +282,14 @@ class NarrativeOutcomeCards extends StatelessWidget {
                       children: [
                         Icon(
                           FontAwesomeIcons.dollarSign,
-                          size: 16,
+                          size: 14,
                           color: const Color(0xFFF59E0B),
                         ),
                         const SizedBox(width: 8),
                         Text(
                           'Financial Impact',
                           style: GoogleFonts.inter(
-                            fontSize: 14,
+                            fontSize: 13,
                             fontWeight: FontWeight.w600,
                             color: const Color(0xFF92400E),
                           ),
@@ -330,7 +302,7 @@ class NarrativeOutcomeCards extends StatelessWidget {
                       child: Text(
                         impact,
                         style: GoogleFonts.inter(
-                          fontSize: 13,
+                          fontSize: 12,
                           color: const Color(0xFF92400E),
                         ),
                       ),

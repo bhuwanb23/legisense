@@ -3,6 +3,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'simulation_scenario.dart';
+import 'styles.dart';
 
 class TimelineView extends StatefulWidget {
   final SimulationScenario scenario;
@@ -25,95 +26,79 @@ class _TimelineViewState extends State<TimelineView> {
 
   @override
   Widget build(BuildContext context) {
+    final double width = MediaQuery.of(context).size.width;
+    final bool isNarrow = width < 380;
     return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: const Color(0xFFE5E7EB),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+      decoration: SimStyles.sectionDecoration(),
       child: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: SimStyles.sectionPadding,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Header
-            Row(
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF2563EB).withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(
-                    FontAwesomeIcons.sitemap,
-                    color: Color(0xFF2563EB),
-                    size: 20,
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(SimStyles.spaceS),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF2563EB).withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(SimStyles.radiusM),
+                      ),
+                      child: const Icon(
+                        FontAwesomeIcons.sitemap,
+                        color: Color(0xFF2563EB),
+                        size: 18,
+                      ),
+                    ),
+                    const Spacer(),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: SimStyles.badgeDecoration(const Color(0xFF10B981)),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            FontAwesomeIcons.robot,
+                            size: 11,
+                            color: Color(0xFF10B981),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            'AI Generated',
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: const Color(0xFF10B981),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: SimStyles.spaceS),
+                Text(
+                  'Interactive Timeline',
+                  style: GoogleFonts.inter(
+                    fontSize: isNarrow ? 16 : 18,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF1F2937),
                   ),
                 ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Interactive Timeline',
-                        style: GoogleFonts.inter(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w700,
-                          color: const Color(0xFF1F2937),
-                        ),
-                      ),
-                      Text(
-                        '${widget.documentTitle} - AI Generated Flow',
-                        style: GoogleFonts.inter(
-                          fontSize: 14,
-                          color: const Color(0xFF6B7280),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF10B981).withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(
-                        FontAwesomeIcons.robot,
-                        size: 12,
-                        color: Color(0xFF10B981),
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        'AI Generated',
-                        style: GoogleFonts.inter(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: const Color(0xFF10B981),
-                        ),
-                      ),
-                    ],
+                Text(
+                  '${widget.documentTitle} - AI Generated Flow',
+                  style: GoogleFonts.inter(
+                    fontSize: isNarrow ? 12 : 13,
+                    color: const Color(0xFF6B7280),
                   ),
                 ),
               ],
             ),
             
-            const SizedBox(height: 24),
+            const SizedBox(height: SimStyles.spaceL),
             
             // Interactive Timeline
             _buildInteractiveTimeline(),
@@ -159,21 +144,21 @@ class _TimelineViewState extends State<TimelineView> {
         width: double.infinity,
         decoration: BoxDecoration(
           color: node.backgroundColor,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(SimStyles.radiusM),
           border: Border.all(
             color: node.borderColor,
-            width: 2,
+            width: 1.5,
           ),
           boxShadow: [
             BoxShadow(
-              color: node.borderColor.withValues(alpha: 0.2),
-              blurRadius: 8,
-              offset: const Offset(0, 4),
+              color: node.borderColor.withValues(alpha: 0.15),
+              blurRadius: 6,
+              offset: const Offset(0, 3),
             ),
           ],
         ),
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(SimStyles.spaceM),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -181,8 +166,8 @@ class _TimelineViewState extends State<TimelineView> {
                 children: [
                   // Node Icon
                   Container(
-                    width: 40,
-                    height: 40,
+                    width: 36,
+                    height: 36,
                     decoration: BoxDecoration(
                       color: node.iconColor,
                       shape: BoxShape.circle,
@@ -190,11 +175,11 @@ class _TimelineViewState extends State<TimelineView> {
                     child: Icon(
                       node.icon,
                       color: Colors.white,
-                      size: 20,
+                      size: 18,
                     ),
                   ),
                   
-                  const SizedBox(width: 16),
+                  const SizedBox(width: SimStyles.spaceM),
                   
                   // Node Content
                   Expanded(
@@ -204,7 +189,7 @@ class _TimelineViewState extends State<TimelineView> {
                         Text(
                           node.title,
                           style: GoogleFonts.inter(
-                            fontSize: 16,
+                            fontSize: 15,
                             fontWeight: FontWeight.w600,
                             color: const Color(0xFF1F2937),
                           ),
@@ -213,7 +198,7 @@ class _TimelineViewState extends State<TimelineView> {
                         Text(
                           node.description,
                           style: GoogleFonts.inter(
-                            fontSize: 14,
+                            fontSize: 13,
                             color: const Color(0xFF6B7280),
                           ),
                         ),
@@ -225,32 +210,25 @@ class _TimelineViewState extends State<TimelineView> {
                   Icon(
                     isExpanded ? FontAwesomeIcons.chevronUp : FontAwesomeIcons.chevronDown,
                     color: const Color(0xFF6B7280),
-                    size: 16,
+                    size: 14,
                   ),
                 ],
               ),
               
               // Expanded Content
               if (isExpanded) ...[
-                const SizedBox(height: 16),
+                const SizedBox(height: SimStyles.spaceM),
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.7),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: const Color(0xFFE5E7EB),
-                      width: 1,
-                    ),
-                  ),
+                  padding: const EdgeInsets.all(SimStyles.spaceS),
+                  decoration: SimStyles.insetCard(),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         'Detailed Analysis',
                         style: GoogleFonts.inter(
-                          fontSize: 14,
+                          fontSize: 13,
                           fontWeight: FontWeight.w600,
                           color: const Color(0xFF1F2937),
                         ),
@@ -259,13 +237,13 @@ class _TimelineViewState extends State<TimelineView> {
                       Text(
                         node.detailedDescription,
                         style: GoogleFonts.inter(
-                          fontSize: 13,
+                          fontSize: 12,
                           color: const Color(0xFF4B5563),
                           height: 1.5,
                         ),
                       ),
                       if (node.risks.isNotEmpty) ...[
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 10),
                         Text(
                           'Potential Risks:',
                           style: GoogleFonts.inter(
@@ -318,11 +296,11 @@ class _TimelineViewState extends State<TimelineView> {
 
   Widget _buildConnectionLine() {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: SimStyles.spaceS),
       child: Center(
         child: Container(
           width: 2,
-          height: 30,
+          height: 26,
           decoration: BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topCenter,

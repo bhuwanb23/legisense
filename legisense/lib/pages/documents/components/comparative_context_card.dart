@@ -22,65 +22,82 @@ class ComparativeContextCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(color: const Color(0xFFE5E7EB)),
       ),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: GoogleFonts.inter(fontSize: 14, fontWeight: FontWeight.w700, color: const Color(0xFF0F172A))),
-          const SizedBox(height: 10),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              return Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Expanded(
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Flexible(child: _metric('Standard', standard)),
-                        const SizedBox(width: 12),
-                        const Icon(Icons.compare_arrows, color: Color(0xFF64748B), size: 18),
-                        const SizedBox(width: 12),
-                        Flexible(child: _metric('Contract', contract)),
-                      ],
-                    ),
+          // Title + Assessment pill
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: Text(
+                  label,
+                  style: GoogleFonts.inter(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF0F172A),
                   ),
-                  const SizedBox(width: 12),
-                  ConstrainedBox(
-                    constraints: BoxConstraints(maxWidth: constraints.maxWidth * 0.4),
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      alignment: Alignment.centerRight,
-                      child: Container(
-                        decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(999)),
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                        child: Text(
-                          assessment,
-                          style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w700, color: color),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              );
-            },
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              _assessmentPill(color),
+            ],
+          ),
+          const SizedBox(height: 8),
+          // Metrics row with equal columns and centered compare icon
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: _metric('Standard', standard, alignRight: false)),
+              const SizedBox(width: 10),
+              const Padding(
+                padding: EdgeInsets.only(top: 10),
+                child: Icon(Icons.compare_arrows, color: Color(0xFF64748B), size: 16),
+              ),
+              const SizedBox(width: 10),
+              Expanded(child: _metric('Contract', contract, alignRight: true)),
+            ],
           ),
         ],
       ),
     );
   }
 
-  Widget _metric(String label, String value) {
+  Widget _assessmentPill(Color color) {
+    return Container(
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      child: Text(
+        assessment,
+        style: GoogleFonts.inter(fontSize: 11.5, fontWeight: FontWeight.w700, color: color),
+        overflow: TextOverflow.ellipsis,
+      ),
+    );
+  }
+
+  Widget _metric(String label, String value, {bool alignRight = false}) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: alignRight ? CrossAxisAlignment.end : CrossAxisAlignment.start,
       children: [
-        Text(label, style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF64748B), fontWeight: FontWeight.w600)),
-        const SizedBox(height: 4),
-        Text(value, style: GoogleFonts.inter(fontSize: 14, color: const Color(0xFF0F172A), fontWeight: FontWeight.w700)),
+        Text(
+          label,
+          style: GoogleFonts.inter(fontSize: 11.5, color: const Color(0xFF64748B), fontWeight: FontWeight.w600),
+          textAlign: alignRight ? TextAlign.right : TextAlign.left,
+        ),
+        const SizedBox(height: 3),
+        Text(
+          value,
+          style: GoogleFonts.inter(fontSize: 13.5, color: const Color(0xFF0F172A), fontWeight: FontWeight.w700),
+          overflow: TextOverflow.ellipsis,
+          textAlign: alignRight ? TextAlign.right : TextAlign.left,
+        ),
       ],
     );
   }

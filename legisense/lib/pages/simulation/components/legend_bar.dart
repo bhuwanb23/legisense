@@ -70,7 +70,7 @@ class LegendBar extends StatelessWidget {
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
         color: AppTheme.backgroundLight,
         borderRadius: BorderRadius.circular(8),
@@ -88,8 +88,8 @@ class LegendBar extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Wrap(
-            spacing: 16,
-            runSpacing: 8,
+            spacing: 12,
+            runSpacing: 6,
             children: items.map((item) => _LegendDot(item: item)).toList(),
           ),
         ],

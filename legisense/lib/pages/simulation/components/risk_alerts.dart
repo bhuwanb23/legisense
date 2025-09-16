@@ -3,6 +3,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'simulation_scenario.dart';
+import 'styles.dart';
 
 class RiskAlerts extends StatelessWidget {
   final SimulationScenario scenario;
@@ -19,96 +20,73 @@ class RiskAlerts extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final alerts = _getRiskAlerts(simulationData, scenario);
+    final double width = MediaQuery.of(context).size.width;
+    final bool isNarrow = width < 380;
     
     if (alerts.isEmpty) {
       return const SizedBox.shrink();
     }
 
     return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: const Color(0xFFE5E7EB),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+      decoration: SimStyles.sectionDecoration(),
       child: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: SimStyles.sectionPadding,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Header
-            Row(
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFEF4444).withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(
-                    FontAwesomeIcons.shield,
-                    color: Color(0xFFEF4444),
-                    size: 20,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Risk Alerts & Insights',
-                        style: GoogleFonts.inter(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w700,
-                          color: const Color(0xFF1F2937),
-                        ),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(SimStyles.spaceS),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEF4444).withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(SimStyles.radiusM),
                       ),
-                      Text(
-                        'AI-detected high-risk clauses in current scenario',
-                        style: GoogleFonts.inter(
-                          fontSize: 14,
-                          color: const Color(0xFF6B7280),
-                        ),
+                      child: const Icon(
+                        FontAwesomeIcons.shield,
+                        color: Color(0xFFEF4444),
+                        size: 18,
                       ),
-                    ],
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFEF4444).withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    '${alerts.length} Alert${alerts.length > 1 ? 's' : ''}',
-                    style: GoogleFonts.inter(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: const Color(0xFFEF4444),
                     ),
+                    const Spacer(),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: SimStyles.badgeDecoration(const Color(0xFFEF4444)),
+                      child: Text('${alerts.length} Alert${alerts.length > 1 ? 's' : ''}', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: const Color(0xFFEF4444))),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: SimStyles.spaceS),
+                Text(
+                  'Risk Alerts & Insights',
+                  style: GoogleFonts.inter(
+                    fontSize: isNarrow ? 16 : 18,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF1F2937),
+                  ),
+                ),
+                Text(
+                  'AI-detected high-risk clauses in current scenario',
+                  style: GoogleFonts.inter(
+                    fontSize: isNarrow ? 12 : 13,
+                    color: const Color(0xFF6B7280),
                   ),
                 ),
               ],
             ),
             
-            const SizedBox(height: 20),
+            const SizedBox(height: SimStyles.spaceL),
             
             // Risk Alerts
             ...alerts.asMap().entries.map((entry) {
               final index = entry.key;
               final alert = entry.value;
               return Padding(
-                padding: EdgeInsets.only(bottom: index < alerts.length - 1 ? 16 : 0),
+                padding: EdgeInsets.only(bottom: index < alerts.length - 1 ? SimStyles.spaceM : 0),
                 child: _buildRiskAlert(alert, index),
               );
             }),
@@ -122,14 +100,14 @@ class RiskAlerts extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: alert.backgroundColor,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(SimStyles.radiusM),
         border: Border.all(
           color: alert.borderColor,
           width: 1,
         ),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(SimStyles.spaceM),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -137,17 +115,17 @@ class RiskAlerts extends StatelessWidget {
               children: [
                 // Risk Level Badge
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
                     color: alert.levelColor,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(SimStyles.radiusS),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Icon(
                         alert.levelIcon,
-                        size: 12,
+                        size: 11,
                         color: Colors.white,
                       ),
                       const SizedBox(width: 4),
@@ -167,8 +145,8 @@ class RiskAlerts extends StatelessWidget {
                 
                 // Alert Icon
                 Container(
-                  width: 32,
-                  height: 32,
+                  width: 30,
+                  height: 30,
                   decoration: BoxDecoration(
                     color: alert.iconColor.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
@@ -176,49 +154,42 @@ class RiskAlerts extends StatelessWidget {
                   child: Icon(
                     alert.icon,
                     color: alert.iconColor,
-                    size: 16,
+                    size: 15,
                   ),
                 ),
               ],
             ),
             
-            const SizedBox(height: 12),
+            const SizedBox(height: SimStyles.spaceS),
             
             // Alert Title
             Text(
               alert.title,
               style: GoogleFonts.inter(
-                fontSize: 16,
+                fontSize: 15,
                 fontWeight: FontWeight.w600,
                 color: const Color(0xFF1F2937),
               ),
             ),
             
-            const SizedBox(height: 8),
+            const SizedBox(height: SimStyles.spaceS),
             
             // Alert Description
             Text(
               alert.description,
               style: GoogleFonts.inter(
-                fontSize: 14,
+                fontSize: 13,
                 color: const Color(0xFF4B5563),
                 height: 1.5,
               ),
             ),
             
             if (alert.impact.isNotEmpty) ...[
-              const SizedBox(height: 12),
+              const SizedBox(height: SimStyles.spaceM),
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.7),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: const Color(0xFFE5E7EB),
-                    width: 1,
-                  ),
-                ),
+                padding: const EdgeInsets.all(SimStyles.spaceS),
+                decoration: SimStyles.insetCard(),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -260,24 +231,20 @@ class RiskAlerts extends StatelessWidget {
             ],
             
             if (alert.recommendation.isNotEmpty) ...[
-              const SizedBox(height: 12),
+              const SizedBox(height: SimStyles.spaceM),
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF10B981).withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: const Color(0xFF10B981).withValues(alpha: 0.3),
-                    width: 1,
-                  ),
+                padding: const EdgeInsets.all(SimStyles.spaceS),
+                decoration: SimStyles.insetCard(
+                  color: const Color(0xFF10B981).withValues(alpha: 0.12),
+                  borderColor: const Color(0xFF10B981).withValues(alpha: 0.3),
                 ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Icon(
                       FontAwesomeIcons.lightbulb,
-                      size: 14,
+                      size: 13,
                       color: const Color(0xFF10B981),
                     ),
                     const SizedBox(width: 8),

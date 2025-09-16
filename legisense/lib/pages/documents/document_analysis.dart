@@ -34,7 +34,7 @@ class _AnalysisPanelState extends State<AnalysisPanel> {
       final String? idStr = widget.document?.id;
       if (idStr != null && idStr.startsWith('server-')) {
         final int id = int.parse(idStr.split('-').last);
-        final repo = ParsedDocumentsRepository(baseUrl: const String.fromEnvironment('LEGISENSE_API_BASE', defaultValue: 'http://10.0.2.2:8000'));
+        final repo = ParsedDocumentsRepository(baseUrl: ApiConfig.baseUrl);
         try {
           final data = await repo.fetchAnalysis(id);
           setState(() {
@@ -90,11 +90,11 @@ class _AnalysisPanelState extends State<AnalysisPanel> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 6),
             child: Text(
               'Analysis & Insights',
               style: GoogleFonts.inter(
-                fontSize: 14,
+                fontSize: 13,
                 fontWeight: FontWeight.w600,
                 color: const Color(0xFF6B7280),
               ),
@@ -133,15 +133,15 @@ class _AnalysisPanelState extends State<AnalysisPanel> {
     final List<dynamic> qs = (a['suggested_questions'] ?? []) as List<dynamic>;
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+      padding: const EdgeInsets.fromLTRB(14, 10, 14, 12),
       children: [
         if (tldr.isNotEmpty) ...[
           TldrBullets(bullets: tldr.cast<String>()),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
         ],
 
         const ListHeader(title: 'Clause Breakdown'),
-        const SizedBox(height: 12),
+        const SizedBox(height: 10),
         ...clauses.map((c) {
           final String title = (c['category'] ?? 'Clause').toString();
           final String snippet = (c['original_snippet'] ?? '').toString();
@@ -150,23 +150,23 @@ class _AnalysisPanelState extends State<AnalysisPanel> {
           final ClauseRisk r = risk == 'high' ? ClauseRisk.high : risk == 'medium' ? ClauseRisk.medium : ClauseRisk.low;
           final IconData icon = Icons.article_outlined;
           return Padding(
-            padding: const EdgeInsets.only(bottom: 10),
+            padding: const EdgeInsets.only(bottom: 8),
             child: ClauseBreakdownCard(title: title, icon: icon, originalSnippet: snippet, explanation: explanation, risk: r),
           );
         }),
 
-        const SizedBox(height: 16),
-        const ListHeader(title: 'Risk Flags & Warnings'),
         const SizedBox(height: 12),
+        const ListHeader(title: 'Risk Flags & Warnings'),
+        const SizedBox(height: 10),
         RiskFlagsList(
           items: flags.map((f) => RiskFlagItem(text: (f['text'] ?? '').toString(), level: (f['level'] ?? 'low').toString(), why: (f['why'] ?? '').toString())).cast<RiskFlagItem>().toList(),
         ),
 
-        const SizedBox(height: 16),
-        const ListHeader(title: 'Comparative Context'),
         const SizedBox(height: 12),
+        const ListHeader(title: 'Comparative Context'),
+        const SizedBox(height: 10),
         ...comp.map((cc) => Padding(
-              padding: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.only(bottom: 8),
               child: ComparativeContextCard(
                 label: (cc['label'] ?? '').toString(),
                 standard: (cc['standard'] ?? '').toString(),
@@ -175,12 +175,12 @@ class _AnalysisPanelState extends State<AnalysisPanel> {
               ),
             )),
 
-        const SizedBox(height: 16),
-        const ListHeader(title: 'Suggested Questions'),
         const SizedBox(height: 12),
+        const ListHeader(title: 'Suggested Questions'),
+        const SizedBox(height: 10),
         SuggestedQuestions(questions: qs.cast<String>()),
 
-        const SizedBox(height: 20),
+        const SizedBox(height: 14),
         const SimulationCta(),
       ],
     );

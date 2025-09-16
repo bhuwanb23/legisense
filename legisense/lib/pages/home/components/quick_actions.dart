@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import '../../../utils/responsive.dart';
 import '../../../main.dart';
 
 class QuickActions extends StatelessWidget {
@@ -60,8 +61,37 @@ class QuickActions extends StatelessWidget {
       },
     ];
 
+    final width = MediaQuery.of(context).size.width;
+    final isSmall = ResponsiveHelper.isSmallScreen(context);
+    final isLarge = ResponsiveHelper.isLargeScreen(context);
+    final crossAxisCount = width >= 900
+        ? 5
+        : width >= 720
+            ? 4
+            : width >= 520
+                ? 3
+                : 2;
+    final childAspect = isLarge
+        ? 1.2
+        : isSmall
+            ? 1.05
+            : 1.1;
+
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      margin: EdgeInsets.symmetric(
+        horizontal: ResponsiveHelper.getResponsivePadding(
+          context,
+          small: 8,
+          medium: 12,
+          large: 16,
+        ),
+        vertical: ResponsiveHelper.getResponsivePadding(
+          context,
+          small: 8,
+          medium: 12,
+          large: 16,
+        ),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -80,16 +110,16 @@ class QuickActions extends StatelessWidget {
                 curve: Curves.easeOut,
               ),
           
-          const SizedBox(height: 12),
+          SizedBox(height: isSmall ? 8 : 12),
           
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2,
-              childAspectRatio: 1.0,
-              crossAxisSpacing: 8,
-              mainAxisSpacing: 8,
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: crossAxisCount,
+              childAspectRatio: childAspect + 0.05,
+              crossAxisSpacing: isSmall ? 6 : 8,
+              mainAxisSpacing: isSmall ? 6 : 8,
             ),
             itemCount: actions.length,
             itemBuilder: (context, index) {
@@ -119,13 +149,14 @@ class QuickActions extends StatelessWidget {
     required int delay,
     required VoidCallback onTap,
   }) {
+    final isSmall = ResponsiveHelper.isSmallScreen(context);
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(12),
+        padding: EdgeInsets.all(isSmall ? 8 : 10),
         decoration: BoxDecoration(
           color: Colors.white.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(isSmall ? 10 : 14),
           border: Border.all(
             color: Colors.white.withValues(alpha: 0.2),
             width: 1,
@@ -144,26 +175,26 @@ class QuickActions extends StatelessWidget {
           children: [
             // Icon Container
             Container(
-              width: 36,
-              height: 36,
+              width: isSmall ? 26 : 32,
+              height: isSmall ? 26 : 32,
               decoration: BoxDecoration(
                 gradient: gradient,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(isSmall ? 8 : 10),
               ),
               child: Icon(
                 icon,
                 color: Colors.white,
-                size: 16,
+                size: isSmall ? 12 : 14,
               ),
             ),
             
-            const SizedBox(height: 6),
+            SizedBox(height: isSmall ? 3 : 5),
             
             // Title
             Text(
               title,
               style: GoogleFonts.inter(
-                fontSize: 14,
+                fontSize: isSmall ? 11 : 13,
                 fontWeight: FontWeight.w600,
                 color: const Color(0xFF1F2937),
               ),
@@ -172,13 +203,13 @@ class QuickActions extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
             ),
             
-            const SizedBox(height: 1),
+            SizedBox(height: isSmall ? 0 : 1),
             
             // Subtitle
             Text(
               subtitle,
               style: GoogleFonts.inter(
-                fontSize: 11,
+                fontSize: isSmall ? 9 : 10.5,
                 fontWeight: FontWeight.w400,
                 color: const Color(0xFF6B7280),
               ),

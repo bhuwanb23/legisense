@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'styles.dart';
 
 class LongTermForecastChart extends StatelessWidget {
   final String documentTitle;
@@ -24,17 +25,17 @@ class LongTermForecastChart extends StatelessWidget {
       children: [
         Text(
           'Long-Term Forecast',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
                 color: const Color(0xFF111827),
                 fontWeight: FontWeight.w700,
               ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 10),
         Container(
-          height: 160,
+          height: 140,
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(SimStyles.radiusM),
             border: Border.all(color: Colors.grey.withValues(alpha: 0.15)),
           ),
           padding: const EdgeInsets.all(12),
@@ -77,7 +78,7 @@ class LongTermForecastChart extends StatelessWidget {
                         ],
                       ),
                     ),
-                    const SizedBox(width: 10),
+                    const SizedBox(width: 8),
                   ],
                 ],
               );

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
+import 'styles.dart';
 
 class PenaltyForecastPanel extends StatelessWidget {
   final String documentTitle;
@@ -29,16 +30,16 @@ class PenaltyForecastPanel extends StatelessWidget {
       children: [
         Text(
           'Penalty & Liability Forecast',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
                 color: headerColor,
                 fontWeight: FontWeight.w700,
               ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 10),
 
         // Simple table
         ClipRRect(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(SimStyles.radiusM),
           child: Container(
             decoration: BoxDecoration(
               color: Colors.white,
@@ -58,7 +59,7 @@ class PenaltyForecastPanel extends StatelessWidget {
 
         // Simple bar chart (placeholder)
         SizedBox(
-          height: 120,
+          height: 110,
           child: LayoutBuilder(
             builder: (context, constraints) {
               final double labelSpace = 18; // space for label text below bars
@@ -72,7 +73,7 @@ class PenaltyForecastPanel extends StatelessWidget {
                   final double h = ((total / denominator) * maxBarHeight).clamp(0.0, maxBarHeight);
                   return Expanded(
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 6),
+                      padding: const EdgeInsets.symmetric(horizontal: 5),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.end,
                         mainAxisSize: MainAxisSize.min,
@@ -120,7 +121,7 @@ class PenaltyForecastPanel extends StatelessWidget {
           color: const Color(0xFF111827),
         );
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       child: Row(
         children: [
           _cell('Month', flex: 3, style: style),
@@ -136,7 +137,7 @@ class PenaltyForecastPanel extends StatelessWidget {
   Widget _tableRow(BuildContext context, Map<String, dynamic> r) {
     TextStyle? style = Theme.of(context).textTheme.bodySmall;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       child: Row(
         children: [
           _cell(r['month'] as String, flex: 3, style: style),

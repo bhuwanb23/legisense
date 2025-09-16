@@ -34,7 +34,7 @@ class _DocumentViewDetailState extends State<DocumentViewDetail> {
   Widget build(BuildContext context) {
     if (widget.docId != null && widget.docId!.startsWith('server-')) {
       final int id = int.parse(widget.docId!.split('-').last);
-      final repo = ParsedDocumentsRepository(baseUrl: const String.fromEnvironment('LEGISENSE_API_BASE', defaultValue: 'http://10.0.2.2:8000'));
+      final repo = ParsedDocumentsRepository(baseUrl: ApiConfig.baseUrl);
       return FutureBuilder<SampleDocument>(
         future: repo.fetchDocumentDetail(id),
         builder: (context, snapshot) {

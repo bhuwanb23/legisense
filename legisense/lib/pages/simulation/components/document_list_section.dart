@@ -3,6 +3,7 @@ import '../../../theme/app_theme.dart';
 import '../../documents/components/components.dart';
 import '../enhanced_simulation_details.dart';
 import '../../../api/parsed_documents_repository.dart';
+import 'styles.dart';
 
 class DocumentListSection extends StatelessWidget {
   final Function(String documentId, String documentTitle)? onDocumentTap; // legacy single-tap (kept for compatibility)
@@ -21,17 +22,7 @@ class DocumentListSection extends StatelessWidget {
     final repo = ParsedDocumentsRepository(baseUrl: ApiConfig.baseUrl);
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: AppTheme.spacingM, vertical: AppTheme.spacingS),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 1.0),
-        borderRadius: BorderRadius.circular(AppTheme.radiusM),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
+      decoration: SimStyles.sectionDecoration(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -104,11 +95,7 @@ class DocumentListSection extends StatelessWidget {
                                     if (simulationCount > 0) {
                                       return Container(
                                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                        decoration: BoxDecoration(
-                                          color: const Color(0xFF10B981).withValues(alpha: 0.1),
-                                          borderRadius: BorderRadius.circular(12),
-                                          border: Border.all(color: const Color(0xFF10B981).withValues(alpha: 0.3)),
-                                        ),
+                                        decoration: SimStyles.badgeDecoration(const Color(0xFF10B981)),
                                         child: Row(
                                           mainAxisSize: MainAxisSize.min,
                                           children: [
@@ -236,6 +223,8 @@ class DocumentListSection extends StatelessWidget {
                                           ? const Color(0xFF10B981) 
                                           : const Color(0xFF6366F1),
                                         foregroundColor: Colors.white,
+                                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                                        textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
                                       ),
                                     ),
                                   );

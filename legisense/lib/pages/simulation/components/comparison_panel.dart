@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'styles.dart';
 
 class ComparisonPanel extends StatelessWidget {
   final String documentTitle;
@@ -19,12 +20,12 @@ class ComparisonPanel extends StatelessWidget {
       children: [
         Text(
           'Termination / Exit Comparison',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
                 color: const Color(0xFF111827),
                 fontWeight: FontWeight.w700,
               ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 10),
         LayoutBuilder(
           builder: (context, constraints) {
             final bool vertical = constraints.maxWidth < 700;
@@ -47,23 +48,23 @@ class ComparisonPanel extends StatelessWidget {
     
     return Container(
       margin: const EdgeInsets.all(4),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(SimStyles.spaceM),
       decoration: BoxDecoration(
         color: bgColor,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: borderColor, width: 1.5),
+        borderRadius: BorderRadius.circular(SimStyles.radiusM),
+        border: Border.all(color: borderColor, width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             scenario.label,
-            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+            style: Theme.of(context).textTheme.labelLarge?.copyWith(
                   fontWeight: FontWeight.w600,
                   color: const Color(0xFF111827),
                 ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           _buildKeyValue('Penalty', scenario.penalty, context),
           _buildKeyValue('Risk Level', scenario.risk, context),
           _buildKeyValue('Benefits Lost', scenario.benefitsLost, context),
@@ -87,9 +88,9 @@ class ComparisonPanel extends StatelessWidget {
 
   Widget _buildKeyValue(String k, String v, BuildContext context) {
     TextStyle? ks = Theme.of(context).textTheme.bodySmall?.copyWith(color: const Color(0xFF6B7280));
-    TextStyle? vs = Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600);
+    TextStyle? vs = Theme.of(context).textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w600);
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: 3),
       child: Row(
         children: [
           Expanded(child: Text(k, style: ks, maxLines: 1, overflow: TextOverflow.ellipsis)),

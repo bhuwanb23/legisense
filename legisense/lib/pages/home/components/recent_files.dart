@@ -3,6 +3,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../../theme/app_theme.dart';
 import '../../../api/parsed_documents_repository.dart';
+import '../../../utils/responsive.dart';
 import '../../../main.dart';
 import '../../documents/document_view_detail.dart';
 
@@ -130,8 +131,22 @@ class _RecentFilesState extends State<RecentFiles> {
   @override
   Widget build(BuildContext context) {
 
+    final isSmall = ResponsiveHelper.isSmallScreen(context);
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: AppTheme.spacingS + 6, vertical: AppTheme.spacingS + 6),
+      margin: EdgeInsets.symmetric(
+        horizontal: ResponsiveHelper.getResponsivePadding(
+          context,
+          small: AppTheme.spacingS,
+          medium: AppTheme.spacingS + 6,
+          large: AppTheme.spacingM,
+        ),
+        vertical: ResponsiveHelper.getResponsivePadding(
+          context,
+          small: AppTheme.spacingS,
+          medium: AppTheme.spacingS + 6,
+          large: AppTheme.spacingM,
+        ),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -165,7 +180,7 @@ class _RecentFilesState extends State<RecentFiles> {
             ],
           ),
           
-          const SizedBox(height: AppTheme.spacingS + 6),
+          SizedBox(height: isSmall ? AppTheme.spacingXS : AppTheme.spacingS),
           
           if (isLoading)
             _buildLoadingState()
@@ -179,7 +194,9 @@ class _RecentFilesState extends State<RecentFiles> {
               Map<String, dynamic> file = entry.value;
               
               return Padding(
-                padding: const EdgeInsets.only(bottom: AppTheme.spacingS + 6),
+                padding: EdgeInsets.only(
+                  bottom: isSmall ? AppTheme.spacingXS : AppTheme.spacingS,
+                ),
                 child: _buildFileCard(
                   context: context,
                   id: file['id'],
@@ -207,6 +224,7 @@ class _RecentFilesState extends State<RecentFiles> {
     required Color bgColor,
     required int delay,
   }) {
+    final isSmall = ResponsiveHelper.isSmallScreen(context);
     return GestureDetector(
       onTap: () {
         // Navigate to document detail page
@@ -221,10 +239,10 @@ class _RecentFilesState extends State<RecentFiles> {
         );
       },
       child: Container(
-        padding: const EdgeInsets.all(AppTheme.spacingS + 6),
+        padding: EdgeInsets.all(isSmall ? AppTheme.spacingXS + 2 : AppTheme.spacingS),
         decoration: BoxDecoration(
           color: AppTheme.backgroundWhite.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(AppTheme.radiusM),
+          borderRadius: BorderRadius.circular(isSmall ? AppTheme.radiusS : AppTheme.radiusM),
           border: Border.all(
             color: AppTheme.backgroundWhite.withValues(alpha: 0.2),
             width: 1,
@@ -241,20 +259,20 @@ class _RecentFilesState extends State<RecentFiles> {
           children: [
             // File Icon
             Container(
-              width: 42,
-              height: 42,
+              width: isSmall ? 32 : 40,
+              height: isSmall ? 32 : 40,
               decoration: BoxDecoration(
                 color: bgColor,
-                borderRadius: BorderRadius.circular(AppTheme.radiusM),
+                borderRadius: BorderRadius.circular(isSmall ? AppTheme.radiusS : AppTheme.radiusM),
               ),
               child: Icon(
                 icon,
                 color: color,
-                size: 18,
+                size: isSmall ? 14 : 16,
               ),
             ),
             
-            const SizedBox(width: AppTheme.spacingM),
+            SizedBox(width: isSmall ? AppTheme.spacingXS : AppTheme.spacingS),
             
             // File Info
             Expanded(
@@ -263,11 +281,11 @@ class _RecentFilesState extends State<RecentFiles> {
                 children: [
                   Text(
                     title,
-                    style: AppTheme.bodyMedium,
+                    style: isSmall ? AppTheme.bodySmall : AppTheme.bodySmall,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: AppTheme.spacingXS),
+                  SizedBox(height: isSmall ? AppTheme.spacingXS - 3 : AppTheme.spacingXS - 2),
                   Text(
                     subtitle,
                     style: AppTheme.bodySmall,
@@ -278,11 +296,11 @@ class _RecentFilesState extends State<RecentFiles> {
             
             // More Options Button
             Container(
-              width: 28,
-              height: 28,
+              width: isSmall ? 22 : 26,
+              height: isSmall ? 22 : 26,
               decoration: BoxDecoration(
                 color: Colors.transparent,
-                borderRadius: BorderRadius.circular(AppTheme.radiusS),
+                borderRadius: BorderRadius.circular(isSmall ? AppTheme.radiusS : AppTheme.radiusS),
               ),
               child: Builder(
                 builder: (context) => IconButton(
@@ -292,7 +310,7 @@ class _RecentFilesState extends State<RecentFiles> {
                 icon: const Icon(
                   FontAwesomeIcons.ellipsisVertical,
                   color: AppTheme.textTertiary,
-                  size: 14,
+                  size: 13,
                 ),
                 padding: EdgeInsets.zero,
               ),
