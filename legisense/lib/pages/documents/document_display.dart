@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'data/sample_documents.dart';
 import '../../theme/app_theme.dart';
+import '../profile/language/language_scope.dart';
+import 'language/strings.dart';
 
 class DocumentDisplayPanel extends StatefulWidget {
   const DocumentDisplayPanel({super.key, this.document});
@@ -87,6 +89,8 @@ class _DocumentDisplayPanelState extends State<DocumentDisplayPanel>
 
   @override
   Widget build(BuildContext context) {
+    final lang = LanguageScope.maybeOf(context)?.language ?? AppLanguage.en;
+    final i18n = DocumentsI18n.mapFor(lang);
     return Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -102,7 +106,7 @@ class _DocumentDisplayPanelState extends State<DocumentDisplayPanel>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Enhanced Header Section
-            _buildHeaderSection(),
+            _buildHeaderSection(i18n),
             
             // Document Content Area
             Expanded(
@@ -110,7 +114,7 @@ class _DocumentDisplayPanelState extends State<DocumentDisplayPanel>
                 opacity: _fadeAnimation,
                 child: SlideTransition(
                   position: _slideAnimation,
-                  child: _buildDocumentContent(),
+                  child: _buildDocumentContent(i18n),
                 ),
               ),
             ),
@@ -161,7 +165,11 @@ class _DocumentDisplayPanelState extends State<DocumentDisplayPanel>
                 children: [
                   _buildCompactActionMenuItem(
                     icon: Icons.bookmark_border,
-                    label: 'Bookmark',
+                    label: ((){
+                      final lang = LanguageScope.maybeOf(context)?.language ?? AppLanguage.en;
+                      final i = DocumentsI18n.mapFor(lang);
+                      return i['docs.action.bookmark'] ?? 'Bookmark';
+                    })(),
                     color: AppTheme.primaryBlue,
                     onTap: () {
                       Navigator.pop(context);
@@ -170,7 +178,11 @@ class _DocumentDisplayPanelState extends State<DocumentDisplayPanel>
                   ),
                   _buildCompactActionMenuItem(
                     icon: Icons.note_add,
-                    label: 'Add Note',
+                    label: ((){
+                      final lang = LanguageScope.maybeOf(context)?.language ?? AppLanguage.en;
+                      final i = DocumentsI18n.mapFor(lang);
+                      return i['docs.action.note'] ?? 'Add Note';
+                    })(),
                     color: AppTheme.successGreen,
                     onTap: () {
                       Navigator.pop(context);
@@ -179,7 +191,11 @@ class _DocumentDisplayPanelState extends State<DocumentDisplayPanel>
                   ),
                   _buildCompactActionMenuItem(
                     icon: Icons.highlight,
-                    label: 'Highlight',
+                    label: ((){
+                      final lang = LanguageScope.maybeOf(context)?.language ?? AppLanguage.en;
+                      final i = DocumentsI18n.mapFor(lang);
+                      return i['docs.action.highlight'] ?? 'Highlight';
+                    })(),
                     color: AppTheme.warningOrange,
                     onTap: () {
                       Navigator.pop(context);
@@ -240,7 +256,7 @@ class _DocumentDisplayPanelState extends State<DocumentDisplayPanel>
     );
   }
 
-  Widget _buildHeaderSection() {
+  Widget _buildHeaderSection(Map<String, String> i18n) {
     return Container(
       decoration: BoxDecoration(
         color: AppTheme.backgroundWhite,
@@ -286,7 +302,7 @@ class _DocumentDisplayPanelState extends State<DocumentDisplayPanel>
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Document Viewer',
+                                  i18n['docs.viewer.title'] ?? 'Document Viewer',
                                   style: AppTheme.heading4.copyWith(
                                     color: AppTheme.textPrimary,
                                     fontWeight: FontWeight.w600,
@@ -502,9 +518,9 @@ class _DocumentDisplayPanelState extends State<DocumentDisplayPanel>
     );
   }
 
-  Widget _buildDocumentContent() {
+  Widget _buildDocumentContent(Map<String, String> i18n) {
     if (widget.document == null || widget.document!.textBlocks.isEmpty) {
-      return _buildEmptyState();
+      return _buildEmptyState(i18n);
     }
 
     return Column(
@@ -518,7 +534,7 @@ class _DocumentDisplayPanelState extends State<DocumentDisplayPanel>
         ),
         
         // Navigation Controls
-        _buildNavigationControls(),
+        _buildNavigationControls(i18n),
       ],
     );
   }
@@ -752,7 +768,7 @@ class _DocumentDisplayPanelState extends State<DocumentDisplayPanel>
     );
   }
 
-  Widget _buildNavigationControls() {
+  Widget _buildNavigationControls(Map<String, String> i18n) {
     if (widget.document == null || widget.document!.textBlocks.length <= 1) {
       return const SizedBox.shrink();
     }
@@ -808,7 +824,7 @@ class _DocumentDisplayPanelState extends State<DocumentDisplayPanel>
             child: Column(
               children: [
                 Text(
-                  'Page ${_currentPageIndex + 1}',
+                  '${i18n['docs.viewer.page'] ?? 'Page'} ${_currentPageIndex + 1}',
                   style: AppTheme.bodyMedium.copyWith(
                     color: AppTheme.primaryBlue,
                     fontWeight: FontWeight.w600,
@@ -817,7 +833,7 @@ class _DocumentDisplayPanelState extends State<DocumentDisplayPanel>
                 ),
                 const SizedBox(height: 1),
                 Text(
-                  'of ${widget.document!.textBlocks.length}',
+                  '${i18n['docs.viewer.of'] ?? 'of'} ${widget.document!.textBlocks.length}',
                   style: AppTheme.caption.copyWith(
                     color: AppTheme.textSecondary,
                     fontSize: 10,
@@ -885,7 +901,7 @@ class _DocumentDisplayPanelState extends State<DocumentDisplayPanel>
 
 
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(Map<String, String> i18n) {
     return Center(
       child: Container(
         margin: const EdgeInsets.all(AppTheme.spacingXL),
@@ -925,7 +941,7 @@ class _DocumentDisplayPanelState extends State<DocumentDisplayPanel>
             ),
             const SizedBox(height: AppTheme.spacingXL),
             Text(
-              'No Document Selected',
+              i18n['docs.viewer.noSelection'] ?? 'No Document Selected',
               style: AppTheme.heading2.copyWith(
                 color: AppTheme.textPrimary,
                 fontWeight: FontWeight.w700,
@@ -933,7 +949,7 @@ class _DocumentDisplayPanelState extends State<DocumentDisplayPanel>
             ),
             const SizedBox(height: AppTheme.spacingM),
             Text(
-              'Choose a document from the list to view its content and analysis',
+              i18n['docs.viewer.selectHint'] ?? 'Choose a document from the list to view its content and analysis',
               style: AppTheme.bodyLarge.copyWith(
                 color: AppTheme.textSecondary,
                 height: 1.5,
@@ -970,7 +986,7 @@ class _DocumentDisplayPanelState extends State<DocumentDisplayPanel>
                   ),
                   const SizedBox(width: AppTheme.spacingS),
                   Text(
-                    'Select a document to get started',
+                    i18n['docs.viewer.selectCta'] ?? 'Select a document to get started',
                     style: AppTheme.bodyMedium.copyWith(
                       color: AppTheme.primaryBlue,
                       fontWeight: FontWeight.w600,

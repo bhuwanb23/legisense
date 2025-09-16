@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'document_view_detail.dart';
 import 'components/components.dart';
+import '../profile/language/language_scope.dart';
+import 'language/strings.dart';
 import '../../api/parsed_documents_repository.dart';
 
 class DocumentListPanel extends StatefulWidget {
@@ -16,6 +18,8 @@ class _DocumentListPanelState extends State<DocumentListPanel> {
   @override
   Widget build(BuildContext context) {
     final repo = ParsedDocumentsRepository(baseUrl: ApiConfig.baseUrl);
+    final lang = LanguageScope.maybeOf(context)?.language ?? AppLanguage.en;
+    final i18n = DocumentsI18n.mapFor(lang);
     return Container(
       decoration: const BoxDecoration(
         color: Colors.white,
@@ -23,7 +27,7 @@ class _DocumentListPanelState extends State<DocumentListPanel> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const ListHeader(title: 'Document List'),
+          ListHeader(title: i18n['docs.list.title'] ?? 'Document List'),
           SearchField(onChanged: (v) => setState(() => _query = v)),
 
           const Divider(height: 1, color: Color(0xFFE5E7EB)),
@@ -37,7 +41,7 @@ class _DocumentListPanelState extends State<DocumentListPanel> {
                   return const _LoadingListSkeleton();
                 }
                 if (snapshot.hasError) {
-                  return _ErrorCard(error: snapshot.error.toString());
+                  return _ErrorCard(error: snapshot.error.toString(), i18n: i18n);
                 }
                 final String q = _query.trim().toLowerCase();
                 List<Map<String, dynamic>> list = (snapshot.data ?? const <Map<String, dynamic>>[]);
@@ -48,7 +52,7 @@ class _DocumentListPanelState extends State<DocumentListPanel> {
                   }).toList();
                 }
                 if (list.isEmpty) {
-                  return const _EmptyStateCard();
+                  return _EmptyStateCard(i18n: i18n);
                 }
                 return ListView.separated(
                   itemCount: list.length,
@@ -177,7 +181,8 @@ class _SkeletonBox extends StatelessWidget {
 }
 
 class _EmptyStateCard extends StatelessWidget {
-  const _EmptyStateCard();
+  const _EmptyStateCard({required this.i18n});
+  final Map<String, String> i18n;
 
   @override
   Widget build(BuildContext context) {
@@ -195,10 +200,10 @@ class _EmptyStateCard extends StatelessWidget {
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
-          children: const [
-            Icon(Icons.inbox_rounded, color: Color(0xFF64748B)),
-            SizedBox(width: 8),
-            Text('No documents uploaded yet', style: TextStyle(color: Color(0xFF334155))),
+          children: [
+            const Icon(Icons.inbox_rounded, color: Color(0xFF64748B)),
+            const SizedBox(width: 8),
+            Text(i18n['docs.empty'] ?? 'No documents uploaded yet', style: const TextStyle(color: Color(0xFF334155))),
           ],
         ),
       ),
@@ -207,8 +212,9 @@ class _EmptyStateCard extends StatelessWidget {
 }
 
 class _ErrorCard extends StatelessWidget {
-  const _ErrorCard({required this.error});
+  const _ErrorCard({required this.error, required this.i18n});
   final String error;
+  final Map<String, String> i18n;
 
   @override
   Widget build(BuildContext context) {
@@ -228,7 +234,7 @@ class _ErrorCard extends StatelessWidget {
             const SizedBox(width: 8),
             Flexible(
               child: Text(
-                'Failed to load documents: $error',
+                '${i18n['docs.error.load'] ?? 'Failed to load documents'}: $error',
                 style: const TextStyle(color: Color(0xFF991B1B)),
               ),
             ),

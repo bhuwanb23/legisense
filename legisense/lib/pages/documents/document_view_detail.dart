@@ -7,6 +7,8 @@ import 'data/sample_documents.dart';
 import '../../api/parsed_documents_repository.dart';
 import '../../components/bottom_nav_bar.dart';
 import '../../main.dart';
+import '../profile/language/language_scope.dart';
+import 'language/strings.dart';
 
 class DocumentViewDetail extends StatefulWidget {
   const DocumentViewDetail({super.key, required this.title, required this.meta, this.docId});
@@ -45,6 +47,7 @@ class _DocumentViewDetailState extends State<DocumentViewDetail> {
             );
           }
           if (snapshot.hasError) {
+            final i18n = DocumentsI18n.mapFor(LanguageScope.maybeOf(context)?.language ?? AppLanguage.en);
             return Container(
               color: const Color(0xFFF8FAFC),
               child: Center(
@@ -59,8 +62,8 @@ class _DocumentViewDetailState extends State<DocumentViewDetail> {
                         color: Colors.red,
                       ),
                       const SizedBox(height: 16),
-                      const Text(
-                        'Failed to load document',
+                      Text(
+                        i18n['docs.detail.failed'] ?? 'Failed to load document',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -68,8 +71,8 @@ class _DocumentViewDetailState extends State<DocumentViewDetail> {
                         ),
                       ),
                       const SizedBox(height: 8),
-                      const Text(
-                        'Please check your internet connection and ensure the server is running.',
+                      Text(
+                        i18n['docs.detail.check'] ?? 'Please check your internet connection and ensure the server is running.',
                         textAlign: TextAlign.center,
                         style: TextStyle(color: Colors.grey),
                       ),
@@ -78,7 +81,7 @@ class _DocumentViewDetailState extends State<DocumentViewDetail> {
                         onPressed: () {
                           setState(() {});
                         },
-                        child: const Text('Retry'),
+                        child: Text(i18n['docs.detail.retry'] ?? 'Retry'),
                       ),
                     ],
                   ),

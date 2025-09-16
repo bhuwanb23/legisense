@@ -44,7 +44,8 @@ class ComparativeContextCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              _assessmentPill(color),
+              const SizedBox(width: 8),
+              Flexible(child: _assessmentPill(color)),
             ],
           ),
           const SizedBox(height: 8),
@@ -78,6 +79,7 @@ class ComparativeContextCard extends StatelessWidget {
         assessment,
         style: GoogleFonts.inter(fontSize: 11.5, fontWeight: FontWeight.w700, color: color),
         overflow: TextOverflow.ellipsis,
+        maxLines: 1,
       ),
     );
   }

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../profile/language/language_scope.dart';
+import '../language/strings.dart';
 
 class DetailTabs extends StatelessWidget {
   const DetailTabs({super.key, required this.index, required this.onChange});
@@ -16,8 +18,8 @@ class DetailTabs extends StatelessWidget {
       ),
       child: Row(
         children: [
-          _tab('Text', 0),
-          _tab('Analysis', 1),
+          _tab(_label(context, 'docs.tab.text', fallback: 'Text'), 0),
+          _tab(_label(context, 'docs.tab.analysis', fallback: 'Analysis'), 1),
         ],
       ),
     );
@@ -54,6 +56,12 @@ class DetailTabs extends StatelessWidget {
       ),
     );
   }
+}
+
+String _label(BuildContext context, String key, {required String fallback}) {
+  final lang = LanguageScope.maybeOf(context)?.language ?? AppLanguage.en;
+  final i18n = DocumentsI18n.mapFor(lang);
+  return i18n[key] ?? fallback;
 }
 
 

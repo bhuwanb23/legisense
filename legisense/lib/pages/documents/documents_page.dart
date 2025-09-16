@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'document_list.dart';
 import '../../components/main_header.dart';
+import '../profile/language/language_scope.dart';
+import 'language/strings.dart';
 import '../../theme/app_theme.dart';
 // Only list on this page; detail is a separate route
 
@@ -84,7 +86,7 @@ class DocumentsPage extends StatelessWidget {
                   bottom: false,
                   child: Container(
                     color: Colors.white,
-                    child: const MainHeader(title: 'Documents'),
+                    child: MainHeader(title: DocumentsI18n.mapFor(LanguageScope.maybeOf(context)?.language ?? AppLanguage.en)['docs.header.title'] ?? 'Documents'),
                   ),
                 ),
               ),

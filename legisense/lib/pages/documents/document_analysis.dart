@@ -3,6 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'components/components.dart';
 import 'data/sample_documents.dart';
 import '../../api/parsed_documents_repository.dart';
+import '../profile/language/language_scope.dart';
+import 'language/strings.dart';
 
 class AnalysisPanel extends StatefulWidget {
   const AnalysisPanel({super.key, this.document});
@@ -84,6 +86,8 @@ class _AnalysisPanelState extends State<AnalysisPanel> {
 
   @override
   Widget build(BuildContext context) {
+    final lang = LanguageScope.maybeOf(context)?.language ?? AppLanguage.en;
+    final i18n = DocumentsI18n.mapFor(lang);
     return Container(
       color: Colors.white,
       child: Column(
@@ -92,7 +96,7 @@ class _AnalysisPanelState extends State<AnalysisPanel> {
           Padding(
             padding: const EdgeInsets.fromLTRB(14, 12, 14, 6),
             child: Text(
-              'Analysis & Insights',
+              i18n['docs.analysis.title'] ?? 'Analysis & Insights',
               style: GoogleFonts.inter(
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
@@ -109,22 +113,22 @@ class _AnalysisPanelState extends State<AnalysisPanel> {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Text('Failed to load analysis', style: GoogleFonts.inter(color: const Color(0xFF991B1B))),
+                            Text(i18n['docs.analysis.failed'] ?? 'Failed to load analysis', style: GoogleFonts.inter(color: const Color(0xFF991B1B))),
                             const SizedBox(height: 8),
                             Text(error!, style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF991B1B))),
                             const SizedBox(height: 12),
-                            OutlinedButton(onPressed: _load, child: const Text('Retry')),
+                            OutlinedButton(onPressed: _load, child: Text(i18n['docs.retry'] ?? 'Retry')),
                           ],
                         ),
                       )
-                    : _buildAnalysisView(),
+                    : _buildAnalysisView(i18n),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildAnalysisView() {
+  Widget _buildAnalysisView(Map<String, String> i18n) {
     final Map<String, dynamic> a = analysis ?? {};
     final List<dynamic> tldr = (a['tldr_bullets'] ?? []) as List<dynamic>;
     final List<dynamic> clauses = (a['clauses'] ?? []) as List<dynamic>;
@@ -140,7 +144,7 @@ class _AnalysisPanelState extends State<AnalysisPanel> {
           const SizedBox(height: 12),
         ],
 
-        const ListHeader(title: 'Clause Breakdown'),
+        ListHeader(title: i18n['docs.clauses'] ?? 'Clause Breakdown'),
         const SizedBox(height: 10),
         ...clauses.map((c) {
           final String title = (c['category'] ?? 'Clause').toString();
@@ -156,14 +160,14 @@ class _AnalysisPanelState extends State<AnalysisPanel> {
         }),
 
         const SizedBox(height: 12),
-        const ListHeader(title: 'Risk Flags & Warnings'),
+        ListHeader(title: i18n['docs.flags'] ?? 'Risk Flags & Warnings'),
         const SizedBox(height: 10),
         RiskFlagsList(
           items: flags.map((f) => RiskFlagItem(text: (f['text'] ?? '').toString(), level: (f['level'] ?? 'low').toString(), why: (f['why'] ?? '').toString())).cast<RiskFlagItem>().toList(),
         ),
 
         const SizedBox(height: 12),
-        const ListHeader(title: 'Comparative Context'),
+        ListHeader(title: i18n['docs.context'] ?? 'Comparative Context'),
         const SizedBox(height: 10),
         ...comp.map((cc) => Padding(
               padding: const EdgeInsets.only(bottom: 8),
@@ -176,7 +180,7 @@ class _AnalysisPanelState extends State<AnalysisPanel> {
             )),
 
         const SizedBox(height: 12),
-        const ListHeader(title: 'Suggested Questions'),
+        ListHeader(title: i18n['docs.suggested'] ?? 'Suggested Questions'),
         const SizedBox(height: 10),
         SuggestedQuestions(questions: qs.cast<String>()),
 

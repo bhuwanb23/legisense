@@ -1,0 +1,41 @@
+const documentsStringsEn = {
+  // DocumentsPage
+  'docs.header.title': 'Documents',
+  // DocumentList
+  'docs.list.title': 'Document List',
+  'docs.empty': 'No documents uploaded yet',
+  'docs.error.load': 'Failed to load documents',
+  'docs.retry': 'Retry',
+  'docs.meta.pdf': 'PDF',
+  'docs.meta.pages': 'pages',
+  // DocumentViewDetail
+  'docs.detail.failed': 'Failed to load document',
+  'docs.detail.check': 'Please check your internet connection and ensure the server is running.',
+  'docs.detail.retry': 'Retry',
+  // AnalysisPanel
+  'docs.analysis.title': 'Analysis & Insights',
+  'docs.analysis.failed': 'Failed to load analysis',
+  'docs.analysis.pending': 'Analysis not available',
+  'docs.clauses': 'Clause Breakdown',
+  'docs.flags': 'Risk Flags & Warnings',
+  'docs.context': 'Comparative Context',
+  'docs.suggested': 'Suggested Questions',
+  // DocumentDisplayPanel
+  'docs.viewer.title': 'Document Viewer',
+  'docs.viewer.noSelection': 'No Document Selected',
+  'docs.viewer.selectHint': 'Choose a document from the list to view its content and analysis',
+  'docs.viewer.selectCta': 'Select a document to get started',
+  'docs.viewer.page': 'Page',
+  'docs.viewer.of': 'of',
+  'docs.viewer.words': 'Words',
+  'docs.viewer.chars': 'Chars',
+  'docs.viewer.read': 'Read',
+  'docs.viewer.characters': 'characters',
+  'docs.tab.text': 'Text',
+  'docs.tab.analysis': 'Analysis',
+  'docs.action.bookmark': 'Bookmark',
+  'docs.action.note': 'Add Note',
+  'docs.action.highlight': 'Highlight',
+};
+
+
