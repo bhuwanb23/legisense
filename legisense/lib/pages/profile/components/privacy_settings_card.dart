@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../../theme/app_theme.dart';
+import '../language/language_scope.dart';
+import '../language/strings.dart';
 
 class PrivacySettingsCard extends StatelessWidget {
   final String profileVisibility;
@@ -22,6 +24,8 @@ class PrivacySettingsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final controller = LanguageScope.of(context);
+    final i18n = ProfileI18n.mapFor(controller.language);
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -56,7 +60,7 @@ class PrivacySettingsCard extends StatelessWidget {
               ),
             ),
             child: Text(
-              'Privacy Settings',
+              i18n['privacy.title'] ?? 'Privacy Settings',
               style: AppTheme.bodySmall.copyWith(
                 color: AppTheme.primaryBlue,
                 fontWeight: FontWeight.w600,
@@ -70,7 +74,7 @@ class PrivacySettingsCard extends StatelessWidget {
             child: Column(
               children: [
                 _buildPrivacyRow(
-                  label: 'Profile Visibility',
+                  label: i18n['privacy.profileVisibility'] ?? 'Profile Visibility',
                   value: profileVisibility,
                   valueColor: AppTheme.primaryBlue,
                   onTap: onProfileVisibilityTap,
@@ -79,7 +83,7 @@ class PrivacySettingsCard extends StatelessWidget {
                 const SizedBox(height: AppTheme.spacingS),
                 
                 _buildPrivacyRow(
-                  label: 'Data Sharing',
+                  label: i18n['privacy.dataSharing'] ?? 'Data Sharing',
                   value: dataSharing,
                   valueColor: AppTheme.textSecondary,
                   onTap: onDataSharingTap,
@@ -88,8 +92,8 @@ class PrivacySettingsCard extends StatelessWidget {
                 const SizedBox(height: AppTheme.spacingS),
                 
                 _buildPrivacyRow(
-                  label: 'Two-Factor Auth',
-                  value: twoFactorAuth ? 'Enabled' : 'Disabled',
+                  label: i18n['privacy.twoFactor'] ?? 'Two-Factor Auth',
+                  value: twoFactorAuth ? (i18n['privacy.enabled'] ?? 'Enabled') : (i18n['privacy.disabled'] ?? 'Disabled'),
                   valueColor: twoFactorAuth ? AppTheme.successGreen : AppTheme.textSecondary,
                   icon: twoFactorAuth ? FontAwesomeIcons.circleCheck : null,
                   onTap: onTwoFactorAuthTap,
@@ -116,30 +120,46 @@ class PrivacySettingsCard extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              label,
-              style: AppTheme.bodyMedium.copyWith(
-                color: AppTheme.textPrimary,
+            Expanded(
+              child: Text(
+                label,
+                style: AppTheme.bodyMedium.copyWith(
+                  color: AppTheme.textPrimary,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                softWrap: false,
               ),
             ),
-            Row(
-              children: [
-                if (icon != null) ...[
-                  Icon(
-                    icon,
-                    size: 14,
-                    color: valueColor,
+            const SizedBox(width: AppTheme.spacingS),
+            Flexible(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (icon != null) ...[
+                    Icon(
+                      icon,
+                      size: 14,
+                      color: valueColor,
+                    ),
+                    const SizedBox(width: AppTheme.spacingXS),
+                  ],
+                  Flexible(
+                    child: Text(
+                      value,
+                      style: AppTheme.bodySmall.copyWith(
+                        color: valueColor,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.right,
+                      softWrap: false,
+                    ),
                   ),
-                  const SizedBox(width: AppTheme.spacingXS),
                 ],
-                Text(
-                  value,
-                  style: AppTheme.bodySmall.copyWith(
-                    color: valueColor,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
+              ),
             ),
           ],
         ),

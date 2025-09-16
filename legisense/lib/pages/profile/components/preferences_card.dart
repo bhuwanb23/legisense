@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../theme/app_theme.dart';
+import '../language/language_scope.dart';
+import '../language/strings.dart';
 
 class PreferencesCard extends StatefulWidget {
   final bool emailNotifications;
@@ -33,11 +35,15 @@ class _PreferencesCardState extends State<PreferencesCard> {
     super.initState();
     _emailNotifications = widget.emailNotifications;
     _pushNotifications = widget.pushNotifications;
-    _language = widget.language;
+    _language = widget.language == 'English (US)'
+        ? 'en'
+        : (['en','hi','ta','te'].contains(widget.language) ? widget.language : 'en');
   }
 
   @override
   Widget build(BuildContext context) {
+    final controller = LanguageScope.of(context);
+    final i18n = ProfileI18n.mapFor(controller.language);
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -72,7 +78,7 @@ class _PreferencesCardState extends State<PreferencesCard> {
               ),
             ),
             child: Text(
-              'Preferences',
+              i18n['preferences.title'] ?? 'Preferences',
               style: AppTheme.bodySmall.copyWith(
                 color: AppTheme.primaryBlue,
                 fontWeight: FontWeight.w600,
@@ -87,7 +93,7 @@ class _PreferencesCardState extends State<PreferencesCard> {
               children: [
                 // Email Notifications Toggle
                 _buildToggleRow(
-                  label: 'Email Notifications',
+                  label: i18n['preferences.email'] ?? 'Email Notifications',
                   value: _emailNotifications,
                   onChanged: (value) {
                     setState(() {
@@ -101,7 +107,7 @@ class _PreferencesCardState extends State<PreferencesCard> {
                 
                 // Push Notifications Toggle
                 _buildToggleRow(
-                  label: 'Push Notifications',
+                  label: i18n['preferences.push'] ?? 'Push Notifications',
                   value: _pushNotifications,
                   onChanged: (value) {
                     setState(() {
@@ -114,7 +120,7 @@ class _PreferencesCardState extends State<PreferencesCard> {
                 const SizedBox(height: AppTheme.spacingM),
                 
                 // Language Dropdown
-                _buildLanguageDropdown(),
+                _buildLanguageDropdown(i18n, controller),
               ],
             ),
           ),
@@ -131,12 +137,18 @@ class _PreferencesCardState extends State<PreferencesCard> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          label,
-          style: AppTheme.bodyMedium.copyWith(
-            color: AppTheme.textPrimary,
+        Expanded(
+          child: Text(
+            label,
+            style: AppTheme.bodyMedium.copyWith(
+              color: AppTheme.textPrimary,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            softWrap: false,
           ),
         ),
+        const SizedBox(width: AppTheme.spacingS),
         GestureDetector(
           onTap: () => onChanged(!value),
           child: Container(
@@ -165,12 +177,13 @@ class _PreferencesCardState extends State<PreferencesCard> {
     );
   }
 
-  Widget _buildLanguageDropdown() {
+  Widget _buildLanguageDropdown(Map<String, String> i18n, LanguageController controller) {
+    final String dropdownValue = _normalizeLanguage(_language);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Language',
+          i18n['preferences.language'] ?? 'Language',
           style: AppTheme.bodySmall.copyWith(
             color: AppTheme.textPrimary,
             fontWeight: FontWeight.w500,
@@ -189,23 +202,27 @@ class _PreferencesCardState extends State<PreferencesCard> {
           ),
           child: DropdownButtonHideUnderline(
             child: DropdownButton<String>(
-              value: _language,
+              value: dropdownValue,
               isExpanded: true,
               style: AppTheme.bodyMedium.copyWith(
                 color: AppTheme.textPrimary,
               ),
-              items: const [
+              items: [
                 DropdownMenuItem(
-                  value: 'English (US)',
-                  child: Text('English (US)'),
+                  value: 'en',
+                  child: Text(i18n['language.english'] ?? 'English'),
                 ),
                 DropdownMenuItem(
-                  value: 'Spanish',
-                  child: Text('Spanish'),
+                  value: 'hi',
+                  child: Text(i18n['language.hindi'] ?? 'Hindi'),
                 ),
                 DropdownMenuItem(
-                  value: 'French',
-                  child: Text('French'),
+                  value: 'ta',
+                  child: Text(i18n['language.tamil'] ?? 'Tamil'),
+                ),
+                DropdownMenuItem(
+                  value: 'te',
+                  child: Text(i18n['language.telugu'] ?? 'Telugu'),
                 ),
               ],
               onChanged: (String? newValue) {
@@ -214,6 +231,23 @@ class _PreferencesCardState extends State<PreferencesCard> {
                     _language = newValue;
                   });
                   widget.onLanguageChanged?.call(newValue);
+                  // Propagate to global language controller
+                  Future.microtask(() {
+                    switch (newValue) {
+                      case 'hi':
+                        controller.setLanguage(AppLanguage.hi);
+                        break;
+                      case 'ta':
+                        controller.setLanguage(AppLanguage.ta);
+                        break;
+                      case 'te':
+                        controller.setLanguage(AppLanguage.te);
+                        break;
+                      case 'en':
+                      default:
+                        controller.setLanguage(AppLanguage.en);
+                    }
+                  });
                 }
               },
             ),
@@ -221,5 +255,11 @@ class _PreferencesCardState extends State<PreferencesCard> {
         ),
       ],
     );
+  }
+
+  String _normalizeLanguage(String value) {
+    if (value == 'English (US)') return 'en';
+    if (value == 'hi' || value == 'ta' || value == 'te' || value == 'en') return value;
+    return 'en';
   }
 }

@@ -10,3 +10,5 @@ export 'profile_stats.dart';
 export 'security_overview.dart';
 export 'social_connections.dart';
 export 'skeleton_loader.dart';
+export '../language/language_scope.dart';
+export '../language/strings.dart';

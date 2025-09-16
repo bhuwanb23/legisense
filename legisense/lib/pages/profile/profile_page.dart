@@ -5,6 +5,7 @@ import 'dart:io';
 import '../../components/main_header.dart';
 import '../../theme/app_theme.dart';
 import 'components/components.dart';
+// imports provided transitively by components/components.dart
 
 class ProfilePage extends StatefulWidget {
   final VoidCallback? onLogout;
@@ -30,7 +31,7 @@ class _ProfilePageState extends State<ProfilePage> {
   // Settings
   bool _emailNotifications = true;
   bool _pushNotifications = false;
-  String _language = 'English (US)';
+  String _language = 'en';
   String _profileVisibility = 'Public';
   String _dataSharing = 'Limited';
   bool _twoFactorAuth = true;
@@ -41,6 +42,8 @@ class _ProfilePageState extends State<ProfilePage> {
   // Lightweight loading state for timeline
   bool _loadingTimeline = true;
 
+  final LanguageController _languageController = LanguageController(AppLanguage.en);
+
   @override
   void initState() {
     super.initState();
@@ -48,6 +51,12 @@ class _ProfilePageState extends State<ProfilePage> {
       if (!mounted) return;
       setState(() => _loadingTimeline = false);
     });
+  }
+
+  @override
+  void dispose() {
+    _languageController.dispose();
+    super.dispose();
   }
 
   // Camera tap functionality
@@ -320,7 +329,13 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     if (_loadingTimeline) {}
-    return Scaffold(
+    return LanguageScope(
+      controller: _languageController,
+      child: Builder(
+        builder: (context) {
+          final controller = LanguageScope.of(context);
+          final i18n = ProfileI18n.mapFor(controller.language);
+          return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -479,13 +494,16 @@ class _ProfilePageState extends State<ProfilePage> {
                   bottom: false,
                   child: Container(
                     color: Colors.white,
-                    child: const MainHeader(title: 'Profile'),
+                    child: MainHeader(title: i18n['profile.title'] ?? 'Profile'),
                   ),
                 ),
               ),
             ],
           ),
         ),
+      ),
+    );
+        },
       ),
     );
   }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../../theme/app_theme.dart';
+import '../language/language_scope.dart';
+import '../language/strings.dart';
 
 class PersonalInfoCard extends StatefulWidget {
   final String fullName;
@@ -31,6 +33,8 @@ class _PersonalInfoCardState extends State<PersonalInfoCard> {
 
   @override
   Widget build(BuildContext context) {
+    final controller = LanguageScope.of(context);
+    final i18n = ProfileI18n.mapFor(controller.language);
     return Listener(
       onPointerDown: (_) => _setPressed(true),
       onPointerUp: (_) => _setPressed(false),
@@ -72,7 +76,7 @@ class _PersonalInfoCardState extends State<PersonalInfoCard> {
               ),
             ),
             child: Text(
-              'Personal Info',
+              i18n['personalInfo.title'] ?? 'Personal Info',
               style: AppTheme.bodySmall.copyWith(
                 color: AppTheme.primaryBlue,
                 fontWeight: FontWeight.w600,
@@ -86,21 +90,21 @@ class _PersonalInfoCardState extends State<PersonalInfoCard> {
             child: Column(
               children: [
                 _buildFormField(
-                  label: 'Full Name',
+                  label: i18n['personalInfo.fullName'] ?? 'Full Name',
                   value: widget.fullName,
                   icon: FontAwesomeIcons.user,
                   onChanged: widget.onNameChanged,
                 ),
                 const SizedBox(height: AppTheme.spacingM),
                 _buildFormField(
-                  label: 'Phone Number',
+                  label: i18n['personalInfo.phone'] ?? 'Phone Number',
                   value: widget.phoneNumber,
                   icon: FontAwesomeIcons.phone,
                   onChanged: widget.onPhoneChanged,
                 ),
                 const SizedBox(height: AppTheme.spacingM),
                 _buildFormField(
-                  label: 'Location',
+                  label: i18n['personalInfo.location'] ?? 'Location',
                   value: widget.location,
                   icon: FontAwesomeIcons.locationDot,
                   onChanged: widget.onLocationChanged,

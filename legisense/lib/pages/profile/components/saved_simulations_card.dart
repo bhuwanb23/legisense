@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../../../theme/app_theme.dart';
+import '../language/language_scope.dart';
+import '../language/strings.dart';
 
 class SavedSimulationsCard extends StatelessWidget {
   final VoidCallback? onCreateSimulation;
@@ -12,6 +14,8 @@ class SavedSimulationsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final controller = LanguageScope.of(context);
+    final i18n = ProfileI18n.mapFor(controller.language);
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -46,7 +50,7 @@ class SavedSimulationsCard extends StatelessWidget {
               ),
             ),
             child: Text(
-              'Saved Simulations',
+              i18n['savedSimulations.title'] ?? 'Saved Simulations',
               style: AppTheme.bodySmall.copyWith(
                 color: AppTheme.primaryBlue,
                 fontWeight: FontWeight.w600,
@@ -73,7 +77,7 @@ class SavedSimulationsCard extends StatelessWidget {
                   
                   // Empty state text
                   Text(
-                    'No saved simulations yet',
+                    i18n['savedSimulations.empty'] ?? 'No saved simulations yet',
                     style: AppTheme.bodyMedium.copyWith(
                       color: AppTheme.textSecondary,
                     ),
@@ -85,7 +89,7 @@ class SavedSimulationsCard extends StatelessWidget {
                   GestureDetector(
                     onTap: onCreateSimulation,
                     child: Text(
-                      'Create your first simulation',
+                      i18n['savedSimulations.create'] ?? 'Create your first simulation',
                       style: AppTheme.bodySmall.copyWith(
                         color: AppTheme.primaryBlue,
                         fontWeight: FontWeight.w500,

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../theme/app_theme.dart';
+import '../language/language_scope.dart';
+import '../language/strings.dart';
 
 class ProfileActionButtons extends StatelessWidget {
   final VoidCallback? onEditProfile;
@@ -15,6 +17,8 @@ class ProfileActionButtons extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final controller = LanguageScope.of(context);
+    final i18n = ProfileI18n.mapFor(controller.language);
     return Column(
       children: [
         // Edit Profile Button
@@ -32,7 +36,7 @@ class ProfileActionButtons extends StatelessWidget {
               ),
             ),
             child: Text(
-              'Edit Profile',
+              i18n['actions.editProfile'] ?? 'Edit Profile',
               style: AppTheme.bodyMedium.copyWith(
                 color: Colors.white,
                 fontWeight: FontWeight.w500,
@@ -60,7 +64,7 @@ class ProfileActionButtons extends StatelessWidget {
               ),
             ),
             child: Text(
-              'Manage Privacy',
+              i18n['actions.managePrivacy'] ?? 'Manage Privacy',
               style: AppTheme.bodyMedium.copyWith(
                 color: AppTheme.primaryBlue,
                 fontWeight: FontWeight.w500,
@@ -89,7 +93,7 @@ class ProfileActionButtons extends StatelessWidget {
                 ),
               ),
               child: Text(
-                'Logout',
+                i18n['actions.logout'] ?? 'Logout',
                 style: AppTheme.bodyMedium.copyWith(
                   color: AppTheme.errorRed,
                   fontWeight: FontWeight.w500,
