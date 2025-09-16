@@ -21,10 +21,10 @@ class EnhancedScenarioControls extends StatefulWidget {
 
 class _EnhancedScenarioControlsState extends State<EnhancedScenarioControls> {
   late SimulationScenario _selectedScenario;
-  int _missedPayments = 0;
-  bool _earlyTermination = false;
-  int _delayDays = 0;
-  double _interestRate = 2.0;
+  final int _missedPayments = 0;
+  final bool _earlyTermination = false;
+  final int _delayDays = 0;
+  final double _interestRate = 2.0;
 
   @override
   void initState() {

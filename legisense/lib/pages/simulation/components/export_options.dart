@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:open_file/open_file.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:path_provider/path_provider.dart';
+import 'dart:io';
 import '../../../theme/app_theme.dart';
 
 class ExportOptions extends StatelessWidget {
@@ -72,9 +76,7 @@ class ExportOptions extends StatelessWidget {
           action: SnackBarAction(
             label: 'Open',
             textColor: Colors.white,
-            onPressed: () {
-              // TODO: Open PDF file
-            },
+            onPressed: () => _openFile('$documentTitle.pdf'),
           ),
         ),
       );
@@ -90,9 +92,7 @@ class ExportOptions extends StatelessWidget {
           action: SnackBarAction(
             label: 'Open',
             textColor: Colors.white,
-            onPressed: () {
-              // TODO: Open DOCX file
-            },
+            onPressed: () => _openFile('$documentTitle.docx'),
           ),
         ),
       );
@@ -108,9 +108,7 @@ class ExportOptions extends StatelessWidget {
           action: SnackBarAction(
             label: 'Open',
             textColor: Colors.white,
-            onPressed: () {
-              // TODO: Open Excel file
-            },
+            onPressed: () => _openFile('$documentTitle.xlsx'),
           ),
         ),
       );
@@ -128,9 +126,7 @@ class ExportOptions extends StatelessWidget {
         action: SnackBarAction(
           label: 'Share',
           textColor: Colors.white,
-          onPressed: () {
-            // TODO: Open native share dialog
-          },
+          onPressed: () => _openShareDialog(context),
         ),
       ),
     );
@@ -159,6 +155,54 @@ class ExportOptions extends StatelessWidget {
         onComplete();
       }
     });
+  }
+
+  /// Opens a file using the system's default application
+  Future<void> _openFile(String fileName) async {
+    try {
+      // Get the documents directory
+      final directory = await getApplicationDocumentsDirectory();
+      final filePath = '${directory.path}/$fileName';
+      
+      // Check if file exists
+      final file = File(filePath);
+      if (await file.exists()) {
+        final result = await OpenFile.open(filePath);
+        if (result.type != ResultType.done) {
+          // Handle error cases
+          debugPrint('Error opening file: ${result.message}');
+        }
+      } else {
+        // File doesn't exist, show a message or create a placeholder
+        debugPrint('File not found: $filePath');
+        // In a real app, you might want to show a dialog or create the file
+      }
+    } catch (e) {
+      debugPrint('Error opening file: $e');
+    }
+  }
+
+  /// Opens the native share dialog
+  Future<void> _openShareDialog(BuildContext context) async {
+    final shareText = 'Check out this simulation analysis for $documentTitle';
+    try {
+      await Share.share(
+        shareText,
+        subject: 'Legisense Simulation Analysis',
+      );
+    } catch (e) {
+      debugPrint('Error sharing: $e');
+      // Fallback to clipboard if sharing fails
+      Clipboard.setData(ClipboardData(text: shareText));
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Share dialog failed, text copied to clipboard'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+    }
   }
 }
 
