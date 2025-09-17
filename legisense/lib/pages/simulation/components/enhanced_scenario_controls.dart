@@ -3,6 +3,8 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'simulation_scenario.dart';
 import 'styles.dart';
+import '../../profile/language/language_scope.dart';
+import '../language/strings.dart';
 
 class EnhancedScenarioControls extends StatefulWidget {
   final SimulationScenario selectedScenario;
@@ -35,6 +37,8 @@ class _EnhancedScenarioControlsState extends State<EnhancedScenarioControls> {
 
   @override
   Widget build(BuildContext context) {
+    final scope = LanguageScope.maybeOf(context);
+    final i18n = SimulationI18n.mapFor(scope?.language ?? AppLanguage.en);
     return Container(
       decoration: SimStyles.sectionDecoration(),
       child: Padding(
@@ -74,7 +78,7 @@ class _EnhancedScenarioControlsState extends State<EnhancedScenarioControls> {
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            'Interactive',
+                            i18n['scenario.controls.badge'] ?? 'Interactive',
                             style: GoogleFonts.inter(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
@@ -88,7 +92,7 @@ class _EnhancedScenarioControlsState extends State<EnhancedScenarioControls> {
                 ),
                 const SizedBox(height: SimStyles.spaceS),
                 Text(
-                  'What-If Scenario Controls',
+                  i18n['scenario.controls.title'] ?? 'What-If Scenario Controls',
                   style: GoogleFonts.inter(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
@@ -96,7 +100,7 @@ class _EnhancedScenarioControlsState extends State<EnhancedScenarioControls> {
                   ),
                 ),
                 Text(
-                  'Adjust parameters to see different outcomes',
+                  i18n['scenario.controls.subtitle'] ?? 'Adjust parameters to see different outcomes',
                   style: GoogleFonts.inter(
                     fontSize: 13,
                     color: const Color(0xFF6B7280),
@@ -118,11 +122,13 @@ class _EnhancedScenarioControlsState extends State<EnhancedScenarioControls> {
   }
 
   Widget _buildScenarioSelection() {
+    final scope = LanguageScope.maybeOf(context);
+    final i18n = SimulationI18n.mapFor(scope?.language ?? AppLanguage.en);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Select Scenario Type',
+          i18n['scenario.controls.select'] ?? 'Select Scenario Type',
           style: GoogleFonts.inter(
             fontSize: 16,
             fontWeight: FontWeight.w600,
@@ -135,8 +141,8 @@ class _EnhancedScenarioControlsState extends State<EnhancedScenarioControls> {
             Expanded(
               child: _buildScenarioCard(
                 scenario: SimulationScenario.normal,
-                title: 'Normal Flow',
-                description: 'Standard execution',
+                title: i18n['scenario.card.normal.title'] ?? 'Normal Flow',
+                description: i18n['scenario.card.normal.desc'] ?? 'Standard execution',
                 icon: FontAwesomeIcons.check,
                 color: const Color(0xFF10B981),
               ),
@@ -145,8 +151,8 @@ class _EnhancedScenarioControlsState extends State<EnhancedScenarioControls> {
             Expanded(
               child: _buildScenarioCard(
                 scenario: SimulationScenario.missedPayment,
-                title: 'Missed Payment',
-                description: 'Payment delays',
+                title: i18n['scenario.card.missed.title'] ?? 'Missed Payment',
+                description: i18n['scenario.card.missed.desc'] ?? 'Payment delays',
                 icon: FontAwesomeIcons.clock,
                 color: const Color(0xFFF59E0B),
               ),
@@ -155,8 +161,8 @@ class _EnhancedScenarioControlsState extends State<EnhancedScenarioControls> {
             Expanded(
               child: _buildScenarioCard(
                 scenario: SimulationScenario.earlyTermination,
-                title: 'Early Termination',
-                description: 'Contract breach',
+                title: i18n['scenario.card.early.title'] ?? 'Early Termination',
+                description: i18n['scenario.card.early.desc'] ?? 'Contract breach',
                 icon: FontAwesomeIcons.triangleExclamation,
                 color: const Color(0xFFEF4444),
               ),

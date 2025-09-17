@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'styles.dart';
+import '../../profile/language/language_scope.dart';
+import '../language/strings.dart';
 
 class ComparisonPanel extends StatelessWidget {
   final String documentTitle;
@@ -13,13 +15,15 @@ class ComparisonPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scope = LanguageScope.maybeOf(context);
+    final i18n = SimulationI18n.mapFor(scope?.language ?? AppLanguage.en);
     final List<_ExitScenario> scenarios = _getExitScenarios();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Termination / Exit Comparison',
+          i18n['comparison.header'] ?? 'Termination / Exit Comparison',
           style: Theme.of(context).textTheme.titleSmall?.copyWith(
                 color: const Color(0xFF111827),
                 fontWeight: FontWeight.w700,
@@ -31,10 +35,10 @@ class ComparisonPanel extends StatelessWidget {
             final bool vertical = constraints.maxWidth < 700;
             return vertical
                 ? Column(
-                    children: scenarios.map((s) => _buildScenarioCard(context, s)).toList(),
+                    children: scenarios.map((s) => _buildScenarioCard(context, s, i18n)).toList(),
                   )
                 : Row(
-                    children: scenarios.map((s) => Expanded(child: _buildScenarioCard(context, s))).toList(),
+                    children: scenarios.map((s) => Expanded(child: _buildScenarioCard(context, s, i18n))).toList(),
                   );
           },
         ),
@@ -42,7 +46,7 @@ class ComparisonPanel extends StatelessWidget {
     );
   }
 
-  Widget _buildScenarioCard(BuildContext context, _ExitScenario scenario) {
+  Widget _buildScenarioCard(BuildContext context, _ExitScenario scenario, Map<String, String> i18n) {
     final Color bgColor = _getRiskColor(scenario.risk).withValues(alpha: 0.1);
     final Color borderColor = _getRiskColor(scenario.risk);
     
@@ -65,9 +69,9 @@ class ComparisonPanel extends StatelessWidget {
                 ),
           ),
           const SizedBox(height: 6),
-          _buildKeyValue('Penalty', scenario.penalty, context),
-          _buildKeyValue('Risk Level', scenario.risk, context),
-          _buildKeyValue('Benefits Lost', scenario.benefitsLost, context),
+          _buildKeyValue(i18n['comparison.key.penalty'] ?? 'Penalty', scenario.penalty, context),
+          _buildKeyValue(i18n['comparison.key.risk'] ?? 'Risk Level', scenario.risk, context),
+          _buildKeyValue(i18n['comparison.key.benefits'] ?? 'Benefits Lost', scenario.benefitsLost, context),
         ],
       ),
     );

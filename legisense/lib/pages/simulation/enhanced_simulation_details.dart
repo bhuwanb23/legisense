@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../theme/app_theme.dart';
 import 'components/components.dart';
+import '../profile/language/language_scope.dart';
+import 'language/strings.dart';
 
 class EnhancedSimulationDetailsPage extends StatefulWidget {
   final String documentId;
@@ -225,6 +227,8 @@ class _EnhancedSimulationDetailsPageState extends State<EnhancedSimulationDetail
 
   @override
   Widget build(BuildContext context) {
+    final scope = LanguageScope.maybeOf(context);
+    final i18n = SimulationI18n.mapFor(scope?.language ?? AppLanguage.en);
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
@@ -285,7 +289,7 @@ class _EnhancedSimulationDetailsPageState extends State<EnhancedSimulationDetail
                                   const SizedBox(width: 8),
                                   Expanded(
                                     child: Text(
-                                      'Dynamic simulation active - Parameters affecting outcomes',
+                                      i18n['dynamic.active'] ?? 'Dynamic simulation active - Parameters affecting outcomes',
                                       style: TextStyle(
                                         color: const Color(0xFF8B5CF6),
                                         fontSize: 12,

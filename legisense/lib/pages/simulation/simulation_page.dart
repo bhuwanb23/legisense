@@ -4,6 +4,8 @@ import '../../theme/app_theme.dart';
 import '../../components/main_header.dart';
 import '../documents/components/components.dart' show SearchField;
 import 'components/components.dart';
+import '../profile/language/language_scope.dart';
+import 'language/strings.dart';
 
 class SimulationPage extends StatefulWidget {
   const SimulationPage({super.key});
@@ -17,6 +19,8 @@ class _SimulationPageState extends State<SimulationPage> {
 
   @override
   Widget build(BuildContext context) {
+    final scope = LanguageScope.maybeOf(context);
+    final i18n = SimulationI18n.mapFor(scope?.language ?? AppLanguage.en);
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
@@ -74,7 +78,7 @@ class _SimulationPageState extends State<SimulationPage> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const MainHeader(title: 'Simulation'),
+                        MainHeader(title: i18n['header.title'] ?? 'Simulation'),
                         // Fixed compact search bar under header
                         Padding(
                           padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),

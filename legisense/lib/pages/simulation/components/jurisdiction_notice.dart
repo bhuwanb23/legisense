@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../profile/language/language_scope.dart';
+import '../language/strings.dart';
 
 class JurisdictionNotice extends StatelessWidget {
   final String jurisdiction;
@@ -12,6 +14,8 @@ class JurisdictionNotice extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scope = LanguageScope.maybeOf(context);
+    final i18n = SimulationI18n.mapFor(scope?.language ?? AppLanguage.en);
     return Container(
       padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
@@ -29,7 +33,7 @@ class JurisdictionNotice extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Jurisdiction Adjustment · $jurisdiction',
+                  (i18n['jurisdiction.adjustment'] ?? 'Jurisdiction Adjustment · {jurisdiction}').replaceFirst('{jurisdiction}', jurisdiction),
                   style: Theme.of(context).textTheme.labelLarge?.copyWith(
                         color: const Color(0xFF065F46),
                         fontWeight: FontWeight.w700,

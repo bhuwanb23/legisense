@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
 import 'styles.dart';
+import '../../profile/language/language_scope.dart';
+import '../language/strings.dart';
 
 class PenaltyForecastPanel extends StatelessWidget {
   final String documentTitle;
@@ -16,6 +18,8 @@ class PenaltyForecastPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scope = LanguageScope.maybeOf(context);
+    final i18n = SimulationI18n.mapFor(scope?.language ?? AppLanguage.en);
     final Color headerColor = const Color(0xFF111827);
     final List<Map<String, dynamic>> rows = _getPenaltyForecastData();
     // Determine the maximum total to scale bars safely, avoiding overflow
@@ -29,7 +33,7 @@ class PenaltyForecastPanel extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Penalty & Liability Forecast',
+          i18n['penalty.title'] ?? 'Penalty & Liability Forecast',
           style: Theme.of(context).textTheme.titleSmall?.copyWith(
                 color: headerColor,
                 fontWeight: FontWeight.w700,
@@ -47,9 +51,9 @@ class PenaltyForecastPanel extends StatelessWidget {
             ),
             child: Column(
               children: [
-                _tableHeader(context),
+                _tableHeader(context, i18n),
                 const Divider(height: 1),
-                ...rows.map((r) => _tableRow(context, r)),
+                ...rows.map((r) => _tableRow(context, r, i18n)),
               ],
             ),
           ),
@@ -108,14 +112,16 @@ class PenaltyForecastPanel extends StatelessWidget {
 
         const SizedBox(height: 8),
         Text(
-          'By Month 6, total owed ≈ ₹20,800 (base + fees + penalties).',
+          (i18n['penalty.summary'] ?? 'By {month}, total owed ≈ ₹{amount} (base + fees + penalties).')
+              .replaceFirst('{month}', 'Month 6')
+              .replaceFirst('{amount}', '20,800'),
           style: Theme.of(context).textTheme.bodySmall?.copyWith(color: const Color(0xFF374151)),
         ),
       ],
     );
   }
 
-  Widget _tableHeader(BuildContext context) {
+  Widget _tableHeader(BuildContext context, Map<String, String> i18n) {
     TextStyle? style = Theme.of(context).textTheme.labelLarge?.copyWith(
           fontWeight: FontWeight.w700,
           color: const Color(0xFF111827),
@@ -124,17 +130,17 @@ class PenaltyForecastPanel extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       child: Row(
         children: [
-          _cell('Month', flex: 3, style: style),
-          _cell('Base', flex: 2, style: style, align: TextAlign.right),
-          _cell('Fees', flex: 2, style: style, align: TextAlign.right),
-          _cell('Penalties', flex: 3, style: style, align: TextAlign.right),
-          _cell('Total', flex: 2, style: style, align: TextAlign.right),
+          _cell(i18n['penalty.header.month'] ?? 'Month', flex: 3, style: style),
+          _cell(i18n['penalty.header.base'] ?? 'Base', flex: 2, style: style, align: TextAlign.right),
+          _cell(i18n['penalty.header.fees'] ?? 'Fees', flex: 2, style: style, align: TextAlign.right),
+          _cell(i18n['penalty.header.penalties'] ?? 'Penalties', flex: 3, style: style, align: TextAlign.right),
+          _cell(i18n['penalty.header.total'] ?? 'Total', flex: 2, style: style, align: TextAlign.right),
         ],
       ),
     );
   }
 
-  Widget _tableRow(BuildContext context, Map<String, dynamic> r) {
+  Widget _tableRow(BuildContext context, Map<String, dynamic> r, Map<String, String> i18n) {
     TextStyle? style = Theme.of(context).textTheme.bodySmall;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),

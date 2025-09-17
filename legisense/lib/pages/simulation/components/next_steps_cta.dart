@@ -3,6 +3,8 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'styles.dart';
+import '../../profile/language/language_scope.dart';
+import '../language/strings.dart';
 
 class NextStepsCTA extends StatelessWidget {
   final VoidCallback? onBackToAnalysis;
@@ -22,6 +24,8 @@ class NextStepsCTA extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scope = LanguageScope.maybeOf(context);
+    final i18n = SimulationI18n.mapFor(scope?.language ?? AppLanguage.en);
     return Container(
       decoration: SimStyles.sectionDecoration(),
       child: Padding(
@@ -51,7 +55,7 @@ class NextStepsCTA extends StatelessWidget {
                 ),
                 const SizedBox(height: SimStyles.spaceS),
                 Text(
-                  'Next Steps',
+                  i18n['next.title'] ?? 'Next Steps',
                   style: GoogleFonts.inter(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
@@ -59,7 +63,7 @@ class NextStepsCTA extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  'Choose your next action',
+                  i18n['next.subtitle'] ?? 'Choose your next action',
                   style: GoogleFonts.inter(
                     fontSize: 13,
                     color: const Color(0xFF6B7280),
@@ -79,8 +83,8 @@ class NextStepsCTA extends StatelessWidget {
                     Expanded(
                       child: _buildActionButton(
                         icon: FontAwesomeIcons.arrowLeft,
-                        title: 'Back to Analysis',
-                        subtitle: 'Return to clause breakdown',
+                        title: i18n['next.back'] ?? 'Back to Analysis',
+                        subtitle: i18n['next.back.subtitle'] ?? 'Return to clause breakdown',
                         color: const Color(0xFF6B7280),
                         onTap: onBackToAnalysis ?? () {
                           Navigator.of(context).pop();
@@ -92,8 +96,8 @@ class NextStepsCTA extends StatelessWidget {
                     Expanded(
                       child: _buildActionButton(
                         icon: FontAwesomeIcons.floppyDisk,
-                        title: 'Save Simulation',
-                        subtitle: 'Store in profile',
+                        title: i18n['next.save'] ?? 'Save Simulation',
+                        subtitle: i18n['next.save.subtitle'] ?? 'Store in profile',
                         color: const Color(0xFF2563EB),
                         onTap: onSaveSimulation ?? () {
                           _showSaveDialog(context);
@@ -112,8 +116,8 @@ class NextStepsCTA extends StatelessWidget {
                     Expanded(
                       child: _buildActionButton(
                         icon: FontAwesomeIcons.download,
-                        title: 'Export Report',
-                        subtitle: 'Download PDF',
+                        title: i18n['next.export'] ?? 'Export Report',
+                        subtitle: i18n['next.export.subtitle'] ?? 'Download PDF',
                         color: const Color(0xFF10B981),
                         onTap: onExportReport ?? () {
                           _showExportDialog(context);
@@ -125,8 +129,8 @@ class NextStepsCTA extends StatelessWidget {
                     Expanded(
                       child: _buildActionButton(
                         icon: FontAwesomeIcons.share,
-                        title: 'Share Results',
-                        subtitle: 'Send to team',
+                        title: i18n['next.share'] ?? 'Share Results',
+                        subtitle: i18n['next.share.subtitle'] ?? 'Send to team',
                         color: const Color(0xFF8B5CF6),
                         onTap: onShareResults ?? () {
                           _showShareDialog(context);
@@ -161,7 +165,7 @@ class NextStepsCTA extends StatelessWidget {
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        'Simulation Summary',
+                        i18n['next.summary.title'] ?? 'Simulation Summary',
                         style: GoogleFonts.inter(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
@@ -175,21 +179,21 @@ class NextStepsCTA extends StatelessWidget {
                     children: [
                       Expanded(
                         child: _buildStatItem(
-                          label: 'Scenarios Tested',
+                          label: i18n['next.summary.scenarios'] ?? 'Scenarios Tested',
                           value: '3',
                           icon: FontAwesomeIcons.play,
                         ),
                       ),
                       Expanded(
                         child: _buildStatItem(
-                          label: 'Risk Alerts',
+                          label: i18n['next.summary.alerts'] ?? 'Risk Alerts',
                           value: '2',
                           icon: FontAwesomeIcons.shield,
                         ),
                       ),
                       Expanded(
                         child: _buildStatItem(
-                          label: 'Outcomes',
+                          label: i18n['next.summary.outcomes'] ?? 'Outcomes',
                           value: '5',
                           icon: FontAwesomeIcons.lightbulb,
                         ),

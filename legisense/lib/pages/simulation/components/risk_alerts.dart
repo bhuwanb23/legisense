@@ -4,6 +4,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'simulation_scenario.dart';
 import 'styles.dart';
+import '../../profile/language/language_scope.dart';
+import '../language/strings.dart';
 
 class RiskAlerts extends StatelessWidget {
   final SimulationScenario scenario;
@@ -19,6 +21,8 @@ class RiskAlerts extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scope = LanguageScope.maybeOf(context);
+    final i18n = SimulationI18n.mapFor(scope?.language ?? AppLanguage.en);
     final alerts = _getRiskAlerts(simulationData, scenario);
     final double width = MediaQuery.of(context).size.width;
     final bool isNarrow = width < 380;
@@ -56,13 +60,16 @@ class RiskAlerts extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                       decoration: SimStyles.badgeDecoration(const Color(0xFFEF4444)),
-                      child: Text('${alerts.length} Alert${alerts.length > 1 ? 's' : ''}', style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: const Color(0xFFEF4444))),
+                      child: Text((i18n['risk.count'] ?? '{n} Alert{plural}')
+                          .replaceFirst('{n}', alerts.length.toString())
+                          .replaceFirst('{plural}', alerts.length > 1 ? 's' : ''),
+                          style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: const Color(0xFFEF4444))),
                     ),
                   ],
                 ),
                 const SizedBox(height: SimStyles.spaceS),
                 Text(
-                  'Risk Alerts & Insights',
+                  i18n['risk.header.title'] ?? 'Risk Alerts & Insights',
                   style: GoogleFonts.inter(
                     fontSize: isNarrow ? 16 : 18,
                     fontWeight: FontWeight.w700,
@@ -70,7 +77,7 @@ class RiskAlerts extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  'AI-detected high-risk clauses in current scenario',
+                  i18n['risk.header.subtitle'] ?? 'AI-detected high-risk clauses in current scenario',
                   style: GoogleFonts.inter(
                     fontSize: isNarrow ? 12 : 13,
                     color: const Color(0xFF6B7280),
@@ -87,7 +94,7 @@ class RiskAlerts extends StatelessWidget {
               final alert = entry.value;
               return Padding(
                 padding: EdgeInsets.only(bottom: index < alerts.length - 1 ? SimStyles.spaceM : 0),
-                child: _buildRiskAlert(alert, index),
+                child: _buildRiskAlert(alert, index, i18n),
               );
             }),
           ],
@@ -96,7 +103,7 @@ class RiskAlerts extends StatelessWidget {
     );
   }
 
-  Widget _buildRiskAlert(RiskAlert alert, int index) {
+  Widget _buildRiskAlert(RiskAlert alert, int index, Map<String, String> i18n) {
     return Container(
       decoration: BoxDecoration(
         color: alert.backgroundColor,
@@ -194,7 +201,7 @@ class RiskAlerts extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Potential Impact:',
+                      i18n['risk.impact'] ?? 'Potential Impact:',
                       style: GoogleFonts.inter(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
@@ -253,7 +260,7 @@ class RiskAlerts extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Recommendation:',
+                            i18n['risk.recommendation'] ?? 'Recommendation:',
                             style: GoogleFonts.inter(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,

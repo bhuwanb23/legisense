@@ -1,3 +1,8 @@
+// i18n helpers
+import 'package:flutter/widgets.dart';
+import '../../profile/language/language_scope.dart';
+import '../language/strings.dart';
+
 enum SimulationScenario {
   normal,
   missedPayment,
@@ -36,5 +41,53 @@ extension SimulationScenarioExtension on SimulationScenario {
       case SimulationScenario.earlyTermination:
         return '✗';
     }
+  }
+}
+
+extension SimulationScenarioI18n on SimulationScenario {
+  /// Returns the i18n key for this scenario's name
+  String get i18nKeyName {
+    switch (this) {
+      case SimulationScenario.normal:
+        return 'scenario.normal';
+      case SimulationScenario.missedPayment:
+        return 'scenario.missed';
+      case SimulationScenario.earlyTermination:
+        return 'scenario.early';
+    }
+  }
+
+  /// Returns the i18n key for this scenario's description
+  String get i18nKeyDescription {
+    switch (this) {
+      case SimulationScenario.normal:
+        return 'scenario.normal.desc';
+      case SimulationScenario.missedPayment:
+        return 'scenario.missed.desc';
+      case SimulationScenario.earlyTermination:
+        return 'scenario.early.desc';
+    }
+  }
+
+  /// Localized display name using provided i18n map
+  String localizedName(Map<String, String> i18n) =>
+      i18n[i18nKeyName] ?? displayName;
+
+  /// Localized description using provided i18n map
+  String localizedDescription(Map<String, String> i18n) =>
+      i18n[i18nKeyDescription] ?? description;
+
+  /// Localized display name using BuildContext
+  String localizedNameFromContext(BuildContext context) {
+    final scope = LanguageScope.maybeOf(context);
+    final i18n = SimulationI18n.mapFor(scope?.language ?? AppLanguage.en);
+    return localizedName(i18n);
+  }
+
+  /// Localized description using BuildContext
+  String localizedDescriptionFromContext(BuildContext context) {
+    final scope = LanguageScope.maybeOf(context);
+    final i18n = SimulationI18n.mapFor(scope?.language ?? AppLanguage.en);
+    return localizedDescription(i18n);
   }
 }

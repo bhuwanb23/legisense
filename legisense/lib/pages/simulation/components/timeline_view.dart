@@ -4,6 +4,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'simulation_scenario.dart';
 import 'styles.dart';
+import '../../profile/language/language_scope.dart';
+import '../language/strings.dart';
 
 class TimelineView extends StatefulWidget {
   final SimulationScenario scenario;
@@ -26,6 +28,8 @@ class _TimelineViewState extends State<TimelineView> {
 
   @override
   Widget build(BuildContext context) {
+    final scope = LanguageScope.maybeOf(context);
+    final i18n = SimulationI18n.mapFor(scope?.language ?? AppLanguage.en);
     final double width = MediaQuery.of(context).size.width;
     final bool isNarrow = width < 380;
     return Container(
@@ -67,7 +71,7 @@ class _TimelineViewState extends State<TimelineView> {
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            'AI Generated',
+                            i18n['timeline.badge.ai'] ?? 'AI Generated',
                             style: GoogleFonts.inter(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
@@ -81,7 +85,7 @@ class _TimelineViewState extends State<TimelineView> {
                 ),
                 const SizedBox(height: SimStyles.spaceS),
                 Text(
-                  'Interactive Timeline',
+                  i18n['timeline.title'] ?? 'Interactive Timeline',
                   style: GoogleFonts.inter(
                     fontSize: isNarrow ? 16 : 18,
                     fontWeight: FontWeight.w700,
@@ -89,7 +93,7 @@ class _TimelineViewState extends State<TimelineView> {
                   ),
                 ),
                 Text(
-                  '${widget.documentTitle} - AI Generated Flow',
+                  (i18n['timeline.subtitle'] ?? '{title} - AI Generated Flow').replaceFirst('{title}', widget.documentTitle),
                   style: GoogleFonts.inter(
                     fontSize: isNarrow ? 12 : 13,
                     color: const Color(0xFF6B7280),
@@ -138,6 +142,8 @@ class _TimelineViewState extends State<TimelineView> {
     required bool isExpanded,
     required VoidCallback onTap,
   }) {
+    final scope = LanguageScope.maybeOf(context);
+    final i18n = SimulationI18n.mapFor(scope?.language ?? AppLanguage.en);
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -226,7 +232,7 @@ class _TimelineViewState extends State<TimelineView> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Detailed Analysis',
+                        i18n['timeline.details'] ?? 'Detailed Analysis',
                         style: GoogleFonts.inter(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
@@ -245,7 +251,7 @@ class _TimelineViewState extends State<TimelineView> {
                       if (node.risks.isNotEmpty) ...[
                         const SizedBox(height: 10),
                         Text(
-                          'Potential Risks:',
+                          i18n['timeline.risks'] ?? 'Potential Risks:',
                           style: GoogleFonts.inter(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,

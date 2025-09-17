@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../theme/app_theme.dart';
+import '../../profile/language/language_scope.dart';
+import '../language/strings.dart';
 
 class LegendBar extends StatelessWidget {
   const LegendBar({
@@ -21,11 +23,13 @@ class LegendBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scope = LanguageScope.maybeOf(context);
+    final i18n = SimulationI18n.mapFor(scope?.language ?? AppLanguage.en);
     final items = <LegendItem>[];
     
     if (showObligation) {
       items.add(const LegendItem(
-        label: 'Obligation',
+        label: 'legend.obligation',
         color: Color(0xFF2563EB),
         icon: Icons.check_circle_outline,
       ));
@@ -33,7 +37,7 @@ class LegendBar extends StatelessWidget {
     
     if (showWarning) {
       items.add(const LegendItem(
-        label: 'Warning',
+        label: 'legend.warning',
         color: Color(0xFFF59E0B),
         icon: Icons.warning_amber_outlined,
       ));
@@ -41,7 +45,7 @@ class LegendBar extends StatelessWidget {
     
     if (showPenalty) {
       items.add(const LegendItem(
-        label: 'Penalty',
+        label: 'legend.penalty',
         color: Color(0xFFDC2626),
         icon: Icons.error_outline,
       ));
@@ -49,7 +53,7 @@ class LegendBar extends StatelessWidget {
     
     if (showSuccess) {
       items.add(const LegendItem(
-        label: 'Success',
+        label: 'legend.success',
         color: Color(0xFF10B981),
         icon: Icons.check_circle,
       ));
@@ -57,7 +61,7 @@ class LegendBar extends StatelessWidget {
     
     if (showInfo) {
       items.add(const LegendItem(
-        label: 'Info',
+        label: 'legend.info',
         color: Color(0xFF6B7280),
         icon: Icons.info_outline,
       ));
@@ -80,7 +84,7 @@ class LegendBar extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Legend',
+            i18n['legend.title'] ?? 'Legend',
             style: AppTheme.bodySmall.copyWith(
               fontWeight: FontWeight.w600,
               color: AppTheme.textSecondary,
@@ -90,7 +94,7 @@ class LegendBar extends StatelessWidget {
           Wrap(
             spacing: 12,
             runSpacing: 6,
-            children: items.map((item) => _LegendDot(item: item)).toList(),
+            children: items.map((item) => _LegendDot(item: item, i18n: i18n)).toList(),
           ),
         ],
       ),
@@ -113,13 +117,14 @@ class LegendItem {
 }
 
 class _LegendDot extends StatelessWidget {
-  const _LegendDot({required this.item});
+  const _LegendDot({required this.item, required this.i18n});
   final LegendItem item;
+  final Map<String, String> i18n;
 
   @override
   Widget build(BuildContext context) {
     return Tooltip(
-      message: item.description ?? item.label,
+      message: item.description ?? (i18n[item.label] ?? item.label),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -147,7 +152,7 @@ class _LegendDot extends StatelessWidget {
           ),
           const SizedBox(width: 6),
           Text(
-            item.label,
+            i18n[item.label] ?? item.label,
             style: AppTheme.bodySmall.copyWith(
               color: AppTheme.textPrimary,
               fontWeight: FontWeight.w500,

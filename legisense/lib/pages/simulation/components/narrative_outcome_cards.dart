@@ -4,6 +4,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'simulation_scenario.dart';
 import 'styles.dart';
+import '../../profile/language/language_scope.dart';
+import '../language/strings.dart';
 
 class NarrativeOutcomeCards extends StatelessWidget {
   final SimulationScenario scenario;
@@ -19,6 +21,8 @@ class NarrativeOutcomeCards extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scope = LanguageScope.maybeOf(context);
+    final i18n = SimulationI18n.mapFor(scope?.language ?? AppLanguage.en);
     final outcomes = _getNarrativeOutcomes(simulationData, scenario, parameters);
     
     return Container(
@@ -60,7 +64,7 @@ class NarrativeOutcomeCards extends StatelessWidget {
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            'Storytelling Mode',
+                            i18n['narrative.mode'] ?? 'Storytelling Mode',
                             style: GoogleFonts.inter(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
@@ -74,7 +78,7 @@ class NarrativeOutcomeCards extends StatelessWidget {
                 ),
                 const SizedBox(height: SimStyles.spaceS),
                 Text(
-                  'Narrative Outcomes',
+                  i18n['narrative.title'] ?? 'Narrative Outcomes',
                   style: GoogleFonts.inter(
                     fontSize: 18,
                     fontWeight: FontWeight.w700,
@@ -82,7 +86,7 @@ class NarrativeOutcomeCards extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  'Plain-English scenario explanations',
+                  i18n['narrative.subtitle'] ?? 'Plain-English scenario explanations',
                   style: GoogleFonts.inter(
                     fontSize: 13,
                     color: const Color(0xFF6B7280),
@@ -99,7 +103,7 @@ class NarrativeOutcomeCards extends StatelessWidget {
               final outcome = entry.value;
               return Padding(
                 padding: EdgeInsets.only(bottom: index < outcomes.length - 1 ? 16 : 0),
-                child: _buildNarrativeCard(outcome, index),
+                child: _buildNarrativeCard(outcome, index, i18n),
               );
             }),
           ],
@@ -108,7 +112,7 @@ class NarrativeOutcomeCards extends StatelessWidget {
     );
   }
 
-  Widget _buildNarrativeCard(NarrativeOutcome outcome, int index) {
+  Widget _buildNarrativeCard(NarrativeOutcome outcome, int index, Map<String, String> i18n) {
     return Container(
       decoration: BoxDecoration(
         color: outcome.backgroundColor,
@@ -199,7 +203,7 @@ class NarrativeOutcomeCards extends StatelessWidget {
                       ),
                       const SizedBox(width: 8),
                       Text(
-                        'Scenario Story',
+                        i18n['narrative.story'] ?? 'Scenario Story',
                         style: GoogleFonts.inter(
                           fontSize: 13,
                           fontWeight: FontWeight.w600,
@@ -226,7 +230,7 @@ class NarrativeOutcomeCards extends StatelessWidget {
             // Key Points
             if (outcome.keyPoints.isNotEmpty) ...[
               Text(
-                'Key Points:',
+                i18n['narrative.keypoints'] ?? 'Key Points:',
                 style: GoogleFonts.inter(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
@@ -287,7 +291,7 @@ class NarrativeOutcomeCards extends StatelessWidget {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          'Financial Impact',
+                          i18n['narrative.financial'] ?? 'Financial Impact',
                           style: GoogleFonts.inter(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,

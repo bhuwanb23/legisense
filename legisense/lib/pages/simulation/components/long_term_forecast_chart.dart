@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'styles.dart';
+import '../../profile/language/language_scope.dart';
+import '../language/strings.dart';
 
 class LongTermForecastChart extends StatelessWidget {
   final String documentTitle;
@@ -15,6 +17,8 @@ class LongTermForecastChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scope = LanguageScope.maybeOf(context);
+    final i18n = SimulationI18n.mapFor(scope?.language ?? AppLanguage.en);
     // Use real simulation data if available, otherwise fall back to mock data
     final List<_Point> data = _getLongTermData();
 
@@ -24,7 +28,7 @@ class LongTermForecastChart extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Long-Term Forecast',
+          i18n['forecast.longterm.title'] ?? 'Long-Term Forecast',
           style: Theme.of(context).textTheme.titleSmall?.copyWith(
                 color: const Color(0xFF111827),
                 fontWeight: FontWeight.w700,
@@ -87,7 +91,7 @@ class LongTermForecastChart extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          _getSummaryText(data),
+          _getSummaryText(data, i18n),
           style: Theme.of(context).textTheme.bodySmall?.copyWith(color: const Color(0xFF374151)),
         ),
       ],
@@ -117,13 +121,15 @@ class LongTermForecastChart extends StatelessWidget {
     ];
   }
 
-  String _getSummaryText(List<_Point> data) {
-    if (data.isEmpty) return 'No long-term forecast data available.';
+  String _getSummaryText(List<_Point> data, Map<String, String> i18n) {
+    if (data.isEmpty) return i18n['forecast.longterm.empty'] ?? 'No long-term forecast data available.';
     
     final maxValue = data.map((e) => e.value).reduce((a, b) => a > b ? a : b);
     final maxValueFormatted = (maxValue / 100000).toStringAsFixed(1);
     
-    return 'If auto-renew isn\'t canceled, projected extra over ${data.length} years ≈ ₹$maxValueFormatted lakh.';
+    return (i18n['forecast.longterm.summary'] ?? 'If auto-renew isn\'t canceled, projected extra over {years} years ≈ ₹{amount} lakh.')
+      .replaceFirst('{years}', data.length.toString())
+      .replaceFirst('{amount}', maxValueFormatted);
   }
 }
 

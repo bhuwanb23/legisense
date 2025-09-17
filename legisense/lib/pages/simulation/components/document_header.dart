@@ -3,6 +3,8 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'styles.dart';
+import '../../profile/language/language_scope.dart';
+import '../language/strings.dart';
 
 class DocumentHeader extends StatelessWidget {
   final String documentTitle;
@@ -30,6 +32,8 @@ class DocumentHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scope = LanguageScope.maybeOf(context);
+    final i18n = SimulationI18n.mapFor(scope?.language ?? AppLanguage.en);
     return Container(
       decoration: SimStyles.sectionDecoration(),
       child: Padding(
@@ -66,7 +70,7 @@ class DocumentHeader extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Document Analysis',
+                        i18n['document.header.subtitle'] ?? 'Document Analysis',
                         style: GoogleFonts.inter(
                           fontSize: 13,
                           fontWeight: FontWeight.w500,
@@ -121,7 +125,7 @@ class DocumentHeader extends StatelessWidget {
                   const SizedBox(width: 8),
                   Flexible(
                     child: Text(
-                      'Switch Document:',
+                      i18n['document.switch'] ?? 'Switch Document:',
                       style: GoogleFonts.inter(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,

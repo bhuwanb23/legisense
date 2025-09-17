@@ -163,17 +163,20 @@ class _RecentFilesState extends State<RecentFiles> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                i18n['recent.title'] ?? 'Recent Files',
-                style: AppTheme.heading4,
-              )
-                  .animate()
-                  .slideY(
-                    begin: 0.3,
-                    duration: AppTheme.animationMedium,
-                    curve: Curves.easeOut,
-                  ),
-              
+              Expanded(
+                child: Text(
+                  i18n['recent.title'] ?? 'Recent Files',
+                  style: AppTheme.heading4,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                )
+                    .animate()
+                    .slideY(
+                      begin: 0.3,
+                      duration: AppTheme.animationMedium,
+                      curve: Curves.easeOut,
+                    ),
+              ),
               if (recentFiles.isNotEmpty)
                 TextButton(
                   onPressed: () {
