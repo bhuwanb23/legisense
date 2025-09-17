@@ -93,6 +93,13 @@ class _DocumentDisplayPanelState extends State<DocumentDisplayPanel>
     }
   }
 
+  void _ensureValidPageIndex() {
+    final doc = _translatedDocument ?? widget.document;
+    if (doc != null && _currentPageIndex >= doc.textBlocks.length) {
+      _currentPageIndex = 0;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     // Use global app language for UI elements (buttons, labels, etc.)
@@ -662,6 +669,10 @@ class _DocumentDisplayPanelState extends State<DocumentDisplayPanel>
   Widget _buildCurrentPageCard([SampleDocument? document]) {
     final doc = document ?? widget.document;
     if (doc == null) return const SizedBox.shrink();
+    
+    // Ensure page index is valid for the current document
+    _ensureValidPageIndex();
+    
     final currentPageText = doc.textBlocks[_currentPageIndex];
     
     return GestureDetector(
@@ -693,7 +704,7 @@ class _DocumentDisplayPanelState extends State<DocumentDisplayPanel>
           );
         },
         child: Container(
-          key: ValueKey(_currentPageIndex),
+          key: ValueKey('${_currentPageIndex}_${doc.id}_${_documentLanguage.name}'),
           decoration: BoxDecoration(
             color: AppTheme.backgroundWhite,
             borderRadius: BorderRadius.circular(AppTheme.radiusM),
@@ -1196,9 +1207,12 @@ class _DocumentDisplayPanelState extends State<DocumentDisplayPanel>
             await _translateDocument(language);
           } else {
             // Reset to original document for English
+            developer.log('Switching back to original document (English)', name: 'DocumentDisplayPanel');
             setState(() {
               _translatedDocument = null;
               _isTranslating = false;
+              // Reset to first page when switching back to original
+              _currentPageIndex = 0;
             });
           }
         },
@@ -1447,9 +1461,12 @@ class _DocumentDisplayPanelState extends State<DocumentDisplayPanel>
         language: languageCode,
       );
       
+      developer.log('Translation loaded successfully for language: ${_getLanguageCode(language)}', name: 'DocumentDisplayPanel');
       setState(() {
         _translatedDocument = translatedDoc;
         _isTranslating = false;
+        // Reset to first page when translation is loaded
+        _currentPageIndex = 0;
       });
     } catch (e) {
       developer.log('Translation error: $e', name: 'DocumentDisplayPanel');

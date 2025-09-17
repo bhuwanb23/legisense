@@ -28,8 +28,8 @@ class _UploadZoneState extends State<UploadZone> {
   @override
   void initState() {
     super.initState();
-    // Backend base URL (override via LEGISENSE_API_BASE at build/runtime)
-    final String base = _apiBaseOverride ?? const String.fromEnvironment('LEGISENSE_API_BASE', defaultValue: 'http://10.0.2.2:8000');
+    // Use the same base URL configuration as the repository
+    final String base = _apiBaseOverride ?? ApiConfig.baseUrl;
     _repo = ParsedDocumentsRepository(baseUrl: base);
   }
   Future<void> _pickDocument() async {
@@ -100,18 +100,27 @@ class _UploadZoneState extends State<UploadZone> {
           if (idStr.startsWith('server-')) {
             final int serverId = int.parse(idStr.split('-').last);
             setState(() {
-              _loadingLabel = 'Analyzing document...';
+              final i18n = HomeI18n.mapFor(LanguageScope.maybeOf(context)?.language ?? AppLanguage.en);
+              _loadingLabel = i18n['upload.loading.analyzing'] ?? 'Analyzing document...';
             });
             await _repo.fetchAnalysis(serverId);
+            
+            // Show translation progress (translations happen in background)
+            setState(() {
+              final i18n = HomeI18n.mapFor(LanguageScope.maybeOf(context)?.language ?? AppLanguage.en);
+              _loadingLabel = i18n['upload.loading.translating'] ?? 'Preparing translations...';
+            });
+            // Small delay to show the message
+            await Future.delayed(const Duration(milliseconds: 500));
           }
         } catch (_) {}
         if (!mounted) return;
         final i18n = HomeI18n.mapFor(LanguageScope.maybeOf(context)?.language ?? AppLanguage.en);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(i18n['upload.snackbar.success'] ?? 'PDF processed successfully'),
+            content: Text(i18n['upload.snackbar.success'] ?? 'PDF processed successfully. Translations are being prepared in the background.'),
             backgroundColor: AppTheme.successGreen,
-            duration: const Duration(seconds: 2),
+            duration: const Duration(seconds: 3),
           ),
         );
         // Navigate to documents page to view it
@@ -188,6 +197,13 @@ class _UploadZoneState extends State<UploadZone> {
                         _retryWithBase('http://127.0.0.1:8000');
                       },
                       child: Text(i18n['upload.connect.use127'] ?? 'Use 127.0.0.1'),
+                    ),
+                    OutlinedButton(
+                      onPressed: () {
+                        Navigator.of(context).pop();
+                        _retryWithBase(ApiConfig.baseUrl);
+                      },
+                      child: Text(i18n['upload.connect.useDefault'] ?? 'Use Default'),
                     ),
                   ],
                 ),

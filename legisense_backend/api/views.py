@@ -12,6 +12,7 @@ from .models import ParsedDocument, DocumentAnalysis, DocumentTranslation, Docum
 from documents.pdf_document_parser import extract_pdf_text
 from ai_models.run_analysis import call_openrouter_for_analysis
 from translation.translator import DocumentTranslator
+import threading
 
 
 @csrf_exempt
@@ -75,11 +76,12 @@ def parse_pdf_view(request: HttpRequest):
     response["file_url"] = doc.uploaded_file.url if doc.uploaded_file else None
 
     # Trigger analysis synchronously (simple implementation)
+    analysis_obj = None
     try:
         meta = {"file_name": doc.file_name, "num_pages": doc.num_pages}
         pages = [p.get("text", "") for p in data.get("pages", [])]
         analysis_payload = call_openrouter_for_analysis(pages, meta)
-        DocumentAnalysis.objects.update_or_create(
+        analysis_obj, _ = DocumentAnalysis.objects.update_or_create(
             document=doc,
             defaults={
                 "status": "success" if analysis_payload else "failed",
@@ -88,10 +90,21 @@ def parse_pdf_view(request: HttpRequest):
             },
         )
     except Exception as exc:  # noqa: BLE001
-        DocumentAnalysis.objects.update_or_create(
+        analysis_obj, _ = DocumentAnalysis.objects.update_or_create(
             document=doc,
             defaults={"status": "failed", "error": str(exc)},
         )
+
+    # Trigger translations for all supported languages (background process)
+    if analysis_obj and analysis_obj.status == "success":
+        try:
+            # Translate document content for all languages
+            _translate_document_async(doc.id, data)
+            # Translate analysis for all languages
+            _translate_analysis_async(analysis_obj.id, analysis_obj.output_json)
+        except Exception as exc:  # noqa: BLE001
+            # Log error but don't fail the upload
+            print(f"Background translation failed for document {doc.id}: {exc}")
 
     response["analysis_available"] = DocumentAnalysis.objects.filter(document=doc, status="success").exists()
     return JsonResponse(response)
@@ -743,5 +756,87 @@ def list_analysis_translations_view(request: HttpRequest, pk: int):
         "available_translations": translation_list,
         "total_translations": translations.count()
     })
+
+
+def _translate_document_async(document_id: int, document_data: dict):
+    """Background function to translate document content for all languages."""
+    def translate_worker():
+        try:
+            doc = ParsedDocument.objects.get(id=document_id)
+            translator = DocumentTranslator()
+            supported_languages = ['hi', 'ta', 'te']
+            
+            for lang in supported_languages:
+                try:
+                    # Check if translation already exists
+                    if DocumentTranslation.objects.filter(document=doc, language=lang).exists():
+                        continue
+                    
+                    # Get original document data
+                    original_pages = document_data.get('pages', [])
+                    original_full_text = document_data.get('full_text', '')
+                    
+                    # Translate pages
+                    translated_pages = translator.translate_pages(original_pages, lang)
+                    
+                    # Translate full text
+                    translated_full_text = translator.translate_full_text(original_full_text, lang)
+                    
+                    # Create translation record
+                    DocumentTranslation.objects.create(
+                        document=doc,
+                        language=lang,
+                        translated_pages=translated_pages,
+                        translated_full_text=translated_full_text
+                    )
+                    
+                    print(f"✅ Document {document_id} translated to {lang}")
+                except Exception as e:
+                    print(f"❌ Failed to translate document {document_id} to {lang}: {e}")
+        except Exception as e:
+            print(f"❌ Background document translation failed for {document_id}: {e}")
+    
+    # Run in background thread
+    thread = threading.Thread(target=translate_worker)
+    thread.daemon = True
+    thread.start()
+
+
+def _translate_analysis_async(analysis_id: int, analysis_json: dict):
+    """Background function to translate analysis for all languages."""
+    def translate_worker():
+        try:
+            analysis = DocumentAnalysis.objects.get(id=analysis_id)
+            translator = DocumentTranslator()
+            supported_languages = ['hi', 'ta', 'te']
+            
+            for lang in supported_languages:
+                try:
+                    # Check if translation already exists
+                    if DocumentAnalysisTranslation.objects.filter(analysis=analysis, language=lang).exists():
+                        continue
+                    
+                    # Translate the analysis
+                    translated_analysis = translator.translate_analysis_json(
+                        analysis_json, lang, 'en'
+                    )
+                    
+                    # Create translation record
+                    DocumentAnalysisTranslation.objects.create(
+                        analysis=analysis,
+                        language=lang,
+                        translated_analysis_json=translated_analysis
+                    )
+                    
+                    print(f"✅ Analysis {analysis_id} translated to {lang}")
+                except Exception as e:
+                    print(f"❌ Failed to translate analysis {analysis_id} to {lang}: {e}")
+        except Exception as e:
+            print(f"❌ Background analysis translation failed for {analysis_id}: {e}")
+    
+    # Run in background thread
+    thread = threading.Thread(target=translate_worker)
+    thread.daemon = True
+    thread.start()
 
 
