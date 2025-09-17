@@ -172,67 +172,6 @@ class DocumentHeader extends StatelessWidget {
                 ],
               ),
             ],
-            
-            const SizedBox(height: 16),
-            
-            // Status Indicators
-            LayoutBuilder(
-              builder: (context, constraints) {
-                // If screen is very narrow, stack indicators vertically
-                if (constraints.maxWidth < 300) {
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildStatusIndicator(
-                        icon: FontAwesomeIcons.circleCheck,
-                        label: 'Analysis Complete',
-                        color: const Color(0xFF10B981),
-                      ),
-                      const SizedBox(height: 8),
-                      _buildStatusIndicator(
-                        icon: FontAwesomeIcons.play,
-                        label: 'Simulation Ready',
-                        color: const Color(0xFF2563EB),
-                      ),
-                      const SizedBox(height: 8),
-                      _buildStatusIndicator(
-                        icon: FontAwesomeIcons.robot,
-                        label: 'AI Enhanced',
-                        color: const Color(0xFF8B5CF6),
-                      ),
-                    ],
-                  );
-                }
-                // Otherwise, use horizontal layout with flexible children
-                return Row(
-                  children: [
-                    Expanded(
-                      child: _buildStatusIndicator(
-                        icon: FontAwesomeIcons.circleCheck,
-                        label: 'Analysis Complete',
-                        color: const Color(0xFF10B981),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: _buildStatusIndicator(
-                        icon: FontAwesomeIcons.play,
-                        label: 'Simulation Ready',
-                        color: const Color(0xFF2563EB),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: _buildStatusIndicator(
-                        icon: FontAwesomeIcons.robot,
-                        label: 'AI Enhanced',
-                        color: const Color(0xFF8B5CF6),
-                      ),
-                    ),
-                  ],
-                );
-              },
-            ),
           ],
         ),
       ),
@@ -246,41 +185,4 @@ class DocumentHeader extends StatelessWidget {
         .fadeIn(duration: 600.ms);
   }
 
-  Widget _buildStatusIndicator({
-    required IconData icon,
-    required String label,
-    required Color color,
-  }) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 24,
-          height: 24,
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.1),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(
-            icon,
-            size: 12,
-            color: color,
-          ),
-        ),
-        const SizedBox(width: 6),
-        Flexible(
-          child: Text(
-            label,
-            style: GoogleFonts.inter(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: const Color(0xFF374151),
-            ),
-            overflow: TextOverflow.ellipsis,
-            maxLines: 1,
-          ),
-        ),
-      ],
-    );
-  }
 }
