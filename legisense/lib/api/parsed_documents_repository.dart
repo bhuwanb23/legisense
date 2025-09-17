@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:developer' as developer;
 
 import 'package:http/http.dart' as http;
 
@@ -159,6 +160,111 @@ class ParsedDocumentsRepository {
     }
     final Map<String, dynamic> data = json.decode(res.body) as Map<String, dynamic>;
     return data;
+  }
+
+  /// Translate a document to a specific language.
+  /// Returns a map with translation status and metadata.
+  Future<Map<String, dynamic>> translateDocument({
+    required int documentId,
+    required String language,
+  }) async {
+    final uri = Uri.parse('$baseUrl/api/documents/$documentId/translate/');
+    final res = await http.post(
+      uri,
+      headers: {"Content-Type": "application/json"},
+      body: json.encode({"language": language}),
+    );
+    if (res.statusCode != 200) {
+      throw HttpException('Translation failed (${res.statusCode}): ${res.body}');
+    }
+    final Map<String, dynamic> data = json.decode(res.body) as Map<String, dynamic>;
+    return data;
+  }
+
+  /// Get translated document content.
+  /// Returns a map with translated document data.
+  Future<Map<String, dynamic>> getTranslatedDocument({
+    required int documentId,
+    required String language,
+  }) async {
+    final uri = Uri.parse('$baseUrl/api/documents/$documentId/translations/$language/');
+    final res = await http.get(uri);
+    if (res.statusCode != 200) {
+      throw HttpException('Translation fetch failed (${res.statusCode}): ${res.body}');
+    }
+    final Map<String, dynamic> data = json.decode(res.body) as Map<String, dynamic>;
+    return data;
+  }
+
+  /// List all available translations for a document.
+  /// Returns a map with available translations.
+  Future<Map<String, dynamic>> listDocumentTranslations({required int documentId}) async {
+    final uri = Uri.parse('$baseUrl/api/documents/$documentId/translations/');
+    final res = await http.get(uri);
+    if (res.statusCode != 200) {
+      throw HttpException('Translation list failed (${res.statusCode}): ${res.body}');
+    }
+    final Map<String, dynamic> data = json.decode(res.body) as Map<String, dynamic>;
+    return data;
+  }
+
+  /// Fetch document detail with optional language translation.
+  /// If language is provided and not 'en', will fetch translated content.
+  Future<SampleDocument> fetchDocumentDetailWithLanguage({
+    required int id,
+    String language = 'en',
+  }) async {
+    Map<String, dynamic> data;
+    if (language == 'en') {
+      // Fetch original document
+      final originalDoc = await fetchDocumentDetail(id);
+      data = {
+        'file_name': originalDoc.title,
+        'num_pages': originalDoc.textBlocks.length,
+        'pages': originalDoc.textBlocks.map((text) => {'text': text}).toList(),
+        'full_text': originalDoc.textBlocks.join('\n'),
+      };
+    } else {
+      // Try to fetch translated document
+      try {
+        data = await getTranslatedDocument(documentId: id, language: language);
+      } catch (e) {
+        // If translation doesn't exist, try to create it
+        try {
+          await translateDocument(documentId: id, language: language);
+          data = await getTranslatedDocument(documentId: id, language: language);
+        } catch (translationError) {
+          // Fallback to original document if translation fails
+          developer.log('Translation failed, falling back to original: $translationError', name: 'ParsedDocumentsRepository');
+          final originalDoc = await fetchDocumentDetail(id);
+          data = {
+            'file_name': originalDoc.title,
+            'num_pages': originalDoc.textBlocks.length,
+            'pages': originalDoc.textBlocks.map((text) => {'text': text}).toList(),
+            'full_text': originalDoc.textBlocks.join('\n'),
+          };
+        }
+      }
+    }
+
+    final String title = (data['file_name'] ?? 'Document').toString();
+    final int numPages = (data['num_pages'] ?? 0) as int;
+    final List<dynamic> pages = (data['pages'] ?? []) as List<dynamic>;
+    final List<String> textBlocks = pages
+        .map((e) => (e as Map<String, dynamic>)['text']?.toString() ?? '')
+        .where((t) => t.isNotEmpty)
+        .toList(growable: false);
+
+    return SampleDocument(
+      id: 'server-$id',
+      title: title,
+      meta: 'PDF • $numPages page${numPages == 1 ? '' : 's'}',
+      ext: 'pdf',
+      tldr: '',
+      textBlocks: textBlocks,
+      imageUrls: const [],
+      insights: const [],
+    );
   }
 }
 

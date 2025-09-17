@@ -31,6 +31,15 @@ const documentsStringsHi = {
   'docs.action.bookmark': 'बुकमार्क',
   'docs.action.note': 'नोट जोड़ें',
   'docs.action.highlight': 'हाइलाइट',
+  // Language Selector
+  'docs.language.select': 'भाषा चुनें',
+  'docs.language.english': 'English',
+  'docs.language.hindi': 'हिन्दी',
+  'docs.language.tamil': 'தமிழ்',
+  'docs.language.telugu': 'తెలుగు',
+  // Translation
+  'docs.translating': 'दस्तावेज़ का अनुवाद हो रहा है...',
+  'docs.translation.progress': 'यह कुछ क्षण ले सकता है...',
 };
 
 

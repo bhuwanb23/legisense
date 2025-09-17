@@ -10,6 +10,9 @@ from .views import (
     import_simulation_view,
     simulation_detail_view,
     document_simulations_view,
+    translate_document_view,
+    get_document_translation_view,
+    list_document_translations_view,
 )
 
 urlpatterns = [
@@ -22,6 +25,10 @@ urlpatterns = [
     path('documents/<int:pk>/simulations/', document_simulations_view, name='document_simulations'),
     path('simulations/import/', import_simulation_view, name='import_simulation'),
     path('simulations/<int:pk>/', simulation_detail_view, name='simulation_detail'),
+    # Translation endpoints
+    path('documents/<int:pk>/translate/', translate_document_view, name='translate_document'),
+    path('documents/<int:pk>/translations/', list_document_translations_view, name='list_document_translations'),
+    path('documents/<int:pk>/translations/<str:language>/', get_document_translation_view, name='get_document_translation'),
 ]
 
 

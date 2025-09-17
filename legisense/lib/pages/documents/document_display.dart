@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'dart:developer' as developer;
 import 'data/sample_documents.dart';
 import '../../theme/app_theme.dart';
 import '../profile/language/language_scope.dart';
 import 'language/strings.dart';
+import '../../api/parsed_documents_repository.dart';
 
 class DocumentDisplayPanel extends StatefulWidget {
   const DocumentDisplayPanel({super.key, this.document});
@@ -21,6 +23,9 @@ class _DocumentDisplayPanelState extends State<DocumentDisplayPanel>
   late Animation<Offset> _slideAnimation;
   
   int _currentPageIndex = 0;
+  AppLanguage _documentLanguage = AppLanguage.en; // Document-specific language (only affects document content)
+  SampleDocument? _translatedDocument;
+  bool _isTranslating = false;
 
   @override
   void initState() {
@@ -71,8 +76,9 @@ class _DocumentDisplayPanelState extends State<DocumentDisplayPanel>
   }
 
   void _goToNextPage() {
-    if (widget.document != null && 
-        _currentPageIndex < widget.document!.textBlocks.length - 1) {
+    final doc = _translatedDocument ?? widget.document;
+    if (doc != null && 
+        _currentPageIndex < doc.textBlocks.length - 1) {
       setState(() {
         _currentPageIndex++;
       });
@@ -89,8 +95,13 @@ class _DocumentDisplayPanelState extends State<DocumentDisplayPanel>
 
   @override
   Widget build(BuildContext context) {
-    final lang = LanguageScope.maybeOf(context)?.language ?? AppLanguage.en;
-    final i18n = DocumentsI18n.mapFor(lang);
+    // Use global app language for UI elements (buttons, labels, etc.)
+    final globalLanguage = LanguageScope.of(context).language;
+    final i18n = DocumentsI18n.mapFor(globalLanguage);
+    
+    // Use translated document if available, otherwise use original
+    // Document content language is controlled by _documentLanguage (separate from UI language)
+    final currentDocument = _translatedDocument ?? widget.document;
     return Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
@@ -106,17 +117,19 @@ class _DocumentDisplayPanelState extends State<DocumentDisplayPanel>
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Enhanced Header Section
-            _buildHeaderSection(i18n),
+            _buildHeaderSection(i18n, currentDocument),
             
             // Document Content Area
             Expanded(
-              child: FadeTransition(
-                opacity: _fadeAnimation,
-                child: SlideTransition(
-                  position: _slideAnimation,
-                  child: _buildDocumentContent(i18n),
-                ),
-              ),
+              child: _isTranslating 
+                ? _buildTranslationLoader(i18n)
+                : FadeTransition(
+                    opacity: _fadeAnimation,
+                    child: SlideTransition(
+                      position: _slideAnimation,
+                      child: _buildDocumentContent(i18n, currentDocument),
+                    ),
+                  ),
             ),
           ],
         ),
@@ -166,8 +179,8 @@ class _DocumentDisplayPanelState extends State<DocumentDisplayPanel>
                   _buildCompactActionMenuItem(
                     icon: Icons.bookmark_border,
                     label: ((){
-                      final lang = LanguageScope.maybeOf(context)?.language ?? AppLanguage.en;
-                      final i = DocumentsI18n.mapFor(lang);
+                      final globalLanguage = LanguageScope.of(context).language;
+                      final i = DocumentsI18n.mapFor(globalLanguage);
                       return i['docs.action.bookmark'] ?? 'Bookmark';
                     })(),
                     color: AppTheme.primaryBlue,
@@ -179,8 +192,8 @@ class _DocumentDisplayPanelState extends State<DocumentDisplayPanel>
                   _buildCompactActionMenuItem(
                     icon: Icons.note_add,
                     label: ((){
-                      final lang = LanguageScope.maybeOf(context)?.language ?? AppLanguage.en;
-                      final i = DocumentsI18n.mapFor(lang);
+                      final globalLanguage = LanguageScope.of(context).language;
+                      final i = DocumentsI18n.mapFor(globalLanguage);
                       return i['docs.action.note'] ?? 'Add Note';
                     })(),
                     color: AppTheme.successGreen,
@@ -192,8 +205,8 @@ class _DocumentDisplayPanelState extends State<DocumentDisplayPanel>
                   _buildCompactActionMenuItem(
                     icon: Icons.highlight,
                     label: ((){
-                      final lang = LanguageScope.maybeOf(context)?.language ?? AppLanguage.en;
-                      final i = DocumentsI18n.mapFor(lang);
+                      final globalLanguage = LanguageScope.of(context).language;
+                      final i = DocumentsI18n.mapFor(globalLanguage);
                       return i['docs.action.highlight'] ?? 'Highlight';
                     })(),
                     color: AppTheme.warningOrange,
@@ -256,7 +269,8 @@ class _DocumentDisplayPanelState extends State<DocumentDisplayPanel>
     );
   }
 
-  Widget _buildHeaderSection(Map<String, String> i18n) {
+  Widget _buildHeaderSection(Map<String, String> i18n, [SampleDocument? document]) {
+    final currentDocument = document ?? widget.document;
     return Container(
       decoration: BoxDecoration(
         color: AppTheme.backgroundWhite,
@@ -332,7 +346,7 @@ class _DocumentDisplayPanelState extends State<DocumentDisplayPanel>
                 ),
                 
                 // Compact Page Progress Info with FAB
-                if (widget.document != null) ...[
+                if (currentDocument != null) ...[
                   const SizedBox(height: AppTheme.spacingXS + 2),
                   Row(
                     children: [
@@ -343,13 +357,13 @@ class _DocumentDisplayPanelState extends State<DocumentDisplayPanel>
                       ),
                       const SizedBox(width: 6),
                       _buildCompactInfoPill(
-                        '${widget.document!.textBlocks.length} pages',
+                        '${currentDocument.textBlocks.length} pages',
                         AppTheme.successGreen,
                         Icons.library_books,
                       ),
                       const SizedBox(width: 6),
                       _buildCompactInfoPill(
-                        _getDocumentSize(),
+                        _getDocumentSize(currentDocument),
                         AppTheme.warningOrange,
                         Icons.data_usage,
                       ),
@@ -364,7 +378,7 @@ class _DocumentDisplayPanelState extends State<DocumentDisplayPanel>
           ),
           
           // Progress Indicator
-          if (widget.document != null) _buildProgressIndicator(),
+          if (currentDocument != null) _buildProgressIndicator(currentDocument),
           
           const Divider(height: 1, color: AppTheme.borderLight),
         ],
@@ -490,13 +504,14 @@ class _DocumentDisplayPanelState extends State<DocumentDisplayPanel>
   }
 
 
-  Widget _buildProgressIndicator() {
-    if (widget.document == null || widget.document!.textBlocks.isEmpty) {
+  Widget _buildProgressIndicator([SampleDocument? document]) {
+    final doc = document ?? widget.document;
+    if (doc == null || doc.textBlocks.isEmpty) {
       return const SizedBox.shrink();
     }
     
-    final rawProgress = (widget.document!.textBlocks.length > 1) 
-        ? (_currentPageIndex + 1) / widget.document!.textBlocks.length 
+    final rawProgress = (doc.textBlocks.length > 1) 
+        ? (_currentPageIndex + 1) / doc.textBlocks.length 
         : 1.0;
     
     return Container(
@@ -518,8 +533,113 @@ class _DocumentDisplayPanelState extends State<DocumentDisplayPanel>
     );
   }
 
-  Widget _buildDocumentContent(Map<String, String> i18n) {
-    if (widget.document == null || widget.document!.textBlocks.isEmpty) {
+  Widget _buildTranslationLoader(Map<String, String> i18n) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppTheme.spacingXL),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // Animated loader
+          Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  AppTheme.primaryBlue.withValues(alpha: 0.1),
+                  AppTheme.successGreen.withValues(alpha: 0.1),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(30),
+            ),
+            child: const Center(
+              child: SizedBox(
+                width: 30,
+                height: 30,
+                child: CircularProgressIndicator(
+                  strokeWidth: 3,
+                  valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryBlue),
+                ),
+              ),
+            ),
+          ),
+          
+          const SizedBox(height: AppTheme.spacingL),
+          
+          // Translation status text
+          Text(
+            i18n['docs.translating'] ?? 'Translating document...',
+            style: AppTheme.bodyLarge.copyWith(
+              color: AppTheme.textPrimary,
+              fontWeight: FontWeight.w600,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          
+          const SizedBox(height: AppTheme.spacingS),
+          
+          // Language info
+          Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppTheme.spacingM,
+              vertical: AppTheme.spacingS,
+            ),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  AppTheme.successGreen.withValues(alpha: 0.1),
+                  AppTheme.successGreen.withValues(alpha: 0.05),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: AppTheme.successGreen.withValues(alpha: 0.2),
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.language,
+                  size: 16,
+                  color: AppTheme.successGreen,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  'Translating to ${_getLanguageDisplayCode(_documentLanguage)}',
+                  style: AppTheme.bodyMedium.copyWith(
+                    color: AppTheme.successGreen,
+                    fontWeight: FontWeight.w500,
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          const SizedBox(height: AppTheme.spacingM),
+          
+          // Progress hint
+          Text(
+            i18n['docs.translation.progress'] ?? 'This may take a few moments...',
+            style: AppTheme.bodyMedium.copyWith(
+              color: AppTheme.textSecondary,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDocumentContent(Map<String, String> i18n, [SampleDocument? document]) {
+    final doc = document ?? widget.document;
+    if (doc == null || doc.textBlocks.isEmpty) {
       return _buildEmptyState(i18n);
     }
 
@@ -529,7 +649,7 @@ class _DocumentDisplayPanelState extends State<DocumentDisplayPanel>
         Expanded(
           child: Container(
             margin: const EdgeInsets.all(AppTheme.spacingM),
-            child: _buildCurrentPageCard(),
+            child: _buildCurrentPageCard(doc),
           ),
         ),
         
@@ -539,8 +659,10 @@ class _DocumentDisplayPanelState extends State<DocumentDisplayPanel>
     );
   }
 
-  Widget _buildCurrentPageCard() {
-    final currentPageText = widget.document!.textBlocks[_currentPageIndex];
+  Widget _buildCurrentPageCard([SampleDocument? document]) {
+    final doc = document ?? widget.document;
+    if (doc == null) return const SizedBox.shrink();
+    final currentPageText = doc.textBlocks[_currentPageIndex];
     
     return GestureDetector(
       onHorizontalDragEnd: (details) {
@@ -769,7 +891,8 @@ class _DocumentDisplayPanelState extends State<DocumentDisplayPanel>
   }
 
   Widget _buildNavigationControls(Map<String, String> i18n) {
-    if (widget.document == null || widget.document!.textBlocks.length <= 1) {
+    final doc = _translatedDocument ?? widget.document;
+    if (doc == null || doc.textBlocks.length <= 1) {
       return const SizedBox.shrink();
     }
 
@@ -801,57 +924,358 @@ class _DocumentDisplayPanelState extends State<DocumentDisplayPanel>
             isEnabled: _currentPageIndex > 0,
           ),
           
-          // Compact Page Indicator
-          Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppTheme.spacingM,
-              vertical: AppTheme.spacingS,
-            ),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  AppTheme.primaryBlue.withValues(alpha: 0.1),
-                  AppTheme.primaryBlue.withValues(alpha: 0.05),
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(
-                color: AppTheme.primaryBlue.withValues(alpha: 0.2),
-              ),
-            ),
-            child: Column(
-              children: [
-                Text(
-                  '${i18n['docs.viewer.page'] ?? 'Page'} ${_currentPageIndex + 1}',
-                  style: AppTheme.bodyMedium.copyWith(
-                    color: AppTheme.primaryBlue,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 12,
+          // Center section with Page Indicator and Language Selector
+          Row(
+            children: [
+              // Compact Page Indicator
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppTheme.spacingM,
+                  vertical: AppTheme.spacingS,
+                ),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      AppTheme.primaryBlue.withValues(alpha: 0.1),
+                      AppTheme.primaryBlue.withValues(alpha: 0.05),
+                    ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: AppTheme.primaryBlue.withValues(alpha: 0.2),
                   ),
                 ),
-                const SizedBox(height: 1),
-                Text(
-                  '${i18n['docs.viewer.of'] ?? 'of'} ${widget.document!.textBlocks.length}',
-                  style: AppTheme.caption.copyWith(
-                    color: AppTheme.textSecondary,
-                    fontSize: 10,
-                  ),
+                child: Column(
+                  children: [
+                    Text(
+                      '${i18n['docs.viewer.page'] ?? 'Page'} ${_currentPageIndex + 1}',
+                      style: AppTheme.bodyMedium.copyWith(
+                        color: AppTheme.primaryBlue,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 12,
+                      ),
+                    ),
+                    const SizedBox(height: 1),
+                    Text(
+                      '${i18n['docs.viewer.of'] ?? 'of'} ${doc.textBlocks.length}',
+                      style: AppTheme.caption.copyWith(
+                        color: AppTheme.textSecondary,
+                        fontSize: 10,
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+              
+              const SizedBox(width: AppTheme.spacingS),
+              
+              // Language Selector
+              _buildLanguageSelector(),
+            ],
           ),
           
           // Next Page Button - Compact Arrow
           _buildCompactArrowButton(
             icon: Icons.arrow_forward_ios,
-            onPressed: _currentPageIndex < widget.document!.textBlocks.length - 1 
+            onPressed: _currentPageIndex < doc.textBlocks.length - 1 
                 ? _goToNextPage 
                 : null,
-            isEnabled: _currentPageIndex < widget.document!.textBlocks.length - 1,
+            isEnabled: _currentPageIndex < doc.textBlocks.length - 1,
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildLanguageSelector() {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: _isTranslating ? null : _showLanguageSelector,
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppTheme.spacingM,
+            vertical: AppTheme.spacingS,
+          ),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: _isTranslating 
+                ? [
+                    AppTheme.textSecondary.withValues(alpha: 0.1),
+                    AppTheme.textSecondary.withValues(alpha: 0.05),
+                  ]
+                : [
+                    AppTheme.successGreen.withValues(alpha: 0.1),
+                    AppTheme.successGreen.withValues(alpha: 0.05),
+                  ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: _isTranslating 
+                ? AppTheme.textSecondary.withValues(alpha: 0.2)
+                : AppTheme.successGreen.withValues(alpha: 0.2),
+            ),
+          ),
+          child: Column(
+            children: [
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.language,
+                    size: 12,
+                    color: _isTranslating ? AppTheme.textSecondary : AppTheme.successGreen,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    _getLanguageDisplayCode(_documentLanguage),
+                    style: AppTheme.bodyMedium.copyWith(
+                      color: _isTranslating ? AppTheme.textSecondary : AppTheme.successGreen,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 1),
+              Text(
+                _isTranslating ? 'Translating...' : 'Language',
+                style: AppTheme.caption.copyWith(
+                  color: _isTranslating ? AppTheme.warningOrange : AppTheme.textSecondary,
+                  fontSize: 10,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _getLanguageCode(AppLanguage lang) {
+    switch (lang) {
+      case AppLanguage.en:
+        return 'en';
+      case AppLanguage.hi:
+        return 'hi';
+      case AppLanguage.ta:
+        return 'ta';
+      case AppLanguage.te:
+        return 'te';
+    }
+  }
+
+  String _getLanguageDisplayCode(AppLanguage lang) {
+    switch (lang) {
+      case AppLanguage.en:
+        return 'EN';
+      case AppLanguage.hi:
+        return 'हि';
+      case AppLanguage.ta:
+        return 'த';
+      case AppLanguage.te:
+        return 'తె';
+    }
+  }
+
+  void _showLanguageSelector() {
+    final globalLanguage = LanguageScope.of(context).language;
+    final i18n = DocumentsI18n.mapFor(globalLanguage);
+    
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        margin: const EdgeInsets.all(AppTheme.spacingS),
+        decoration: BoxDecoration(
+          color: AppTheme.backgroundWhite,
+          borderRadius: BorderRadius.circular(AppTheme.radiusM),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.1),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Handle
+            Container(
+              margin: const EdgeInsets.only(top: AppTheme.spacingS),
+              width: 32,
+              height: 3,
+              decoration: BoxDecoration(
+                color: AppTheme.borderMedium,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            
+            const SizedBox(height: AppTheme.spacingM),
+            
+            // Title
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingM),
+              child: Text(
+                i18n['docs.language.select'] ?? 'Select Language',
+                style: AppTheme.heading4.copyWith(
+                  color: AppTheme.textPrimary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            
+            const SizedBox(height: AppTheme.spacingM),
+            
+            // Language Options
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingM),
+              child: Column(
+                children: [
+                  _buildLanguageOption(
+                    AppLanguage.en,
+                    i18n['docs.language.english'] ?? 'English',
+                    'EN',
+                    _documentLanguage == AppLanguage.en,
+                  ),
+                  _buildLanguageOption(
+                    AppLanguage.hi,
+                    i18n['docs.language.hindi'] ?? 'हिन्दी',
+                    'हि',
+                    _documentLanguage == AppLanguage.hi,
+                  ),
+                  _buildLanguageOption(
+                    AppLanguage.ta,
+                    i18n['docs.language.tamil'] ?? 'தமிழ்',
+                    'த',
+                    _documentLanguage == AppLanguage.ta,
+                  ),
+                  _buildLanguageOption(
+                    AppLanguage.te,
+                    i18n['docs.language.telugu'] ?? 'తెలుగు',
+                    'తె',
+                    _documentLanguage == AppLanguage.te,
+                  ),
+                ],
+              ),
+            ),
+            
+            const SizedBox(height: AppTheme.spacingM),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLanguageOption(
+    AppLanguage language,
+    String name,
+    String code,
+    bool isSelected,
+  ) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () async {
+          // Only change document-specific language, not global app language
+          // This affects only the document content, UI elements remain in global language
+          setState(() {
+            _documentLanguage = language;
+            _isTranslating = language != AppLanguage.en;
+          });
+          Navigator.pop(context);
+          
+          // If not English, fetch translated content
+          if (language != AppLanguage.en && widget.document != null) {
+            await _translateDocument(language);
+          } else {
+            // Reset to original document for English
+            setState(() {
+              _translatedDocument = null;
+              _isTranslating = false;
+            });
+          }
+        },
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppTheme.spacingM,
+            vertical: AppTheme.spacingS,
+          ),
+          margin: const EdgeInsets.only(bottom: AppTheme.spacingXS),
+          decoration: BoxDecoration(
+            color: isSelected 
+                ? AppTheme.primaryBlue.withValues(alpha: 0.1)
+                : AppTheme.backgroundLight,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: isSelected 
+                  ? AppTheme.primaryBlue.withValues(alpha: 0.3)
+                  : AppTheme.borderLight,
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 24,
+                height: 24,
+                decoration: BoxDecoration(
+                  color: isSelected 
+                      ? AppTheme.primaryBlue
+                      : AppTheme.backgroundLight,
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: isSelected 
+                        ? AppTheme.primaryBlue
+                        : AppTheme.borderMedium,
+                  ),
+                ),
+                child: isSelected
+                    ? Icon(
+                        Icons.check,
+                        size: 14,
+                        color: Colors.white,
+                      )
+                    : null,
+              ),
+              const SizedBox(width: AppTheme.spacingM),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      name,
+                      style: AppTheme.bodyMedium.copyWith(
+                        color: isSelected 
+                            ? AppTheme.primaryBlue
+                            : AppTheme.textPrimary,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      code,
+                      style: AppTheme.caption.copyWith(
+                        color: isSelected 
+                            ? AppTheme.primaryBlue
+                            : AppTheme.textSecondary,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -1001,12 +1425,47 @@ class _DocumentDisplayPanelState extends State<DocumentDisplayPanel>
     );
   }
 
-  String _getDocumentSize() {
-    if (widget.document == null) return '';
-    final totalChars = widget.document!.textBlocks
+  String _getDocumentSize([SampleDocument? document]) {
+    final doc = document ?? widget.document;
+    if (doc == null) return '';
+    final totalChars = doc.textBlocks
         .fold(0, (sum, block) => sum + block.length);
     if (totalChars < 1000) return '$totalChars characters';
     return '${(totalChars / 1000).toStringAsFixed(1)}k characters';
+  }
+
+  Future<void> _translateDocument(AppLanguage language) async {
+    if (widget.document == null) return;
+    
+    try {
+      final repo = ParsedDocumentsRepository(baseUrl: ApiConfig.baseUrl);
+      final documentId = int.parse(widget.document!.id.replaceFirst('server-', ''));
+      final languageCode = _getLanguageCode(language);
+      
+      final translatedDoc = await repo.fetchDocumentDetailWithLanguage(
+        id: documentId,
+        language: languageCode,
+      );
+      
+      setState(() {
+        _translatedDocument = translatedDoc;
+        _isTranslating = false;
+      });
+    } catch (e) {
+      developer.log('Translation error: $e', name: 'DocumentDisplayPanel');
+      setState(() {
+        _isTranslating = false;
+      });
+      // Show error to user
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Translation failed: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 }
 

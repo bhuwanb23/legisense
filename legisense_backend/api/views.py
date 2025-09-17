@@ -8,9 +8,10 @@ from django.core.files.base import ContentFile
 from django.shortcuts import get_object_or_404
 from django.db import transaction
 
-from .models import ParsedDocument, DocumentAnalysis
+from .models import ParsedDocument, DocumentAnalysis, DocumentTranslation
 from documents.pdf_document_parser import extract_pdf_text
 from ai_models.run_analysis import call_openrouter_for_analysis
+from translation.translator import DocumentTranslator
 
 
 @csrf_exempt
@@ -481,5 +482,143 @@ def document_simulations_view(request: HttpRequest, pk: int):
         }
     
     return JsonResponse(response_data)
+
+
+@csrf_exempt
+def translate_document_view(request: HttpRequest, pk: int):
+    """Translate a document to a specific language."""
+    if request.method != "POST":
+        return JsonResponse({"error": "Method not allowed"}, status=405)
+    
+    try:
+        payload = json.loads(request.body.decode("utf-8"))
+    except Exception as exc:  # noqa: BLE001
+        return JsonResponse({"error": f"Invalid JSON: {exc}"}, status=400)
+    
+    target_language = payload.get("language", "en")
+    if target_language not in ['en', 'hi', 'ta', 'te']:
+        return JsonResponse({"error": "Invalid language code"}, status=400)
+    
+    doc = get_object_or_404(ParsedDocument, pk=pk)
+    
+    # Check if translation already exists
+    existing_translation = DocumentTranslation.objects.filter(
+        document=doc, 
+        language=target_language
+    ).first()
+    
+    if existing_translation:
+        return JsonResponse({
+            "status": "ok",
+            "translation_id": existing_translation.id,
+            "language": existing_translation.language,
+            "cached": True,
+            "message": "Translation already exists"
+        })
+    
+    # Create new translation
+    try:
+        translator = DocumentTranslator()
+        target_lang_code = translator.get_language_code(target_language)
+        
+        # Get original document data
+        original_pages = doc.payload.get('pages', [])
+        original_full_text = doc.payload.get('full_text', '')
+        
+        # Translate pages
+        translated_pages = translator.translate_pages(original_pages, target_lang_code)
+        
+        # Translate full text
+        translated_full_text = translator.translate_full_text(original_full_text, target_lang_code)
+        
+        # Create translation record
+        translation = DocumentTranslation.objects.create(
+            document=doc,
+            language=target_language,
+            translated_pages=translated_pages,
+            translated_full_text=translated_full_text
+        )
+        
+        return JsonResponse({
+            "status": "ok",
+            "translation_id": translation.id,
+            "language": translation.language,
+            "cached": False,
+            "message": "Translation created successfully"
+        })
+        
+    except Exception as exc:  # noqa: BLE001
+        return JsonResponse({
+            "error": "Translation failed",
+            "message": "Unable to translate document. Please try again later.",
+            "details": str(exc)
+        }, status=500)
+
+
+def get_document_translation_view(request: HttpRequest, pk: int, language: str):
+    """Get translated document content."""
+    if request.method != "GET":
+        return JsonResponse({"error": "Method not allowed"}, status=405)
+    
+    if language not in ['en', 'hi', 'ta', 'te']:
+        return JsonResponse({"error": "Invalid language code"}, status=400)
+    
+    doc = get_object_or_404(ParsedDocument, pk=pk)
+    
+    # If requesting English, return original document
+    if language == 'en':
+        data = dict(doc.payload)
+        data["id"] = doc.id
+        data["file_name"] = doc.file_name
+        data["num_pages"] = doc.num_pages
+        data["file_url"] = doc.uploaded_file.url if doc.uploaded_file else None
+        data["analysis_available"] = hasattr(doc, "analysis") and doc.analysis.status == "success"
+        data["language"] = "en"
+        return JsonResponse(data)
+    
+    # Get translation
+    translation = DocumentTranslation.objects.filter(
+        document=doc, 
+        language=language
+    ).first()
+    
+    if not translation:
+        return JsonResponse({
+            "error": "Translation not found",
+            "message": f"Document not translated to {language}. Please request translation first."
+        }, status=404)
+    
+    # Return translated data
+    data = {
+        "id": doc.id,
+        "file_name": doc.file_name,
+        "num_pages": doc.num_pages,
+        "file_url": doc.uploaded_file.url if doc.uploaded_file else None,
+        "analysis_available": hasattr(doc, "analysis") and doc.analysis.status == "success",
+        "language": language,
+        "pages": translation.translated_pages,
+        "full_text": translation.translated_full_text,
+        "num_pages": len(translation.translated_pages)
+    }
+    
+    return JsonResponse(data)
+
+
+def list_document_translations_view(request: HttpRequest, pk: int):
+    """List all available translations for a document."""
+    if request.method != "GET":
+        return JsonResponse({"error": "Method not allowed"}, status=405)
+    
+    doc = get_object_or_404(ParsedDocument, pk=pk)
+    
+    translations = DocumentTranslation.objects.filter(document=doc).values(
+        'id', 'language', 'created_at', 'updated_at'
+    )
+    
+    return JsonResponse({
+        "document_id": doc.id,
+        "available_translations": list(translations),
+        "total_translations": translations.count()
+    })
 
 

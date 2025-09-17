@@ -36,6 +36,15 @@ const documentsStringsEn = {
   'docs.action.bookmark': 'Bookmark',
   'docs.action.note': 'Add Note',
   'docs.action.highlight': 'Highlight',
+  // Language Selector
+  'docs.language.select': 'Select Language',
+  'docs.language.english': 'English',
+  'docs.language.hindi': 'हिन्दी',
+  'docs.language.tamil': 'தமிழ்',
+  'docs.language.telugu': 'తెలుగు',
+  // Translation
+  'docs.translating': 'Translating document...',
+  'docs.translation.progress': 'This may take a few moments...',
 };
 
 

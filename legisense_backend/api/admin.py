@@ -8,6 +8,7 @@ from .models import (
     SimulationNarrativeOutcome,
     SimulationLongTermPoint,
     SimulationRiskAlert,
+    DocumentTranslation,
 )
 
 
@@ -70,3 +71,10 @@ class SimulationLongTermPointAdmin(admin.ModelAdmin):
 class SimulationRiskAlertAdmin(admin.ModelAdmin):
     list_display = ("id", "session", "level", "message", "created_at")
     list_filter = ("level", "session")
+
+@admin.register(DocumentTranslation)
+class DocumentTranslationAdmin(admin.ModelAdmin):
+    list_display = ("id", "document", "language", "created_at", "updated_at")
+    list_filter = ("language",)
+    search_fields = ("document__file_name",)
+    readonly_fields = ("created_at", "updated_at")

@@ -31,6 +31,15 @@ const documentsStringsTa = {
   'docs.action.bookmark': 'புக் மார்க்',
   'docs.action.note': 'குறிப்பு சேர்க்க',
   'docs.action.highlight': 'ஹைலைட்',
+  // Language Selector
+  'docs.language.select': 'மொழியைத் தேர்ந்தெடுக்கவும்',
+  'docs.language.english': 'English',
+  'docs.language.hindi': 'हिन्दी',
+  'docs.language.tamil': 'தமிழ்',
+  'docs.language.telugu': 'తెలుగు',
+  // Translation
+  'docs.translating': 'ஆவணம் மொழிபெயர்க்கப்படுகிறது...',
+  'docs.translation.progress': 'இது சில நிமிடங்கள் எடுக்கலாம்...',
 };
 
 

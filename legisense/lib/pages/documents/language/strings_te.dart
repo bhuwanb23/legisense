@@ -31,6 +31,15 @@ const documentsStringsTe = {
   'docs.action.bookmark': 'బుక్‌మార్క్',
   'docs.action.note': 'నోట్ జోడించు',
   'docs.action.highlight': 'హైలైట్',
+  // Language Selector
+  'docs.language.select': 'భాషను ఎంచుకోండి',
+  'docs.language.english': 'English',
+  'docs.language.hindi': 'हिन्दी',
+  'docs.language.tamil': 'தமிழ்',
+  'docs.language.telugu': 'తెలుగు',
+  // Translation
+  'docs.translating': 'పత్రం అనువదించబడుతోంది...',
+  'docs.translation.progress': 'ఇది కొన్ని క్షణాలు పడుతుంది...',
 };
 
 
