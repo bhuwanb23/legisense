@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../profile/language/language_scope.dart';
+import '../language/strings.dart';
 
 class ComparativeContextCard extends StatelessWidget {
   const ComparativeContextCard({
@@ -53,14 +55,14 @@ class ComparativeContextCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(child: _metric('Standard', standard, alignRight: false)),
+              Expanded(child: _metric(DocumentsI18n.mapFor(LanguageScope.of(context).language)['analysis.standard'] ?? 'Standard', standard, alignRight: false)),
               const SizedBox(width: 10),
               const Padding(
                 padding: EdgeInsets.only(top: 10),
                 child: Icon(Icons.compare_arrows, color: Color(0xFF64748B), size: 16),
               ),
               const SizedBox(width: 10),
-              Expanded(child: _metric('Contract', contract, alignRight: true)),
+              Expanded(child: _metric(DocumentsI18n.mapFor(LanguageScope.of(context).language)['analysis.contract'] ?? 'Contract', contract, alignRight: true)),
             ],
           ),
         ],

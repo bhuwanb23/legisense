@@ -40,6 +40,23 @@ const documentsStringsHi = {
   // Translation
   'docs.translating': 'दस्तावेज़ का अनुवाद हो रहा है...',
   'docs.translation.progress': 'यह कुछ क्षण ले सकता है...',
+  // Analysis Components
+  'analysis.tldr.title': 'टीएल;डीआर सारांश',
+  'analysis.clauses.title': 'धारा विश्लेषण',
+  'analysis.flags.title': 'जोखिम संकेत और चेतावनियाँ',
+  'analysis.context.title': 'तुलनात्मक संदर्भ',
+  'analysis.questions.title': 'सुझाए गए प्रश्न',
+  'analysis.simulation.cta': 'सिमुलेशन चलाएं',
+  'analysis.simulation.subtitle': 'धाराओं को समयरेखा और परिणामों में बदलें',
+  'analysis.simulation.open': 'खोलें',
+  'analysis.risk.low': 'कम जोखिम',
+  'analysis.risk.medium': 'मध्यम जोखिम',
+  'analysis.risk.high': 'उच्च जोखिम',
+  'analysis.risk.label': 'जोखिम',
+  'analysis.simple.terms': 'सरल शब्दों में',
+  'analysis.standard': 'मानक',
+  'analysis.contract': 'अनुबंध',
+  'analysis.assessment': 'मूल्यांकन',
 };
 
 

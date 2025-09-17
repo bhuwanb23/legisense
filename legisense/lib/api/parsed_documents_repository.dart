@@ -208,8 +208,70 @@ class ParsedDocumentsRepository {
     return data;
   }
 
-  /// Fetch document detail with optional language translation.
+  /// Fetch document analysis with optional language translation.
   /// If language is provided and not 'en', will fetch translated content.
+  Future<Map<String, dynamic>> fetchAnalysisWithLanguage({
+    required int documentId,
+    String language = 'en',
+  }) async {
+    Map<String, dynamic> data;
+    if (language == 'en') {
+      // Fetch original analysis
+      data = await fetchAnalysis(documentId);
+    } else {
+      // First get the analysis to extract the analysis ID
+      final analysisResponse = await http.get(Uri.parse('$baseUrl/api/documents/$documentId/analysis/'));
+      if (analysisResponse.statusCode != 200) {
+        throw Exception('Failed to fetch analysis: ${analysisResponse.statusCode}');
+      }
+      final analysisData = json.decode(analysisResponse.body) as Map<String, dynamic>;
+      final analysisId = analysisData['id'] as int?;
+      
+      if (analysisId == null) {
+        throw Exception('Analysis ID not found in analysis data');
+      }
+      
+      // Try to fetch translated analysis
+      try {
+        final uri = Uri.parse('$baseUrl/api/analysis/$analysisId/translations/$language/');
+        final response = await http.get(uri);
+        if (response.statusCode == 200) {
+          final responseData = json.decode(response.body) as Map<String, dynamic>;
+          data = responseData['analysis'];
+        } else {
+          throw Exception('Failed to fetch translation: ${response.statusCode}');
+        }
+      } catch (e) {
+        // If translation doesn't exist, try to create it
+        try {
+          final translateUri = Uri.parse('$baseUrl/api/analysis/$analysisId/translate/');
+          final translateResponse = await http.post(
+            translateUri,
+            headers: {'Content-Type': 'application/json'},
+            body: json.encode({'language': language}),
+          );
+          if (translateResponse.statusCode == 200) {
+            final fetchUri = Uri.parse('$baseUrl/api/analysis/$analysisId/translations/$language/');
+            final fetchResponse = await http.get(fetchUri);
+            if (fetchResponse.statusCode == 200) {
+              final responseData = json.decode(fetchResponse.body) as Map<String, dynamic>;
+              data = responseData['analysis'];
+            } else {
+              throw Exception('Failed to fetch created translation: ${fetchResponse.statusCode}');
+            }
+          } else {
+            throw Exception('Failed to create translation: ${translateResponse.statusCode}');
+          }
+        } catch (translationError) {
+          // Fallback to original analysis if translation fails
+          developer.log('Analysis translation failed, falling back to original: $translationError', name: 'ParsedDocumentsRepository');
+          data = analysisData['analysis'] as Map<String, dynamic>;
+        }
+      }
+    }
+    return data;
+  }
+
   Future<SampleDocument> fetchDocumentDetailWithLanguage({
     required int id,
     String language = 'en',

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../main.dart';
+import '../../profile/language/language_scope.dart';
+import '../language/strings.dart';
 
 class SimulationCta extends StatefulWidget {
   const SimulationCta({super.key});
@@ -58,16 +60,16 @@ class _SimulationCtaState extends State<SimulationCta> with SingleTickerProvider
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Run Simulation', style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w800, color: Colors.white)),
+                          Text(DocumentsI18n.mapFor(LanguageScope.of(context).language)['analysis.simulation.cta'] ?? 'Run Simulation', style: GoogleFonts.inter(fontSize: 16, fontWeight: FontWeight.w800, color: Colors.white)),
                           const SizedBox(height: 2),
-                          Text('Transform clauses into timelines and outcomes', style: GoogleFonts.inter(fontSize: 12, color: Colors.white.withValues(alpha: 0.9))),
+                          Text(DocumentsI18n.mapFor(LanguageScope.of(context).language)['analysis.simulation.subtitle'] ?? 'Transform clauses into timelines and outcomes', style: GoogleFonts.inter(fontSize: 12, color: Colors.white.withValues(alpha: 0.9))),
                         ],
                       ),
                     ),
                     Container(
                       decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.15), borderRadius: BorderRadius.circular(12)),
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      child: Text('Open', style: GoogleFonts.inter(fontSize: 12, color: Colors.white, fontWeight: FontWeight.w700)),
+                      child: Text(DocumentsI18n.mapFor(LanguageScope.of(context).language)['analysis.simulation.open'] ?? 'Open', style: GoogleFonts.inter(fontSize: 12, color: Colors.white, fontWeight: FontWeight.w700)),
                     ),
                   ],
                 ),

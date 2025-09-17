@@ -8,7 +8,7 @@ from django.core.files.base import ContentFile
 from django.shortcuts import get_object_or_404
 from django.db import transaction
 
-from .models import ParsedDocument, DocumentAnalysis, DocumentTranslation
+from .models import ParsedDocument, DocumentAnalysis, DocumentTranslation, DocumentAnalysisTranslation
 from documents.pdf_document_parser import extract_pdf_text
 from ai_models.run_analysis import call_openrouter_for_analysis
 from translation.translator import DocumentTranslator
@@ -123,7 +123,7 @@ def parsed_doc_analysis_view(request: HttpRequest, pk: int):
     doc = get_object_or_404(ParsedDocument, pk=pk)
     if not hasattr(doc, "analysis") or doc.analysis.status != "success":
         return JsonResponse({"error": "Analysis not available"}, status=404)
-    return JsonResponse({"id": doc.id, "analysis": doc.analysis.output_json})
+    return JsonResponse({"id": doc.analysis.id, "analysis": doc.analysis.output_json})
 
 
 @csrf_exempt
@@ -618,6 +618,129 @@ def list_document_translations_view(request: HttpRequest, pk: int):
     return JsonResponse({
         "document_id": doc.id,
         "available_translations": list(translations),
+        "total_translations": translations.count()
+    })
+
+
+@csrf_exempt
+def translate_analysis_view(request: HttpRequest, pk: int):
+    """Translate document analysis to a specific language."""
+    if request.method != "POST":
+        return JsonResponse({"error": "Method not allowed"}, status=405)
+    
+    try:
+        payload = json.loads(request.body)
+    except Exception as exc:  # noqa: BLE001
+        return JsonResponse({"error": f"Invalid JSON: {exc}"}, status=400)
+    
+    target_language = payload.get("language", "en")
+    if target_language not in ['en', 'hi', 'ta', 'te']:
+        return JsonResponse({"error": "Invalid language code"}, status=400)
+    
+    analysis = get_object_or_404(DocumentAnalysis, pk=pk)
+    
+    # Check if translation already exists
+    existing_translation = DocumentAnalysisTranslation.objects.filter(
+        analysis=analysis, language=target_language
+    ).first()
+    
+    if existing_translation:
+        return JsonResponse({
+            "message": "Translation already exists",
+            "translation_id": existing_translation.id,
+            "language": target_language
+        })
+    
+    # If requesting English, return original analysis
+    if target_language == 'en':
+        return JsonResponse({
+            "message": "Original analysis returned",
+            "analysis": analysis.output_json,
+            "language": "en"
+        })
+    
+    # Translate the analysis
+    translator = DocumentTranslator()
+    original_analysis = analysis.output_json or {}
+    
+    try:
+        translated_analysis = translator.translate_analysis_json(
+            original_analysis, target_language, 'en'
+        )
+        
+        # Save the translation
+        translation = DocumentAnalysisTranslation.objects.create(
+            analysis=analysis,
+            language=target_language,
+            translated_analysis_json=translated_analysis
+        )
+        
+        return JsonResponse({
+            "message": "Analysis translated successfully",
+            "translation_id": translation.id,
+            "language": target_language,
+            "analysis": translated_analysis
+        })
+        
+    except Exception as e:
+        return JsonResponse({"error": f"Translation failed: {str(e)}"}, status=500)
+
+
+def get_analysis_translation_view(request: HttpRequest, pk: int, language: str):
+    """Get translated analysis for a specific language."""
+    if request.method != "GET":
+        return JsonResponse({"error": "Method not allowed"}, status=405)
+    
+    if language not in ['en', 'hi', 'ta', 'te']:
+        return JsonResponse({"error": "Invalid language code"}, status=400)
+    
+    analysis = get_object_or_404(DocumentAnalysis, pk=pk)
+    
+    # If requesting English, return original analysis
+    if language == 'en':
+        return JsonResponse({
+            "analysis": analysis.output_json,
+            "language": "en",
+            "is_original": True
+        })
+    
+    # Try to get existing translation
+    translation = DocumentAnalysisTranslation.objects.filter(
+        analysis=analysis, language=language
+    ).first()
+    
+    if translation:
+        return JsonResponse({
+            "analysis": translation.translated_analysis_json,
+            "language": language,
+            "is_original": False,
+            "translation_id": translation.id
+        })
+    
+    return JsonResponse({"error": "Translation not found"}, status=404)
+
+
+def list_analysis_translations_view(request: HttpRequest, pk: int):
+    """List all available translations for a document analysis."""
+    if request.method != "GET":
+        return JsonResponse({"error": "Method not allowed"}, status=405)
+    
+    analysis = get_object_or_404(DocumentAnalysis, pk=pk)
+    translations = DocumentAnalysisTranslation.objects.filter(analysis=analysis)
+    
+    translation_list = [
+        {
+            "id": t.id,
+            "language": t.language,
+            "created_at": t.created_at.isoformat(),
+            "updated_at": t.updated_at.isoformat()
+        }
+        for t in translations
+    ]
+    
+    return JsonResponse({
+        "analysis_id": analysis.id,
+        "available_translations": translation_list,
         "total_translations": translations.count()
     })
 

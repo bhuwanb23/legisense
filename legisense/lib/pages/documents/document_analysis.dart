@@ -19,11 +19,21 @@ class _AnalysisPanelState extends State<AnalysisPanel> {
   Map<String, dynamic>? analysis;
   bool loading = false;
   String? error;
+  bool _hasLoaded = false;
 
   @override
   void initState() {
     super.initState();
-    _load();
+    // Don't call _load() here - wait for didChangeDependencies
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_hasLoaded) {
+      _hasLoaded = true;
+      _load();
+    }
   }
 
   Future<void> _load() async {
@@ -37,8 +47,17 @@ class _AnalysisPanelState extends State<AnalysisPanel> {
       if (idStr != null && idStr.startsWith('server-')) {
         final int id = int.parse(idStr.split('-').last);
         final repo = ParsedDocumentsRepository(baseUrl: ApiConfig.baseUrl);
+        
+        // Get current global language for analysis translation
+        final globalLanguage = LanguageScope.of(context).language;
+        final languageCode = _getLanguageCode(globalLanguage);
+        
         try {
-          final data = await repo.fetchAnalysis(id);
+          // Fetch analysis with language translation
+          final data = await repo.fetchAnalysisWithLanguage(
+            documentId: id,
+            language: languageCode,
+          );
           setState(() {
             analysis = data;
           });
@@ -52,7 +71,10 @@ class _AnalysisPanelState extends State<AnalysisPanel> {
             while (DateTime.now().isBefore(deadline) && mounted) {
               await Future.delayed(const Duration(seconds: 2));
               try {
-                final Map<String, dynamic> d = await repo.fetchAnalysis(id);
+                final Map<String, dynamic> d = await repo.fetchAnalysisWithLanguage(
+                  documentId: id,
+                  language: languageCode,
+                );
                 polled = d;
                 break;
               } catch (_) {
@@ -84,10 +106,24 @@ class _AnalysisPanelState extends State<AnalysisPanel> {
     }
   }
 
+  String _getLanguageCode(AppLanguage lang) {
+    switch (lang) {
+      case AppLanguage.en:
+        return 'en';
+      case AppLanguage.hi:
+        return 'hi';
+      case AppLanguage.ta:
+        return 'ta';
+      case AppLanguage.te:
+        return 'te';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final lang = LanguageScope.maybeOf(context)?.language ?? AppLanguage.en;
-    final i18n = DocumentsI18n.mapFor(lang);
+    // Use global app language for analysis page
+    final globalLanguage = LanguageScope.of(context).language;
+    final i18n = DocumentsI18n.mapFor(globalLanguage);
     return Container(
       color: Colors.white,
       child: Column(
@@ -144,7 +180,7 @@ class _AnalysisPanelState extends State<AnalysisPanel> {
           const SizedBox(height: 12),
         ],
 
-        ListHeader(title: i18n['docs.clauses'] ?? 'Clause Breakdown'),
+        ListHeader(title: i18n['analysis.clauses.title'] ?? 'Clause Breakdown'),
         const SizedBox(height: 10),
         ...clauses.map((c) {
           final String title = (c['category'] ?? 'Clause').toString();
@@ -160,14 +196,14 @@ class _AnalysisPanelState extends State<AnalysisPanel> {
         }),
 
         const SizedBox(height: 12),
-        ListHeader(title: i18n['docs.flags'] ?? 'Risk Flags & Warnings'),
+        ListHeader(title: i18n['analysis.flags.title'] ?? 'Risk Flags & Warnings'),
         const SizedBox(height: 10),
         RiskFlagsList(
           items: flags.map((f) => RiskFlagItem(text: (f['text'] ?? '').toString(), level: (f['level'] ?? 'low').toString(), why: (f['why'] ?? '').toString())).cast<RiskFlagItem>().toList(),
         ),
 
         const SizedBox(height: 12),
-        ListHeader(title: i18n['docs.context'] ?? 'Comparative Context'),
+        ListHeader(title: i18n['analysis.context.title'] ?? 'Comparative Context'),
         const SizedBox(height: 10),
         ...comp.map((cc) => Padding(
               padding: const EdgeInsets.only(bottom: 8),
@@ -180,7 +216,7 @@ class _AnalysisPanelState extends State<AnalysisPanel> {
             )),
 
         const SizedBox(height: 12),
-        ListHeader(title: i18n['docs.suggested'] ?? 'Suggested Questions'),
+        ListHeader(title: i18n['analysis.questions.title'] ?? 'Suggested Questions'),
         const SizedBox(height: 10),
         SuggestedQuestions(questions: qs.cast<String>()),
 

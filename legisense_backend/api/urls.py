@@ -13,6 +13,9 @@ from .views import (
     translate_document_view,
     get_document_translation_view,
     list_document_translations_view,
+    translate_analysis_view,
+    get_analysis_translation_view,
+    list_analysis_translations_view,
 )
 
 urlpatterns = [
@@ -29,6 +32,10 @@ urlpatterns = [
     path('documents/<int:pk>/translate/', translate_document_view, name='translate_document'),
     path('documents/<int:pk>/translations/', list_document_translations_view, name='list_document_translations'),
     path('documents/<int:pk>/translations/<str:language>/', get_document_translation_view, name='get_document_translation'),
+    # Analysis translation endpoints
+    path('analysis/<int:pk>/translate/', translate_analysis_view, name='translate_analysis'),
+    path('analysis/<int:pk>/translations/', list_analysis_translations_view, name='list_analysis_translations'),
+    path('analysis/<int:pk>/translations/<str:language>/', get_analysis_translation_view, name='get_analysis_translation'),
 ]
 
 

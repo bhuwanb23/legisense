@@ -77,3 +77,88 @@ class DocumentTranslator:
             'telugu': 'te',
         }
         return language_map.get(language.lower(), 'en')
+    
+    def translate_analysis_json(self, analysis_json: dict, target_language: str, source_language: str = 'en') -> dict:
+        """Translate the entire analysis JSON structure."""
+        try:
+            translated_analysis = analysis_json.copy()
+            
+            # Translate TL;DR bullets
+            if 'tldr_bullets' in translated_analysis:
+                translated_analysis['tldr_bullets'] = [
+                    self.translate_text(bullet, target_language, source_language)
+                    for bullet in translated_analysis['tldr_bullets']
+                ]
+            
+            # Translate clauses
+            if 'clauses' in translated_analysis:
+                translated_clauses = []
+                for clause in translated_analysis['clauses']:
+                    translated_clause = clause.copy()
+                    if 'category' in translated_clause:
+                        translated_clause['category'] = self.translate_text(
+                            translated_clause['category'], target_language, source_language
+                        )
+                    if 'original_snippet' in translated_clause:
+                        translated_clause['original_snippet'] = self.translate_text(
+                            translated_clause['original_snippet'], target_language, source_language
+                        )
+                    if 'explanation' in translated_clause:
+                        translated_clause['explanation'] = self.translate_text(
+                            translated_clause['explanation'], target_language, source_language
+                        )
+                    translated_clauses.append(translated_clause)
+                translated_analysis['clauses'] = translated_clauses
+            
+            # Translate risk flags
+            if 'risk_flags' in translated_analysis:
+                translated_flags = []
+                for flag in translated_analysis['risk_flags']:
+                    translated_flag = flag.copy()
+                    if 'text' in translated_flag:
+                        translated_flag['text'] = self.translate_text(
+                            translated_flag['text'], target_language, source_language
+                        )
+                    if 'why' in translated_flag:
+                        translated_flag['why'] = self.translate_text(
+                            translated_flag['why'], target_language, source_language
+                        )
+                    translated_flags.append(translated_flag)
+                translated_analysis['risk_flags'] = translated_flags
+            
+            # Translate comparative context
+            if 'comparative_context' in translated_analysis:
+                translated_context = []
+                for context in translated_analysis['comparative_context']:
+                    translated_context_item = context.copy()
+                    if 'label' in translated_context_item:
+                        translated_context_item['label'] = self.translate_text(
+                            translated_context_item['label'], target_language, source_language
+                        )
+                    if 'standard' in translated_context_item:
+                        translated_context_item['standard'] = self.translate_text(
+                            translated_context_item['standard'], target_language, source_language
+                        )
+                    if 'contract' in translated_context_item:
+                        translated_context_item['contract'] = self.translate_text(
+                            translated_context_item['contract'], target_language, source_language
+                        )
+                    if 'assessment' in translated_context_item:
+                        translated_context_item['assessment'] = self.translate_text(
+                            translated_context_item['assessment'], target_language, source_language
+                        )
+                    translated_context.append(translated_context_item)
+                translated_analysis['comparative_context'] = translated_context
+            
+            # Translate suggested questions
+            if 'suggested_questions' in translated_analysis:
+                translated_analysis['suggested_questions'] = [
+                    self.translate_text(question, target_language, source_language)
+                    for question in translated_analysis['suggested_questions']
+                ]
+            
+            return translated_analysis
+            
+        except Exception as e:
+            logger.error(f"Error translating analysis JSON: {e}")
+            return analysis_json  # Return original if translation fails

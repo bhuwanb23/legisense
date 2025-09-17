@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../profile/language/language_scope.dart';
+import '../language/strings.dart';
 
 enum ClauseRisk { low, medium, high }
 
@@ -36,6 +38,20 @@ class ClauseBreakdownCard extends StatelessWidget {
         ClauseRisk.medium => 'Medium',
         ClauseRisk.high => 'High',
       };
+
+  String _getRiskLabel(BuildContext context, ClauseRisk risk) {
+    final globalLanguage = LanguageScope.of(context).language;
+    final i18n = DocumentsI18n.mapFor(globalLanguage);
+    
+    switch (risk) {
+      case ClauseRisk.low:
+        return i18n['analysis.risk.low'] ?? 'Low';
+      case ClauseRisk.medium:
+        return i18n['analysis.risk.medium'] ?? 'Medium';
+      case ClauseRisk.high:
+        return i18n['analysis.risk.high'] ?? 'High';
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -81,7 +97,7 @@ class ClauseBreakdownCard extends StatelessWidget {
                   decoration: BoxDecoration(color: riskBg, borderRadius: BorderRadius.circular(999)),
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   child: Text(
-                    'Risk: $riskLabel',
+                    '${DocumentsI18n.mapFor(LanguageScope.of(context).language)['analysis.risk.label'] ?? 'Risk'}: ${_getRiskLabel(context, risk)}',
                     style: GoogleFonts.inter(fontSize: 12, fontWeight: FontWeight.w600, color: riskColor),
                   ),
                 ),
@@ -110,7 +126,7 @@ class ClauseBreakdownCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 10),
-            Text('In simple terms', style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF64748B), fontWeight: FontWeight.w600)),
+            Text(DocumentsI18n.mapFor(LanguageScope.of(context).language)['analysis.simple.terms'] ?? 'In simple terms', style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF64748B), fontWeight: FontWeight.w600)),
             const SizedBox(height: 6),
             Text(
               explanation,

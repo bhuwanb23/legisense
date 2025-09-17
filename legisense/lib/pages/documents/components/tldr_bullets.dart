@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../profile/language/language_scope.dart';
+import '../language/strings.dart';
 
 class TldrBullets extends StatelessWidget {
   const TldrBullets({super.key, required this.bullets});
@@ -31,7 +33,7 @@ class TldrBullets extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                'TL;DR Summary',
+                DocumentsI18n.mapFor(LanguageScope.of(context).language)['analysis.tldr.title'] ?? 'TL;DR Summary',
                 style: GoogleFonts.inter(
                   fontSize: 16,
                   fontWeight: FontWeight.w700,

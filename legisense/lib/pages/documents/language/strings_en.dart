@@ -45,6 +45,23 @@ const documentsStringsEn = {
   // Translation
   'docs.translating': 'Translating document...',
   'docs.translation.progress': 'This may take a few moments...',
+  // Analysis Components
+  'analysis.tldr.title': 'TL;DR Summary',
+  'analysis.clauses.title': 'Clause Breakdown',
+  'analysis.flags.title': 'Risk Flags & Warnings',
+  'analysis.context.title': 'Comparative Context',
+  'analysis.questions.title': 'Suggested Questions',
+  'analysis.simulation.cta': 'Run Simulation',
+  'analysis.simulation.subtitle': 'Transform clauses into timelines and outcomes',
+  'analysis.simulation.open': 'Open',
+  'analysis.risk.low': 'Low Risk',
+  'analysis.risk.medium': 'Medium Risk',
+  'analysis.risk.high': 'High Risk',
+  'analysis.risk.label': 'Risk',
+  'analysis.simple.terms': 'In simple terms',
+  'analysis.standard': 'Standard',
+  'analysis.contract': 'Contract',
+  'analysis.assessment': 'Assessment',
 };
 
 

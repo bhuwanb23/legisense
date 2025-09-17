@@ -40,6 +40,23 @@ const documentsStringsTe = {
   // Translation
   'docs.translating': 'పత్రం అనువదించబడుతోంది...',
   'docs.translation.progress': 'ఇది కొన్ని క్షణాలు పడుతుంది...',
+  // Analysis Components
+  'analysis.tldr.title': 'TL;DR సారాంశం',
+  'analysis.clauses.title': 'క్లాజ్ విభజన',
+  'analysis.flags.title': 'ప్రమాద హెచ్చరికలు',
+  'analysis.context.title': 'తులనాత్మక సందర్భం',
+  'analysis.questions.title': 'సూచించిన ప్రశ్నలు',
+  'analysis.simulation.cta': 'సిమ్యులేషన్ రన్ చేయండి',
+  'analysis.simulation.subtitle': 'క్లాజ్లను టైమ్‌లైన్‌లు మరియు ఫలితాలుగా మార్చండి',
+  'analysis.simulation.open': 'తెరవండి',
+  'analysis.risk.low': 'తక్కువ ప్రమాదం',
+  'analysis.risk.medium': 'మధ్యస్థ ప్రమాదం',
+  'analysis.risk.high': 'అధిక ప్రమాదం',
+  'analysis.risk.label': 'ప్రమాదం',
+  'analysis.simple.terms': 'సరళ పదాలలో',
+  'analysis.standard': 'ప్రమాణం',
+  'analysis.contract': 'ఒప్పందం',
+  'analysis.assessment': 'మూల్యాంకనం',
 };
 
 

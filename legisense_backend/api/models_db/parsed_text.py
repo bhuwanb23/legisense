@@ -66,3 +66,28 @@ class DocumentTranslation(models.Model):
     
     def __str__(self) -> str:  # pragma: no cover - simple model string
         return f"DocumentTranslation(doc={self.document_id}, lang={self.language})"
+
+
+class DocumentAnalysisTranslation(models.Model):
+    """Stores translated versions of document analysis for different languages."""
+    
+    LANGUAGE_CHOICES = (
+        ('en', 'English'),
+        ('hi', 'Hindi'),
+        ('ta', 'Tamil'),
+        ('te', 'Telugu'),
+    )
+    
+    analysis = models.ForeignKey(DocumentAnalysis, on_delete=models.CASCADE, related_name="translations")
+    language = models.CharField(max_length=2, choices=LANGUAGE_CHOICES)
+    # Store translated analysis JSON
+    translated_analysis_json = models.JSONField()
+    # Metadata
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        unique_together = ['analysis', 'language']
+    
+    def __str__(self) -> str:  # pragma: no cover - simple model string
+        return f"DocumentAnalysisTranslation(analysis={self.analysis_id}, lang={self.language})"

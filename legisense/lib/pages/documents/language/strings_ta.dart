@@ -40,6 +40,23 @@ const documentsStringsTa = {
   // Translation
   'docs.translating': 'ஆவணம் மொழிபெயர்க்கப்படுகிறது...',
   'docs.translation.progress': 'இது சில நிமிடங்கள் எடுக்கலாம்...',
+  // Analysis Components
+  'analysis.tldr.title': 'TL;DR சுருக்கம்',
+  'analysis.clauses.title': 'தரப்பு பிரிவு',
+  'analysis.flags.title': 'அபாயக் கொடிகள் & எச்சரிக்கைகள்',
+  'analysis.context.title': 'ஒப்பீட்டு சூழல்',
+  'analysis.questions.title': 'பரிந்துரைக்கப்பட்ட கேள்விகள்',
+  'analysis.simulation.cta': 'சிமுலேஷன் இயக்கவும்',
+  'analysis.simulation.subtitle': 'தரப்புகளை காலவரிசை மற்றும் விளைவுகளாக மாற்றவும்',
+  'analysis.simulation.open': 'திறக்க',
+  'analysis.risk.low': 'குறைந்த அபாயம்',
+  'analysis.risk.medium': 'நடுத்தர அபாயம்',
+  'analysis.risk.high': 'உயர் அபாயம்',
+  'analysis.risk.label': 'அபாயம்',
+  'analysis.simple.terms': 'எளிய வார்த்தைகளில்',
+  'analysis.standard': 'தரநிலை',
+  'analysis.contract': 'ஒப்பந்தம்',
+  'analysis.assessment': 'மதிப்பீடு',
 };
 
 
