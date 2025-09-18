@@ -10,207 +10,214 @@
       "interestRate": 0.0
     },
     "jurisdiction": "California, USA",
-    "jurisdiction_note": "Contract governed by California law, with specific provisions for termination, indemnification, and compliance with state and federal regulations."
+    "jurisdiction_note": "Contract governed by California law, with specific provisions for termination, indemnification, and compliance with federal and state regulations."
   },
   "timeline": [
     {
       "order": 1,
       "title": "Agreement Effective Date",
-      "description": "Contract takes effect upon COMMISSION governing board approval",
-      "detailed_description": "The Agreement becomes effective on the specified date, contingent upon prior approval by the COMMISSION governing board. CONSULTANT commences work after notification to proceed by the COMMISSION’s Contract Manager.",
-      "risks": ["Work cannot start without board approval", "Delays in approval may impact project timeline"]
+      "description": "Agreement takes effect upon COMMISSION board approval and notification to proceed",
+      "detailed_description": "The Agreement becomes effective only after approval by the COMMISSION governing board and written notification to proceed from the Contract Manager. Work must not commence before this date.",
+      "risks": ["Work performed prior to approval is not reimbursable", "Delays in board approval may impact project timeline"]
     },
     {
       "order": 2,
-      "title": "Monthly Invoice Submission",
-      "description": "CONSULTANT submits itemized invoices within 45 days of work performance",
-      "detailed_description": "Invoices must include labor details, itemized expenses, total payment requested, cumulative payments, expenditure report by task, and written progress reports. Final invoice must be submitted within 60 days after acceptance of work.",
-      "risks": ["Late submission may delay payment", "Incomplete invoices may be rejected"]
+      "title": "Monthly Invoice Submission Deadline",
+      "description": "Invoices due within 45 calendar days after work performance",
+      "detailed_description": "CONSULTANT must submit itemized invoices no later than 45 calendar days after performing work. Invoices must include detailed labor breakdown, expenses, progress reports, and cumulative charges.",
+      "risks": ["Late submissions may delay payment", "Incomplete invoices may be rejected"]
     },
     {
       "order": 3,
-      "title": "Progress Payment Due",
-      "description": "COMMISSION makes progress payments no less than monthly in arrears",
-      "detailed_description": "Payments are based on satisfactory services provided and actual allowable incurred costs. Payment may be delayed if deliverables are not submitted according to schedule.",
-      "risks": ["Payment delay if deliverables are late", "Non-compliance may lead to termination"]
+      "title": "Progress Payment Due Date",
+      "description": "Payments made monthly in arrears upon approval of services",
+      "detailed_description": "COMMISSION makes progress payments no less than monthly in arrears based on satisfactory services and actual allowable costs. Payment requires approval of work and proper invoice submission.",
+      "risks": ["Delayed approvals impact cash flow", "Unsatisfactory work may withhold payment"]
     },
     {
       "order": 4,
-      "title": "Compliance and Audit Review",
-      "description": "Monthly review of contract adherence and potential audits",
-      "detailed_description": "COMMISSION reviews progress reports and may conduct audits. CONSULTANT must maintain records for 5 years from final payment or until audit completion.",
-      "risks": ["Audit disputes may arise", "Non-compliance with record retention may incur penalties"]
+      "title": "Insurance Compliance Check",
+      "description": "Ongoing insurance maintenance and certificate updates required",
+      "detailed_description": "CONSULTANT must maintain all required insurance coverage throughout term. Certificates must be provided before effective date and updated as policies expire. 30-day notice required for policy cancellations.",
+      "risks": ["Policy lapse may lead to termination", "Inadequate coverage exposes both parties to liability"]
     },
     {
       "order": 5,
-      "title": "Agreement End Date",
-      "description": "Contract ends on specified date unless terminated or extended",
-      "detailed_description": "The Agreement terminates on the end date unless earlier terminated for convenience or default, or extended by amendment.",
-      "risks": ["Early termination costs", "Default termination may lead to reprocurement costs"]
+      "title": "Final Invoice Submission",
+      "description": "Final invoice due within 60 days after work acceptance",
+      "detailed_description": "CONSULTANT must submit final invoice within 60 calendar days after acceptance of work by Contract Manager. Must include all final costs and completion documentation.",
+      "risks": ["Late submission may delay final payment", "Incomplete documentation may require revisions"]
+    },
+    {
+      "order": 6,
+      "title": "Record Retention Period",
+      "description": "Records must be maintained for 5 years after final payment",
+      "detailed_description": "All books, documents, and accounting records must be maintained for 5 years from date of final payment or until final audit acceptance. Available for inspection by COMMISSION and government auditors.",
+      "risks": ["Non-compliance may lead to audit disputes", "Inadequate record keeping may affect future contracts"]
     }
   ],
   "penalty_forecast": [
     {
-      "label": "Month 1",
-      "base_amount": 10000,
+      "label": "Month 1 - Timely Compliance",
+      "base_amount": 0,
       "fees_amount": 0,
       "penalties_amount": 0,
-      "total_amount": 10000
+      "total_amount": 0
     },
     {
-      "label": "Month 3",
-      "base_amount": 10000,
-      "fees_amount": 500,
-      "penalties_amount": 2000,
-      "total_amount": 12500
+      "label": "Month 3 - Late Invoice Submission",
+      "base_amount": 0,
+      "fees_amount": 0,
+      "penalties_amount": 0,
+      "total_amount": 0
     },
     {
-      "label": "Month 6",
-      "base_amount": 10000,
-      "fees_amount": 1000,
-      "penalties_amount": 5000,
-      "total_amount": 16000
+      "label": "Month 6 - Insurance Lapse",
+      "base_amount": 0,
+      "fees_amount": 0,
+      "penalties_amount": 0,
+      "total_amount": 0
     },
     {
-      "label": "Month 12",
-      "base_amount": 10000,
-      "fees_amount": 2000,
-      "penalties_amount": 10000,
-      "total_amount": 22000
+      "label": "Month 12 - Default Termination",
+      "base_amount": 0,
+      "fees_amount": 0,
+      "penalties_amount": 0,
+      "total_amount": 0
     }
   ],
   "exit_comparisons": [
     {
-      "label": "Termination for Convenience (COMMISSION)",
-      "penalty_text": "Allowable costs incurred + reasonable termination costs",
+      "label": "Commission Termination for Convenience",
+      "penalty_text": "Allowable costs incurred plus termination costs",
       "risk_level": "low",
       "benefits_lost": "No further claims against COMMISSION"
     },
     {
-      "label": "Termination for Default (COMMISSION)",
-      "penalty_text": "Reprocurement costs + all reasonable costs incurred",
+      "label": "Termination for Consultant Default",
+      "penalty_text": "All reasonable costs including reprocurement",
       "risk_level": "high",
-      "benefits_lost": "Liability for all COMMISSION costs, potential legal action"
+      "benefits_lost": "Liability for COMMISSION's additional costs"
     },
     {
-      "label": "Termination by CONSULTANT",
-      "penalty_text": "Reprocurement costs + all reasonable costs incurred",
-      "risk_level": "high",
-      "benefits_lost": "Liability for COMMISSION costs, forfeiture of unpaid amounts"
+      "label": "Consultant Termination with 120-day Notice",
+      "penalty_text": "All reasonable costs including reprocurement",
+      "risk_level": "medium",
+      "benefits_lost": "Liability for COMMISSION's additional costs"
     },
     {
       "label": "Full Term Completion",
       "penalty_text": "₹0",
       "risk_level": "low",
-      "benefits_lost": "None - all benefits retained"
+      "benefits_lost": "None - all obligations fulfilled"
     }
   ],
   "narratives": [
     {
-      "title": "Smooth Contract Execution",
-      "subtitle": "Ideal compliance with all terms",
-      "narrative": "CONSULTANT submits all invoices on time, provides required progress reports, and meets all deliverables. COMMISSION makes timely payments, and the contract concludes without disputes or penalties.",
+      "title": "Ideal Contract Performance",
+      "subtitle": "Full compliance with all terms and timely deliverables",
+      "narrative": "CONSULTANT performs all services satisfactorily, submits invoices within 45 days, maintains required insurance, and meets all compliance requirements. COMMISSION approves work and makes timely payments. Agreement completes successfully with no disputes.",
       "severity": "low",
       "key_points": [
-        "Invoices submitted within 45 days",
-        "Progress reports detailed and timely",
-        "No audit issues or disputes",
-        "All insurance and compliance requirements met"
+        "All deliverables met according to Scope of Services",
+        "Invoices submitted within 45-day window",
+        "Insurance maintained throughout term",
+        "No compliance issues or disputes"
       ],
       "financial_impact": [
-        "Total cost: ₹120,000 (as per agreed amount)",
+        "Total compensation: As per Fee Schedule up to maximum amount",
         "No late fees or penalties",
-        "All payments received on schedule"
+        "Full payment received upon completion"
       ]
     },
     {
-      "title": "Payment Delay and Audit Dispute",
-      "subtitle": "Late invoice submission leads to payment delay and audit findings",
-      "narrative": "CONSULTANT delays invoice submission, causing payment delays. An audit reveals non-compliance with record retention, leading to disputes and additional costs for reprocurement and penalties.",
-      "severity": "medium",
-      "key_points": [
-        "Invoices submitted after 45-day window",
-        "Incomplete progress reports",
-        "Audit finds record retention issues",
-        "Dispute resolution process initiated"
-      ],
-      "financial_impact": [
-        "Late payment fees: ₹500 per delayed invoice",
-        "Audit penalty: ₹5,000",
-        "Reprocurement cost: ₹10,000",
-        "Total additional cost: ₹15,500"
-      ]
-    },
-    {
-      "title": "Termination for Default",
-      "subtitle": "CONSULTANT breaches agreement terms, leading to termination",
-      "narrative": "CONSULTANT fails to cure a breach within 10 days after written notice, such as non-compliance with insurance requirements or discrimination policies. COMMISSION terminates for default, invoking reprocurement costs and penalties.",
+      "title": "Insurance Compliance Failure",
+      "subtitle": "Lapse in required insurance coverage",
+      "narrative": "CONSULTANT fails to maintain required insurance policies. COMMISSION issues notice and terminates agreement after 30 days. CONSULTANT liable for reprocurement costs and any damages resulting from coverage gap.",
       "severity": "high",
       "key_points": [
-        "Breach of insurance or compliance terms",
-        "Failure to cure within 10 days",
-        "COMMISSION incurs reprocurement costs",
-        "Legal and penalty costs applied"
+        "Insurance policy lapses during term",
+        "30-day notice requirement not met",
+        "COMMISSION exercises termination rights",
+        "Reprocurement costs incurred"
       ],
       "financial_impact": [
-        "Reprocurement cost: ₹20,000",
-        "Penalties: ₹15,000",
-        "Legal fees: ₹5,000",
-        "Total additional cost: ₹40,000"
+        "Termination costs: Variable based on reprocurement",
+        "Potential liability for uncovered incidents",
+        "Loss of remaining contract value",
+        "Legal fees for dispute resolution"
+      ]
+    },
+    {
+      "title": "Late Deliverable Scenario",
+      "subtitle": "Failure to meet project milestones",
+      "narrative": "CONSULTANT fails to submit required deliverables according to schedule. COMMISSION delays payments and may terminate agreement. CONSULTANT must cure breach within 10 days or face default termination.",
+      "severity": "medium",
+      "key_points": [
+        "Deliverables not submitted on schedule",
+        "COMMISSION withholds payment",
+        "10-day cure period initiated",
+        "Potential termination for default"
+      ],
+      "financial_impact": [
+        "Delayed payment receivables",
+        "Additional costs for cure efforts",
+        "Potential reprocurement costs if terminated",
+        "Loss of profit on unfinished work"
       ]
     }
   ],
   "long_term": [
     {
       "index": 1,
-      "label": "Year 1",
-      "value": 120000,
-      "description": "Base contract amount with no penalties"
+      "label": "Year 1 - Base Performance",
+      "value": 0,
+      "description": "First year costs based on agreed fee schedule up to maximum amount"
     },
     {
       "index": 2,
-      "label": "Year 2",
-      "value": 240000,
-      "description": "Cumulative base amount for two-year term"
+      "label": "Year 2 - Extended Term",
+      "value": 0,
+      "description": "Potential additional year if agreement amended and extended"
     },
     {
       "index": 3,
-      "label": "Year 3",
-      "value": 360000,
-      "description": "Cumulative base amount for three-year term"
+      "label": "Year 3 - Audit Period",
+      "value": 0,
+      "description": "Post-completion audit review period with potential additional costs"
     },
     {
       "index": 4,
-      "label": "Year 5",
-      "value": 600000,
-      "description": "Cumulative base amount for five-year term with potential extensions"
+      "label": "Year 5 - Record Retention",
+      "value": 0,
+      "description": "Final year of mandatory record retention requirements"
     }
   ],
   "risk_alerts": [
     {
       "level": "high",
-      "message": "Insurance Compliance: CONSULTANT must maintain required insurance coverage throughout the term. Failure to do so allows COMMISSION to terminate immediately, resulting in significant reprocurement costs and penalties.",
-      "recommendation": "Ensure all insurance policies are current and certificates are submitted on time. Monitor expiration dates and renew policies 30 days prior to expiry."
+      "message": "Insurance Maintenance: Failure to maintain required insurance coverage allows COMMISSION to terminate immediately. CONSULTANT must provide certificates before start and maintain policies throughout term.",
+      "recommendation": "Implement insurance tracking system with 45-day renewal reminders and maintain backup policies."
     },
     {
       "level": "medium",
-      "message": "Invoice Submission Deadline: Invoices must be submitted within 45 days of work performance. Late submission delays payment and may incur penalties or lead to termination.",
-      "recommendation": "Implement a system to track work performance dates and submit invoices promptly. Include all required details to avoid rejection."
+      "message": "Invoice Timing: Invoices must be submitted within 45 days of work performance. Late submissions may delay payment and affect cash flow.",
+      "recommendation": "Establish internal invoice submission process with 30-day buffer to ensure timely filing."
     },
     {
       "level": "high",
-      "message": "Record Retention: CONSULTANT must maintain all records for 5 years post-payment. Failure to do so may result in audit penalties and legal disputes.",
-      "recommendation": "Establish a secure record-keeping system. Ensure all subcontractors also comply with retention policies."
+      "message": "Default Termination: COMMISSION can terminate for default with only 10-day cure period for breaches. This includes any term violation.",
+      "recommendation": "Maintain detailed compliance checklist and regular internal audits to identify potential breaches early."
     },
     {
       "level": "critical",
-      "message": "Termination for Default: COMMISSION can terminate for breach with only 10 days to cure. This includes breaches of insurance, compliance, or discrimination policies, leading to high reprocurement costs.",
-      "recommendation": "Regularly review contract terms for compliance. Address any issues immediately upon notice to avoid default termination."
+      "message": "Indemnification Liability: CONSULTANT must indemnify COMMISSION for all claims arising from negligence, including unlimited defense costs and damages.",
+      "recommendation": "Ensure adequate liability insurance coverage and implement rigorous safety and quality control protocols."
     },
     {
       "level": "medium",
-      "message": "Subcontracting Restrictions: No subcontracting without prior written authorization. Unauthorized subcontracting may lead to termination and liability for costs.",
-      "recommendation": "Seek written approval for any subcontracting. Ensure subcontracts include all required provisions from the main agreement."
+      "message": "Record Retention: All records must be maintained for 5 years post-completion and available for audit. Inadequate records may lead to disputes.",
+      "recommendation": "Implement document management system with secure storage and easy retrieval capabilities for all contract-related materials."
     }
   ]
 }

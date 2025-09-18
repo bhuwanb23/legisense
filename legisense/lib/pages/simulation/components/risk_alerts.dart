@@ -23,7 +23,7 @@ class RiskAlerts extends StatelessWidget {
   Widget build(BuildContext context) {
     final scope = LanguageScope.maybeOf(context);
     final i18n = SimulationI18n.mapFor(scope?.language ?? AppLanguage.en);
-    final alerts = _getRiskAlerts(simulationData, scenario);
+    final alerts = _getRiskAlerts(simulationData, scenario, i18n);
     final double width = MediaQuery.of(context).size.width;
     final bool isNarrow = width < 380;
     
@@ -295,7 +295,7 @@ class RiskAlerts extends StatelessWidget {
         .fadeIn(duration: 600.ms);
   }
 
-  List<RiskAlert> _getRiskAlerts(Map<String, dynamic>? simulationData, SimulationScenario scenario) {
+  List<RiskAlert> _getRiskAlerts(Map<String, dynamic>? simulationData, SimulationScenario scenario, Map<String, String> i18n) {
     // Use real simulation data if available, otherwise fall back to scenario-based data
     if (simulationData != null) {
       final riskAlertsData = simulationData['risk_alerts'] as List<dynamic>?;
@@ -303,10 +303,10 @@ class RiskAlerts extends StatelessWidget {
         return riskAlertsData.map((item) {
           final data = item as Map<String, dynamic>;
           return RiskAlert(
-            title: _getTitleForRiskLevel(data['level'] as String? ?? 'info'),
+            title: _getTitleForRiskLevel(data['level'] as String? ?? 'info', i18n),
             description: data['message'] as String? ?? 'Risk alert description',
             level: _getRiskLevel(data['level'] as String? ?? 'info'),
-            levelText: _getRiskLevelText(data['level'] as String? ?? 'info'),
+            levelText: _getRiskLevelText(data['level'] as String? ?? 'info', i18n),
             levelIcon: _getRiskLevelIcon(data['level'] as String? ?? 'info'),
             levelColor: _getRiskLevelColor(data['level'] as String? ?? 'info'),
             icon: _getRiskLevelIcon(data['level'] as String? ?? 'info'),
@@ -321,18 +321,18 @@ class RiskAlerts extends StatelessWidget {
     }
     
     // Fall back to scenario-based data if no simulation data available
-    return _getRiskAlertsForScenario(scenario);
+    return _getRiskAlertsForScenario(scenario, i18n);
   }
 
-  List<RiskAlert> _getRiskAlertsForScenario(SimulationScenario scenario) {
+  List<RiskAlert> _getRiskAlertsForScenario(SimulationScenario scenario, Map<String, String> i18n) {
     switch (scenario) {
       case SimulationScenario.normal:
         return [
           RiskAlert(
-            title: 'Standard Contract Terms',
+            title: i18n['risk.title.info'] ?? 'Information Alert',
             description: 'This contract follows standard industry practices with reasonable terms and conditions.',
             level: RiskLevel.low,
-            levelText: 'LOW RISK',
+            levelText: i18n['risk.level.low'] ?? 'LOW RISK',
             levelIcon: FontAwesomeIcons.check,
             levelColor: const Color(0xFF10B981),
             icon: FontAwesomeIcons.shield,
@@ -351,10 +351,10 @@ class RiskAlerts extends StatelessWidget {
       case SimulationScenario.missedPayment:
         return [
           RiskAlert(
-            title: 'Accumulating Late Fees',
+            title: i18n['risk.title.high'] ?? 'High Risk Alert',
             description: 'The contract allows for unlimited late fees that can compound monthly, potentially creating significant financial burden.',
             level: RiskLevel.high,
-            levelText: 'HIGH RISK',
+            levelText: i18n['risk.level.high'] ?? 'HIGH RISK',
             levelIcon: FontAwesomeIcons.triangleExclamation,
             levelColor: const Color(0xFFEF4444),
             icon: FontAwesomeIcons.dollarSign,
@@ -370,10 +370,10 @@ class RiskAlerts extends StatelessWidget {
             recommendation: 'Make payment immediately to stop fee accumulation. Consider negotiating payment plan if needed.',
           ),
           RiskAlert(
-            title: 'Default Notice Clause',
+            title: i18n['risk.title.medium'] ?? 'Medium Risk Alert',
             description: 'This clause allows the lender to send a default notice after just 30 days, which is shorter than industry standard.',
             level: RiskLevel.medium,
-            levelText: 'MEDIUM RISK',
+            levelText: i18n['risk.level.medium'] ?? 'MEDIUM RISK',
             levelIcon: FontAwesomeIcons.exclamation,
             levelColor: const Color(0xFFF59E0B),
             icon: FontAwesomeIcons.fileContract,
@@ -392,10 +392,10 @@ class RiskAlerts extends StatelessWidget {
       case SimulationScenario.earlyTermination:
         return [
           RiskAlert(
-            title: 'Unlimited Termination Fees',
+            title: i18n['risk.title.high'] ?? 'High Risk Alert',
             description: 'This clause allows the lender to charge unlimited fees for early termination, which could exceed the remaining contract value.',
             level: RiskLevel.high,
-            levelText: 'HIGH RISK',
+            levelText: i18n['risk.level.high'] ?? 'HIGH RISK',
             levelIcon: FontAwesomeIcons.triangleExclamation,
             levelColor: const Color(0xFFEF4444),
             icon: FontAwesomeIcons.gavel,
@@ -411,10 +411,10 @@ class RiskAlerts extends StatelessWidget {
             recommendation: 'Negotiate termination terms before proceeding. Consider legal consultation.',
           ),
           RiskAlert(
-            title: 'Asset Seizure Clause',
+            title: i18n['risk.title.critical'] ?? 'Critical Risk Alert',
             description: 'The contract includes a clause that allows asset seizure in case of default, which is unusually aggressive.',
             level: RiskLevel.high,
-            levelText: 'HIGH RISK',
+            levelText: i18n['risk.level.high'] ?? 'HIGH RISK',
             levelIcon: FontAwesomeIcons.triangleExclamation,
             levelColor: const Color(0xFFEF4444),
             icon: FontAwesomeIcons.handcuffs,
@@ -432,19 +432,19 @@ class RiskAlerts extends StatelessWidget {
     }
   }
 
-  String _getTitleForRiskLevel(String level) {
+  String _getTitleForRiskLevel(String level, Map<String, String> i18n) {
     switch (level.toLowerCase()) {
       case 'critical':
-        return 'Critical Risk Alert';
+        return i18n['risk.title.critical'] ?? 'Critical Risk Alert';
       case 'high':
-        return 'High Risk Alert';
+        return i18n['risk.title.high'] ?? 'High Risk Alert';
       case 'medium':
-        return 'Medium Risk Alert';
+        return i18n['risk.title.medium'] ?? 'Medium Risk Alert';
       case 'warning':
-        return 'Warning Alert';
+        return i18n['risk.title.warning'] ?? 'Warning Alert';
       case 'info':
       default:
-        return 'Information Alert';
+        return i18n['risk.title.info'] ?? 'Information Alert';
     }
   }
 
@@ -463,22 +463,23 @@ class RiskAlerts extends StatelessWidget {
     }
   }
 
-  String _getRiskLevelText(String level) {
+  String _getRiskLevelText(String level, Map<String, String> i18n) {
     switch (level.toLowerCase()) {
       case 'critical':
-        return 'CRITICAL';
+        return i18n['risk.level.critical'] ?? 'CRITICAL';
       case 'high':
-        return 'HIGH RISK';
+        return i18n['risk.level.high'] ?? 'HIGH RISK';
       case 'medium':
-        return 'MEDIUM RISK';
+        return i18n['risk.level.medium'] ?? 'MEDIUM RISK';
       case 'warning':
-        return 'WARNING';
+        return i18n['risk.level.medium'] ?? 'MEDIUM RISK';
       case 'info':
       case 'low':
       default:
-        return 'INFO';
+        return i18n['risk.level.info'] ?? 'INFO';
     }
   }
+  
 
   IconData _getRiskLevelIcon(String level) {
     switch (level.toLowerCase()) {

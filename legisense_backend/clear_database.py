@@ -26,7 +26,12 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'legisense_backend.settings')
 django.setup()
 
 from django.db import transaction
-from api.models_db.parsed_text import ParsedDocument, DocumentAnalysis
+from api.models_db.parsed_text import (
+    ParsedDocument,
+    DocumentAnalysis,
+    DocumentTranslation,
+    DocumentAnalysisTranslation,
+)
 from api.models_db.simulation import (
     SimulationSession,
     SimulationTimelineNode,
@@ -35,6 +40,13 @@ from api.models_db.simulation import (
     SimulationNarrativeOutcome,
     SimulationLongTermPoint,
     SimulationRiskAlert,
+    SimulationSessionTranslation,
+    SimulationTimelineNodeTranslation,
+    SimulationPenaltyForecastTranslation,
+    SimulationExitComparisonTranslation,
+    SimulationNarrativeOutcomeTranslation,
+    SimulationLongTermPointTranslation,
+    SimulationRiskAlertTranslation,
 )
 
 
@@ -52,6 +64,8 @@ def clear_database(confirm=False, tables=None):
         tables = [
             'parsed_documents',
             'document_analysis',
+            'document_translations',
+            'analysis_translations',
             'simulation_sessions',
             'timeline_nodes',
             'penalty_forecasts',
@@ -59,6 +73,13 @@ def clear_database(confirm=False, tables=None):
             'narrative_outcomes',
             'long_term_points',
             'risk_alerts',
+            'simulation_session_translations',
+            'timeline_node_translations',
+            'penalty_forecast_translations',
+            'exit_comparison_translations',
+            'narrative_outcome_translations',
+            'long_term_point_translations',
+            'risk_alert_translations',
         ]
 
     # Count records before deletion
@@ -68,6 +89,10 @@ def clear_database(confirm=False, tables=None):
             counts[table] = ParsedDocument.objects.count()
         elif table == 'document_analysis':
             counts[table] = DocumentAnalysis.objects.count()
+        elif table == 'document_translations':
+            counts[table] = DocumentTranslation.objects.count()
+        elif table == 'analysis_translations':
+            counts[table] = DocumentAnalysisTranslation.objects.count()
         elif table == 'simulation_sessions':
             counts[table] = SimulationSession.objects.count()
         elif table == 'timeline_nodes':
@@ -82,6 +107,20 @@ def clear_database(confirm=False, tables=None):
             counts[table] = SimulationLongTermPoint.objects.count()
         elif table == 'risk_alerts':
             counts[table] = SimulationRiskAlert.objects.count()
+        elif table == 'simulation_session_translations':
+            counts[table] = SimulationSessionTranslation.objects.count()
+        elif table == 'timeline_node_translations':
+            counts[table] = SimulationTimelineNodeTranslation.objects.count()
+        elif table == 'penalty_forecast_translations':
+            counts[table] = SimulationPenaltyForecastTranslation.objects.count()
+        elif table == 'exit_comparison_translations':
+            counts[table] = SimulationExitComparisonTranslation.objects.count()
+        elif table == 'narrative_outcome_translations':
+            counts[table] = SimulationNarrativeOutcomeTranslation.objects.count()
+        elif table == 'long_term_point_translations':
+            counts[table] = SimulationLongTermPointTranslation.objects.count()
+        elif table == 'risk_alert_translations':
+            counts[table] = SimulationRiskAlertTranslation.objects.count()
 
     # Display counts
     total_records = 0
@@ -115,6 +154,16 @@ def clear_database(confirm=False, tables=None):
             
             # Clear in reverse dependency order to avoid foreign key constraints
             clear_order = [
+                # Translations first (depend on base tables)
+                ('risk_alert_translations', SimulationRiskAlertTranslation),
+                ('long_term_point_translations', SimulationLongTermPointTranslation),
+                ('narrative_outcome_translations', SimulationNarrativeOutcomeTranslation),
+                ('exit_comparison_translations', SimulationExitComparisonTranslation),
+                ('penalty_forecast_translations', SimulationPenaltyForecastTranslation),
+                ('timeline_node_translations', SimulationTimelineNodeTranslation),
+                ('simulation_session_translations', SimulationSessionTranslation),
+                ('analysis_translations', DocumentAnalysisTranslation),
+                ('document_translations', DocumentTranslation),
                 ('risk_alerts', SimulationRiskAlert),
                 ('long_term_points', SimulationLongTermPoint),
                 ('narrative_outcomes', SimulationNarrativeOutcome),

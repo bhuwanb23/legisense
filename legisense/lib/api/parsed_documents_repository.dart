@@ -395,28 +395,51 @@ class ParsedDocumentsRepository {
       }
       return json.decode(res.body) as Map<String, dynamic>;
     } else {
-      // Try to fetch translated simulation
+      // Always trigger/ensure translation, then poll until fully translated before returning
       try {
-        developer.log('📡 Trying to get existing translation for session $sessionId in $language', name: 'ParsedDocumentsRepository');
-        return await getTranslatedSimulation(sessionId: sessionId, language: language);
+        developer.log('📡 Ensuring translation is triggered for $language', name: 'ParsedDocumentsRepository');
+        await translateSimulation(sessionId: sessionId, language: language);
       } catch (e) {
-        developer.log('⚠️ Translation not found, creating new one: $e', name: 'ParsedDocumentsRepository');
-        // If translation doesn't exist, try to create it
-        try {
-          await translateSimulation(sessionId: sessionId, language: language);
-          developer.log('✅ Translation created, fetching translated data', name: 'ParsedDocumentsRepository');
-          return await getTranslatedSimulation(sessionId: sessionId, language: language);
-        } catch (translationError) {
-          // Fallback to original simulation if translation fails
-          developer.log('❌ Simulation translation failed, falling back to original: $translationError', name: 'ParsedDocumentsRepository');
-          final uri = Uri.parse('$baseUrl/api/simulations/$sessionId/');
-          final res = await http.get(uri);
-          if (res.statusCode != 200) {
-            throw HttpException('Get simulation failed (${res.statusCode}): ${res.body}');
-          }
-          return json.decode(res.body) as Map<String, dynamic>;
-        }
+        developer.log('⚠️ translateSimulation returned non-blocking/exists: $e', name: 'ParsedDocumentsRepository');
       }
+
+      Map<String, dynamic> last = {};
+      for (int attempt = 1; attempt <= 25; attempt++) {
+        final data = await getTranslatedSimulation(sessionId: sessionId, language: language);
+        last = data;
+        if (_isTranslatedSimulation(data, language)) {
+          developer.log('✅ Translated data confirmed on attempt $attempt', name: 'ParsedDocumentsRepository');
+          return data;
+        }
+        await Future.delayed(const Duration(milliseconds: 900));
+      }
+      developer.log('⏱️ Translation not confirmed in time; returning last response', name: 'ParsedDocumentsRepository');
+      return last;
+    }
+  }
+
+  bool _isTranslatedSimulation(Map<String, dynamic> data, String language) {
+    if (language == 'en') return true;
+    try {
+      final session = data['session'] as Map<String, dynamic>?;
+      final title = session?['title']?.toString() ?? '';
+      // Check some likely-translated fields for non-ascii characters
+      final narratives = (data['narratives'] as List?)?.cast<dynamic>() ?? const [];
+      final risks = (data['risk_alerts'] as List?)?.cast<dynamic>() ?? const [];
+      final samples = <String>[
+        if (title.isNotEmpty) title,
+        if (narratives.isNotEmpty) ((narratives.first as Map)['title']?.toString() ?? ''),
+        if (narratives.isNotEmpty) ((narratives.first as Map)['narrative']?.toString() ?? ''),
+        if (risks.isNotEmpty) ((risks.first as Map)['message']?.toString() ?? ''),
+      ].where((s) => s.isNotEmpty).toList();
+      if (samples.isEmpty) return false;
+      // If any sample has non-ASCII, consider translated for Indic scripts
+      for (final s in samples) {
+        if (s.codeUnits.any((u) => u > 127)) return true;
+      }
+      return false;
+    } catch (_) {
+      return false;
     }
   }
 }

@@ -16,7 +16,7 @@ class SimulationPage extends StatefulWidget {
 
 class _SimulationPageState extends State<SimulationPage> {
   String _query = '';
-  bool _isLoading = false;
+  final bool _isLoading = false;
 
   @override
   Widget build(BuildContext context) {

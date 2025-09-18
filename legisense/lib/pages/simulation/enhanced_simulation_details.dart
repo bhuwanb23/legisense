@@ -5,6 +5,7 @@ import 'components/components.dart';
 import '../profile/language/language_scope.dart';
 import 'language/strings.dart';
 import '../../api/parsed_documents_repository.dart';
+import 'dart:developer' as developer;
 
 class EnhancedSimulationDetailsPage extends StatefulWidget {
   final String documentId;
@@ -31,12 +32,17 @@ class _EnhancedSimulationDetailsPageState extends State<EnhancedSimulationDetail
   bool _isInitialLoading = true; // New flag for initial loading
   String? _currentLanguage;
   late ParsedDocumentsRepository _repository;
+  Map<String, dynamic>? _englishSnapshot; // Snapshot to compare for translation
+  int _translationAttempts = 0;
 
   @override
   void initState() {
     super.initState();
     _repository = ParsedDocumentsRepository(baseUrl: ApiConfig.baseUrl);
     _baseSimulationData = widget.simulationData;
+    _englishSnapshot = widget.simulationData != null
+        ? Map<String, dynamic>.from(widget.simulationData!)
+        : null;
     
     // Initialize parameters from simulation data or use defaults
     if (_baseSimulationData != null) {
@@ -66,10 +72,10 @@ class _EnhancedSimulationDetailsPageState extends State<EnhancedSimulationDetail
       if (mounted) {
         final scope = LanguageScope.maybeOf(context);
         final currentLanguage = scope?.language.name ?? 'en';
-        print('🧪 Initial language check: $currentLanguage');
+        developer.log('🧪 Initial language check: $currentLanguage', name: 'EnhancedSimulationDetailsPage');
         
         if (currentLanguage != 'en') {
-          print('🌐 Loading translated data immediately for language: $currentLanguage');
+          developer.log('🌐 Loading translated data immediately for language: $currentLanguage', name: 'EnhancedSimulationDetailsPage');
           _loadTranslatedSimulationData(currentLanguage);
         } else {
           // No translation needed, hide loading
@@ -87,14 +93,14 @@ class _EnhancedSimulationDetailsPageState extends State<EnhancedSimulationDetail
     final scope = LanguageScope.maybeOf(context);
     final newLanguage = scope?.language.name ?? 'en';
     
-    print('🔄 didChangeDependencies: currentLanguage=$_currentLanguage, newLanguage=$newLanguage');
+    developer.log('🔄 didChangeDependencies: currentLanguage=$_currentLanguage, newLanguage=$newLanguage', name: 'EnhancedSimulationDetailsPage');
     
     if (_currentLanguage != null && _currentLanguage != newLanguage) {
-      print('🌐 Language changed from $_currentLanguage to $newLanguage, loading translation...');
+      developer.log('🌐 Language changed from $_currentLanguage to $newLanguage, loading translation...', name: 'EnhancedSimulationDetailsPage');
       
       if (newLanguage == 'en') {
         // Switching to English - show original data immediately
-        print('🔄 Switching to English - showing original data');
+        developer.log('🔄 Switching to English - showing original data', name: 'EnhancedSimulationDetailsPage');
         setState(() {
           _isTranslating = false;
           _isInitialLoading = false;
@@ -104,7 +110,7 @@ class _EnhancedSimulationDetailsPageState extends State<EnhancedSimulationDetail
         });
       } else {
         // Switching to non-English - show loader and translate
-        print('🌐 Switching to $newLanguage - showing loader and translating');
+        developer.log('🌐 Switching to $newLanguage - showing loader and translating', name: 'EnhancedSimulationDetailsPage');
         setState(() {
           _isTranslating = true;
           _isInitialLoading = true;
@@ -118,7 +124,7 @@ class _EnhancedSimulationDetailsPageState extends State<EnhancedSimulationDetail
 
   Future<void> _loadTranslatedSimulationData(String language) async {
     if (_baseSimulationData == null) {
-      print('❌ No base simulation data available');
+      developer.log('❌ No base simulation data available', name: 'EnhancedSimulationDetailsPage');
       setState(() {
         _isTranslating = false;
         _isInitialLoading = false;
@@ -126,15 +132,15 @@ class _EnhancedSimulationDetailsPageState extends State<EnhancedSimulationDetail
       return;
     }
     
-    print('📊 Base simulation data keys: ${_baseSimulationData!.keys.toList()}');
+    developer.log('📊 Base simulation data keys: ${_baseSimulationData!.keys.toList()}', name: 'EnhancedSimulationDetailsPage');
     if (_baseSimulationData!['session'] != null) {
-      print('📋 Session data keys: ${(_baseSimulationData!['session'] as Map).keys.toList()}');
+      developer.log('📋 Session data keys: ${(_baseSimulationData!['session'] as Map).keys.toList()}', name: 'EnhancedSimulationDetailsPage');
     }
     
     final sessionId = _baseSimulationData!['session']?['id'] as int?;
     if (sessionId == null) {
-      print('❌ No session ID found in simulation data');
-      print('📊 Available session data: ${_baseSimulationData!['session']}');
+      developer.log('❌ No session ID found in simulation data', name: 'EnhancedSimulationDetailsPage');
+      developer.log('📊 Available session data: ${_baseSimulationData!['session']}', name: 'EnhancedSimulationDetailsPage');
       setState(() {
         _isTranslating = false;
         _isInitialLoading = false;
@@ -142,7 +148,7 @@ class _EnhancedSimulationDetailsPageState extends State<EnhancedSimulationDetail
       return;
     }
 
-    print('🔄 Starting translation for session $sessionId to language $language');
+    developer.log('🔄 Starting translation for session $sessionId to language $language', name: 'EnhancedSimulationDetailsPage');
     
     setState(() {
       _isTranslating = true;
@@ -154,21 +160,22 @@ class _EnhancedSimulationDetailsPageState extends State<EnhancedSimulationDetail
         sessionId: sessionId,
         language: language,
       );
-      
-      print('✅ Translation completed for session $sessionId');
-      
-      print('📊 Translated data keys: ${translatedData.keys.toList()}');
-      if (translatedData['risk_alerts'] != null) {
-        final riskAlerts = translatedData['risk_alerts'] as List<dynamic>?;
-        if (riskAlerts != null && riskAlerts.isNotEmpty) {
-          print('📊 Translated risk alerts count: ${riskAlerts.length}');
-          for (int i = 0; i < riskAlerts.length; i++) {
-            final alert = riskAlerts[i] as Map<String, dynamic>;
-            print('📊 Translated risk alert $i: level=${alert['level']}, message=${alert['message']?.toString().substring(0, 50)}...');
-          }
-        }
+
+      developer.log('✅ Translation response received for session $sessionId', name: 'EnhancedSimulationDetailsPage');
+
+      // Verify translated content before displaying
+      final looksTranslated = _looksTranslated(translatedData, language);
+      developer.log('🔎 looksTranslated=$looksTranslated (attempt ${_translationAttempts + 1})', name: 'EnhancedSimulationDetailsPage');
+
+      if (!looksTranslated && _translationAttempts < 10) {
+        _translationAttempts += 1;
+        // keep loader visible and retry shortly
+        await Future.delayed(const Duration(milliseconds: 900));
+        return _loadTranslatedSimulationData(language);
       }
-      
+
+      _translationAttempts = 0; // reset attempts on success or give up
+
       setState(() {
         _baseSimulationData = translatedData;
         _calculateDynamicData();
@@ -176,13 +183,60 @@ class _EnhancedSimulationDetailsPageState extends State<EnhancedSimulationDetail
         _isInitialLoading = false; // Hide loading when translation is complete
       });
     } catch (e) {
-      print('❌ Translation failed for session $sessionId: $e');
+      developer.log('❌ Translation failed for session $sessionId: $e', name: 'EnhancedSimulationDetailsPage');
       setState(() {
         _isTranslating = false;
         _isInitialLoading = false; // Hide loading even if translation fails
       });
       // Keep original data if translation fails
     }
+  }
+
+  bool _looksTranslated(Map<String, dynamic> data, String language) {
+    if (language == 'en') return true;
+    // Compare against English snapshot if available
+    try {
+      final session = data['session'] as Map<String, dynamic>?;
+      final enSession = _englishSnapshot?['session'] as Map<String, dynamic>?;
+      final title = session?['title']?.toString() ?? '';
+      final enTitle = enSession?['title']?.toString() ?? '';
+      if (title.isNotEmpty && enTitle.isNotEmpty && title != enTitle) {
+        return true;
+      }
+
+      // Check first narrative title/body differences
+      final narratives = (data['narratives'] as List?)?.cast<dynamic>() ?? const [];
+      final enNarratives = (_englishSnapshot?['narratives'] as List?)?.cast<dynamic>() ?? const [];
+      if (narratives.isNotEmpty && enNarratives.isNotEmpty) {
+        final t0 = (narratives.first as Map)['title']?.toString() ?? '';
+        final e0 = (enNarratives.first as Map)['title']?.toString() ?? '';
+        if (t0.isNotEmpty && e0.isNotEmpty && t0 != e0) return true;
+      }
+
+      // Check first risk alert message difference
+      final risks = (data['risk_alerts'] as List?)?.cast<dynamic>() ?? const [];
+      final enRisks = (_englishSnapshot?['risk_alerts'] as List?)?.cast<dynamic>() ?? const [];
+      if (risks.isNotEmpty && enRisks.isNotEmpty) {
+        final t0 = (risks.first as Map)['message']?.toString() ?? '';
+        final e0 = (enRisks.first as Map)['message']?.toString() ?? '';
+        if (t0.isNotEmpty && e0.isNotEmpty && t0 != e0) return true;
+      }
+
+      // Heuristic: for Indian languages expect non-ascii chars
+      final sample = [
+        title,
+        if ((risks).isNotEmpty) (risks.first as Map)['message']?.toString() ?? '',
+        if ((narratives).isNotEmpty) (narratives.first as Map)['narrative']?.toString() ?? '',
+      ].firstWhere((s) => s.isNotEmpty, orElse: () => '');
+      if (language != 'en' && sample.isNotEmpty) {
+        final hasNonAscii = sample.codeUnits.any((u) => u > 127);
+        if (hasNonAscii) return true;
+      }
+    } catch (_) {
+      // If structure unexpected, don't block UI indefinitely
+      return true;
+    }
+    return false;
   }
 
   SimulationScenario _parseScenario(String? scenario) {
@@ -207,17 +261,17 @@ class _EnhancedSimulationDetailsPageState extends State<EnhancedSimulationDetail
     // Create a deep copy of the base data
     _dynamicSimulationData = Map<String, dynamic>.from(_baseSimulationData!);
     
-    print('🔄 _calculateDynamicData: Keys in base data: ${_baseSimulationData!.keys.toList()}');
-    print('🔄 _calculateDynamicData: Keys in dynamic data: ${_dynamicSimulationData!.keys.toList()}');
+    developer.log('🔄 _calculateDynamicData: Keys in base data: ${_baseSimulationData!.keys.toList()}', name: 'EnhancedSimulationDetailsPage');
+    developer.log('🔄 _calculateDynamicData: Keys in dynamic data: ${_dynamicSimulationData!.keys.toList()}', name: 'EnhancedSimulationDetailsPage');
     
     // Check if we have translated content
     if (_baseSimulationData!['risk_alerts'] != null) {
       final riskAlerts = _baseSimulationData!['risk_alerts'] as List<dynamic>?;
       if (riskAlerts != null && riskAlerts.isNotEmpty) {
-        print('📊 Risk alerts count: ${riskAlerts.length}');
+        developer.log('📊 Risk alerts count: ${riskAlerts.length}', name: 'EnhancedSimulationDetailsPage');
         for (int i = 0; i < riskAlerts.length; i++) {
           final alert = riskAlerts[i] as Map<String, dynamic>;
-          print('📊 Risk alert $i: level=${alert['level']}, message=${alert['message']?.toString().substring(0, 50)}...');
+          developer.log('📊 Risk alert $i: level=${alert['level']}, message=${alert['message']?.toString().substring(0, 50)}...', name: 'EnhancedSimulationDetailsPage');
         }
       }
     }
@@ -810,7 +864,7 @@ class _EnhancedSimulationDetailsPageState extends State<EnhancedSimulationDetail
                     }
                   },
                   icon: const Icon(Icons.translate, size: 16),
-                  label: Text('Test Translation (${LanguageScope.maybeOf(context)?.language.name ?? 'en'})'),
+                  label: Text('If not translated then click here (${LanguageScope.maybeOf(context)?.language.name ?? 'en'})'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.orange,
                     foregroundColor: Colors.white,
