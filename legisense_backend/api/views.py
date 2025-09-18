@@ -1105,19 +1105,28 @@ def _translate_simulation_related_data_sync(session_id: int, target_language: st
         
         # Translate timeline nodes
         for node in session.timeline.all():
-            if not SimulationTimelineNodeTranslation.objects.filter(node=node, language=target_language).exists():
-                translated_risks = translator.translate_text(
-                    json.dumps(node.risks), target_language, 'en'
-                )
-                SimulationTimelineNodeTranslation.objects.create(
-                    node=node,
-                    language=target_language,
-                    translated_title=translator.translate_text(node.title, target_language, 'en'),
-                    translated_description=translator.translate_text(node.description, target_language, 'en'),
-                    translated_detailed_description=translator.translate_text(node.detailed_description, target_language, 'en'),
-                    translated_risks=json.loads(translated_risks),
-                )
-                print(f"💾 Created timeline translation for node {node.id}")
+            try:
+                if not SimulationTimelineNodeTranslation.objects.filter(node=node, language=target_language).exists():
+                    # Safely translate risks list item-by-item (avoid JSON roundtrip)
+                    risks_list = node.risks if isinstance(node.risks, list) else []
+                    translated_risks: list = []
+                    for r in risks_list:
+                        try:
+                            translated_risks.append(translator.translate_text(str(r), target_language, 'en'))
+                        except Exception:
+                            translated_risks.append(str(r))
+
+                    SimulationTimelineNodeTranslation.objects.create(
+                        node=node,
+                        language=target_language,
+                        translated_title=translator.translate_text(node.title, target_language, 'en'),
+                        translated_description=translator.translate_text(node.description, target_language, 'en'),
+                        translated_detailed_description=translator.translate_text(node.detailed_description, target_language, 'en'),
+                        translated_risks=translated_risks,
+                    )
+                    print(f"💾 Created timeline translation for node {node.id}")
+            except Exception as e:
+                print(f"❌ Failed timeline translation for node {node.id}: {e}")
         
         # Translate penalty forecasts
         for forecast in session.penalty_forecast.all():
@@ -1143,20 +1152,34 @@ def _translate_simulation_related_data_sync(session_id: int, target_language: st
         
         # Translate narrative outcomes
         for outcome in session.narratives.all():
-            if not SimulationNarrativeOutcomeTranslation.objects.filter(outcome=outcome, language=target_language).exists():
-                translated_key_points = [translator.translate_text(point, target_language, 'en') for point in outcome.key_points]
-                translated_financial_impact = [translator.translate_text(impact, target_language, 'en') for impact in outcome.financial_impact]
-                
-                SimulationNarrativeOutcomeTranslation.objects.create(
-                    outcome=outcome,
-                    language=target_language,
-                    translated_title=translator.translate_text(outcome.title, target_language, 'en'),
-                    translated_subtitle=translator.translate_text(outcome.subtitle, target_language, 'en'),
-                    translated_narrative=translator.translate_text(outcome.narrative, target_language, 'en'),
-                    translated_key_points=translated_key_points,
-                    translated_financial_impact=translated_financial_impact,
-                )
-                print(f"💾 Created narrative translation for {outcome.id}")
+            try:
+                if not SimulationNarrativeOutcomeTranslation.objects.filter(outcome=outcome, language=target_language).exists():
+                    translated_key_points = []
+                    for point in (outcome.key_points or []):
+                        try:
+                            translated_key_points.append(translator.translate_text(point, target_language, 'en'))
+                        except Exception:
+                            translated_key_points.append(point)
+
+                    translated_financial_impact = []
+                    for impact in (outcome.financial_impact or []):
+                        try:
+                            translated_financial_impact.append(translator.translate_text(impact, target_language, 'en'))
+                        except Exception:
+                            translated_financial_impact.append(impact)
+                    
+                    SimulationNarrativeOutcomeTranslation.objects.create(
+                        outcome=outcome,
+                        language=target_language,
+                        translated_title=translator.translate_text(outcome.title, target_language, 'en'),
+                        translated_subtitle=translator.translate_text(outcome.subtitle, target_language, 'en'),
+                        translated_narrative=translator.translate_text(outcome.narrative, target_language, 'en'),
+                        translated_key_points=translated_key_points,
+                        translated_financial_impact=translated_financial_impact,
+                    )
+                    print(f"💾 Created narrative translation for {outcome.id}")
+            except Exception as e:
+                print(f"❌ Failed narrative translation for outcome {outcome.id}: {e}")
         
         # Translate long-term points
         for point in session.long_term.all():
@@ -1204,17 +1227,21 @@ def _translate_simulation_related_data_async(session_id: int, target_language: s
             # Translate timeline nodes
             for node in session.timeline.all():
                 if not SimulationTimelineNodeTranslation.objects.filter(node=node, language=target_language).exists():
-                    translated_risks = translator.translate_text(
-                        str(node.risks), target_language, 'en'
-                    ) if node.risks else []
-                    
+                    # translate risks item-wise safely
+                    risks_list = node.risks if isinstance(node.risks, list) else []
+                    safe_translated = []
+                    for r in risks_list:
+                        try:
+                            safe_translated.append(translator.translate_text(str(r), target_language, 'en'))
+                        except Exception:
+                            safe_translated.append(str(r))
                     SimulationTimelineNodeTranslation.objects.create(
                         node=node,
                         language=target_language,
                         translated_title=translator.translate_text(node.title, target_language, 'en'),
                         translated_description=translator.translate_text(node.description, target_language, 'en'),
                         translated_detailed_description=translator.translate_text(node.detailed_description, target_language, 'en'),
-                        translated_risks=translated_risks if isinstance(translated_risks, list) else [translated_risks],
+                        translated_risks=safe_translated,
                     )
             
             # Translate penalty forecasts
