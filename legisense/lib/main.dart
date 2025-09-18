@@ -8,6 +8,7 @@ import 'pages/simulation/simulation_page.dart';
 import 'pages/profile/profile_page.dart';
 import 'components/bottom_nav_bar.dart';
 import 'pages/profile/language/language_scope.dart';
+import 'pages/ai_chat/chat_overlay.dart';
 
 // Global navigation key to access the main app state
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
@@ -130,6 +131,8 @@ class _AppWrapperState extends State<AppWrapper> {
                 ),
               ),
             ),
+            // AI Chat overlay floating on top
+            const ChatOverlay(),
             
             // Bottom Navigation Bar - Always on top with elevation
             Positioned(
