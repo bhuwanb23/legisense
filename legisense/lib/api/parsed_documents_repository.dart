@@ -328,6 +328,97 @@ class ParsedDocumentsRepository {
       insights: const [],
     );
   }
+
+  // Simulation Translation Methods
+
+  /// Translate simulation data to a specific language
+  Future<Map<String, dynamic>> translateSimulation({
+    required int sessionId,
+    required String language,
+  }) async {
+    final uri = Uri.parse('$baseUrl/api/simulations/$sessionId/translate/');
+    developer.log('📡 Translating simulation: $uri with language $language', name: 'ParsedDocumentsRepository');
+    final res = await http.post(
+      uri,
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode({'language': language}),
+    );
+    developer.log('📡 Translation response: ${res.statusCode} - ${res.body}', name: 'ParsedDocumentsRepository');
+    if (res.statusCode != 200) {
+      throw HttpException('Simulation translation failed (${res.statusCode}): ${res.body}');
+    }
+    return json.decode(res.body) as Map<String, dynamic>;
+  }
+
+  /// Get translated simulation data for a specific language
+  Future<Map<String, dynamic>> getTranslatedSimulation({
+    required int sessionId,
+    required String language,
+  }) async {
+    final uri = Uri.parse('$baseUrl/api/simulations/$sessionId/translations/$language/');
+    developer.log('📡 Getting translated simulation: $uri', name: 'ParsedDocumentsRepository');
+    final res = await http.get(uri);
+    developer.log('📡 Get translation response: ${res.statusCode} - ${res.body.substring(0, res.body.length > 200 ? 200 : res.body.length)}...', name: 'ParsedDocumentsRepository');
+    if (res.statusCode != 200) {
+      throw HttpException('Get simulation translation failed (${res.statusCode}): ${res.body}');
+    }
+    return json.decode(res.body) as Map<String, dynamic>;
+  }
+
+  /// List all available translations for a simulation session
+  Future<List<String>> listSimulationTranslations({required int sessionId}) async {
+    final uri = Uri.parse('$baseUrl/api/simulations/$sessionId/translations/');
+    final res = await http.get(uri);
+    if (res.statusCode != 200) {
+      throw HttpException('List simulation translations failed (${res.statusCode}): ${res.body}');
+    }
+    final Map<String, dynamic> data = json.decode(res.body) as Map<String, dynamic>;
+    final List<dynamic> languages = (data['available_languages'] ?? []) as List<dynamic>;
+    return languages.map((lang) => (lang as Map<String, dynamic>)['language'] as String).toList();
+  }
+
+  /// Fetch simulation data with language support
+  Future<Map<String, dynamic>> fetchSimulationWithLanguage({
+    required int sessionId,
+    required String language,
+  }) async {
+    developer.log('🔄 fetchSimulationWithLanguage: sessionId=$sessionId, language=$language', name: 'ParsedDocumentsRepository');
+    
+    if (language == 'en') {
+      // For English, we might need to fetch from the original simulation endpoint
+      // This would depend on your existing simulation API structure
+      final uri = Uri.parse('$baseUrl/api/simulations/$sessionId/');
+      developer.log('📡 Fetching original simulation from: $uri', name: 'ParsedDocumentsRepository');
+      final res = await http.get(uri);
+      if (res.statusCode != 200) {
+        throw HttpException('Get simulation failed (${res.statusCode}): ${res.body}');
+      }
+      return json.decode(res.body) as Map<String, dynamic>;
+    } else {
+      // Try to fetch translated simulation
+      try {
+        developer.log('📡 Trying to get existing translation for session $sessionId in $language', name: 'ParsedDocumentsRepository');
+        return await getTranslatedSimulation(sessionId: sessionId, language: language);
+      } catch (e) {
+        developer.log('⚠️ Translation not found, creating new one: $e', name: 'ParsedDocumentsRepository');
+        // If translation doesn't exist, try to create it
+        try {
+          await translateSimulation(sessionId: sessionId, language: language);
+          developer.log('✅ Translation created, fetching translated data', name: 'ParsedDocumentsRepository');
+          return await getTranslatedSimulation(sessionId: sessionId, language: language);
+        } catch (translationError) {
+          // Fallback to original simulation if translation fails
+          developer.log('❌ Simulation translation failed, falling back to original: $translationError', name: 'ParsedDocumentsRepository');
+          final uri = Uri.parse('$baseUrl/api/simulations/$sessionId/');
+          final res = await http.get(uri);
+          if (res.statusCode != 200) {
+            throw HttpException('Get simulation failed (${res.statusCode}): ${res.body}');
+          }
+          return json.decode(res.body) as Map<String, dynamic>;
+        }
+      }
+    }
+  }
 }
 
 

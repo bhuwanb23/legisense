@@ -4,6 +4,7 @@ import '../../theme/app_theme.dart';
 import 'components/components.dart';
 import '../profile/language/language_scope.dart';
 import 'language/strings.dart';
+import '../../api/parsed_documents_repository.dart';
 
 class EnhancedSimulationDetailsPage extends StatefulWidget {
   final String documentId;
@@ -26,10 +27,15 @@ class _EnhancedSimulationDetailsPageState extends State<EnhancedSimulationDetail
   Map<String, dynamic> _parameters = {};
   Map<String, dynamic>? _baseSimulationData; // Original LLM data
   Map<String, dynamic>? _dynamicSimulationData; // Calculated data based on parameters
+  bool _isTranslating = false;
+  bool _isInitialLoading = true; // New flag for initial loading
+  String? _currentLanguage;
+  late ParsedDocumentsRepository _repository;
 
   @override
   void initState() {
     super.initState();
+    _repository = ParsedDocumentsRepository(baseUrl: ApiConfig.baseUrl);
     _baseSimulationData = widget.simulationData;
     
     // Initialize parameters from simulation data or use defaults
@@ -54,6 +60,129 @@ class _EnhancedSimulationDetailsPageState extends State<EnhancedSimulationDetail
     
     // Calculate initial dynamic data
     _calculateDynamicData();
+    
+    // Check if we need to load translated data immediately
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        final scope = LanguageScope.maybeOf(context);
+        final currentLanguage = scope?.language.name ?? 'en';
+        print('🧪 Initial language check: $currentLanguage');
+        
+        if (currentLanguage != 'en') {
+          print('🌐 Loading translated data immediately for language: $currentLanguage');
+          _loadTranslatedSimulationData(currentLanguage);
+        } else {
+          // No translation needed, hide loading
+          setState(() {
+            _isInitialLoading = false;
+          });
+        }
+      }
+    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final scope = LanguageScope.maybeOf(context);
+    final newLanguage = scope?.language.name ?? 'en';
+    
+    print('🔄 didChangeDependencies: currentLanguage=$_currentLanguage, newLanguage=$newLanguage');
+    
+    if (_currentLanguage != null && _currentLanguage != newLanguage) {
+      print('🌐 Language changed from $_currentLanguage to $newLanguage, loading translation...');
+      
+      if (newLanguage == 'en') {
+        // Switching to English - show original data immediately
+        print('🔄 Switching to English - showing original data');
+        setState(() {
+          _isTranslating = false;
+          _isInitialLoading = false;
+          // Reset to original data
+          _baseSimulationData = widget.simulationData;
+          _calculateDynamicData();
+        });
+      } else {
+        // Switching to non-English - show loader and translate
+        print('🌐 Switching to $newLanguage - showing loader and translating');
+        setState(() {
+          _isTranslating = true;
+          _isInitialLoading = true;
+        });
+        
+        _loadTranslatedSimulationData(newLanguage);
+      }
+    }
+    _currentLanguage = newLanguage;
+  }
+
+  Future<void> _loadTranslatedSimulationData(String language) async {
+    if (_baseSimulationData == null) {
+      print('❌ No base simulation data available');
+      setState(() {
+        _isTranslating = false;
+        _isInitialLoading = false;
+      });
+      return;
+    }
+    
+    print('📊 Base simulation data keys: ${_baseSimulationData!.keys.toList()}');
+    if (_baseSimulationData!['session'] != null) {
+      print('📋 Session data keys: ${(_baseSimulationData!['session'] as Map).keys.toList()}');
+    }
+    
+    final sessionId = _baseSimulationData!['session']?['id'] as int?;
+    if (sessionId == null) {
+      print('❌ No session ID found in simulation data');
+      print('📊 Available session data: ${_baseSimulationData!['session']}');
+      setState(() {
+        _isTranslating = false;
+        _isInitialLoading = false;
+      });
+      return;
+    }
+
+    print('🔄 Starting translation for session $sessionId to language $language');
+    
+    setState(() {
+      _isTranslating = true;
+      _isInitialLoading = true; // Keep initial loading true during translation
+    });
+
+    try {
+      final translatedData = await _repository.fetchSimulationWithLanguage(
+        sessionId: sessionId,
+        language: language,
+      );
+      
+      print('✅ Translation completed for session $sessionId');
+      
+      print('📊 Translated data keys: ${translatedData.keys.toList()}');
+      if (translatedData['risk_alerts'] != null) {
+        final riskAlerts = translatedData['risk_alerts'] as List<dynamic>?;
+        if (riskAlerts != null && riskAlerts.isNotEmpty) {
+          print('📊 Translated risk alerts count: ${riskAlerts.length}');
+          for (int i = 0; i < riskAlerts.length; i++) {
+            final alert = riskAlerts[i] as Map<String, dynamic>;
+            print('📊 Translated risk alert $i: level=${alert['level']}, message=${alert['message']?.toString().substring(0, 50)}...');
+          }
+        }
+      }
+      
+      setState(() {
+        _baseSimulationData = translatedData;
+        _calculateDynamicData();
+        _isTranslating = false;
+        _isInitialLoading = false; // Hide loading when translation is complete
+      });
+    } catch (e) {
+      print('❌ Translation failed for session $sessionId: $e');
+      setState(() {
+        _isTranslating = false;
+        _isInitialLoading = false; // Hide loading even if translation fails
+      });
+      // Keep original data if translation fails
+    }
   }
 
   SimulationScenario _parseScenario(String? scenario) {
@@ -77,6 +206,21 @@ class _EnhancedSimulationDetailsPageState extends State<EnhancedSimulationDetail
 
     // Create a deep copy of the base data
     _dynamicSimulationData = Map<String, dynamic>.from(_baseSimulationData!);
+    
+    print('🔄 _calculateDynamicData: Keys in base data: ${_baseSimulationData!.keys.toList()}');
+    print('🔄 _calculateDynamicData: Keys in dynamic data: ${_dynamicSimulationData!.keys.toList()}');
+    
+    // Check if we have translated content
+    if (_baseSimulationData!['risk_alerts'] != null) {
+      final riskAlerts = _baseSimulationData!['risk_alerts'] as List<dynamic>?;
+      if (riskAlerts != null && riskAlerts.isNotEmpty) {
+        print('📊 Risk alerts count: ${riskAlerts.length}');
+        for (int i = 0; i < riskAlerts.length; i++) {
+          final alert = riskAlerts[i] as Map<String, dynamic>;
+          print('📊 Risk alert $i: level=${alert['level']}, message=${alert['message']?.toString().substring(0, 50)}...');
+        }
+      }
+    }
     
     // Normalize scenario inside parameters to enum if it arrived as String from backend
     if (_dynamicSimulationData!['session'] != null) {
@@ -258,6 +402,15 @@ class _EnhancedSimulationDetailsPageState extends State<EnhancedSimulationDetail
                   children: [
                     const SizedBox(height: 120),
 
+                    // Show loading indicator if translating or initial loading
+                    if (_isTranslating || _isInitialLoading) _buildTranslationLoader(i18n),
+
+                    // Debug: Manual translation trigger button (remove in production)
+                    if (!_isTranslating && !_isInitialLoading) _buildDebugTranslationButton(i18n),
+
+                    // Only show content when not loading
+                    if (!_isInitialLoading) ...[
+
                     // Enhanced Scenario Controls section
                     _section(
                       Column(
@@ -437,6 +590,7 @@ class _EnhancedSimulationDetailsPageState extends State<EnhancedSimulationDetail
                         .fadeIn(duration: AppTheme.animationSlow, delay: 750.ms),
 
                     const SizedBox(height: 8),
+                    ], // Close the conditional content block
                   ],
                 ),
               ),
@@ -567,6 +721,112 @@ class _EnhancedSimulationDetailsPageState extends State<EnhancedSimulationDetail
           );
         }),
       ],
+    );
+  }
+
+  Widget _buildTranslationLoader(Map<String, String> i18n) {
+    final isInitialLoad = _isInitialLoading && !_isTranslating;
+    final title = isInitialLoad 
+        ? (i18n['translation.initial'] ?? 'Loading simulation data...')
+        : (i18n['translation.loading'] ?? 'Translating simulation data...');
+    final subtitle = isInitialLoad
+        ? 'Please wait while we load the simulation content in your selected language.'
+        : 'Please wait while we translate the simulation content to your selected language.';
+    
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppTheme.primaryBlue.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppTheme.primaryBlue.withValues(alpha: 0.4),
+          width: 2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.primaryBlue.withValues(alpha: 0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(
+                  strokeWidth: 3,
+                  valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryBlue),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    color: AppTheme.primaryBlue,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            subtitle,
+            style: TextStyle(
+              color: AppTheme.primaryBlue.withValues(alpha: 0.8),
+              fontSize: 14,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDebugTranslationButton(Map<String, String> i18n) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    final scope = LanguageScope.maybeOf(context);
+                    final currentLanguage = scope?.language.name ?? 'en';
+                    if (currentLanguage != 'en') {
+                      setState(() {
+                        _isTranslating = true;
+                        _isInitialLoading = true;
+                      });
+                      _loadTranslatedSimulationData(currentLanguage);
+                    }
+                  },
+                  icon: const Icon(Icons.translate, size: 16),
+                  label: Text('Test Translation (${LanguageScope.maybeOf(context)?.language.name ?? 'en'})'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.orange,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Current Language: ${LanguageScope.maybeOf(context)?.language.name ?? 'en'} | Previous: $_currentLanguage',
+            style: const TextStyle(fontSize: 12, color: Colors.grey),
+          ),
+        ],
+      ),
     );
   }
 }

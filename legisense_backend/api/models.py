@@ -7,4 +7,11 @@ from .models_db.simulation import (
     SimulationNarrativeOutcome,
     SimulationLongTermPoint,
     SimulationRiskAlert,
+    SimulationSessionTranslation,
+    SimulationTimelineNodeTranslation,
+    SimulationPenaltyForecastTranslation,
+    SimulationExitComparisonTranslation,
+    SimulationNarrativeOutcomeTranslation,
+    SimulationLongTermPointTranslation,
+    SimulationRiskAlertTranslation,
 )

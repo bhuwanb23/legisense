@@ -133,3 +133,175 @@ class SimulationRiskAlert(models.Model):
         return f"RiskAlert(session={self.session_id}, level={self.level})"
 
 
+class SimulationSessionTranslation(models.Model):
+    """Stores translated versions of simulation session data for different languages."""
+
+    LANGUAGE_CHOICES = (
+        ('en', 'English'),
+        ('hi', 'Hindi'),
+        ('ta', 'Tamil'),
+        ('te', 'Telugu'),
+    )
+
+    session = models.ForeignKey(SimulationSession, on_delete=models.CASCADE, related_name="translations")
+    language = models.CharField(max_length=2, choices=LANGUAGE_CHOICES)
+    translated_title = models.CharField(max_length=255, blank=True, default="")
+    translated_jurisdiction = models.CharField(max_length=128, blank=True, default="")
+    translated_jurisdiction_note = models.TextField(blank=True, default="")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ['session', 'language']
+
+    def __str__(self) -> str:
+        return f"SimulationSessionTranslation(session={self.session_id}, lang={self.language})"
+
+
+class SimulationTimelineNodeTranslation(models.Model):
+    """Stores translated versions of timeline nodes for different languages."""
+
+    LANGUAGE_CHOICES = (
+        ('en', 'English'),
+        ('hi', 'Hindi'),
+        ('ta', 'Tamil'),
+        ('te', 'Telugu'),
+    )
+
+    node = models.ForeignKey(SimulationTimelineNode, on_delete=models.CASCADE, related_name="translations")
+    language = models.CharField(max_length=2, choices=LANGUAGE_CHOICES)
+    translated_title = models.CharField(max_length=255)
+    translated_description = models.CharField(max_length=512, blank=True, default="")
+    translated_detailed_description = models.TextField(blank=True, default="")
+    translated_risks = models.JSONField(default=list, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ['node', 'language']
+
+    def __str__(self) -> str:
+        return f"TimelineNodeTranslation(node={self.node_id}, lang={self.language})"
+
+
+class SimulationPenaltyForecastTranslation(models.Model):
+    """Stores translated versions of penalty forecast labels for different languages."""
+
+    LANGUAGE_CHOICES = (
+        ('en', 'English'),
+        ('hi', 'Hindi'),
+        ('ta', 'Tamil'),
+        ('te', 'Telugu'),
+    )
+
+    forecast = models.ForeignKey(SimulationPenaltyForecast, on_delete=models.CASCADE, related_name="translations")
+    language = models.CharField(max_length=2, choices=LANGUAGE_CHOICES)
+    translated_label = models.CharField(max_length=64)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ['forecast', 'language']
+
+    def __str__(self) -> str:
+        return f"PenaltyForecastTranslation(forecast={self.forecast_id}, lang={self.language})"
+
+
+class SimulationExitComparisonTranslation(models.Model):
+    """Stores translated versions of exit comparison data for different languages."""
+
+    LANGUAGE_CHOICES = (
+        ('en', 'English'),
+        ('hi', 'Hindi'),
+        ('ta', 'Tamil'),
+        ('te', 'Telugu'),
+    )
+
+    comparison = models.ForeignKey(SimulationExitComparison, on_delete=models.CASCADE, related_name="translations")
+    language = models.CharField(max_length=2, choices=LANGUAGE_CHOICES)
+    translated_label = models.CharField(max_length=128)
+    translated_penalty_text = models.CharField(max_length=64, blank=True, default="")
+    translated_benefits_lost = models.CharField(max_length=128, blank=True, default="")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ['comparison', 'language']
+
+    def __str__(self) -> str:
+        return f"ExitComparisonTranslation(comparison={self.comparison_id}, lang={self.language})"
+
+
+class SimulationNarrativeOutcomeTranslation(models.Model):
+    """Stores translated versions of narrative outcomes for different languages."""
+
+    LANGUAGE_CHOICES = (
+        ('en', 'English'),
+        ('hi', 'Hindi'),
+        ('ta', 'Tamil'),
+        ('te', 'Telugu'),
+    )
+
+    outcome = models.ForeignKey(SimulationNarrativeOutcome, on_delete=models.CASCADE, related_name="translations")
+    language = models.CharField(max_length=2, choices=LANGUAGE_CHOICES)
+    translated_title = models.CharField(max_length=255)
+    translated_subtitle = models.CharField(max_length=255, blank=True, default="")
+    translated_narrative = models.TextField()
+    translated_key_points = models.JSONField(default=list, blank=True)
+    translated_financial_impact = models.JSONField(default=list, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ['outcome', 'language']
+
+    def __str__(self) -> str:
+        return f"NarrativeOutcomeTranslation(outcome={self.outcome_id}, lang={self.language})"
+
+
+class SimulationLongTermPointTranslation(models.Model):
+    """Stores translated versions of long-term forecast points for different languages."""
+
+    LANGUAGE_CHOICES = (
+        ('en', 'English'),
+        ('hi', 'Hindi'),
+        ('ta', 'Tamil'),
+        ('te', 'Telugu'),
+    )
+
+    point = models.ForeignKey(SimulationLongTermPoint, on_delete=models.CASCADE, related_name="translations")
+    language = models.CharField(max_length=2, choices=LANGUAGE_CHOICES)
+    translated_label = models.CharField(max_length=64, blank=True, default="")
+    translated_description = models.CharField(max_length=255, blank=True, default="")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ['point', 'language']
+
+    def __str__(self) -> str:
+        return f"LongTermPointTranslation(point={self.point_id}, lang={self.language})"
+
+
+class SimulationRiskAlertTranslation(models.Model):
+    """Stores translated versions of risk alerts for different languages."""
+
+    LANGUAGE_CHOICES = (
+        ('en', 'English'),
+        ('hi', 'Hindi'),
+        ('ta', 'Tamil'),
+        ('te', 'Telugu'),
+    )
+
+    alert = models.ForeignKey(SimulationRiskAlert, on_delete=models.CASCADE, related_name="translations")
+    language = models.CharField(max_length=2, choices=LANGUAGE_CHOICES)
+    translated_message = models.CharField(max_length=512)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        unique_together = ['alert', 'language']
+
+    def __str__(self) -> str:
+        return f"RiskAlertTranslation(alert={self.alert_id}, lang={self.language})"
+

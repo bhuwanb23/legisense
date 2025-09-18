@@ -16,6 +16,7 @@ class SimulationPage extends StatefulWidget {
 
 class _SimulationPageState extends State<SimulationPage> {
   String _query = '';
+  bool _isLoading = false;
 
   @override
   Widget build(BuildContext context) {
@@ -52,16 +53,19 @@ class _SimulationPageState extends State<SimulationPage> {
                     // Removed heading card for a cleaner look
 
                     // Document List Section - Natural height with page scrolling
-                    DocumentListSection(
-                      searchQuery: _query,
-                    )
-                        .animate()
-                        .slideY(
-                          begin: 0.3,
-                          duration: AppTheme.animationSlow,
-                          curve: Curves.easeOut,
-                        )
-                        .fadeIn(duration: AppTheme.animationSlow, delay: 200.ms),
+                    if (_isLoading)
+                      _buildLoadingIndicator(i18n)
+                    else
+                      DocumentListSection(
+                        searchQuery: _query,
+                      )
+                          .animate()
+                          .slideY(
+                            begin: 0.3,
+                            duration: AppTheme.animationSlow,
+                            curve: Curves.easeOut,
+                          )
+                          .fadeIn(duration: AppTheme.animationSlow, delay: 200.ms),
                   ],
                 ),
               ),
@@ -207,6 +211,63 @@ class _SimulationPageState extends State<SimulationPage> {
           );
         }),
       ],
+    );
+  }
+
+  Widget _buildLoadingIndicator(Map<String, String> i18n) {
+    return Container(
+      margin: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppTheme.primaryBlue.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppTheme.primaryBlue.withValues(alpha: 0.4),
+          width: 2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.primaryBlue.withValues(alpha: 0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(
+                  strokeWidth: 3,
+                  valueColor: AlwaysStoppedAnimation<Color>(AppTheme.primaryBlue),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Text(
+                  i18n['translation.initial'] ?? 'Loading simulation data...',
+                  style: TextStyle(
+                    color: AppTheme.primaryBlue,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Please wait while we load the simulation content in your selected language.',
+            style: TextStyle(
+              color: AppTheme.primaryBlue.withValues(alpha: 0.8),
+              fontSize: 14,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

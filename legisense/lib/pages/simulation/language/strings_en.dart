@@ -99,6 +99,8 @@ const Map<String, String> strings = {
   'scenario.card.missed.desc': 'Payment delays',
   'scenario.card.early.title': 'Early Termination',
   'scenario.card.early.desc': 'Contract breach',
+  'translation.loading': 'Translating simulation data...',
+  'translation.initial': 'Loading simulation data...',
 };
 
 

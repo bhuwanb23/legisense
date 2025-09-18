@@ -89,6 +89,8 @@ const Map<String, String> strings = {
   'scenario.normal.desc': 'बिना किसी समस्या के मानक अनुबंध निष्पादन',
   'scenario.missed.desc': 'ठेकेदार भुगतान समयसीमा चूकता है',
   'scenario.early.desc': 'समाप्ति से पहले अनुबंध समाप्त',
+  'translation.loading': 'सिमुलेशन डेटा का अनुवाद हो रहा है...',
+  'translation.initial': 'सिमुलेशन डेटा लोड हो रहा है...',
 };
 
 

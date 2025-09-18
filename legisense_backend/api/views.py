@@ -8,7 +8,14 @@ from django.core.files.base import ContentFile
 from django.shortcuts import get_object_or_404
 from django.db import transaction
 
-from .models import ParsedDocument, DocumentAnalysis, DocumentTranslation, DocumentAnalysisTranslation
+from .models import (
+    ParsedDocument, DocumentAnalysis, DocumentTranslation, DocumentAnalysisTranslation,
+    SimulationSession, SimulationTimelineNode, SimulationPenaltyForecast, SimulationExitComparison,
+    SimulationNarrativeOutcome, SimulationLongTermPoint, SimulationRiskAlert,
+    SimulationSessionTranslation, SimulationTimelineNodeTranslation, SimulationPenaltyForecastTranslation,
+    SimulationExitComparisonTranslation, SimulationNarrativeOutcomeTranslation,
+    SimulationLongTermPointTranslation, SimulationRiskAlertTranslation
+)
 from documents.pdf_document_parser import extract_pdf_text
 from ai_models.run_analysis import call_openrouter_for_analysis
 from translation.translator import DocumentTranslator
@@ -833,6 +840,457 @@ def _translate_analysis_async(analysis_id: int, analysis_json: dict):
                     print(f"❌ Failed to translate analysis {analysis_id} to {lang}: {e}")
         except Exception as e:
             print(f"❌ Background analysis translation failed for {analysis_id}: {e}")
+    
+    # Run in background thread
+    thread = threading.Thread(target=translate_worker)
+    thread.daemon = True
+    thread.start()
+
+
+# Simulation Translation Views
+
+@csrf_exempt
+def translate_simulation_view(request: HttpRequest, session_id: int):
+    """Translate simulation session data to a specific language."""
+    print(f"🔄 translate_simulation_view called for session {session_id}")
+    
+    if request.method != "POST":
+        return JsonResponse({"error": "Method not allowed"}, status=405)
+    
+    try:
+        data = json.loads(request.body)
+        target_language = data.get('language', 'hi')
+        print(f"📝 Target language: {target_language}")
+        
+        if target_language not in ['hi', 'ta', 'te']:
+            return JsonResponse({"error": "Unsupported language"}, status=400)
+        
+        session = get_object_or_404(SimulationSession, id=session_id)
+        print(f"📋 Session found: {session.title}")
+        
+        # Check if translation already exists
+        session_translation_exists = SimulationSessionTranslation.objects.filter(session=session, language=target_language).exists()
+        if session_translation_exists:
+            print(f"✅ Session translation already exists for {target_language}")
+            # Still translate related data even if session translation exists
+            _translate_simulation_related_data_sync(session_id, target_language)
+            return JsonResponse({"message": "Translation already exists"})
+        
+        translator = DocumentTranslator()
+        
+        # Get session data
+        session_data = {
+            'title': session.title,
+            'jurisdiction': session.jurisdiction,
+            'jurisdiction_note': session.jurisdiction_note,
+        }
+        print(f"📄 Session data: {session_data}")
+        
+        # Translate session data
+        translated_session = translator.translate_simulation_session(session_data, target_language, 'en')
+        print(f"🌐 Translated session: {translated_session}")
+        
+        # Create translation record
+        SimulationSessionTranslation.objects.create(
+            session=session,
+            language=target_language,
+            translated_title=translated_session.get('title', ''),
+            translated_jurisdiction=translated_session.get('jurisdiction', ''),
+            translated_jurisdiction_note=translated_session.get('jurisdiction_note', ''),
+        )
+        print(f"💾 Translation record created for {target_language}")
+        
+        # Translate related data (synchronous for now to debug)
+        _translate_simulation_related_data_sync(session_id, target_language)
+        
+        return JsonResponse({"message": "Translation started"})
+        
+    except Exception as e:
+        print(f"❌ Translation error: {e}")
+        return JsonResponse({"error": str(e)}, status=500)
+
+
+@csrf_exempt
+def get_simulation_translation_view(request: HttpRequest, session_id: int, language: str):
+    """Get translated simulation data for a specific language."""
+    print(f"🔄 get_simulation_translation_view called for session {session_id}, language {language}")
+    
+    try:
+        session = get_object_or_404(SimulationSession, id=session_id)
+        print(f"📋 Session found: {session.title}")
+        
+        # Get or create translation
+        translation, created = SimulationSessionTranslation.objects.get_or_create(
+            session=session,
+            language=language,
+            defaults={
+                'translated_title': session.title,
+                'translated_jurisdiction': session.jurisdiction,
+                'translated_jurisdiction_note': session.jurisdiction_note,
+            }
+        )
+        
+        # If translation was just created, trigger background translation
+        if created and language != 'en':
+            _translate_simulation_related_data_async(session_id, language)
+        
+        # Build translated simulation data
+        translated_data = {
+            'session': {
+                'id': session.id,
+                'title': translation.translated_title,
+                'scenario': session.scenario,
+                'parameters': session.parameters,
+                'jurisdiction': translation.translated_jurisdiction,
+                'jurisdiction_note': translation.translated_jurisdiction_note,
+                'created_at': session.created_at.isoformat(),
+                'updated_at': session.updated_at.isoformat(),
+            }
+        }
+        
+        # Add translated timeline nodes
+        timeline_nodes = session.timeline.all()
+        translated_timeline = []
+        for node in timeline_nodes:
+            node_translation = SimulationTimelineNodeTranslation.objects.filter(
+                node=node, language=language
+            ).first()
+            
+            if node_translation:
+                translated_timeline.append({
+                    'id': node.id,
+                    'order': node.order,
+                    'title': node_translation.translated_title,
+                    'description': node_translation.translated_description,
+                    'detailed_description': node_translation.translated_detailed_description,
+                    'risks': node_translation.translated_risks,
+                })
+            else:
+                translated_timeline.append({
+                    'id': node.id,
+                    'order': node.order,
+                    'title': node.title,
+                    'description': node.description,
+                    'detailed_description': node.detailed_description,
+                    'risks': node.risks,
+                })
+        
+        translated_data['timeline'] = translated_timeline
+        
+        # Add translated penalty forecasts
+        penalty_forecasts = session.penalty_forecast.all()
+        translated_forecasts = []
+        for forecast in penalty_forecasts:
+            forecast_translation = SimulationPenaltyForecastTranslation.objects.filter(
+                forecast=forecast, language=language
+            ).first()
+            
+            translated_forecasts.append({
+                'id': forecast.id,
+                'label': forecast_translation.translated_label if forecast_translation else forecast.label,
+                'base_amount': float(forecast.base_amount),
+                'fees_amount': float(forecast.fees_amount),
+                'penalties_amount': float(forecast.penalties_amount),
+                'total_amount': float(forecast.total_amount),
+            })
+        
+        translated_data['penalty_forecast'] = translated_forecasts
+        
+        # Add translated exit comparisons
+        exit_comparisons = session.exit_comparisons.all()
+        translated_comparisons = []
+        for comparison in exit_comparisons:
+            comparison_translation = SimulationExitComparisonTranslation.objects.filter(
+                comparison=comparison, language=language
+            ).first()
+            
+            translated_comparisons.append({
+                'id': comparison.id,
+                'label': comparison_translation.translated_label if comparison_translation else comparison.label,
+                'penalty_text': comparison_translation.translated_penalty_text if comparison_translation else comparison.penalty_text,
+                'risk_level': comparison.risk_level,
+                'benefits_lost': comparison_translation.translated_benefits_lost if comparison_translation else comparison.benefits_lost,
+            })
+        
+        translated_data['exit_comparisons'] = translated_comparisons
+        
+        # Add translated narrative outcomes
+        narrative_outcomes = session.narratives.all()
+        translated_narratives = []
+        for outcome in narrative_outcomes:
+            outcome_translation = SimulationNarrativeOutcomeTranslation.objects.filter(
+                outcome=outcome, language=language
+            ).first()
+            
+            translated_narratives.append({
+                'id': outcome.id,
+                'title': outcome_translation.translated_title if outcome_translation else outcome.title,
+                'subtitle': outcome_translation.translated_subtitle if outcome_translation else outcome.subtitle,
+                'narrative': outcome_translation.translated_narrative if outcome_translation else outcome.narrative,
+                'severity': outcome.severity,
+                'key_points': outcome_translation.translated_key_points if outcome_translation else outcome.key_points,
+                'financial_impact': outcome_translation.translated_financial_impact if outcome_translation else outcome.financial_impact,
+            })
+        
+        translated_data['narratives'] = translated_narratives
+        
+        # Add translated long-term points
+        long_term_points = session.long_term.all()
+        translated_points = []
+        for point in long_term_points:
+            point_translation = SimulationLongTermPointTranslation.objects.filter(
+                point=point, language=language
+            ).first()
+            
+            translated_points.append({
+                'id': point.id,
+                'index': point.index,
+                'label': point_translation.translated_label if point_translation else point.label,
+                'value': float(point.value),
+                'description': point_translation.translated_description if point_translation else point.description,
+            })
+        
+        translated_data['long_term'] = translated_points
+        
+        # Add translated risk alerts
+        risk_alerts = session.risk_alerts.all()
+        translated_alerts = []
+        print(f"📊 Getting risk alerts for session {session_id}: {risk_alerts.count()} alerts")
+        for alert in risk_alerts:
+            alert_translation = SimulationRiskAlertTranslation.objects.filter(
+                alert=alert, language=language
+            ).first()
+            
+            message = alert_translation.translated_message if alert_translation else alert.message
+            print(f"📊 Risk alert {alert.id}: level={alert.level}, message={message[:50]}...")
+            
+            translated_alerts.append({
+                'id': alert.id,
+                'level': alert.level,
+                'message': message,
+                'created_at': alert.created_at.isoformat(),
+            })
+        
+        translated_data['risk_alerts'] = translated_alerts
+        print(f"📊 Final risk alerts count: {len(translated_alerts)}")
+        
+        return JsonResponse(translated_data)
+        
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+
+@csrf_exempt
+def list_simulation_translations_view(request: HttpRequest, session_id: int):
+    """List all available translations for a simulation session."""
+    try:
+        session = get_object_or_404(SimulationSession, id=session_id)
+        translations = SimulationSessionTranslation.objects.filter(session=session)
+        
+        available_languages = [{'language': t.language, 'created_at': t.created_at.isoformat()} for t in translations]
+        
+        return JsonResponse({"available_languages": available_languages})
+        
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+
+def _translate_simulation_related_data_sync(session_id: int, target_language: str):
+    """Synchronous function to translate all simulation related data."""
+    try:
+        print(f"🔄 Synchronous translation started for session {session_id}, language {target_language}")
+        session = SimulationSession.objects.get(id=session_id)
+        translator = DocumentTranslator()
+        print(f"📋 Session found: {session.title}")
+        
+        # Translate timeline nodes
+        for node in session.timeline.all():
+            if not SimulationTimelineNodeTranslation.objects.filter(node=node, language=target_language).exists():
+                translated_risks = translator.translate_text(
+                    json.dumps(node.risks), target_language, 'en'
+                )
+                SimulationTimelineNodeTranslation.objects.create(
+                    node=node,
+                    language=target_language,
+                    translated_title=translator.translate_text(node.title, target_language, 'en'),
+                    translated_description=translator.translate_text(node.description, target_language, 'en'),
+                    translated_detailed_description=translator.translate_text(node.detailed_description, target_language, 'en'),
+                    translated_risks=json.loads(translated_risks),
+                )
+                print(f"💾 Created timeline translation for node {node.id}")
+        
+        # Translate penalty forecasts
+        for forecast in session.penalty_forecast.all():
+            if not SimulationPenaltyForecastTranslation.objects.filter(forecast=forecast, language=target_language).exists():
+                SimulationPenaltyForecastTranslation.objects.create(
+                    forecast=forecast,
+                    language=target_language,
+                    translated_label=translator.translate_text(forecast.label, target_language, 'en'),
+                )
+                print(f"💾 Created penalty forecast translation for {forecast.id}")
+        
+        # Translate exit comparisons
+        for comparison in session.exit_comparisons.all():
+            if not SimulationExitComparisonTranslation.objects.filter(comparison=comparison, language=target_language).exists():
+                SimulationExitComparisonTranslation.objects.create(
+                    comparison=comparison,
+                    language=target_language,
+                    translated_label=translator.translate_text(comparison.label, target_language, 'en'),
+                    translated_penalty_text=translator.translate_text(comparison.penalty_text, target_language, 'en'),
+                    translated_benefits_lost=translator.translate_text(comparison.benefits_lost, target_language, 'en'),
+                )
+                print(f"💾 Created exit comparison translation for {comparison.id}")
+        
+        # Translate narrative outcomes
+        for outcome in session.narratives.all():
+            if not SimulationNarrativeOutcomeTranslation.objects.filter(outcome=outcome, language=target_language).exists():
+                translated_key_points = [translator.translate_text(point, target_language, 'en') for point in outcome.key_points]
+                translated_financial_impact = [translator.translate_text(impact, target_language, 'en') for impact in outcome.financial_impact]
+                
+                SimulationNarrativeOutcomeTranslation.objects.create(
+                    outcome=outcome,
+                    language=target_language,
+                    translated_title=translator.translate_text(outcome.title, target_language, 'en'),
+                    translated_subtitle=translator.translate_text(outcome.subtitle, target_language, 'en'),
+                    translated_narrative=translator.translate_text(outcome.narrative, target_language, 'en'),
+                    translated_key_points=translated_key_points,
+                    translated_financial_impact=translated_financial_impact,
+                )
+                print(f"💾 Created narrative translation for {outcome.id}")
+        
+        # Translate long-term points
+        for point in session.long_term.all():
+            if not SimulationLongTermPointTranslation.objects.filter(point=point, language=target_language).exists():
+                SimulationLongTermPointTranslation.objects.create(
+                    point=point,
+                    language=target_language,
+                    translated_label=translator.translate_text(point.label, target_language, 'en'),
+                    translated_description=translator.translate_text(point.description, target_language, 'en'),
+                )
+                print(f"💾 Created long-term point translation for {point.id}")
+        
+        # Translate risk alerts
+        risk_alerts = session.risk_alerts.all()
+        print(f"📊 Found {risk_alerts.count()} risk alerts for session {session_id}")
+        for alert in risk_alerts:
+            print(f"📊 Risk alert: level={alert.level}, message={alert.message[:50]}...")
+            if not SimulationRiskAlertTranslation.objects.filter(alert=alert, language=target_language).exists():
+                translated_message = translator.translate_text(alert.message, target_language, 'en')
+                print(f"🌐 Translated message: {translated_message[:50]}...")
+                SimulationRiskAlertTranslation.objects.create(
+                    alert=alert,
+                    language=target_language,
+                    translated_message=translated_message,
+                )
+                print(f"💾 Created translation for alert {alert.id}")
+            else:
+                print(f"✅ Translation already exists for alert {alert.id}")
+        
+        print(f"✅ Synchronous translation completed for session {session_id}")
+        
+    except Exception as e:
+        print(f"❌ Synchronous translation failed for {session_id}: {e}")
+
+
+def _translate_simulation_related_data_async(session_id: int, target_language: str):
+    """Background function to translate all simulation related data."""
+    def translate_worker():
+        try:
+            print(f"🔄 Background translation started for session {session_id}, language {target_language}")
+            session = SimulationSession.objects.get(id=session_id)
+            translator = DocumentTranslator()
+            print(f"📋 Session found: {session.title}")
+            
+            # Translate timeline nodes
+            for node in session.timeline.all():
+                if not SimulationTimelineNodeTranslation.objects.filter(node=node, language=target_language).exists():
+                    translated_risks = translator.translate_text(
+                        str(node.risks), target_language, 'en'
+                    ) if node.risks else []
+                    
+                    SimulationTimelineNodeTranslation.objects.create(
+                        node=node,
+                        language=target_language,
+                        translated_title=translator.translate_text(node.title, target_language, 'en'),
+                        translated_description=translator.translate_text(node.description, target_language, 'en'),
+                        translated_detailed_description=translator.translate_text(node.detailed_description, target_language, 'en'),
+                        translated_risks=translated_risks if isinstance(translated_risks, list) else [translated_risks],
+                    )
+            
+            # Translate penalty forecasts
+            for forecast in session.penalty_forecast.all():
+                if not SimulationPenaltyForecastTranslation.objects.filter(forecast=forecast, language=target_language).exists():
+                    SimulationPenaltyForecastTranslation.objects.create(
+                        forecast=forecast,
+                        language=target_language,
+                        translated_label=translator.translate_text(forecast.label, target_language, 'en'),
+                    )
+            
+            # Translate exit comparisons
+            for comparison in session.exit_comparisons.all():
+                if not SimulationExitComparisonTranslation.objects.filter(comparison=comparison, language=target_language).exists():
+                    SimulationExitComparisonTranslation.objects.create(
+                        comparison=comparison,
+                        language=target_language,
+                        translated_label=translator.translate_text(comparison.label, target_language, 'en'),
+                        translated_penalty_text=translator.translate_text(comparison.penalty_text, target_language, 'en'),
+                        translated_benefits_lost=translator.translate_text(comparison.benefits_lost, target_language, 'en'),
+                    )
+            
+            # Translate narrative outcomes
+            for outcome in session.narratives.all():
+                if not SimulationNarrativeOutcomeTranslation.objects.filter(outcome=outcome, language=target_language).exists():
+                    translated_key_points = [
+                        translator.translate_text(point, target_language, 'en')
+                        for point in outcome.key_points
+                    ] if outcome.key_points else []
+                    
+                    translated_financial_impact = [
+                        translator.translate_text(impact, target_language, 'en')
+                        for impact in outcome.financial_impact
+                    ] if outcome.financial_impact else []
+                    
+                    SimulationNarrativeOutcomeTranslation.objects.create(
+                        outcome=outcome,
+                        language=target_language,
+                        translated_title=translator.translate_text(outcome.title, target_language, 'en'),
+                        translated_subtitle=translator.translate_text(outcome.subtitle, target_language, 'en'),
+                        translated_narrative=translator.translate_text(outcome.narrative, target_language, 'en'),
+                        translated_key_points=translated_key_points,
+                        translated_financial_impact=translated_financial_impact,
+                    )
+            
+            # Translate long-term points
+            for point in session.long_term.all():
+                if not SimulationLongTermPointTranslation.objects.filter(point=point, language=target_language).exists():
+                    SimulationLongTermPointTranslation.objects.create(
+                        point=point,
+                        language=target_language,
+                        translated_label=translator.translate_text(point.label, target_language, 'en'),
+                        translated_description=translator.translate_text(point.description, target_language, 'en'),
+                    )
+            
+            # Translate risk alerts
+            risk_alerts = session.risk_alerts.all()
+            print(f"📊 Found {risk_alerts.count()} risk alerts for session {session_id}")
+            for alert in risk_alerts:
+                print(f"📊 Risk alert: level={alert.level}, message={alert.message[:50]}...")
+                if not SimulationRiskAlertTranslation.objects.filter(alert=alert, language=target_language).exists():
+                    translated_message = translator.translate_text(alert.message, target_language, 'en')
+                    print(f"🌐 Translated message: {translated_message[:50]}...")
+                    SimulationRiskAlertTranslation.objects.create(
+                        alert=alert,
+                        language=target_language,
+                        translated_message=translated_message,
+                    )
+                    print(f"💾 Created translation for alert {alert.id}")
+                else:
+                    print(f"✅ Translation already exists for alert {alert.id}")
+            
+            print(f"✅ Simulation {session_id} related data translated to {target_language}")
+            
+        except Exception as e:
+            print(f"❌ Background simulation translation failed for {session_id}: {e}")
     
     # Run in background thread
     thread = threading.Thread(target=translate_worker)

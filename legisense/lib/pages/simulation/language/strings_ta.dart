@@ -89,6 +89,8 @@ const Map<String, String> strings = {
   'scenario.normal.desc': 'எந்த சிக்கலும் இல்லாமல் நிலையான ஒப்பந்த நிறைவேற்றம்',
   'scenario.missed.desc': 'ஒப்பந்ததாரர் கட்டண காலக்கெடு தவறுகிறார்',
   'scenario.early.desc': 'முடிவதற்கு முன் ஒப்பந்தம் நிறுத்தப்பட்டது',
+  'translation.loading': 'சிமுலேஷன் தரவு மொழிபெயர்க்கப்படுகிறது...',
+  'translation.initial': 'சிமுலேஷன் தரவு ஏற்றப்படுகிறது...',
 };
 
 

@@ -16,6 +16,9 @@ from .views import (
     translate_analysis_view,
     get_analysis_translation_view,
     list_analysis_translations_view,
+    translate_simulation_view,
+    get_simulation_translation_view,
+    list_simulation_translations_view,
 )
 
 urlpatterns = [
@@ -36,6 +39,10 @@ urlpatterns = [
     path('analysis/<int:pk>/translate/', translate_analysis_view, name='translate_analysis'),
     path('analysis/<int:pk>/translations/', list_analysis_translations_view, name='list_analysis_translations'),
     path('analysis/<int:pk>/translations/<str:language>/', get_analysis_translation_view, name='get_analysis_translation'),
+    # Simulation translation endpoints
+    path('simulations/<int:session_id>/translate/', translate_simulation_view, name='translate_simulation'),
+    path('simulations/<int:session_id>/translations/', list_simulation_translations_view, name='list_simulation_translations'),
+    path('simulations/<int:session_id>/translations/<str:language>/', get_simulation_translation_view, name='get_simulation_translation'),
 ]
 
 
