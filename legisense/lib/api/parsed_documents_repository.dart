@@ -442,6 +442,25 @@ class ParsedDocumentsRepository {
       return false;
     }
   }
+
+  // --- Gemini Chat ---
+  Future<String> sendChatPrompt(String prompt, {String model = 'gemini-2.0-flash'}) async {
+    final uri = Uri.parse('$baseUrl/api/chat/gemini/');
+    final res = await http.post(
+      uri,
+      headers: {'Content-Type': 'application/json'},
+      body: json.encode({
+        'prompt': prompt,
+        'model': model,
+        // You can pass thinking_budget: 0 to disable thinking if desired
+      }),
+    );
+    if (res.statusCode != 200) {
+      throw HttpException('Chat failed (${res.statusCode}): ${res.body}');
+    }
+    final Map<String, dynamic> data = json.decode(res.body) as Map<String, dynamic>;
+    return (data['text'] ?? '').toString();
+  }
 }
 
 

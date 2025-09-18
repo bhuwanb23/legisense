@@ -19,6 +19,7 @@ from .views import (
     translate_simulation_view,
     get_simulation_translation_view,
     list_simulation_translations_view,
+    chat_gemini_view,
 )
 
 urlpatterns = [
@@ -43,6 +44,8 @@ urlpatterns = [
     path('simulations/<int:session_id>/translate/', translate_simulation_view, name='translate_simulation'),
     path('simulations/<int:session_id>/translations/', list_simulation_translations_view, name='list_simulation_translations'),
     path('simulations/<int:session_id>/translations/<str:language>/', get_simulation_translation_view, name='get_simulation_translation'),
+    # Chat (Gemini) endpoint
+    path('chat/gemini/', chat_gemini_view, name='chat_gemini'),
 ]
 
 

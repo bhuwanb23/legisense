@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../api/parsed_documents_repository.dart';
 
 class ChatOverlay extends StatefulWidget {
   const ChatOverlay({super.key});
@@ -57,12 +58,25 @@ class _ChatOverlayState extends State<ChatOverlay> with TickerProviderStateMixin
     setState(() {
       _messages.add(_ChatMessage(role: _ChatRole.user, text: text));
       _textController.clear();
-      // Placeholder assistant echo for now
-      _messages.add(_ChatMessage(role: _ChatRole.assistant, text: 'You said: "$text"'));
-      if (!_isOpen) {
-        _hasUnread = true;
-      }
     });
+    _sendToBackend(text);
+  }
+
+  Future<void> _sendToBackend(String text) async {
+    try {
+      final repo = ParsedDocumentsRepository(baseUrl: ApiConfig.baseUrl);
+      final reply = await repo.sendChatPrompt(text);
+      if (!mounted) return;
+      setState(() {
+        _messages.add(_ChatMessage(role: _ChatRole.assistant, text: reply.isEmpty ? '...' : reply));
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _messages.add(_ChatMessage(role: _ChatRole.assistant, text: 'Error: $e'));
+        if (!_isOpen) _hasUnread = true;
+      });
+    }
   }
 
   @override

@@ -20,6 +20,7 @@ from documents.pdf_document_parser import extract_pdf_text
 from ai_models.run_analysis import call_openrouter_for_analysis
 from translation.translator import DocumentTranslator
 import threading
+from ai_models.api.google_gemini_api import GoogleGeminiAPI, GeminiAPIError
 
 
 @csrf_exempt
@@ -640,6 +641,43 @@ def list_document_translations_view(request: HttpRequest, pk: int):
         "available_translations": list(translations),
         "total_translations": translations.count()
     })
+
+
+@csrf_exempt
+def chat_gemini_view(request: HttpRequest):
+    """Proxy endpoint that forwards chat prompts to Google Gemini.
+
+    Request JSON:
+    { "prompt": "Hello" , "model": "gemini-2.0-flash", "thinking_budget": 0 }
+
+    Response JSON:
+    { "text": "..." }
+    """
+    if request.method != "POST":
+        return JsonResponse({"error": "Method not allowed"}, status=405)
+    try:
+        payload = json.loads(request.body.decode("utf-8"))
+    except Exception as exc:
+        return JsonResponse({"error": f"Invalid JSON: {exc}"}, status=400)
+
+    prompt = (payload.get("prompt") or "").strip()
+    model = payload.get("model") or None
+    thinking_budget = payload.get("thinking_budget")
+    system_instruction = payload.get("system_instruction") or None
+    if not prompt:
+        return JsonResponse({"error": "prompt is required"}, status=400)
+
+    try:
+        client = GoogleGeminiAPI()
+        text = client.generate_text(
+            prompt,
+            model=model,
+            thinking_budget=thinking_budget,
+            system_instruction=system_instruction,
+        )
+        return JsonResponse({"text": text})
+    except (ValueError, GeminiAPIError) as exc:  # missing key or API error
+        return JsonResponse({"error": str(exc)}, status=500)
 
 
 @csrf_exempt
