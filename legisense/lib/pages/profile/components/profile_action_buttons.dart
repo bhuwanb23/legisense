@@ -25,21 +25,42 @@ class ProfileActionButtons extends StatelessWidget {
         SizedBox(
           width: double.infinity,
           height: 48,
-          child: ElevatedButton(
-            onPressed: onEditProfile,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.primaryBlue,
-              foregroundColor: Colors.white,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppTheme.radiusM),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Color(0xFF3B82F6), // blue-500
+                  Color(0xFFA78BFA), // violet-400
+                ],
               ),
+              borderRadius: BorderRadius.circular(AppTheme.radiusM),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.12),
+                  blurRadius: 16,
+                  offset: const Offset(0, 8),
+                ),
+              ],
             ),
-            child: Text(
-              i18n['actions.editProfile'] ?? 'Edit Profile',
-              style: AppTheme.bodyMedium.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.w500,
+            child: ElevatedButton(
+              onPressed: onEditProfile,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.transparent,
+                foregroundColor: Colors.white,
+                shadowColor: Colors.transparent,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppTheme.radiusM),
+                ),
+              ),
+              child: Text(
+                i18n['actions.editProfile'] ?? 'Edit Profile',
+                style: AppTheme.bodyMedium.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
           ),
@@ -55,20 +76,25 @@ class ProfileActionButtons extends StatelessWidget {
             onPressed: onManagePrivacy,
             style: OutlinedButton.styleFrom(
               foregroundColor: AppTheme.primaryBlue,
-              side: const BorderSide(
-                color: AppTheme.primaryBlue,
+              side: BorderSide(
+                color: AppTheme.primaryBlue.withValues(alpha: 0.6),
                 width: 1,
               ),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(AppTheme.radiusM),
               ),
             ),
-            child: Text(
-              i18n['actions.managePrivacy'] ?? 'Manage Privacy',
-              style: AppTheme.bodyMedium.copyWith(
-                color: AppTheme.primaryBlue,
-                fontWeight: FontWeight.w500,
-              ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  i18n['actions.managePrivacy'] ?? 'Manage Privacy',
+                  style: AppTheme.bodyMedium.copyWith(
+                    color: AppTheme.primaryBlue,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
             ),
           ),
         ),
@@ -84,8 +110,8 @@ class ProfileActionButtons extends StatelessWidget {
               onPressed: onLogout,
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppTheme.errorRed,
-                side: const BorderSide(
-                  color: AppTheme.errorRed,
+                side: BorderSide(
+                  color: AppTheme.errorRed.withValues(alpha: 0.7),
                   width: 1,
                 ),
                 shape: RoundedRectangleBorder(
@@ -96,7 +122,7 @@ class ProfileActionButtons extends StatelessWidget {
                 i18n['actions.logout'] ?? 'Logout',
                 style: AppTheme.bodyMedium.copyWith(
                   color: AppTheme.errorRed,
-                  fontWeight: FontWeight.w500,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ),

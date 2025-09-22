@@ -37,15 +37,38 @@ class _AvatarSectionState extends State<AvatarSection> {
         // Avatar with camera button
         Stack(
           children: [
+            // Glow halo
+            Container(
+              width: 112,
+              height: 112,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: AppTheme.primaryBlue.withValues(alpha: 0.20),
+                    blurRadius: 24,
+                    spreadRadius: 2,
+                  ),
+                ],
+              ),
+            ),
+            // Avatar ring
             Container(
               width: 96,
               height: 96,
               decoration: BoxDecoration(
-                color: AppTheme.primaryBlue.withValues(alpha: 0.1),
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    AppTheme.primaryBlue.withValues(alpha: 0.15),
+                    AppTheme.primaryBlue.withValues(alpha: 0.05),
+                  ],
+                ),
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: AppTheme.primaryBlue.withValues(alpha: 0.3),
-                  width: 4,
+                  color: AppTheme.primaryBlue.withValues(alpha: 0.35),
+                  width: 3,
                 ),
               ),
               child: widget.selectedImage != null

@@ -1,8 +1,6 @@
 <div align="center">
 
-# ⚖️ Legisense
-
-Powerful, cross‑platform legal document analysis. Built with Flutter (frontend) and Django (backend).
+<strong>🌐 Legisense – AI‑Powered Legal Companion</strong>
 
 [![Flutter](https://img.shields.io/badge/Flutter-3.22%2B-02569B?logo=flutter&logoColor=white)](https://flutter.dev)
 [![Django](https://img.shields.io/badge/Django-4.x-092E20?logo=django&logoColor=white)](https://www.djangoproject.com/)
@@ -13,43 +11,125 @@ Powerful, cross‑platform legal document analysis. Built with Flutter (frontend
 
 ---
 
-## ✨ Highlights
-- 📄 Upload and parse legal documents via a Django API
-- 🔍 Smart analysis: TL;DR, clause breakdowns, risk flags, comparative context, suggested questions
-- 🧭 Simulations: standard and enhanced flows with rich, animated UI
-- 🔔 Notifications page with responsive header and quick filters
-- 📱 Beautiful responsive Flutter UI for mobile, tablet, and desktop
-- 🎨 Modern colors API (uses `Color.withValues(alpha: ...)` instead of deprecated `withOpacity()`)
+## 🚨 Problem
+- **Low legal literacy in India**: 70%+ struggle with legal jargon across everyday contracts (rentals, loans, insurance, ToS).
+- **Hidden risks**: Users unknowingly accept auto‑renewals, penalties, and unfair clauses leading to disputes and losses.
+- **Access gap**: SMEs, freelancers, tenants often can’t afford lawyers; billions lost annually to fraud/unfair terms.
+- **Existing tools misaligned**: Solutions like Spellbook, DoNotPay, LawGeex, LegalZoom target lawyers/Western markets, not Indian citizens.
+
+---
+
+## 🌟 Vision
+Build a trustworthy AI co‑pilot that makes legal documents:
+- **Understandable**: Simplifies contracts into plain language.
+- **Actionable**: Simulates what‑if outcomes and obligations.
+- **Protective**: Flags hidden risks and unfair terms.
+- **Empathetic**: Guides users with clarity, stress detection, and multilingual support.
+
+---
+
+## 💡 Solution — Legisense
+An AI‑powered Legal Empathy & Simulation Companion that:
+- **Simplifies** contracts into accessible language.
+- **Analyzes** clauses, flags risks, and explains “why it matters”.
+- **Simulates** real‑world outcomes (e.g., “Miss 2 EMIs → Default in 90 days → Foreclosure in 6 months”).
+- **Adapts** to local laws (e.g., Karnataka vs Maharashtra eviction rules).
+- **Supports** empathetically, detecting stress/confusion and adapting tone.
+- **Guides action** with checklists, negotiation drafts, and links to NGOs/legal aid.
+
+---
+
+## 📱 App Structure (Pages)
+
+### 🔹 Basic Pages
+- **Home Page**: Quick insights, recent documents, alerts, and central “Upload Document” button.
+- **Documents Page**: List of uploads → open in Display (abstract text view) or Analysis (risk & summaries).
+- **Profile Page**: History, saved simulations, preferences (readability level, languages, privacy).
+- **Simulation Page (Entry)**: Hub to run what‑if contract simulations.
+
+### 🔹 Document Analyzer
+- **Document Display Page**: Extracted text + original scans with highlighting and search.
+- **Document Analysis Page**: Clause explanations, red‑flag alerts, risk scoring, checklists, and Q&A with citations.
+
+### 🔹 Document Simulation
+- **Simulation Overview Page**: Topic grid (obligations, penalties, exits, comparative, jurisdiction, forecasts) + what‑if toggles.
+- **Simulation Details Page**: Interactive flowchart + timeline of obligations and outcomes.
+- **Enhanced Simulation Page**: Rich scenario inputs, jurisdiction filters, narrative outcomes, contextual risk alerts, export/save.
+
+---
+
+## ⚙️ Technical Flow (5 Layers)
+- **Ingestion**: Upload → storage → metadata.
+- **Preprocessing**: OCR/contract parsing → clean text → clause detection → embeddings.
+- **Analysis**: Retrieval‑augmented generation → summaries, risks, Q&A.
+- **Application Logic**: Clause Explorer, Red‑Flag Reports, What‑If Simulation, Checklists, Q&A.
+- **User Layer**: Home, Documents, Analyzer, Simulation, Profile → clean UI.
+
+Notes:
+- **Current OSS stack (this repo)**: Flutter app (`legisense/`) + Django API (`legisense_backend/`).
+- **Reference cloud architecture (optional for MVP)**: Google Cloud (Cloud Run, Firestore, Document AI, Vertex AI) for scale‑out.
+
+---
+
+## 🔑 Features
+- **Plain‑Language Summaries**: 3 levels — basic, standard, detailed.
+- **Clause Explorer**: Risks, why‑it‑matters, suggested actions.
+- **Red‑Flag Report**: Sorted by severity.
+- **Contract‑to‑Life Simulation**: Obligations → breaches → consequences.
+- **Jurisdiction‑Aware Guidance**: State‑level rules.
+- **Empathetic Support**: Stress detection, adaptive tone, resources.
+- **Actionable Guidance**: Checklists, draft letters, connect to aid.
+- **Multilingual**: English ↔ Hindi/Marathi.
+- **Privacy Controls**: Ephemeral mode, local redaction.
+
+---
+
+## 🚀 Why Unique (Differentiation)
+
+| Existing Tools (Spellbook, LawGeex, DoNotPay, LegalZoom) | Legisense |
+| --- | --- |
+| Lawyer‑focused, Western markets | Citizen‑first, India‑first |
+| Reactive: Summarization & review | Proactive: Simulation & empathy |
+| Expensive ($15–20/doc avg) | Affordable (~$3–4/doc) |
+| English‑heavy, complex UI | Multilingual, mobile‑first, simple |
+| No emotional support | Empathetic + stress‑aware guidance |
+
+---
+
+## 📊 Feasibility, Scalability, Viability
+- **Feasibility**: Serverless GCP reference (Cloud Run, Firestore, Document AI, Vertex AI); MVP in 6–8 weeks.
+- **Scalability**: Serverless infra auto‑scales; cost grows with usage.
+- **Viability**: Freemium (free summary + red flags; paid simulations). Low processing cost (~$0.30–0.50/doc).
+- **Market Opportunity**: India → 500M+ smartphone users; 70% low legal literacy.
+- **Sustainability**: Efficient infra, caching, reuse, green defaults.
+
+---
+
+## 📈 Impact
+- **Prevents fraud & unfair penalties** → saves billions annually.
+- **Reduces legal burden** for SMEs, freelancers, tenants.
+- **Increases access to justice** for citizens without lawyers.
+- **Empowers with foresight** via simulations of obligations.
+- **Improves legal literacy** through plain explanations and scenarios.
+
+---
+
+## 💰 Implementation Cost (Lean MVP)
+- **Storage + Hosting**: 20%
+- **Document AI Parsing**: 25%
+- **AI Analysis**: 30%
+- **Database (Firestore/BigQuery)**: 10%
+- **Security + Compliance**: 10%
+- **Misc (APIs, logs)**: 5%
+
+➡️ Estimated cost per doc: **$3–4** vs **$15–20** for enterprise tools.
 
 ---
 
 ## 🔗 Quick Links
-- Frontend (Flutter): `legisense/`
-- Backend (Django): `legisense_backend/`
-- Design Prototypes: `prototype_design/`
-
----
-
-
-## 🏗️ Architecture
-```
-Flutter (UI)  ──►  Django API  ──►  Parser/Analysis
-   │                 │
-   │                DB
-   │
-   └── Platforms: Android • iOS • Web • macOS • Windows
-```
-- The Flutter app communicates with the Django backend for document parsing and analysis.
-- The UI uses an `IndexedStack` and a global bottom navigation for a smooth multi‑page experience.
-
----
-
-## 🖼️ Screenshots
-> Add your screenshots/GIFs into `assets/` and update the paths below.
-
-| Home | Documents | Notifications |
-| :--: | :-------: | :-----------: |
-| ![Home](assets/screenshots/home.png) | ![Docs](assets/screenshots/documents.png) | ![Notifications](assets/screenshots/notifications.png) |
+- **Frontend (Flutter)**: `legisense/`
+- **Backend (Django)**: `legisense_backend/`
+- **Design Prototypes**: `prototype_design/`
 
 ---
 
@@ -72,7 +152,7 @@ pip install -r requirements.txt
 python manage.py migrate
 python manage.py runserver 0.0.0.0:8000
 ```
-Backend will run at `http://localhost:8000` (Android emulator uses `http://10.0.2.2:8000`).
+Backend runs at `http://localhost:8000` (Android emulator uses `http://10.0.2.2:8000`).
 
 ### 2) Frontend (Flutter)
 ```bash
@@ -81,7 +161,7 @@ flutter pub get
 flutter run
 ```
 
-> Web/Desktop example:
+Web/Desktop example:
 ```bash
 flutter run --dart-define=LEGISENSE_API_BASE=http://localhost:8000
 ```
@@ -89,53 +169,27 @@ flutter run --dart-define=LEGISENSE_API_BASE=http://localhost:8000
 ---
 
 ## ⚙️ Configuration
-The Flutter app reads the backend base URL via a compile‑time define:
+Flutter app reads the backend base URL via a compile‑time define:
 
 | Var | Default | Notes |
 | --- | --- | --- |
-| `LEGISENSE_API_BASE` | `http://10.0.2.2:8000` | Use this default for Android emulators. For local web/desktop, set to `http://localhost:8000`. |
+| `LEGISENSE_API_BASE` | `http://10.0.2.2:8000` | Default for Android emulators. Use `http://localhost:8000` for local web/desktop. |
 
 ---
 
 ## 🧩 Key Code Paths
-- App entry & shell: `legisense/lib/main.dart`
-  - `SafeArea` prevents overlap with system UI
+- **App entry & shell**: `legisense/lib/main.dart`
+  - `SafeArea` wrapping
   - `IndexedStack` + global bottom nav
-- Nav bar: `legisense/lib/components/bottom_nav_bar.dart`
-- Notifications:
-  - Page: `legisense/lib/pages/notifications/notifications_page.dart`
-  - Components: `legisense/lib/pages/notifications/components/`
-- Documents:
+- **Nav bar**: `legisense/lib/components/bottom_nav_bar.dart`
+- **Documents**:
   - Page: `legisense/lib/pages/documents/documents_page.dart`
-  - Analysis (with polling fallback): `legisense/lib/pages/documents/document_analysis.dart`
+  - Analysis (polling fallback): `legisense/lib/pages/documents/document_analysis.dart`
   - Repository (HTTP): `legisense/lib/api/parsed_documents_repository.dart`
-- Simulation pages: `legisense/lib/pages/simulation/`
-- Theme helpers: `legisense/lib/theme/app_theme.dart`
-- Responsive helpers: `legisense/lib/utils/responsive.dart`
-
----
-
-## 🗂️ Folder Structure (partial)
-```
-legisense/
-  lib/
-    api/
-    components/
-    pages/
-      documents/
-      home/
-      login/
-      notifications/
-      profile/
-      simulation/
-    theme/
-    utils/
-legisense_backend/
-  api/
-  legisense_backend/
-  manage.py
-prototype_design/
-```
+- **Simulation**: `legisense/lib/pages/simulation/`
+- **Notifications**: `legisense/lib/pages/notifications/notifications_page.dart`
+- **Theme helpers**: `legisense/lib/theme/app_theme.dart`
+- **Responsive helpers**: `legisense/lib/utils/responsive.dart`
 
 ---
 
@@ -148,9 +202,18 @@ prototype_design/
 ---
 
 ## 🛠️ Development Notes
-- Prefer `Color.withValues(alpha: ...)` (replaces deprecated `withOpacity()`)
-- Notifications page uses a responsive header (back button, title, filters) and bottom nav consistent with the main shell
-- Global navigation helper: `navigateToPage(int index)` in `main.dart`
+- Prefer `Color.withValues(alpha: ...)` (replaces deprecated `withOpacity()`).
+- Notifications page uses a responsive header and persistent bottom nav.
+- Global navigation helper: `navigateToPage(int index)` in `main.dart`.
+
+---
+
+## 🖼️ Screenshots
+Add screenshots/GIFs into `assets/` and update paths:
+
+| Home | Documents | Notifications |
+| :--: | :-------: | :-----------: |
+| ![Home](assets/screenshots/home.png) | ![Docs](assets/screenshots/documents.png) | ![Notifications](assets/screenshots/notifications.png) |
 
 ---
 
@@ -171,17 +234,22 @@ flutter build apk
 flutter build ios
 
 # Web
-aflutter build web
+flutter build web
 ```
 
 ---
 
 ## 🧯 Troubleshooting
-- Android networking: use `http://10.0.2.2:8000` for the emulator
-- Analysis initially 404: UI polls for ~30s, then shows a friendly message
-- Overlap with device status bar: ensure `SafeArea` wraps page bodies (already applied)
+- **Android networking**: use `http://10.0.2.2:8000` for the emulator.
+- **Analysis 404 initially**: UI polls for ~30s, then shows a friendly message.
+- **Overlap with status bar**: ensure `SafeArea` wraps page bodies (already applied).
+
+---
+
+## ✅ In Summary
+**Legisense** is a citizen‑first, India‑first legal AI companion that not only explains contracts but also simulates consequences, adapts to local laws, and supports users empathetically — bridging a major access‑to‑justice gap while remaining feasible, scalable, and affordable.
 
 ---
 
 ## 📄 License
-MIT — see the LICENSE file (if not present, feel free to add one).
+MIT — see the `LICENSE` file (if not present, feel free to add one).

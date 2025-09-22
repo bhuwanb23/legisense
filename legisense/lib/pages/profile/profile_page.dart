@@ -177,11 +177,7 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  // Create simulation functionality
-  void _onCreateSimulation() {
-    // Navigate to simulation page
-    Navigator.of(context).pushNamed('/simulation');
-  }
+  
 
   // Edit profile functionality
   void _onEditProfile() {
@@ -450,19 +446,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           
                           const SizedBox(height: AppTheme.spacingM),
                           
-                          // Saved Simulations Card with slide animation
-                          SavedSimulationsCard(
-                            onCreateSimulation: _onCreateSimulation,
-                          )
-                              .animate()
-                              .slideY(
-                                begin: 0.3,
-                                duration: AppTheme.animationSlow,
-                                curve: Curves.easeOut,
-                              )
-                              .fadeIn(duration: AppTheme.animationSlow, delay: 1000.ms),
                           
-                          const SizedBox(height: AppTheme.spacingL),
                           
                           // Action Buttons with enhanced animation
                           ProfileActionButtons(

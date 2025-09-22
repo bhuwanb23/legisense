@@ -21,14 +21,29 @@ class InfoCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.only(bottom: AppTheme.spacingM),
-      decoration: AppTheme.cardDecoration,
+      decoration: AppTheme.cardDecoration.copyWith(
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
             padding: const EdgeInsets.symmetric(horizontal: AppTheme.spacingM, vertical: AppTheme.spacingS),
             decoration: BoxDecoration(
-              color: AppTheme.primaryBlue.withValues(alpha: 0.05),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  AppTheme.primaryBlue.withValues(alpha: 0.06),
+                  AppTheme.primaryBlue.withValues(alpha: 0.02),
+                ],
+              ),
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(AppTheme.radiusL),
                 topRight: Radius.circular(AppTheme.radiusL),
@@ -46,7 +61,7 @@ class InfoCard extends StatelessWidget {
                 if (onEdit != null)
                   Container(
                     decoration: BoxDecoration(
-                      color: AppTheme.primaryBlue.withValues(alpha: 0.1),
+                      color: AppTheme.primaryBlue.withValues(alpha: 0.08),
                       borderRadius: BorderRadius.circular(AppTheme.radiusS),
                     ),
                     child: Material(
@@ -54,12 +69,16 @@ class InfoCard extends StatelessWidget {
                       child: InkWell(
                         onTap: onEdit,
                         borderRadius: BorderRadius.circular(AppTheme.radiusS),
-                        child: const Padding(
-                          padding: EdgeInsets.all(AppTheme.spacingS),
-                          child: Icon(
-                            FontAwesomeIcons.penToSquare,
-                            color: AppTheme.primaryBlue,
-                            size: 14,
+                        child: Padding(
+                          padding: const EdgeInsets.all(AppTheme.spacingS),
+                          child: Row(
+                            children: const [
+                              Icon(
+                                FontAwesomeIcons.penToSquare,
+                                color: AppTheme.primaryBlue,
+                                size: 14,
+                              ),
+                            ],
                           ),
                         ),
                       ),
