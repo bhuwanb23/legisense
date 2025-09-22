@@ -79,8 +79,9 @@ def parse_pdf_view(request: HttpRequest):
         pass
 
     # Create DB record and also persist the uploaded file into MEDIA_ROOT
+    # Always prefer the original uploaded file name; do not use parser temp path
     doc = ParsedDocument(
-        file_name=Path(data.get("file") or uploaded_file.name).name,
+        file_name=Path(uploaded_file.name).name,
         num_pages=int(data.get("num_pages") or 0),
         payload=data,
     )
@@ -93,6 +94,7 @@ def parse_pdf_view(request: HttpRequest):
     response = dict(data)
     response["id"] = doc.id
     response["file_url"] = doc.uploaded_file.url if doc.uploaded_file else None
+    response["file_name"] = doc.file_name
 
     # Trigger analysis synchronously (simple implementation)
     analysis_obj = None

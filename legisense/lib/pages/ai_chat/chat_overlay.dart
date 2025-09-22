@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:math' as math;
 import 'dart:ui' as ui;
 import '../../api/parsed_documents_repository.dart';
 
@@ -96,12 +97,19 @@ class _ChatOverlayState extends State<ChatOverlay> with TickerProviderStateMixin
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final size = MediaQuery.of(context).size;
     final bottomInset = MediaQuery.of(context).padding.bottom;
     // Sit above BottomNavBar (~75) with extra spacing and safe area inset
     final bottomPadding = 75.0 + 20.0 + bottomInset;
     // Lift the chat panel slightly higher than the toggle to avoid any overlap
     final panelBottomPadding = bottomPadding + 22.0;
     final rightPadding = 16.0;
+    final horizontalMargin = 16.0;
+    final maxPanelWidth = 420.0;
+    final minPanelWidth = 260.0;
+    final panelWidth = size.width - (horizontalMargin + rightPadding);
+    final clampedPanelWidth = panelWidth.clamp(minPanelWidth, maxPanelWidth);
+    final maxPanelHeight = math.min(520.0, size.height * 0.7);
     return Stack(
       children: [
         // Panel wrapped with IgnorePointer so background remains interactive when closed
@@ -123,10 +131,10 @@ class _ChatOverlayState extends State<ChatOverlay> with TickerProviderStateMixin
                     clipBehavior: Clip.antiAlias,
                     color: Colors.transparent,
                     child: ConstrainedBox(
-                      constraints: const BoxConstraints(
-                        maxWidth: 420,
-                        minWidth: 300,
-                        maxHeight: 520,
+                      constraints: BoxConstraints(
+                        maxWidth: clampedPanelWidth,
+                        minWidth: math.min(clampedPanelWidth, 300),
+                        maxHeight: maxPanelHeight,
                       ),
                       child: Stack(
                         children: [
@@ -153,8 +161,8 @@ class _ChatOverlayState extends State<ChatOverlay> with TickerProviderStateMixin
                             ),
                           ),
                           SizedBox(
-                            width: 360,
-                            height: 420,
+                            width: clampedPanelWidth,
+                            height: maxPanelHeight,
                             child: Column(
                               children: [
                                 Container(

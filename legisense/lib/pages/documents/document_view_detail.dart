@@ -108,7 +108,7 @@ class _DocumentViewDetailState extends State<DocumentViewDetail> {
           Container(
             color: Colors.white,
             padding: EdgeInsets.only(
-              top: MediaQuery.of(context).padding.top,
+              top: MediaQuery.of(context).padding.top + 16,
               left: 16,
               right: 16,
               bottom: 8,

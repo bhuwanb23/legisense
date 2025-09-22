@@ -5,17 +5,22 @@ import '../enhanced_simulation_details.dart';
 import '../../../api/parsed_documents_repository.dart';
 import 'styles.dart';
 
-class DocumentListSection extends StatelessWidget {
+class DocumentListSection extends StatefulWidget {
   final Function(String documentId, String documentTitle)? onDocumentTap; // legacy single-tap (kept for compatibility)
   final Function(String documentId, String documentTitle)? onSimulate;
-  final String searchQuery;
-  
+
   const DocumentListSection({
     super.key,
     this.onDocumentTap,
     this.onSimulate,
-    this.searchQuery = '',
   });
+
+  @override
+  State<DocumentListSection> createState() => _DocumentListSectionState();
+}
+
+class _DocumentListSectionState extends State<DocumentListSection> {
+  String _searchQuery = '';
 
   @override
   Widget build(BuildContext context) {
@@ -27,6 +32,21 @@ class DocumentListSection extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const ListHeader(title: 'Document List'),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: const [
+                  BoxShadow(color: Color(0x1A000000), blurRadius: 10, offset: Offset(0, 4)),
+                ],
+              ),
+              child: SearchField(
+                onChanged: (v) => setState(() => _searchQuery = v),
+              ),
+            ),
+          ),
           const Divider(height: 1, color: Color(0xFFE5E7EB)),
           // Match documents page: server-backed list (natural height within parent scroll)
           FutureBuilder<List<Map<String, dynamic>>>(
@@ -39,7 +59,7 @@ class DocumentListSection extends StatelessWidget {
                 return _ErrorCard(error: snapshot.error.toString());
               }
               List<Map<String, dynamic>> list = (snapshot.data ?? const <Map<String, dynamic>>[]);
-              final String q = searchQuery.trim().toLowerCase();
+              final String q = _searchQuery.trim().toLowerCase();
               if (q.isNotEmpty) {
                 list = list.where((e) {
                   final name = (e['file_name'] ?? '').toString().toLowerCase();
@@ -194,8 +214,8 @@ class DocumentListSection extends StatelessWidget {
                                           }
                                           
                                           // Step 3: Navigate to enhanced page with real data
-                                          if (onSimulate != null) {
-                                            onSimulate!("server-$id", title);
+                                          if (widget.onSimulate != null) {
+                                            widget.onSimulate!("server-$id", title);
                                           } else {
                                             Navigator.of(context).push(
                                               MaterialPageRoute(

@@ -1,6 +1,6 @@
 <div align="center">
 
-<strong>🌐 Legisense – AI‑Powered Legal Companion</strong>
+# <strong>🌐 Legisense – AI‑Powered Legal Companion</strong>
 
 [![Flutter](https://img.shields.io/badge/Flutter-3.22%2B-02569B?logo=flutter&logoColor=white)](https://flutter.dev)
 [![Django](https://img.shields.io/badge/Django-4.x-092E20?logo=django&logoColor=white)](https://www.djangoproject.com/)

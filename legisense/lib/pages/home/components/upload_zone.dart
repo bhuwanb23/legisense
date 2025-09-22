@@ -3,6 +3,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:file_picker/file_picker.dart';
 import 'dart:io';
+import 'dart:async';
 import '../../../api/parsed_documents_repository.dart';
 import '../../documents/documents_page.dart';
 import '../../documents/data/sample_documents.dart';
@@ -24,6 +25,7 @@ class _UploadZoneState extends State<UploadZone> {
   late final ParsedDocumentsRepository _repo;
   String _loadingLabel = 'Opening picker...';
   String? _apiBaseOverride;
+  Timer? _refreshTimer;
 
   @override
   void initState() {
@@ -31,6 +33,20 @@ class _UploadZoneState extends State<UploadZone> {
     // Use the same base URL configuration as the repository
     final String base = _apiBaseOverride ?? ApiConfig.baseUrl;
     _repo = ParsedDocumentsRepository(baseUrl: base);
+    // Background refresh every 5 seconds to keep documents fresh
+    _refreshTimer = Timer.periodic(const Duration(seconds: 5), (_) async {
+      try {
+        await _repo.fetchDocuments();
+      } catch (_) {
+        // ignore background refresh errors
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _refreshTimer?.cancel();
+    super.dispose();
   }
   Future<void> _pickDocument() async {
     try {

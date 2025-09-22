@@ -100,6 +100,7 @@ class ParsedDocumentsRepository {
 
     final Map<String, dynamic> data = json.decode(response.body) as Map<String, dynamic>;
     final int serverId = (data['id'] ?? 0) as int;
+    // Prefer server-returned original filename; fallback to picked file name
     final String title = (data['file_name'] ?? pdfFile.path.split(Platform.pathSeparator).last).toString();
     final int numPages = (data['num_pages'] ?? 0) as int;
     final List<dynamic> pages = (data['pages'] ?? []) as List<dynamic>;
