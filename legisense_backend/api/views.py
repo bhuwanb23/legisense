@@ -22,6 +22,17 @@ from translation.translator import DocumentTranslator
 import threading
 from ai_models.api.google_gemini_api import GoogleGeminiAPI, GeminiAPIError
 
+# Default system prompt for Gemini chat
+_GEMINI_SYSTEM_PROMPT = (
+    "You are Legisense AI, a helpful assistant specialized in legal documents, "
+    "compliance, and jurisdiction-related inquiries. Provide concise, clear, and "
+    "honest answers. When uncertain, say you are unsure and suggest what information "
+    "would clarify the issue. Avoid giving legal, medical, or financial advice; "
+    "instead provide educational, general information and prompt users to consult a "
+    "licensed professional for decisions. Prefer structured, bullet-pointed answers, "
+    "and call out jurisdictional differences explicitly when relevant."
+)
+
 
 @csrf_exempt
 def parse_pdf_view(request: HttpRequest):
@@ -663,7 +674,7 @@ def chat_gemini_view(request: HttpRequest):
     prompt = (payload.get("prompt") or "").strip()
     model = payload.get("model") or None
     thinking_budget = payload.get("thinking_budget")
-    system_instruction = payload.get("system_instruction") or None
+    system_instruction = payload.get("system_instruction") or _GEMINI_SYSTEM_PROMPT
     if not prompt:
         return JsonResponse({"error": "prompt is required"}, status=400)
 
