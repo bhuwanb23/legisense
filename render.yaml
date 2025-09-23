@@ -1,5 +1,6 @@
 services:
   - type: web
+    plan: free
     name: legisense-backend
     env: python
     rootDir: legisense_backend
