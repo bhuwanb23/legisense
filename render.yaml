@@ -1,0 +1,32 @@
+services:
+  - type: web
+    name: legisense-backend
+    env: python
+    rootDir: legisense_backend
+    buildCommand: |
+      pip install --upgrade pip
+      pip install -r requirements.txt
+      python manage.py migrate --noinput
+      python manage.py collectstatic --noinput
+    startCommand: >
+      gunicorn legisense_backend.asgi:application
+      -k uvicorn.workers.UvicornWorker
+      --bind 0.0.0.0:$PORT
+      --timeout 120
+    healthCheckPath: /
+    envVars:
+      - key: DJANGO_SETTINGS_MODULE
+        value: legisense_backend.settings
+      - key: PYTHON_VERSION
+        value: 3.10.13
+      # Set these in Render Dashboard → Environment (or via "Sync from repo" if you prefer)
+      - key: DATABASE_URL
+        sync: false
+      - key: SECRET_KEY
+        generateValue: true
+      # Optional: set ALLOWED_HOSTS in your settings to include your Render URL
+      # or provide it as an env var your settings reads from.
+      # - key: ALLOWED_HOSTS
+      #   value: "your-service.onrender.com"
+
+
