@@ -29,7 +29,7 @@ SECRET_KEY = 'django-insecure-@+l*_-b!o$3bv9pv*6=)dc-9nv^jqluhyhj_a%!n14oeh)68o)
 DEBUG = os.getenv('DEBUG', 'true').lower() == 'true'
 
 # ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '*').split(',')
-ALLOWED_HOSTS = ["*", "192.168.31.67"]
+ALLOWED_HOSTS = ["*", "192.168.31.67","bhuwanb23.pythonanywhere.com"]
 
 
 
