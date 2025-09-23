@@ -86,7 +86,7 @@ WSGI_APPLICATION = 'legisense_backend.wsgi.application'
 DATABASES = {
     'default': dj_database_url.config(
         # Replace this value with your local database's connection string.
-        default='postgresql://legisense_db_user:OxOoL6ySCYNOMFdvBuxYN8BjSHp8fSMP@dpg-d399baruibrs73abvjq0-a.singapore-postgres.render.com/legisense_db',
+        default='postgresql://postgres:postgres@localhost:5432/mysite',
         conn_max_age=600
     )
 }
