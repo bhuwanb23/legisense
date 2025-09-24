@@ -12,7 +12,7 @@ class ApiConfig {
   /// Resolves a sensible default base URL depending on environment.
   /// Overridden to a fixed Wi‑Fi IP as requested.
   static String get baseUrl {
-    return 'http://192.168.31.67:8000';
+    return 'https://legisense-backend-1.onrender.com';
   }
 }
 
@@ -72,6 +72,11 @@ class ParsedDocumentsRepository {
       throw HttpException('Analysis failed (${res.statusCode}): ${res.body}');
     }
     final Map<String, dynamic> data = json.decode(res.body) as Map<String, dynamic>;
+    // Handle pending/failed statuses gracefully
+    final status = (data['status'] ?? 'success').toString();
+    if (status != 'success') {
+      throw HttpException(status == 'pending' ? 'Analysis pending' : 'Analysis unavailable: ${data['error'] ?? status}');
+    }
     final Map<String, dynamic> analysis = (data['analysis'] ?? {}) as Map<String, dynamic>;
     return analysis;
   }
@@ -226,6 +231,11 @@ class ParsedDocumentsRepository {
         throw Exception('Failed to fetch analysis: ${analysisResponse.statusCode}');
       }
       final analysisData = json.decode(analysisResponse.body) as Map<String, dynamic>;
+      // If still pending/failed, bubble up early
+      final status = (analysisData['status'] ?? 'success').toString();
+      if (status != 'success') {
+        throw HttpException(status == 'pending' ? 'Analysis pending' : 'Analysis unavailable: ${analysisData['error'] ?? status}');
+      }
       final analysisId = analysisData['id'] as int?;
       
       if (analysisId == null) {
