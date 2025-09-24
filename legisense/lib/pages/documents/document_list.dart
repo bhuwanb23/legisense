@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'document_view_detail.dart';
-import 'dart:async';
+// no timers needed
 import '../../utils/refresh_bus.dart';
 import 'components/components.dart';
 import '../profile/language/language_scope.dart';

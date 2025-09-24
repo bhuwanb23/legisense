@@ -6,7 +6,6 @@ import 'pages/home/home_page.dart';
 import 'pages/documents/documents_page.dart';
 import 'pages/simulation/simulation_page.dart';
 import 'pages/profile/profile_page.dart';
-import 'components/bottom_nav_bar.dart';
 import 'pages/profile/language/language_scope.dart';
 import 'pages/ai_chat/chat_overlay.dart';
 

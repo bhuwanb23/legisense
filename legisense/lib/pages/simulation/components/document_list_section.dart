@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../theme/app_theme.dart';
-import 'dart:async';
+// no timers here; refresh via GlobalRefreshBus
 import '../../../utils/refresh_bus.dart';
 import '../../documents/components/components.dart';
 import '../enhanced_simulation_details.dart';

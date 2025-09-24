@@ -6,9 +6,8 @@ import '../../components/main_header.dart';
 import '../../theme/app_theme.dart';
 import 'components/components.dart';
 // imports provided transitively by components/components.dart
-import '../../main.dart';
 import '../../components/bottom_nav_bar.dart';
-import '../../main.dart' show navigateToPage;
+import '../../main.dart' show navigateToPage, appLanguageController;
 
 class ProfilePage extends StatefulWidget {
   final VoidCallback? onLogout;

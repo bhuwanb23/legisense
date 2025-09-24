@@ -5,7 +5,6 @@ import 'package:file_picker/file_picker.dart';
 import 'dart:io';
 import 'dart:async';
 import '../../../api/parsed_documents_repository.dart';
-import '../../documents/documents_page.dart';
 import '../../../utils/refresh_bus.dart';
 import '../../../main.dart';
 import '../../documents/data/sample_documents.dart';
@@ -161,9 +160,11 @@ class _UploadZoneState extends State<UploadZone> {
                   i18n['upload.result.successBody'] ?? 'Your document was uploaded and analyzed successfully.',
                 );
               } else {
+                final String bgBody = (i18n['upload.result.backgroundBody'] ?? 'Upload succeeded. Analysis is taking a bit longer and will appear shortly. You can continue browsing while we finish in the background.') +
+                    (lastErr.isNotEmpty ? '\n\n$lastErr' : '');
                 _showMessageDialog(
                   i18n['upload.result.backgroundTitle'] ?? 'We\'re finishing up',
-                  i18n['upload.result.backgroundBody'] ?? 'Upload succeeded. Analysis is taking a bit longer and will appear shortly. You can continue browsing while we finish in the background.',
+                  bgBody,
                 );
               }
             }
