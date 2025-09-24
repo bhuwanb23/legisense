@@ -7,6 +7,8 @@ import '../../theme/app_theme.dart';
 import 'components/components.dart';
 // imports provided transitively by components/components.dart
 import '../../main.dart';
+import '../../components/bottom_nav_bar.dart';
+import '../../main.dart' show navigateToPage;
 
 class ProfilePage extends StatefulWidget {
   final VoidCallback? onLogout;
@@ -480,6 +482,21 @@ class _ProfilePageState extends State<ProfilePage> {
                   child: Container(
                     color: Colors.white,
                     child: MainHeader(title: i18n['profile.title'] ?? 'Profile'),
+                  ),
+                ),
+              ),
+
+              // Per-page Bottom Navigation Bar
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: Material(
+                  elevation: 10,
+                  shadowColor: Colors.black.withValues(alpha: 0.1),
+                  child: BottomNavBar(
+                    currentIndex: 3,
+                    onTap: (idx) => navigateToPage(idx),
                   ),
                 ),
               ),

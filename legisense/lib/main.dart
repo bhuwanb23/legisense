@@ -119,7 +119,7 @@ class _AppWrapperState extends State<AppWrapper> {
               top: 0,
               bottom: 0,
               child: Padding(
-                padding: const EdgeInsets.only(bottom: 75), // Account for navbar height
+                padding: const EdgeInsets.only(bottom: 0),
                 child: IndexedStack(
                   index: currentPageIndex,
                   children: [
@@ -134,20 +134,7 @@ class _AppWrapperState extends State<AppWrapper> {
             // AI Chat overlay floating on top
             const ChatOverlay(),
             
-            // Bottom Navigation Bar - Always on top with elevation
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
-              child: Material(
-                elevation: 10,
-                shadowColor: Colors.black.withValues(alpha: 0.1),
-                child: BottomNavBar(
-                  currentIndex: currentPageIndex,
-                  onTap: onPageChanged,
-                ),
-              ),
-            ),
+            // Bottom navigation is provided per-page now
           ],
         ),
       ),

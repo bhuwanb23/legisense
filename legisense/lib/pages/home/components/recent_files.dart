@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'dart:async';
+import '../../../utils/refresh_bus.dart';
 import '../../../theme/app_theme.dart';
 import '../../../api/parsed_documents_repository.dart';
 import '../../../utils/responsive.dart';
@@ -20,11 +22,15 @@ class _RecentFilesState extends State<RecentFiles> {
   List<Map<String, dynamic>> recentFiles = [];
   bool isLoading = true;
   String? error;
+  late final VoidCallback _busListener;
 
   @override
   void initState() {
     super.initState();
     _loadRecentFiles();
+    // refresh when bus pings (e.g., after upload)
+    _busListener = () { if (mounted) _loadRecentFiles(); };
+    GlobalRefreshBus.notifier.addListener(_busListener);
   }
 
   Future<void> _loadRecentFiles() async {
@@ -108,6 +114,12 @@ class _RecentFilesState extends State<RecentFiles> {
       error = 'Could not connect to backend server.\nTried: ${possibleUrls.join(', ')}\nLast error: $lastError\n\nPlease ensure the Django server is running on your computer.';
       isLoading = false;
     });
+  }
+
+  @override
+  void dispose() {
+    GlobalRefreshBus.notifier.removeListener(_busListener);
+    super.dispose();
   }
 
   String _formatTimeAgo(String dateString) {

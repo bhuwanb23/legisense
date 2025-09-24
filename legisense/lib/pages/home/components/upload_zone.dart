@@ -6,6 +6,8 @@ import 'dart:io';
 import 'dart:async';
 import '../../../api/parsed_documents_repository.dart';
 import '../../documents/documents_page.dart';
+import '../../../utils/refresh_bus.dart';
+import '../../../main.dart';
 import '../../documents/data/sample_documents.dart';
 import '../../../theme/app_theme.dart';
 import '../../../utils/responsive.dart';
@@ -110,39 +112,71 @@ class _UploadZoneState extends State<UploadZone> {
         final parsed = await _repo.uploadAndParsePdf(pdfFile: selectedFile);
         // Also reflect in global uploaded list for documents page
         kUploadedDocuments.insert(0, parsed);
-        // Single-shot probe (do not poll): try once to warm cache; ignore failures
+        // Notify global listeners to refresh document lists
+        GlobalRefreshBus.ping();
+
+        // Poll analysis for up to ~60 seconds with exponential backoff
         try {
           final String idStr = parsed.id;
           if (idStr.startsWith('server-')) {
             final int serverId = int.parse(idStr.split('-').last);
+
+            if (!mounted) return;
+            final i18n = HomeI18n.mapFor(LanguageScope.maybeOf(context)?.language ?? AppLanguage.en);
             setState(() {
-              final i18n = HomeI18n.mapFor(LanguageScope.maybeOf(context)?.language ?? AppLanguage.en);
               _loadingLabel = i18n['upload.loading.analyzing'] ?? 'Analyzing document...';
             });
-            await _repo.fetchAnalysis(serverId);
-            
+
+            Duration delay = const Duration(seconds: 1);
+            final DateTime deadline = DateTime.now().add(const Duration(seconds: 60));
+            bool ready = false;
+            String lastErr = '';
+            while (DateTime.now().isBefore(deadline)) {
+              try {
+                await _repo.fetchAnalysis(serverId);
+                ready = true;
+                break;
+              } catch (e) {
+                lastErr = e.toString();
+                await Future.delayed(delay);
+                final int nextMs = ((delay.inMilliseconds * 1.6).clamp(800, 5000)).toInt();
+                delay = Duration(milliseconds: nextMs);
+              }
+            }
+
             // Show translation progress (translations happen in background)
+            if (!mounted) return;
             setState(() {
-              final i18n = HomeI18n.mapFor(LanguageScope.maybeOf(context)?.language ?? AppLanguage.en);
-              _loadingLabel = i18n['upload.loading.translating'] ?? 'Preparing translations...';
+              _loadingLabel = ready
+                  ? (i18n['upload.loading.translating'] ?? 'Preparing translations...')
+                  : (i18n['upload.loading.background'] ?? 'Processing in background...');
             });
-            // Small delay to show the message
-            await Future.delayed(const Duration(milliseconds: 500));
+            await Future.delayed(const Duration(milliseconds: 600));
+
+            // Sweet polite dialog instead of snackbars
+            if (mounted) {
+              if (ready) {
+                _showMessageDialog(
+                  i18n['upload.result.successTitle'] ?? 'Document Ready',
+                  i18n['upload.result.successBody'] ?? 'Your document was uploaded and analyzed successfully.',
+                );
+              } else {
+                _showMessageDialog(
+                  i18n['upload.result.backgroundTitle'] ?? 'We\'re finishing up',
+                  i18n['upload.result.backgroundBody'] ?? 'Upload succeeded. Analysis is taking a bit longer and will appear shortly. You can continue browsing while we finish in the background.',
+                );
+              }
+            }
           }
         } catch (_) {}
         if (!mounted) return;
         final i18n = HomeI18n.mapFor(LanguageScope.maybeOf(context)?.language ?? AppLanguage.en);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(i18n['upload.snackbar.success'] ?? 'PDF processed successfully. Translations are being prepared in the background.'),
-            backgroundColor: AppTheme.successGreen,
-            duration: const Duration(seconds: 3),
-          ),
+        _showMessageDialog(
+          i18n['upload.dialog.successTitle'] ?? 'Upload Complete',
+          i18n['upload.dialog.successBody'] ?? 'Your PDF was uploaded successfully.',
         );
-        // Navigate to documents page to view it
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const DocumentsPage()),
-        );
+        // Switch to the Documents tab within the main scaffold (keeps bottom navbar)
+        navigateToPage(1);
       }
     } catch (e) {
       final i18n = HomeI18n.mapFor(LanguageScope.maybeOf(context)?.language ?? AppLanguage.en);
@@ -169,6 +203,24 @@ class _UploadZoneState extends State<UploadZone> {
         return AlertDialog(
           title: Text('Error'),
           content: Text(message),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('OK'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showMessageDialog(String title, String body) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(title),
+          content: Text(body),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),

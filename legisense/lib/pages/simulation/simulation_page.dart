@@ -5,6 +5,8 @@ import '../../components/main_header.dart';
 import 'components/components.dart';
 import '../profile/language/language_scope.dart';
 import 'language/strings.dart';
+import '../../components/bottom_nav_bar.dart';
+import '../../main.dart' show navigateToPage;
 
 class SimulationPage extends StatefulWidget {
   const SimulationPage({super.key});
@@ -82,6 +84,21 @@ class _SimulationPageState extends State<SimulationPage> {
                         // Search bar moved into DocumentListSection
                       ],
                     ),
+                  ),
+                ),
+              ),
+
+              // Per-page Bottom Navigation Bar
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: Material(
+                  elevation: 10,
+                  shadowColor: Colors.black.withValues(alpha: 0.1),
+                  child: BottomNavBar(
+                    currentIndex: 2,
+                    onTap: (idx) => navigateToPage(idx),
                   ),
                 ),
               ),

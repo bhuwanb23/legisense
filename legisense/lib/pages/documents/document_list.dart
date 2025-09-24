@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'document_view_detail.dart';
+import 'dart:async';
+import '../../utils/refresh_bus.dart';
 import 'components/components.dart';
 import '../profile/language/language_scope.dart';
 import 'language/strings.dart';
@@ -14,6 +16,21 @@ class DocumentListPanel extends StatefulWidget {
 
 class _DocumentListPanelState extends State<DocumentListPanel> {
   String _query = '';
+  int _refreshTick = 0;
+  late final VoidCallback _busListener;
+
+  @override
+  void initState() {
+    super.initState();
+    _busListener = () { if (mounted) setState(() => _refreshTick++); };
+    GlobalRefreshBus.notifier.addListener(_busListener);
+  }
+
+  @override
+  void dispose() {
+    GlobalRefreshBus.notifier.removeListener(_busListener);
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +52,8 @@ class _DocumentListPanelState extends State<DocumentListPanel> {
           // List
           Expanded(
             child: FutureBuilder<List<Map<String, dynamic>>>(
-              future: repo.fetchDocuments(),
+              // include tick so the FutureBuilder re-runs when we setState
+              future: (() async { final _ = _refreshTick; return repo.fetchDocuments(); })(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState != ConnectionState.done) {
                   return const _LoadingListSkeleton();

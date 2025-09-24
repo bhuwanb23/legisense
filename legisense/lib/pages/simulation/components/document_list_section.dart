@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../theme/app_theme.dart';
+import 'dart:async';
+import '../../../utils/refresh_bus.dart';
 import '../../documents/components/components.dart';
 import '../enhanced_simulation_details.dart';
 import '../../../api/parsed_documents_repository.dart';
@@ -21,6 +23,21 @@ class DocumentListSection extends StatefulWidget {
 
 class _DocumentListSectionState extends State<DocumentListSection> {
   String _searchQuery = '';
+  int _tick = 0;
+  late final VoidCallback _busListener;
+
+  @override
+  void initState() {
+    super.initState();
+    _busListener = () { if (mounted) setState(() { _tick++; }); };
+    GlobalRefreshBus.notifier.addListener(_busListener);
+  }
+
+  @override
+  void dispose() {
+    GlobalRefreshBus.notifier.removeListener(_busListener);
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -50,7 +67,7 @@ class _DocumentListSectionState extends State<DocumentListSection> {
           const Divider(height: 1, color: Color(0xFFE5E7EB)),
           // Match documents page: server-backed list (natural height within parent scroll)
           FutureBuilder<List<Map<String, dynamic>>>(
-            future: repo.fetchDocuments(),
+            future: (() async { final _ = _tick; return repo.fetchDocuments(); })(),
             builder: (context, snapshot) {
               if (snapshot.connectionState != ConnectionState.done) {
                 return const _LoadingListSkeleton();
@@ -109,7 +126,7 @@ class _DocumentListSectionState extends State<DocumentListSection> {
                               // Show simulation count if available
                               Expanded(
                                 child: FutureBuilder<Map<String, dynamic>>(
-                                  future: repo.checkDocumentSimulations(documentId: id),
+                                  future: (() async { final _ = _tick; return repo.checkDocumentSimulations(documentId: id); })(),
                                   builder: (context, snapshot) {
                                     final int simulationCount = snapshot.data?['simulation_count'] ?? 0;
                                     if (simulationCount > 0) {
@@ -142,7 +159,7 @@ class _DocumentListSectionState extends State<DocumentListSection> {
                               ),
                               const SizedBox(width: 8),
                               FutureBuilder<Map<String, dynamic>>(
-                                future: repo.checkDocumentSimulations(documentId: id),
+                                future: (() async { final _ = _tick; return repo.checkDocumentSimulations(documentId: id); })(),
                                 builder: (context, snapshot) {
                                   final bool hasSimulations = snapshot.data?['has_simulations'] == true;
                                   
@@ -159,6 +176,9 @@ class _DocumentListSectionState extends State<DocumentListSection> {
                                         try {
                                           // Step 1: Trigger simulation (may return cached or new data)
                                           final result = await repo.simulateDocument(id: id);
+                                          if (!mounted) return;
+                                          setState(() { _tick++; });
+                                          GlobalRefreshBus.ping();
                                           if (!context.mounted) return;
                                           
                                           // Check if this was a cached simulation

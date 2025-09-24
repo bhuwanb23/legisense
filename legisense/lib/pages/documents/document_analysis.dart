@@ -52,47 +52,35 @@ class _AnalysisPanelState extends State<AnalysisPanel> {
         final globalLanguage = LanguageScope.of(context).language;
         final languageCode = _getLanguageCode(globalLanguage);
         
-        try {
-          // Fetch analysis with language translation
-          final data = await repo.fetchAnalysisWithLanguage(
-            documentId: id,
-            language: languageCode,
-          );
-          setState(() {
-            analysis = data;
-          });
-        } catch (e) {
-          // If analysis not ready yet (404), wait/poll for it
-          final message = e.toString();
-          final bool isPending = message.contains('404') || message.contains('Analysis not available');
-          if (isPending) {
-            final DateTime deadline = DateTime.now().add(const Duration(seconds: 30));
-            Map<String, dynamic>? polled;
-            while (DateTime.now().isBefore(deadline) && mounted) {
-              await Future.delayed(const Duration(seconds: 2));
-              try {
-                final Map<String, dynamic> d = await repo.fetchAnalysisWithLanguage(
-                  documentId: id,
-                  language: languageCode,
-                );
-                polled = d;
-                break;
-              } catch (_) {
-                // keep polling until timeout
-              }
-            }
-            if (polled != null) {
-              setState(() {
-                analysis = polled;
-              });
-            } else {
-              setState(() {
-                error = 'Analysis not available';
-              });
-            }
-          } else {
-            rethrow;
+        // Try immediately, then poll up to ~120s with gentle backoff
+        Map<String, dynamic>? found;
+        Duration delay = const Duration(seconds: 2);
+        final DateTime deadline = DateTime.now().add(const Duration(seconds: 120));
+        while (mounted && DateTime.now().isBefore(deadline)) {
+          try {
+            final data = await repo.fetchAnalysisWithLanguage(
+              documentId: id,
+              language: languageCode,
+            );
+            found = data;
+            break;
+          } catch (_) {
+            await Future.delayed(delay);
+            final int nextMs = ((delay.inMilliseconds * 1.5).clamp(1500, 8000)).toInt();
+            delay = Duration(milliseconds: nextMs);
           }
+        }
+        if (found != null) {
+          if (!mounted) return;
+          setState(() {
+            analysis = found;
+          });
+        } else {
+          // Soft info message instead of error; user can continue waiting
+          if (!mounted) return;
+          setState(() {
+            error = 'Analysis is still being prepared. Please try again in a moment.';
+          });
         }
       }
     } catch (e) {
@@ -143,20 +131,9 @@ class _AnalysisPanelState extends State<AnalysisPanel> {
           const Divider(height: 1, color: Color(0xFFE5E7EB)),
           Expanded(
             child: loading
-                ? const Center(child: CircularProgressIndicator())
+                ? _buildSweetLoader(i18n)
                 : error != null
-                    ? Center(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(i18n['docs.analysis.failed'] ?? 'Failed to load analysis', style: GoogleFonts.inter(color: const Color(0xFF991B1B))),
-                            const SizedBox(height: 8),
-                            Text(error!, style: GoogleFonts.inter(fontSize: 12, color: const Color(0xFF991B1B))),
-                            const SizedBox(height: 12),
-                            OutlinedButton(onPressed: _load, child: Text(i18n['docs.retry'] ?? 'Retry')),
-                          ],
-                        ),
-                      )
+                    ? _buildSoftWaiting(i18n, error!)
                     : _buildAnalysisView(i18n),
           ),
         ],
@@ -223,6 +200,51 @@ class _AnalysisPanelState extends State<AnalysisPanel> {
         const SizedBox(height: 14),
         const SimulationCta(),
       ],
+    );
+  }
+
+  Widget _buildSweetLoader(Map<String, String> i18n) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox(height: 12),
+          const CircularProgressIndicator(),
+          const SizedBox(height: 14),
+          Text(
+            i18n['docs.analysis.loading'] ?? 'Analyzing your document...'
+          ),
+          const SizedBox(height: 6),
+          Text(
+            i18n['docs.analysis.loadingHint'] ?? 'This may take up to a minute. Thanks for your patience!',
+            style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSoftWaiting(Map<String, String> i18n, String msg) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const CircularProgressIndicator(),
+          const SizedBox(height: 12),
+          Text(
+            i18n['docs.analysis.preparing'] ?? 'We’re preparing your analysis...',
+          ),
+          const SizedBox(height: 6),
+          Text(
+            i18n['docs.analysis.keepOpen'] ?? 'You can keep this open; it will appear automatically when ready.',
+            style: const TextStyle(fontSize: 12, color: Color(0xFF6B7280)),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 12),
+          OutlinedButton(onPressed: _load, child: Text(i18n['docs.retry'] ?? 'Retry now')),
+        ],
+      ),
     );
   }
 }
