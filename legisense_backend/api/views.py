@@ -688,6 +688,16 @@ def chat_gemini_view(request: HttpRequest):
             thinking_budget=thinking_budget,
             system_instruction=system_instruction,
         )
+
+        # Optional server-side translation of AI output
+        target_language = (payload.get("language") or "en").lower()
+        if target_language and target_language != "en":
+            try:
+                translator = DocumentTranslator()
+                text = translator.translate_text(text, target_language, 'en')
+            except Exception:
+                pass
+
         return JsonResponse({"text": text})
     except (ValueError, GeminiAPIError) as exc:  # missing key or API error
         return JsonResponse({"error": str(exc)}, status=500)

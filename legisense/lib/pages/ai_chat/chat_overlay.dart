@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 import '../../api/parsed_documents_repository.dart';
+import '../profile/language/language_scope.dart';
 
 class ChatOverlay extends StatefulWidget {
   const ChatOverlay({super.key});
@@ -78,7 +79,29 @@ class _ChatOverlayState extends State<ChatOverlay> with TickerProviderStateMixin
         _isSending = true;
       });
       final repo = ParsedDocumentsRepository(baseUrl: ApiConfig.baseUrl);
-      final reply = await repo.sendChatPrompt(text);
+      // Determine current UI language; default to 'en' if unavailable
+      String language = 'en';
+      try {
+        final controller = LanguageScope.maybeOf(context);
+        if (controller != null) {
+          final appLang = controller.language;
+          switch (appLang) {
+            case AppLanguage.en:
+              language = 'en';
+              break;
+            case AppLanguage.hi:
+              language = 'hi';
+              break;
+            case AppLanguage.ta:
+              language = 'ta';
+              break;
+            case AppLanguage.te:
+              language = 'te';
+              break;
+          }
+        }
+      } catch (_) {}
+      final reply = await repo.sendChatPrompt(text, language: language);
       if (!mounted) return;
       setState(() {
         _messages.add(_ChatMessage(role: _ChatRole.assistant, text: reply.isEmpty ? '...' : reply));
