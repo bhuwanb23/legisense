@@ -201,8 +201,11 @@ def parsed_doc_simulate_view(request: HttpRequest, pk: int):
     # Run extraction (LLM) to produce a structured JSON based on document content
     try:
         from ai_models.run_simulation_models_extraction import run_extraction
-        # Pass document content to the extraction
-        document_content = doc.payload.get('full_text', '') if doc.payload else ''
+        # Extract document content from pages array
+        document_content = ''
+        if doc.payload and 'pages' in doc.payload:
+            pages = doc.payload.get('pages', [])
+            document_content = '\n'.join([page.get('text', '') for page in pages if isinstance(page, dict)])
         print(f"🔍 Document content length: {len(document_content)}")
         print(f"🔍 Document content preview: {document_content[:200]}...")
         extracted = run_extraction(document_content=document_content)

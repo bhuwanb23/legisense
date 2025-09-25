@@ -171,11 +171,6 @@ class _UploadZoneState extends State<UploadZone> {
           }
         } catch (_) {}
         if (!mounted) return;
-        final i18n = HomeI18n.mapFor(LanguageScope.maybeOf(context)?.language ?? AppLanguage.en);
-        _showMessageDialog(
-          i18n['upload.dialog.successTitle'] ?? 'Upload Complete',
-          i18n['upload.dialog.successBody'] ?? 'Your PDF was uploaded successfully.',
-        );
         // Switch to the Documents tab within the main scaffold (keeps bottom navbar)
         navigateToPage(1);
       }

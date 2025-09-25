@@ -199,4 +199,4 @@ Output a single JSON object with this exact structure:
   ]
 }
 
-Return ONLY the JSON object, no other text.
+CRITICAL: Return ONLY a valid JSON object with the exact structure shown above. Do not include any explanatory text, markdown formatting, or code blocks. The response must be parseable JSON that starts with { and ends with }.

@@ -29,7 +29,7 @@ def run_extraction(document_content: str = "") -> Dict[str, Any]:
         document_content = "Generic legal document for simulation purposes."
 
     # Truncate very long documents to keep inference under provider limits
-    def _truncate_text(txt: str, max_chars: int = 6000) -> str:
+    def _truncate_text(txt: str, max_chars: int = 4000) -> str:
         txt = txt.strip()
         if len(txt) <= max_chars:
             return txt
@@ -49,12 +49,32 @@ def run_extraction(document_content: str = "") -> Dict[str, Any]:
     user_msg = {"role": "user", "content": user_content}
 
     client = OpenRouterClient()
-    data = client.create_chat_completion(
-        messages=[system_msg, user_msg],
-        temperature=0.2,
-        max_tokens=900,
-        response_format={"type": "json_object"},
-    )
+    try:
+        data = client.create_chat_completion(
+            messages=[system_msg, user_msg],
+            temperature=0.2,
+            max_tokens=600,
+            response_format={"type": "json_object"},
+        )
+    except Exception as e:
+        # Graceful fallback to avoid 500s/timeouts on constrained environments
+        print(f"[Simulation Extraction] Fallback due to error: {e}")
+        fallback = {
+            "session": {
+                "title": "Auto simulation (fallback)",
+                "scenario": "normal",
+                "parameters": {"source": "fallback"},
+                "jurisdiction": "",
+                "jurisdiction_note": "",
+            },
+            "timeline": [],
+            "penalty_forecast": [],
+            "exit_comparisons": [],
+            "narratives": [],
+            "long_term": [],
+            "risk_alerts": [],
+        }
+        return fallback
 
     content: str = data.get("choices", [{}])[0].get("message", {}).get("content", "")
     if not content:
@@ -65,17 +85,82 @@ def run_extraction(document_content: str = "") -> Dict[str, Any]:
 
     # Parse and validate JSON
     try:
+        # Try to clean up the JSON if it has formatting issues
+        content = content.strip()
+        if not content.startswith('{'):
+            # Find the first { and last } to extract JSON
+            start = content.find('{')
+            end = content.rfind('}')
+            if start != -1 and end != -1 and end > start:
+                content = content[start:end+1]
+            else:
+                raise ValueError("No valid JSON object found in response")
+        
         obj: Dict[str, Any] = json.loads(content)
         # Basic validation - check if it has the expected structure
         if not isinstance(obj, dict):
             raise ValueError("Response is not a JSON object")
+        
+        # Handle case where OpenRouter returns different structure
+        if "simulationData" in obj:
+            # Convert the simulationData structure to our expected format
+            sim_data = obj["simulationData"]
+            return {
+                "session": {
+                    "title": f"Simulation for {sim_data.get('contractTitle', 'Document')}",
+                    "scenario": "normal",
+                    "parameters": {"source": "converted_from_simulationData"},
+                    "jurisdiction": sim_data.get('governingLaw', ''),
+                    "jurisdiction_note": "Converted from OpenRouter response format",
+                },
+                "timeline": [],
+                "penalty_forecast": [],
+                "exit_comparisons": [],
+                "narratives": [],
+                "long_term": [],
+                "risk_alerts": [],
+            }
+        
         if "session" not in obj:
             raise ValueError("Missing 'session' key in response")
         return obj
     except json.JSONDecodeError as e:
-        raise ValueError(f"Invalid JSON response: {e}")
+        print(f"❌ JSON parsing failed: {e}")
+        print(f"❌ Raw content (first 500 chars): {content[:500]}")
+        # Return fallback data instead of crashing
+        return {
+            "session": {
+                "title": "Simulation Failed - JSON Error",
+                "scenario": "error",
+                "parameters": {"source": "json_parse_error"},
+                "jurisdiction": "",
+                "jurisdiction_note": f"JSON parsing failed: {e}",
+            },
+            "timeline": [],
+            "penalty_forecast": [],
+            "exit_comparisons": [],
+            "narratives": [],
+            "long_term": [],
+            "risk_alerts": [],
+        }
     except Exception as e:
-        raise ValueError(f"Validation error: {e}")
+        print(f"❌ Validation error: {e}")
+        # Return fallback data instead of crashing
+        return {
+            "session": {
+                "title": "Simulation Failed - Validation Error",
+                "scenario": "error", 
+                "parameters": {"source": "validation_error"},
+                "jurisdiction": "",
+                "jurisdiction_note": f"Validation failed: {e}",
+            },
+            "timeline": [],
+            "penalty_forecast": [],
+            "exit_comparisons": [],
+            "narratives": [],
+            "long_term": [],
+            "risk_alerts": [],
+        }
 
 
 def main() -> None:
