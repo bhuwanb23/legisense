@@ -755,9 +755,33 @@ graph TB
 - **🐍 Python 3.10+** → [Install Python](https://www.python.org/downloads/)
 - **☁️ Google Cloud Account** → [Get started with GCP](https://cloud.google.com/) (for production)
 
-### 🛠️ **Local Development Setup**
+### 🛠️ **Development Setup Options**
 
-#### **1️⃣ Backend (Django API)**
+#### **🐳 Option 1: Docker (Recommended)**
+```bash
+# Production-like environment with all services
+docker-compose up -d
+
+# Development environment with hot reload
+docker-compose -f docker-compose.dev.yml up -d
+
+# View logs
+docker-compose logs -f
+
+# Stop services
+docker-compose down
+```
+
+**🐳 Docker Services:**
+- **🌐 Frontend**: `http://localhost:3000` (Flutter Web)
+- **🔌 Backend**: `http://localhost:8000` (Django API)
+- **🗄️ Database**: `localhost:5432` (PostgreSQL)
+- **📊 Monitoring**: `http://localhost:3001` (Grafana)
+- **📈 Metrics**: `http://localhost:9090` (Prometheus)
+
+#### **💻 Option 2: Local Development**
+
+##### **1️⃣ Backend (Django API)**
 ```bash
 # Clone and setup backend
 cd legisense_backend
@@ -777,7 +801,7 @@ python manage.py runserver 0.0.0.0:8000
 🌐 **Backend runs at:** `http://localhost:8000`  
 📱 **Android emulator:** `http://10.0.2.2:8000`
 
-#### **2️⃣ Frontend (Flutter App)**
+##### **2️⃣ Frontend (Flutter App)**
 ```bash
 # Setup and run Flutter app
 cd legisense
@@ -785,7 +809,7 @@ flutter pub get
 flutter run
 ```
 
-#### **3️⃣ Web/Desktop Development**
+##### **3️⃣ Web/Desktop Development**
 ```bash
 # Run with custom API endpoint
 flutter run --dart-define=LEGISENSE_API_BASE=http://localhost:8000
@@ -890,7 +914,22 @@ Flutter app reads the backend base URL via a compile‑time define:
 
 ## 📦 **Build & Deployment**
 
-### 🏗️ **Local Build**
+### 🏗️ **Build & Deployment**
+
+#### **🐳 Docker Build**
+```bash
+# Build all services
+docker-compose build
+
+# Build specific service
+docker-compose build backend
+docker-compose build frontend
+
+# Build for production
+docker-compose -f docker-compose.yml build --no-cache
+```
+
+#### **📱 Local Build**
 ```bash
 # Android APK
 flutter build apk --release
@@ -902,21 +941,49 @@ flutter build ios --release
 flutter build web --release
 ```
 
-### ☁️ **Production Deployment**
+#### **☁️ Production Deployment**
+
+##### **🐳 Container Deployment**
+```bash
+# Deploy to Google Cloud Run
+gcloud run deploy legisense-backend --source=./legisense_backend
+gcloud run deploy legisense-frontend --source=./legisense
+
+# Deploy with Docker Compose
+docker-compose -f docker-compose.prod.yml up -d
+```
+
+##### **🌐 Cloud Services**
 - **📱 Mobile** → Google Play Store, Apple App Store
 - **🌐 Web** → Google Cloud Run, Firebase Hosting
 - **🔧 Backend** → Google Cloud Run, Cloud SQL
-- **📊 Monitoring** → Cloud Logging, Error Reporting
+- **📊 Monitoring** → Cloud Logging, Error Reporting, Prometheus + Grafana
+- **🗄️ Database** → Cloud SQL PostgreSQL
+- **📁 Storage** → Google Cloud Storage
+- **🔄 Cache** → Redis Cloud
 
 ---
 
 ## 🧯 **Troubleshooting**
 
 ### 🔧 **Common Issues**
+
+#### **🐳 Docker Issues**
+- **🐳 Container won't start** → Check logs: `docker-compose logs [service-name]`
+- **🗄️ Database connection** → Ensure PostgreSQL is healthy: `docker-compose ps`
+- **🌐 Port conflicts** → Change ports in docker-compose.yml if needed
+- **📁 Volume permissions** → Run: `sudo chown -R $USER:$USER ./volumes`
+
+#### **💻 Local Development**
 - **📱 Android Networking** → Use `http://10.0.2.2:8000` for emulator
 - **⏳ Analysis Delays** → UI polls for ~30s, shows friendly message
 - **📱 Status Bar Overlap** → `SafeArea` wraps page bodies (already applied)
 - **🌐 CORS Issues** → Configure Django CORS settings for web
+
+#### **🔧 Build Issues**
+- **🐳 Docker build fails** → Clear cache: `docker system prune -a`
+- **📱 Flutter build errors** → Run: `flutter clean && flutter pub get`
+- **🐍 Python dependencies** → Recreate venv: `rm -rf venv && python -m venv venv`
 
 ### 🆘 **Getting Help**
 - **📖 Documentation** → Check this README and inline code comments

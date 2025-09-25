@@ -1,0 +1,80 @@
+# Docker Compose for Legisense - Development Environment
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: legisense-postgres-dev
+    environment:
+      POSTGRES_DB: legisense_dev
+      POSTGRES_USER: legisense_dev
+      POSTGRES_PASSWORD: legisense_dev_password
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    networks:
+      - legisense-dev-network
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: legisense-redis-dev
+    ports:
+      - "6380:6379"
+    networks:
+      - legisense-dev-network
+
+  # Django Backend API (Development)
+  backend-dev:
+    build:
+      context: ./legisense_backend
+      dockerfile: Dockerfile
+      target: builder
+    container_name: legisense-backend-dev
+    environment:
+      - DEBUG=True
+      - DATABASE_URL=postgresql://legisense_dev:legisense_dev_password@postgres:5432/legisense_dev
+      - REDIS_URL=redis://redis:6379/0
+      - SECRET_KEY=dev-secret-key-not-for-production
+      - ALLOWED_HOSTS=localhost,127.0.0.1,backend-dev
+      - CORS_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:8080
+    volumes:
+      - ./legisense_backend:/app
+      - /app/venv
+    ports:
+      - "8001:8000"
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - legisense-dev-network
+    command: python manage.py runserver 0.0.0.0:8000
+
+  # Flutter Frontend (Development)
+  frontend-dev:
+    build:
+      context: ./legisense
+      dockerfile: Dockerfile
+      target: builder
+    container_name: legisense-frontend-dev
+    environment:
+      - LEGISENSE_API_BASE=http://backend-dev:8000
+    volumes:
+      - ./legisense:/app
+    ports:
+      - "8080:8080"
+    depends_on:
+      - backend-dev
+    networks:
+      - legisense-dev-network
+    command: flutter run -d web-server --web-port 8080 --web-hostname 0.0.0.0
+
+volumes:
+  postgres_dev_data:
+    driver: local
+
+networks:
+  legisense-dev-network:
+    driver: bridge
