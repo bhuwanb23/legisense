@@ -11,4 +11,7 @@ python manage.py migrate
 # Collect static files
 python manage.py collectstatic --noinput
 
+# Make gunicorn config executable
+chmod +x gunicorn.conf.py
+
 echo "Build completed successfully!"

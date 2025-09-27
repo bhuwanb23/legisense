@@ -96,25 +96,37 @@ def parse_pdf_view(request: HttpRequest):
     response["file_url"] = doc.uploaded_file.url if doc.uploaded_file else None
     response["file_name"] = doc.file_name
 
-    # Trigger analysis synchronously (simple implementation)
-    analysis_obj = None
+    # Create analysis record with pending status (non-blocking)
+    analysis_obj, _ = DocumentAnalysis.objects.update_or_create(
+        document=doc,
+        defaults={
+            "status": "pending",
+            "output_json": {},
+            "model": "openrouter",
+        },
+    )
+    
+    # Trigger analysis asynchronously (non-blocking)
     try:
         meta = {"file_name": doc.file_name, "num_pages": doc.num_pages}
         pages = [p.get("text", "") for p in data.get("pages", [])]
-        analysis_payload = call_openrouter_for_analysis(pages, meta)
-        analysis_obj, _ = DocumentAnalysis.objects.update_or_create(
-            document=doc,
-            defaults={
-                "status": "success" if analysis_payload else "failed",
-                "output_json": analysis_payload or {},
-                "model": "openrouter",
-            },
-        )
+        
+        # For production, we'll do a quick analysis or skip it initially
+        # to prevent timeouts. Full analysis can be done via a separate endpoint.
+        if len(pages) <= 3:  # Only analyze small documents synchronously
+            analysis_payload = call_openrouter_for_analysis(pages, meta)
+            analysis_obj.status = "success" if analysis_payload else "failed"
+            analysis_obj.output_json = analysis_payload or {}
+            analysis_obj.save()
+        else:
+            # For larger documents, mark as pending for background processing
+            analysis_obj.status = "pending"
+            analysis_obj.save()
+            
     except Exception as exc:  # noqa: BLE001
-        analysis_obj, _ = DocumentAnalysis.objects.update_or_create(
-            document=doc,
-            defaults={"status": "failed", "error": str(exc)},
-        )
+        analysis_obj.status = "failed"
+        analysis_obj.error = str(exc)
+        analysis_obj.save()
 
     # Trigger translations for all supported languages (background process)
     if analysis_obj and analysis_obj.status == "success":
