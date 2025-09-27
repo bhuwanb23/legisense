@@ -12,12 +12,125 @@ class DocumentListPanel extends StatefulWidget {
   State<DocumentListPanel> createState() => _DocumentListPanelState();
 }
 
+/// Controller for DocumentListPanel to allow external refresh
+class DocumentListController {
+  _DocumentListPanelState? _state;
+  
+  void _attach(_DocumentListPanelState state) {
+    _state = state;
+  }
+  
+  void _detach() {
+    _state = null;
+  }
+  
+  /// Refresh the documents list
+  void refreshDocuments() {
+    _state?.refreshDocuments();
+  }
+  
+  /// Force UI update
+  void forceUIUpdate() {
+    _state?.forceUIUpdate();
+  }
+}
+
 class _DocumentListPanelState extends State<DocumentListPanel> {
   String _query = '';
+  List<Map<String, dynamic>> _documents = [];
+  bool _isLoading = true;
+  String? _error;
+  ParsedDocumentsRepository? _repo;
+  DocumentListController? _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _repo = ParsedDocumentsRepository(baseUrl: ApiConfig.baseUrl);
+    // Load documents after a short delay to ensure everything is initialized
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _loadDocuments();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller?._detach();
+    super.dispose();
+  }
+
+  /// Called when the page becomes visible again
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Only refresh if repository is already initialized
+    if (_repo != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _loadDocuments();
+        }
+      });
+    }
+  }
+
+  /// Attach a controller to this state
+  void attachController(DocumentListController controller) {
+    _controller = controller;
+    controller._attach(this);
+  }
+
+  /// Ensure repository is initialized
+  void _ensureRepositoryInitialized() {
+    if (_repo == null) {
+      _repo = ParsedDocumentsRepository(baseUrl: ApiConfig.baseUrl);
+    }
+  }
+
+  Future<void> _loadDocuments() async {
+    // Ensure repository is initialized
+    _ensureRepositoryInitialized();
+
+    try {
+      setState(() {
+        _isLoading = true;
+        _error = null;
+      });
+
+      final documents = await _repo!.fetchDocuments();
+      if (mounted) {
+        setState(() {
+          _documents = documents;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = e.toString();
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  /// Manually refresh the documents list
+  void refreshDocuments() {
+    _loadDocuments();
+  }
+
+  /// Force UI update with current data
+  void forceUIUpdate() {
+    if (mounted) {
+      setState(() {
+        // Trigger rebuild
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final repo = ParsedDocumentsRepository(baseUrl: ApiConfig.baseUrl);
     final lang = LanguageScope.maybeOf(context)?.language ?? AppLanguage.en;
     final i18n = DocumentsI18n.mapFor(lang);
     return Container(
@@ -29,22 +142,50 @@ class _DocumentListPanelState extends State<DocumentListPanel> {
         children: [
           ListHeader(title: i18n['docs.list.title'] ?? 'Document List'),
           SearchField(onChanged: (v) => setState(() => _query = v)),
-
+          const Divider(height: 1, color: Color(0xFFE5E7EB)),
+          
+          // Document count and refresh button
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  '${_documents.length} document${_documents.length == 1 ? '' : 's'}',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF6B7280),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                IconButton(
+                  onPressed: _loadDocuments,
+                  icon: const Icon(Icons.refresh, size: 18),
+                  tooltip: 'Refresh documents',
+                  style: IconButton.styleFrom(
+                    backgroundColor: const Color(0xFFF3F4F6),
+                    foregroundColor: const Color(0xFF6B7280),
+                    padding: const EdgeInsets.all(8),
+                  ),
+                ),
+              ],
+            ),
+          ),
           const Divider(height: 1, color: Color(0xFFE5E7EB)),
 
           // List
           Expanded(
-            child: FutureBuilder<List<Map<String, dynamic>>>(
-              future: repo.fetchDocuments(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState != ConnectionState.done) {
+            child: Builder(
+              builder: (context) {
+                if (_isLoading) {
                   return const _LoadingListSkeleton();
                 }
-                if (snapshot.hasError) {
-                  return _ErrorCard(error: snapshot.error.toString(), i18n: i18n);
+                if (_error != null) {
+                  return _ErrorCard(error: _error!, i18n: i18n);
                 }
+                
                 final String q = _query.trim().toLowerCase();
-                List<Map<String, dynamic>> list = (snapshot.data ?? const <Map<String, dynamic>>[]);
+                List<Map<String, dynamic>> list = _documents;
                 if (q.isNotEmpty) {
                   list = list.where((e) {
                     final name = (e['file_name'] ?? '').toString().toLowerCase();
@@ -55,6 +196,7 @@ class _DocumentListPanelState extends State<DocumentListPanel> {
                   return _EmptyStateCard(i18n: i18n);
                 }
                 return ListView.separated(
+                  key: ValueKey('documents_list_${_documents.length}'),
                   itemCount: list.length,
                   separatorBuilder: (_, __) => const Divider(height: 1, color: Color(0xFFF3F4F6)),
                   itemBuilder: (context, index) {

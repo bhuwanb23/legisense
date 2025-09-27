@@ -21,17 +21,106 @@ class DocumentListSection extends StatefulWidget {
 
 class _DocumentListSectionState extends State<DocumentListSection> {
   String _searchQuery = '';
+  List<Map<String, dynamic>> _documents = [];
+  bool _isLoading = true;
+  String? _error;
+  ParsedDocumentsRepository? _repo;
+
+  @override
+  void initState() {
+    super.initState();
+    _repo = ParsedDocumentsRepository(baseUrl: ApiConfig.baseUrl);
+    _loadDocuments();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+  }
+
+  /// Called when the page becomes visible again
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Refresh documents when page becomes visible (useful after navigation)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && _repo != null) {
+        _loadDocuments();
+      }
+    });
+  }
+
+  /// Ensure repository is initialized
+  void _ensureRepositoryInitialized() {
+    if (_repo == null) {
+      _repo = ParsedDocumentsRepository(baseUrl: ApiConfig.baseUrl);
+    }
+  }
+
+  Future<void> _loadDocuments() async {
+    // Ensure repository is initialized
+    _ensureRepositoryInitialized();
+
+    try {
+      setState(() {
+        _isLoading = true;
+        _error = null;
+      });
+
+      final documents = await _repo!.fetchDocuments();
+      if (mounted) {
+        setState(() {
+          _documents = documents;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = e.toString();
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  /// Manually refresh the documents list
+  void refreshDocuments() {
+    _loadDocuments();
+  }
+
+  /// Force UI update with current data
+  void forceUIUpdate() {
+    if (mounted) {
+      setState(() {
+        // Trigger rebuild
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final repo = ParsedDocumentsRepository(baseUrl: ApiConfig.baseUrl);
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: AppTheme.spacingM, vertical: AppTheme.spacingS),
       decoration: SimStyles.sectionDecoration(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const ListHeader(title: 'Document List'),
+          Row(
+            children: [
+              const Expanded(child: ListHeader(title: 'Document List')),
+              IconButton(
+                onPressed: _loadDocuments,
+                icon: const Icon(Icons.refresh, size: 18),
+                tooltip: 'Refresh documents',
+                style: IconButton.styleFrom(
+                  backgroundColor: const Color(0xFFF3F4F6),
+                  foregroundColor: const Color(0xFF6B7280),
+                  padding: const EdgeInsets.all(8),
+                ),
+              ),
+            ],
+          ),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
             child: Container(
@@ -48,17 +137,32 @@ class _DocumentListSectionState extends State<DocumentListSection> {
             ),
           ),
           const Divider(height: 1, color: Color(0xFFE5E7EB)),
-          // Match documents page: server-backed list (natural height within parent scroll)
-          FutureBuilder<List<Map<String, dynamic>>>(
-            future: repo.fetchDocuments(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState != ConnectionState.done) {
+          
+          // Document count
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Text(
+              '${_documents.length} document${_documents.length == 1 ? '' : 's'}',
+              style: const TextStyle(
+                fontSize: 12,
+                color: Color(0xFF6B7280),
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          const Divider(height: 1, color: Color(0xFFE5E7EB)),
+          
+          // Server-backed list (natural height within parent scroll)
+          Builder(
+            builder: (context) {
+              if (_isLoading) {
                 return const _LoadingListSkeleton();
               }
-              if (snapshot.hasError) {
-                return _ErrorCard(error: snapshot.error.toString());
+              if (_error != null) {
+                return _ErrorCard(error: _error!);
               }
-              List<Map<String, dynamic>> list = (snapshot.data ?? const <Map<String, dynamic>>[]);
+              
+              List<Map<String, dynamic>> list = _documents;
               final String q = _searchQuery.trim().toLowerCase();
               if (q.isNotEmpty) {
                 list = list.where((e) {
@@ -70,6 +174,7 @@ class _DocumentListSectionState extends State<DocumentListSection> {
                 return const _EmptyStateCard();
               }
               return ListView.separated(
+                key: ValueKey('simulation_documents_list_${_documents.length}'),
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: list.length,
@@ -109,7 +214,7 @@ class _DocumentListSectionState extends State<DocumentListSection> {
                               // Show simulation count if available
                               Expanded(
                                 child: FutureBuilder<Map<String, dynamic>>(
-                                  future: repo.checkDocumentSimulations(documentId: id),
+                                  future: _repo!.checkDocumentSimulations(documentId: id),
                                   builder: (context, snapshot) {
                                     final int simulationCount = snapshot.data?['simulation_count'] ?? 0;
                                     if (simulationCount > 0) {
@@ -142,7 +247,7 @@ class _DocumentListSectionState extends State<DocumentListSection> {
                               ),
                               const SizedBox(width: 8),
                               FutureBuilder<Map<String, dynamic>>(
-                                future: repo.checkDocumentSimulations(documentId: id),
+                                future: _repo!.checkDocumentSimulations(documentId: id),
                                 builder: (context, snapshot) {
                                   final bool hasSimulations = snapshot.data?['has_simulations'] == true;
                                   
@@ -158,7 +263,7 @@ class _DocumentListSectionState extends State<DocumentListSection> {
                                         );
                                         try {
                                           // Step 1: Trigger simulation (may return cached or new data)
-                                          final result = await repo.simulateDocument(id: id);
+                                          final result = await _repo!.simulateDocument(id: id);
                                           if (!context.mounted) return;
                                           
                                           // Check if this was a cached simulation
@@ -167,7 +272,7 @@ class _DocumentListSectionState extends State<DocumentListSection> {
                                           
                                           // Step 2: Fetch the simulation data
                                           final sessionId = result['session_id'] as int;
-                                          final simulationData = await repo.fetchSimulationData(sessionId: sessionId);
+                                          final simulationData = await _repo!.fetchSimulationData(sessionId: sessionId);
                                           
                                           if (!context.mounted) return;
                                           Navigator.of(context).pop(); // close loader

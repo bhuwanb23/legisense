@@ -293,6 +293,14 @@ class _EnhancedSimulationDetailsPageState extends State<EnhancedSimulationDetail
 
     // Apply parameter-based transformations
     _applyParameterEffects();
+    
+    // Trigger UI update after data calculation
+    if (mounted) {
+      setState(() {
+        // This will trigger a rebuild of the UI with the new data
+        developer.log('🔄 UI update triggered after data calculation', name: 'EnhancedSimulationDetailsPage');
+      });
+    }
   }
 
   void _applyParameterEffects() {
@@ -419,6 +427,44 @@ class _EnhancedSimulationDetailsPageState extends State<EnhancedSimulationDetail
     }
   }
 
+  /// Manually refresh the simulation data and trigger UI update
+  void refreshSimulationData() {
+    developer.log('🔄 Manual refresh triggered', name: 'EnhancedSimulationDetailsPage');
+    _calculateDynamicData();
+  }
+
+  /// Force UI update with current data
+  void forceUIUpdate() {
+    if (mounted) {
+      setState(() {
+        developer.log('🔄 Force UI update triggered', name: 'EnhancedSimulationDetailsPage');
+      });
+    }
+  }
+
+  /// Update specific parameter and trigger UI refresh
+  void updateParameter(String key, dynamic value) {
+    if (mounted) {
+      setState(() {
+        _parameters[key] = value;
+        developer.log('🔄 Parameter updated: $key = $value', name: 'EnhancedSimulationDetailsPage');
+        _calculateDynamicData();
+      });
+    }
+  }
+
+  /// Update scenario and trigger UI refresh
+  void updateScenario(SimulationScenario scenario) {
+    if (mounted) {
+      setState(() {
+        _selectedScenario = scenario;
+        _parameters['scenario'] = scenario;
+        developer.log('🔄 Scenario updated: $scenario', name: 'EnhancedSimulationDetailsPage');
+        _calculateDynamicData();
+      });
+    }
+  }
+
   Widget _section(Widget child) {
     return child;
   }
@@ -450,6 +496,7 @@ class _EnhancedSimulationDetailsPageState extends State<EnhancedSimulationDetail
               
               // Main content with scrolling below fixed header
               SingleChildScrollView(
+                key: ValueKey('simulation_content_${_dynamicSimulationData?.hashCode ?? 0}'),
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -872,12 +919,30 @@ class _EnhancedSimulationDetailsPageState extends State<EnhancedSimulationDetail
                   ),
                 ),
               ),
+              const SizedBox(width: 8),
+              ElevatedButton.icon(
+                onPressed: () {
+                  refreshSimulationData();
+                },
+                icon: const Icon(Icons.refresh, size: 16),
+                label: const Text('Refresh UI'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 8),
           Text(
             'Current Language: ${LanguageScope.maybeOf(context)?.language.name ?? 'en'} | Previous: $_currentLanguage',
             style: const TextStyle(fontSize: 12, color: Colors.grey),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Data Hash: ${_dynamicSimulationData?.hashCode ?? 0} | Parameters: ${_parameters.toString()}',
+            style: const TextStyle(fontSize: 10, color: Colors.grey),
           ),
         ],
       ),
