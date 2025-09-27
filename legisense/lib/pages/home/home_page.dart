@@ -82,16 +82,6 @@ class _HomePageState extends State<HomePage> {
                           )
                           ,
                       
-                      // Recent Files with slide animation
-                      const RecentFiles()
-                          .animate()
-                          .slideY(
-                            begin: 0.3,
-                            duration: AppTheme.animationSlow,
-                            curve: Curves.easeOut,
-                          )
-                          ,
-                      
                       // Quick Actions with enhanced animation
                       const QuickActions()
                           .animate()
