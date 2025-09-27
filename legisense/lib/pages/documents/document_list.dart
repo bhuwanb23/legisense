@@ -59,6 +59,7 @@ class _DocumentListPanelState extends State<DocumentListPanel> {
                   return const _LoadingListSkeleton();
                 }
                 if (snapshot.hasError) {
+                  print('DEBUG: Document list error: ${snapshot.error}');
                   return _ErrorCard(error: snapshot.error.toString(), i18n: i18n);
                 }
                 final String q = _query.trim().toLowerCase();

@@ -10,9 +10,9 @@ import '../pages/documents/data/sample_documents.dart';
 /// the parsed result as a `SampleDocument`-compatible object for display.
 class ApiConfig {
   /// Resolves a sensible default base URL depending on environment.
-  /// Overridden to a fixed Wi‑Fi IP as requested.
+  /// Overridden to localhost for local testing.
   static String get baseUrl {
-    return 'https://legisense-backend-1.onrender.com';
+    return 'http://localhost:8000';
   }
 }
 
@@ -26,15 +26,39 @@ class ParsedDocumentsRepository {
 
   List<SampleDocument> get uploadedDocs => List.unmodifiable(_uploadedDocs);
 
-  Future<List<Map<String, dynamic>>> fetchDocuments() async {
-    final uri = Uri.parse('$baseUrl/api/documents/');
-    final res = await http.get(uri);
-    if (res.statusCode != 200) {
-      throw HttpException('List failed (${res.statusCode}): ${res.body}');
+  /// Test method to verify API connectivity
+  Future<bool> testConnection() async {
+    try {
+      final uri = Uri.parse('$baseUrl/api/documents/');
+      print('DEBUG: Testing connection to: $uri');
+      final res = await http.get(uri);
+      print('DEBUG: Test response status: ${res.statusCode}');
+      return res.statusCode == 200;
+    } catch (e) {
+      print('DEBUG: Connection test failed: $e');
+      return false;
     }
-    final Map<String, dynamic> data = json.decode(res.body) as Map<String, dynamic>;
-    final List<dynamic> results = (data['results'] ?? []) as List<dynamic>;
-    return results.cast<Map<String, dynamic>>();
+  }
+
+  Future<List<Map<String, dynamic>>> fetchDocuments() async {
+    try {
+      final uri = Uri.parse('$baseUrl/api/documents/');
+      print('DEBUG: Fetching documents from: $uri');
+      final res = await http.get(uri);
+      print('DEBUG: Response status: ${res.statusCode}');
+      print('DEBUG: Response body: ${res.body}');
+      
+      if (res.statusCode != 200) {
+        throw HttpException('List failed (${res.statusCode}): ${res.body}');
+      }
+      final Map<String, dynamic> data = json.decode(res.body) as Map<String, dynamic>;
+      final List<dynamic> results = (data['results'] ?? []) as List<dynamic>;
+      print('DEBUG: Parsed ${results.length} documents');
+      return results.cast<Map<String, dynamic>>();
+    } catch (e) {
+      print('DEBUG: Error in fetchDocuments: $e');
+      rethrow;
+    }
   }
 
   Future<SampleDocument> fetchDocumentDetail(int id) async {
