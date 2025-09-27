@@ -445,7 +445,7 @@ class ParsedDocumentsRepository {
   }
 
   // --- Gemini Chat ---
-  Future<String> sendChatPrompt(String prompt, {String model = 'gemini-2.0-flash'}) async {
+  Future<Map<String, dynamic>> sendChatPrompt(String prompt, {String model = 'gemini-2.0-flash', String language = 'en'}) async {
     final uri = Uri.parse('$baseUrl/api/chat/gemini/');
     final res = await http.post(
       uri,
@@ -453,6 +453,7 @@ class ParsedDocumentsRepository {
       body: json.encode({
         'prompt': prompt,
         'model': model,
+        'language': language,
         // You can pass thinking_budget: 0 to disable thinking if desired
       }),
     );
@@ -460,7 +461,7 @@ class ParsedDocumentsRepository {
       throw HttpException('Chat failed (${res.statusCode}): ${res.body}');
     }
     final Map<String, dynamic> data = json.decode(res.body) as Map<String, dynamic>;
-    return (data['text'] ?? '').toString();
+    return data;
   }
 }
 

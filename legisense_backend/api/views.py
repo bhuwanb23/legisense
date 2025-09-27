@@ -661,10 +661,10 @@ def chat_gemini_view(request: HttpRequest):
     """Proxy endpoint that forwards chat prompts to Google Gemini.
 
     Request JSON:
-    { "prompt": "Hello" , "model": "gemini-2.0-flash", "thinking_budget": 0 }
+    { "prompt": "Hello" , "model": "gemini-2.0-flash", "thinking_budget": 0, "language": "hi" }
 
     Response JSON:
-    { "text": "..." }
+    { "text": "...", "original_text": "...", "translated": true }
     """
     if request.method != "POST":
         return JsonResponse({"error": "Method not allowed"}, status=405)
@@ -676,19 +676,50 @@ def chat_gemini_view(request: HttpRequest):
     prompt = (payload.get("prompt") or "").strip()
     model = payload.get("model") or None
     thinking_budget = payload.get("thinking_budget")
+    language = payload.get("language", "en")
     system_instruction = payload.get("system_instruction") or _GEMINI_SYSTEM_PROMPT
     if not prompt:
         return JsonResponse({"error": "prompt is required"}, status=400)
 
     try:
         client = GoogleGeminiAPI()
-        text = client.generate_text(
+        original_text = client.generate_text(
             prompt,
             model=model,
             thinking_budget=thinking_budget,
             system_instruction=system_instruction,
         )
-        return JsonResponse({"text": text})
+        
+        # Translate the response if language is not English
+        if language != "en" and language in ["hi", "ta", "te"]:
+            try:
+                translator = DocumentTranslator()
+                translated_text = translator.translate_text(original_text, language, "en")
+                return JsonResponse({
+                    "text": translated_text,
+                    "original_text": original_text,
+                    "translated": True,
+                    "language": language
+                })
+            except Exception as translation_error:
+                # If translation fails, return original text with error flag
+                print(f"Translation failed: {translation_error}")
+                return JsonResponse({
+                    "text": original_text,
+                    "original_text": original_text,
+                    "translated": False,
+                    "translation_error": str(translation_error),
+                    "language": language
+                })
+        else:
+            # Return original text for English or unsupported languages
+            return JsonResponse({
+                "text": original_text,
+                "original_text": original_text,
+                "translated": False,
+                "language": language
+            })
+            
     except (ValueError, GeminiAPIError) as exc:  # missing key or API error
         return JsonResponse({"error": str(exc)}, status=500)
 

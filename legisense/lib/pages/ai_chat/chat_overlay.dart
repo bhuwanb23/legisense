@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 import '../../api/parsed_documents_repository.dart';
+import '../profile/language/language_scope.dart';
 
 class ChatOverlay extends StatefulWidget {
   const ChatOverlay({super.key});
@@ -17,6 +18,9 @@ class _ChatOverlayState extends State<ChatOverlay> with TickerProviderStateMixin
       role: _ChatRole.assistant,
       text:
           'I am Legisense AI. I specialize in legal documents, compliance, and jurisdiction-related questions. I will answer clearly and honestly, and I will note when laws can vary by jurisdiction. How can I help you today?',
+      originalText: null,
+      isTranslated: false,
+      language: null,
     ),
   ];
   final TextEditingController _textController = TextEditingController();
@@ -27,6 +31,9 @@ class _ChatOverlayState extends State<ChatOverlay> with TickerProviderStateMixin
   bool _hasUnread = false;
   bool _isSending = false;
   Animation<Offset> _panelOffset = const AlwaysStoppedAnimation<Offset>(Offset.zero);
+  
+  // Translation toggle state - maps message index to show original (true) or translated (false)
+  final Map<int, bool> _showOriginalText = {};
 
   @override
   void initState() {
@@ -62,11 +69,23 @@ class _ChatOverlayState extends State<ChatOverlay> with TickerProviderStateMixin
     });
   }
 
+  void _toggleMessageTranslation(int messageIndex) {
+    setState(() {
+      _showOriginalText[messageIndex] = !(_showOriginalText[messageIndex] ?? false);
+    });
+  }
+
   void _handleSend() {
     final text = _textController.text.trim();
     if (text.isEmpty) return;
     setState(() {
-      _messages.add(_ChatMessage(role: _ChatRole.user, text: text));
+      _messages.add(_ChatMessage(
+        role: _ChatRole.user, 
+        text: text,
+        originalText: null,
+        isTranslated: false,
+        language: null,
+      ));
       _textController.clear();
     });
     _sendToBackend(text);
@@ -77,17 +96,41 @@ class _ChatOverlayState extends State<ChatOverlay> with TickerProviderStateMixin
       setState(() {
         _isSending = true;
       });
+      
+      // Get current language from LanguageScope
+      final languageController = LanguageScope.maybeOf(context);
+      final currentLanguage = languageController?.language.name ?? 'en';
+      
       final repo = ParsedDocumentsRepository(baseUrl: ApiConfig.baseUrl);
-      final reply = await repo.sendChatPrompt(text);
+      final response = await repo.sendChatPrompt(text, language: currentLanguage);
+      
       if (!mounted) return;
+      
+      final replyText = response['text']?.toString() ?? '';
+      final originalText = response['original_text']?.toString();
+      final isTranslated = response['translated'] == true;
+      final language = response['language']?.toString();
+      
       setState(() {
-        _messages.add(_ChatMessage(role: _ChatRole.assistant, text: reply.isEmpty ? '...' : reply));
+        _messages.add(_ChatMessage(
+          role: _ChatRole.assistant, 
+          text: replyText.isEmpty ? '...' : replyText,
+          originalText: originalText,
+          isTranslated: isTranslated,
+          language: language,
+        ));
         _isSending = false;
       });
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _messages.add(_ChatMessage(role: _ChatRole.assistant, text: 'Error: $e'));
+        _messages.add(_ChatMessage(
+          role: _ChatRole.assistant, 
+          text: 'Error: $e',
+          originalText: null,
+          isTranslated: false,
+          language: null,
+        ));
         _isSending = false;
         if (!_isOpen) _hasUnread = true;
       });
@@ -177,7 +220,51 @@ class _ChatOverlayState extends State<ChatOverlay> with TickerProviderStateMixin
                                     children: [
                                       Icon(Icons.chat_bubble_rounded, color: theme.colorScheme.primary),
                                       const SizedBox(width: 8),
-                                      Text('AI Chat', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text('AI Chat', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+                                            Builder(
+                                              builder: (context) {
+                                                final languageController = LanguageScope.maybeOf(context);
+                                                final currentLanguage = languageController?.language.name ?? 'en';
+                                                final languageNames = {
+                                                  'en': 'English',
+                                                  'hi': 'Hindi',
+                                                  'ta': 'Tamil',
+                                                  'te': 'Telugu',
+                                                };
+                                                final languageName = languageNames[currentLanguage] ?? 'English';
+                                                
+                                                return Text(
+                                                  currentLanguage != 'en' ? 'Translating to $languageName' : 'English',
+                                                  style: theme.textTheme.bodySmall?.copyWith(
+                                                    color: theme.colorScheme.primary.withValues(alpha: 0.7),
+                                                    fontSize: 11,
+                                                  ),
+                                                );
+                                              },
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      // Translation indicator icon
+                                      Builder(
+                                        builder: (context) {
+                                          final languageController = LanguageScope.maybeOf(context);
+                                          final currentLanguage = languageController?.language.name ?? 'en';
+                                          
+                                          if (currentLanguage != 'en') {
+                                            return Icon(
+                                              Icons.translate,
+                                              color: theme.colorScheme.primary.withValues(alpha: 0.7),
+                                              size: 16,
+                                            );
+                                          }
+                                          return const SizedBox.shrink();
+                                        },
+                                      ),
                                     ],
                                   ),
                                 ),
@@ -197,6 +284,13 @@ class _ChatOverlayState extends State<ChatOverlay> with TickerProviderStateMixin
                                           ? const LinearGradient(colors: [Color(0xFF3B82F6), Color(0xFFA78BFA)])
                                           : const LinearGradient(colors: [Color(0xFFE5E7EB), Color(0xFFF5F6F8)]);
                                       final textColor = isUser ? Colors.white : theme.colorScheme.onSurface;
+                                      
+                                      // Determine which text to show
+                                      final showOriginal = _showOriginalText[index] ?? false;
+                                      final displayText = showOriginal && msg.originalText != null 
+                                          ? msg.originalText! 
+                                          : msg.text;
+                                      
                                       return Align(
                                         alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
                                         child: Container(
@@ -213,9 +307,56 @@ class _ChatOverlayState extends State<ChatOverlay> with TickerProviderStateMixin
                                               ),
                                             ],
                                           ),
-                                          child: Text(
-                                            msg.text,
-                                            style: theme.textTheme.bodyMedium?.copyWith(color: textColor),
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                displayText,
+                                                style: theme.textTheme.bodyMedium?.copyWith(color: textColor),
+                                              ),
+                                              // Show toggle button for translated assistant messages
+                                              if (!isUser && (msg.isTranslated ?? false) && msg.originalText != null) ...[
+                                                const SizedBox(height: 4),
+                                                Row(
+                                                  mainAxisSize: MainAxisSize.min,
+                                                  children: [
+                                                    GestureDetector(
+                                                      onTap: () => _toggleMessageTranslation(index),
+                                                      child: Container(
+                                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                                        decoration: BoxDecoration(
+                                                          color: textColor.withValues(alpha: 0.15),
+                                                          borderRadius: BorderRadius.circular(12),
+                                                          border: Border.all(
+                                                            color: textColor.withValues(alpha: 0.2),
+                                                            width: 0.5,
+                                                          ),
+                                                        ),
+                                                        child: Row(
+                                                          mainAxisSize: MainAxisSize.min,
+                                                          children: [
+                                                            Icon(
+                                                              showOriginal ? Icons.translate : Icons.language,
+                                                              size: 12,
+                                                              color: textColor.withValues(alpha: 0.8),
+                                                            ),
+                                                            const SizedBox(width: 4),
+                                                            Text(
+                                                              showOriginal ? 'Original' : 'Translated',
+                                                              style: theme.textTheme.bodySmall?.copyWith(
+                                                                color: textColor.withValues(alpha: 0.8),
+                                                                fontSize: 10,
+                                                                fontWeight: FontWeight.w500,
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ],
+                                            ],
                                           ),
                                         ),
                                       );
@@ -385,7 +526,16 @@ enum _ChatRole { user, assistant }
 class _ChatMessage {
   final _ChatRole role;
   final String text;
-  const _ChatMessage({required this.role, required this.text});
+  final String? originalText;
+  final bool? isTranslated;
+  final String? language;
+  const _ChatMessage({
+    required this.role, 
+    required this.text,
+    this.originalText,
+    this.isTranslated,
+    this.language,
+  });
 }
 
 class _TypingBubble extends StatefulWidget {
