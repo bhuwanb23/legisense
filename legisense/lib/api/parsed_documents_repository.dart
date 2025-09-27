@@ -10,9 +10,9 @@ import '../pages/documents/data/sample_documents.dart';
 /// the parsed result as a `SampleDocument`-compatible object for display.
 class ApiConfig {
   /// Resolves a sensible default base URL depending on environment.
-  /// Overridden to a fixed Wi‑Fi IP as requested.
+  /// Updated to use the hosted Render.com server.
   static String get baseUrl {
-    return 'http://192.168.31.67:8000';
+    return 'https://legisense-1.onrender.com';
   }
 }
 
@@ -30,7 +30,18 @@ class ParsedDocumentsRepository {
     final uri = Uri.parse('$baseUrl/api/documents/');
     final res = await http.get(uri);
     if (res.statusCode != 200) {
-      throw HttpException('List failed (${res.statusCode}): ${res.body}');
+      // Check if response is HTML (Django error page)
+      String errorMessage = res.body;
+      if (res.headers['content-type']?.contains('text/html') == true) {
+        if (errorMessage.contains('OperationalError')) {
+          errorMessage = 'Database connection error. The server is having database issues.';
+        } else if (errorMessage.contains('500')) {
+          errorMessage = 'Server error (500). Please check if the server is properly configured.';
+        } else {
+          errorMessage = 'Server error. Please check the server configuration.';
+        }
+      }
+      throw HttpException('List failed (${res.statusCode}): $errorMessage');
     }
     final Map<String, dynamic> data = json.decode(res.body) as Map<String, dynamic>;
     final List<dynamic> results = (data['results'] ?? []) as List<dynamic>;
@@ -95,7 +106,21 @@ class ParsedDocumentsRepository {
 
     final response = await http.Response.fromStream(await request.send());
     if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw HttpException('Upload failed (${response.statusCode}): ${response.body}');
+      // Check if response is HTML (Django error page)
+      String errorMessage = response.body;
+      if (response.headers['content-type']?.contains('text/html') == true) {
+        // Extract meaningful error from HTML response
+        if (errorMessage.contains('OperationalError')) {
+          errorMessage = 'Database connection error. The server is having database issues. Please try again later.';
+        } else if (errorMessage.contains('500')) {
+          errorMessage = 'Server error (500). Please check if the server is properly configured.';
+        } else if (errorMessage.contains('CSRF')) {
+          errorMessage = 'Security token error. Please try again.';
+        } else {
+          errorMessage = 'Server error. Please check the server configuration.';
+        }
+      }
+      throw HttpException('Upload failed (${response.statusCode}): $errorMessage');
     }
 
     final Map<String, dynamic> data = json.decode(response.body) as Map<String, dynamic>;
