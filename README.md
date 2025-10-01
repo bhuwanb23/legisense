@@ -59,15 +59,271 @@ An AI‑powered Legal Empathy & Simulation Companion that:
 ---
 
 ## ⚙️ Technical Flow (5 Layers)
-- **Ingestion**: Upload → storage → metadata.
-- **Preprocessing**: OCR/contract parsing → clean text → clause detection → embeddings.
-- **Analysis**: Retrieval‑augmented generation → summaries, risks, Q&A.
-- **Application Logic**: Clause Explorer, Red‑Flag Reports, What‑If Simulation, Checklists, Q&A.
-- **User Layer**: Home, Documents, Analyzer, Simulation, Profile → clean UI.
 
-Notes:
-- **Current OSS stack (this repo)**: Flutter app (`legisense/`) + Django API (`legisense_backend/`).
-- **Reference cloud architecture (optional for MVP)**: Google Cloud (Cloud Run, Firestore, Document AI, Vertex AI) for scale‑out.
+### 📊 Processing Pipeline Flowchart
+```mermaid
+graph TD
+    A[📄 Document Upload] --> B[☁️ Cloud Storage]
+    B --> C[📢 Pub/Sub Trigger]
+    C --> D[🔍 Document AI Processing]
+    D --> E[🛡️ Cloud DLP Redaction]
+    E --> F[🧠 Vertex AI Embeddings]
+    F --> G[🔍 Matching Engine Index]
+    G --> H[💾 Firestore Storage]
+    H --> I[🤖 Gemini Analysis]
+    I --> J[📊 Risk Scoring]
+    J --> K[🎯 Simulation Generation]
+    K --> L[📱 Flutter App Display]
+    
+    M[👤 Firebase Auth] --> L
+    N[📈 BigQuery Analytics] --> O[📊 Looker Dashboards]
+    H --> N
+    I --> N
+```
+
+### 🏗️ Google Cloud Architecture Diagram
+```mermaid
+graph TB
+    subgraph "🌐 Frontend Layer"
+        FA[📱 Flutter App]
+        FB[🌐 Web Interface]
+    end
+    
+    subgraph "🔐 Authentication & Security"
+        AUTH[🔑 Firebase Auth]
+        IAM[👤 IAM Roles]
+        VPC[🛡️ VPC-SC]
+        CMEK[🔐 CMEK]
+    end
+    
+    subgraph "📡 API Gateway"
+        EP[🌐 Cloud Endpoints]
+        RUN[☁️ Cloud Run]
+    end
+    
+    subgraph "📄 Document Processing"
+        GCS[💾 Cloud Storage]
+        PUB[📢 Pub/Sub]
+        DOCAI[🔍 Document AI]
+        DLP[🛡️ Cloud DLP]
+    end
+    
+    subgraph "🧠 AI & Knowledge"
+        VERTEX[🤖 Vertex AI]
+        GEMINI[💬 Gemini 1.5 Pro/Flash]
+        EMBED[🧮 Embeddings API]
+        MATCH[🔍 Matching Engine]
+        FUNC[⚙️ Function Calling]
+    end
+    
+    subgraph "💾 Data Storage"
+        FIRESTORE[🔥 Firestore]
+        BIGQUERY[📊 BigQuery]
+    end
+    
+    subgraph "📊 Monitoring & Analytics"
+        LOOKER[📈 Looker Studio]
+        LOGS[📝 Cloud Logging]
+    end
+    
+    FA --> AUTH
+    FB --> AUTH
+    AUTH --> EP
+    EP --> RUN
+    RUN --> GCS
+    RUN --> PUB
+    PUB --> DOCAI
+    DOCAI --> DLP
+    DLP --> VERTEX
+    VERTEX --> GEMINI
+    VERTEX --> EMBED
+    EMBED --> MATCH
+    MATCH --> FIRESTORE
+    GEMINI --> FUNC
+    FUNC --> BIGQUERY
+    FIRESTORE --> LOOKER
+    BIGQUERY --> LOOKER
+    RUN --> LOGS
+    
+    IAM -.-> RUN
+    VPC -.-> GCS
+    CMEK -.-> FIRESTORE
+```
+
+### 🔄 Layer-by-Layer Breakdown
+- **Ingestion**: Upload → Cloud Storage → Pub/Sub trigger → metadata extraction
+- **Preprocessing**: Document AI (OCR/parsing) → Cloud DLP (PII redaction) → clean text → clause detection
+- **Analysis**: Vertex AI Embeddings → Matching Engine → Gemini 1.5 Pro/Flash → summaries, risks, Q&A
+- **Application Logic**: Function Calling → Clause Explorer, Red‑Flag Reports, What‑If Simulation, Checklists
+- **User Layer**: Firebase Auth → Flutter app → Home, Documents, Analyzer, Simulation, Profile
+
+### 🏗️ Architecture Notes
+- **Current OSS stack (this repo)**: Flutter app (`legisense/`) + Django API (`legisense_backend/`)
+- **Production cloud architecture**: Google Cloud (Cloud Run, Firestore, Document AI, Vertex AI) for scale‑out
+- **Serverless design**: Auto-scaling, pay-per-use, event-driven processing
+
+---
+
+## ☁️ Google Cloud Tools & Services
+
+### 📄 1. Document Ingestion & Processing
+
+| Service | Purpose | Key Features |
+|---------|---------|--------------|
+| **Google Cloud Storage (GCS)** | Store uploaded PDFs, DOCX, images | • Multi-regional storage<br>• Lifecycle management<br>• Signed URLs for secure access |
+| **Cloud Run** | API layer for upload, preprocessing, analysis orchestration | • Serverless containers<br>• Auto-scaling (0-1000 instances)<br>• Pay-per-request pricing |
+| **Cloud Pub/Sub** | Event-driven pipeline trigger | • Asynchronous processing<br>• Guaranteed delivery<br>• Dead letter queues |
+
+### 🔍 2. Document Parsing & Cleaning
+
+| Service | Purpose | Key Features |
+|---------|---------|--------------|
+| **Document AI (DocAI)** | OCR, Contract Parser, Form Extractor | • Contract-specific parsing<br>• Entity extraction (dates, amounts, parties)<br>• Form field detection |
+| **Cloud DLP** | Detect & redact sensitive data | • PII detection (Aadhaar, PAN, names)<br>• Custom data types<br>• De-identification templates |
+
+### 🧠 3. Knowledge & Retrieval
+
+| Service | Purpose | Key Features |
+|---------|---------|--------------|
+| **Vertex AI Embeddings** | Convert document clauses into semantic vectors | • Text embedding models<br>• Multi-language support<br>• Batch processing |
+| **Vertex AI Matching Engine** | ANN-based search for clause retrieval | • Vector similarity search<br>• Real-time indexing<br>• Filtering capabilities |
+| **BigQuery** | Store structured legal data for analytics | • SQL-based queries<br>• Real-time analytics<br>• ML integration |
+| **Firestore** | Store user metadata, doc metadata, analysis results | • NoSQL document store<br>• Real-time updates<br>• Offline support |
+
+### 🤖 4. Reasoning & Generative AI
+
+| Service | Purpose | Key Features |
+|---------|---------|--------------|
+| **Vertex AI Gemini 1.5 Pro** | Deep analysis, risk scoring, simulation generation | • 1M+ token context<br>• Multimodal capabilities<br>• Function calling |
+| **Vertex AI Gemini 1.5 Flash** | Quick summaries, real-time Q&A, UX responsiveness | • Fast inference<br>• Cost-effective<br>• Streaming responses |
+| **Vertex AI Function Calling** | Tools for legal analysis functions | • `extract_clauses()`<br>• `score_risk()`<br>• `simulate_outcomes()`<br>• `generate_checklist()` |
+
+### 🔐 5. Application & Security
+
+| Service | Purpose | Key Features |
+|---------|---------|--------------|
+| **Firebase Auth / Identity Platform** | Secure login (email, phone, OAuth) | • Multi-factor authentication<br>• Social logins<br>• Custom claims |
+| **Cloud Endpoints / API Gateway** | Manage API requests securely | • Rate limiting<br>• API key management<br>• Request/response logging |
+| **VPC-SC (Service Controls)** | Network-level isolation of sensitive data | • Data perimeter security<br>• Service-to-service controls<br>• Compliance boundaries |
+| **CMEK (Customer-Managed Encryption Keys)** | User-controlled encryption | • Key rotation<br>• Audit logging<br>• Compliance support |
+| **IAM (Identity & Access Management)** | Least privilege access for roles | • Role-based access control<br>• Service accounts<br>• Resource-level permissions |
+
+### 📊 6. Monitoring & Analytics
+
+| Service | Purpose | Key Features |
+|---------|---------|--------------|
+| **Looker Studio + BigQuery** | Dashboards for evaluation, performance monitoring | • Real-time dashboards<br>• Custom metrics<br>• Export capabilities |
+| **Cloud Logging** | Centralized logging and monitoring | • Structured logging<br>• Log-based metrics<br>• Error reporting |
+
+### 💰 Cost Optimization Strategy
+
+| Layer | Service | Cost Model | Optimization |
+|-------|---------|------------|--------------|
+| **Storage** | Cloud Storage | $0.020/GB/month | Lifecycle policies, compression |
+| **Processing** | Cloud Run | $0.40/vCPU-hour | Auto-scaling, cold starts |
+| **AI/ML** | Vertex AI | $0.50/1M tokens | Caching, batch processing |
+| **Database** | Firestore | $0.18/100K reads | Query optimization, indexing |
+| **Analytics** | BigQuery | $5/TB processed | Partitioning, clustering |
+
+### 🔄 Data Flow Architecture
+
+```mermaid
+sequenceDiagram
+    participant U as 👤 User
+    participant F as 📱 Flutter App
+    participant A as 🔐 Firebase Auth
+    participant R as ☁️ Cloud Run
+    participant S as 💾 Cloud Storage
+    participant P as 📢 Pub/Sub
+    participant D as 🔍 Document AI
+    participant L as 🛡️ Cloud DLP
+    participant V as 🤖 Vertex AI
+    participant E as 🔍 Matching Engine
+    participant FS as 🔥 Firestore
+    participant BQ as 📊 BigQuery
+    participant LS as 📈 Looker Studio
+
+    U->>F: Upload Document
+    F->>A: Authenticate User
+    A-->>F: Auth Token
+    F->>R: POST /api/parse-pdf
+    R->>S: Store Document
+    R->>P: Publish Upload Event
+    P->>D: Trigger Processing
+    D->>D: OCR & Parse Contract
+    D->>L: Extract & Redact PII
+    L-->>D: Cleaned Text
+    D->>V: Generate Embeddings
+    V->>E: Index Vectors
+    E->>FS: Store Metadata
+    V->>V: Gemini Analysis
+    V->>FS: Store Analysis Results
+    V->>BQ: Store Analytics Data
+    R-->>F: Analysis Complete
+    F->>U: Display Results
+    BQ->>LS: Generate Dashboards
+```
+
+### 🏗️ Service Integration Map
+
+```mermaid
+mindmap
+  root((Legisense<br/>Google Cloud))
+    Document Processing
+      Cloud Storage
+        Multi-regional
+        Lifecycle Management
+        Signed URLs
+      Document AI
+        Contract Parser
+        OCR Engine
+        Form Extractor
+      Cloud DLP
+        PII Detection
+        Data Redaction
+        Custom Types
+    AI & Knowledge
+      Vertex AI
+        Gemini 1.5 Pro
+        Gemini 1.5 Flash
+        Embeddings API
+        Function Calling
+      Matching Engine
+        Vector Search
+        Real-time Indexing
+        Similarity Matching
+    Data Storage
+      Firestore
+        User Data
+        Document Metadata
+        Analysis Results
+      BigQuery
+        Legal Analytics
+        Performance Metrics
+        Compliance Reports
+    Security & Auth
+      Firebase Auth
+        Multi-factor Auth
+        Social Logins
+        Custom Claims
+      IAM
+        Role-based Access
+        Service Accounts
+        Resource Permissions
+      VPC-SC
+        Data Perimeter
+        Service Controls
+        Compliance
+    Monitoring
+      Looker Studio
+        Real-time Dashboards
+        Custom Metrics
+        Export Reports
+      Cloud Logging
+        Structured Logs
+        Error Tracking
+        Performance Monitoring
+```
 
 ---
 
@@ -216,9 +472,9 @@ flutter run --dart-define=LEGISENSE_API_BASE=http://localhost:8000
 
 ---
 
-## 🐳 Docker Architecture
+## 🐳 Docker Architecture (Development)
 
-The application is fully containerized with the following services:
+The application is fully containerized with the following services for local development:
 
 ```
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
@@ -234,6 +490,8 @@ The application is fully containerized with the following services:
                        │   Port: 6379    │
                        └─────────────────┘
 ```
+
+> **Note**: For production deployment, see the [Google Cloud Architecture](#️-technical-flow-5-layers) section above, which provides serverless, auto-scaling infrastructure with Document AI, Vertex AI, and other Google Cloud services.
 
 ### Docker Services
 - **Frontend**: Flutter web app with Nginx
@@ -322,6 +580,17 @@ Add screenshots/GIFs into `assets/` and update paths:
 ---
 
 ## 📦 Build
+
+### Docker Build
+```bash
+# Development build
+docker-compose -f docker-compose.dev.yml build
+
+# Production build
+docker-compose build
+```
+
+### Manual Build
 ```bash
 # Android
 flutter build apk
@@ -336,6 +605,14 @@ flutter build web
 ---
 
 ## 🧯 Troubleshooting
+
+### Docker Issues
+- **Port already in use**: Check what's using the port with `netstat -ano | findstr :8080` and kill the process
+- **Services not starting**: Check logs with `scripts\docker-dev.bat logs`
+- **Database issues**: Reset with `scripts\docker-dev.bat cleanup` then `scripts\docker-dev.bat start`
+- **Permission issues**: Ensure Docker has proper permissions and restart Docker Desktop
+
+### General Issues
 - **Android networking**: use `http://10.0.2.2:8000` for the emulator.
 - **Analysis 404 initially**: UI polls for ~30s, then shows a friendly message.
 - **Overlap with status bar**: ensure `SafeArea` wraps page bodies (already applied).
@@ -343,7 +620,29 @@ flutter build web
 ---
 
 ## ✅ In Summary
+
 **Legisense** is a citizen‑first, India‑first legal AI companion that not only explains contracts but also simulates consequences, adapts to local laws, and supports users empathetically — bridging a major access‑to‑justice gap while remaining feasible, scalable, and affordable.
+
+### 🏗️ Architecture Summary
+
+| Layer | Technology Stack | Purpose |
+|-------|------------------|---------|
+| **Frontend** | Flutter (Cross-platform) | Mobile-first, responsive UI |
+| **Backend** | Django + Cloud Run | API orchestration, business logic |
+| **Document Processing** | Document AI + Cloud DLP | OCR, parsing, PII redaction |
+| **AI/ML** | Vertex AI (Gemini 1.5) | Analysis, simulation, Q&A |
+| **Storage** | Firestore + BigQuery | User data, analytics, knowledge base |
+| **Security** | Firebase Auth + IAM | Authentication, authorization |
+| **Monitoring** | Looker Studio + Cloud Logging | Dashboards, performance tracking |
+
+### 🚀 Key Differentiators
+
+- **🇮🇳 India-First**: Built for Indian legal system, languages, and user needs
+- **🤖 AI-Powered**: Advanced document analysis with Gemini 1.5 Pro/Flash
+- **📊 Simulation Engine**: What-if scenarios for contract outcomes
+- **🛡️ Privacy-Focused**: Local processing options, PII redaction
+- **💰 Cost-Effective**: ~$3-4 per document vs $15-20 for enterprise tools
+- **📱 Mobile-First**: Flutter app for maximum accessibility
 
 ---
 
