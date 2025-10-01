@@ -1,0 +1,63 @@
+# Development Dockerfile for Flutter web app
+FROM ubuntu:22.04
+
+# Set environment variables
+ENV DEBIAN_FRONTEND=noninteractive \
+    FLUTTER_VERSION=3.24.0 \
+    FLUTTER_HOME=/opt/flutter \
+    PATH=$PATH:/opt/flutter/bin:/opt/flutter/bin/cache/dart-sdk/bin
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    git \
+    unzip \
+    xz-utils \
+    zip \
+    libglu1-mesa \
+    lib32stdc++6 \
+    lib32z1 \
+    libstdc++6 \
+    libgconf-2-4 \
+    libxss1 \
+    libasound2 \
+    libxtst6 \
+    libxrandr2 \
+    libasound2 \
+    libpangocairo-1.0-0 \
+    libatk1.0-0 \
+    libcairo-gobject2 \
+    libgtk-3-0 \
+    libgdk-pixbuf2.0-0 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Flutter
+RUN git clone --depth 1 --branch ${FLUTTER_VERSION} https://github.com/flutter/flutter.git ${FLUTTER_HOME} && \
+    ${FLUTTER_HOME}/bin/flutter doctor
+
+# Set up Flutter for web
+RUN ${FLUTTER_HOME}/bin/flutter config --enable-web && \
+    ${FLUTTER_HOME}/bin/flutter precache --web
+
+# Set working directory
+WORKDIR /app
+
+# Copy pubspec files
+COPY pubspec.yaml pubspec.lock ./
+
+# Get dependencies
+RUN ${FLUTTER_HOME}/bin/flutter pub get
+
+# Copy source code
+COPY . .
+
+# Create non-root user
+RUN groupadd -r flutter && useradd -r -g flutter flutter
+RUN chown -R flutter:flutter /app
+USER flutter
+
+# Expose port
+EXPOSE 8080
+
+# Default command for development
+CMD ["flutter", "run", "-d", "web-server", "--web-port", "8080", "--web-hostname", "0.0.0.0"]

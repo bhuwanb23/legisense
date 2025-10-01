@@ -136,10 +136,58 @@ Notes:
 ## 🚀 Getting Started
 
 ### Prerequisites
+- Docker Desktop (Windows/Mac) or Docker Engine (Linux)
+- Git
+
+### Quick Start with Docker (Recommended)
+
+#### 1. Clone and Setup
+```bash
+git clone <your-repository-url>
+cd legisense
+cp env.example .env
+```
+
+#### 2. Start Development Environment
+```bash
+# On Windows
+scripts\docker-dev.bat start
+
+# On Linux/Mac
+./scripts/docker-dev.sh start
+```
+
+#### 3. Access Your Application
+- **Frontend**: http://localhost:8080
+- **Backend API**: http://localhost:8000/api/
+- **Admin Panel**: http://localhost:8000/admin/
+
+#### 4. Create Admin User
+```bash
+# On Windows
+scripts\docker-dev.bat superuser
+
+# On Linux/Mac
+./scripts/docker-dev.sh superuser
+```
+
+### Production Deployment
+```bash
+# Configure environment
+nano .env  # Set DEBUG=false, secure SECRET_KEY, and API keys
+
+# Start production
+scripts\docker-prod.bat start  # Windows
+./scripts/docker-prod.sh start  # Linux/Mac
+```
+
+### Manual Setup (Alternative)
+
+#### Prerequisites
 - Flutter 3.22+ (Dart 3)
 - Python 3.10+
 
-### 1) Backend (Django)
+#### 1) Backend (Django)
 ```bash
 cd legisense_backend
 python -m venv venv
@@ -154,7 +202,7 @@ python manage.py runserver 0.0.0.0:8000
 ```
 Backend runs at `http://localhost:8000` (Android emulator uses `http://10.0.2.2:8000`).
 
-### 2) Frontend (Flutter)
+#### 2) Frontend (Flutter)
 ```bash
 cd legisense
 flutter pub get
@@ -164,6 +212,54 @@ flutter run
 Web/Desktop example:
 ```bash
 flutter run --dart-define=LEGISENSE_API_BASE=http://localhost:8000
+```
+
+---
+
+## 🐳 Docker Architecture
+
+The application is fully containerized with the following services:
+
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Flutter Web   │    │  Django Backend │    │   PostgreSQL    │
+│   (Frontend)    │◄──►│   (API Server)  │◄──►│   (Database)    │
+│   Port: 8080    │    │   Port: 8000    │    │   Port: 5432    │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+                                │
+                                ▼
+                       ┌─────────────────┐
+                       │     Redis       │
+                       │   (Cache)       │
+                       │   Port: 6379    │
+                       └─────────────────┘
+```
+
+### Docker Services
+- **Frontend**: Flutter web app with Nginx
+- **Backend**: Django with Gunicorn
+- **Database**: PostgreSQL with initialization
+- **Cache**: Redis for sessions and caching
+- **Proxy**: Nginx for production load balancing
+
+### Management Scripts
+- `scripts/docker-dev.bat` (Windows) / `scripts/docker-dev.sh` (Linux/Mac) - Development management
+- `scripts/docker-prod.bat` (Windows) / `scripts/docker-prod.sh` (Linux/Mac) - Production management
+
+### Common Docker Commands
+```bash
+# Development
+scripts\docker-dev.bat start      # Start development environment
+scripts\docker-dev.bat logs       # View logs
+scripts\docker-dev.bat migrate    # Run database migrations
+scripts\docker-dev.bat stop       # Stop services
+scripts\docker-dev.bat cleanup    # Clean up resources
+
+# Production
+scripts\docker-prod.bat start     # Start production environment
+scripts\docker-prod.bat monitor   # Monitor services
+scripts\docker-prod.bat backup    # Backup database
+scripts\docker-prod.bat scale 3 2 # Scale services
 ```
 
 ---

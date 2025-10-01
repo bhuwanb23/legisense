@@ -1,0 +1,97 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:15-alpine
+    container_name: legisense_db_dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: legisense_dev
+      POSTGRES_USER: legisense
+      POSTGRES_PASSWORD: legisense_password
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    ports:
+      - "5432:5432"
+    networks:
+      - legisense_network
+
+  # Redis for caching
+  redis:
+    image: redis:7-alpine
+    container_name: legisense_redis_dev
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_dev_data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - legisense_network
+
+  # Django Backend (Development)
+  backend:
+    build:
+      context: ./legisense_backend
+      dockerfile: Dockerfile.dev
+    container_name: legisense_backend_dev
+    restart: unless-stopped
+    environment:
+      - DEBUG=true
+      - DATABASE_URL=postgresql://legisense:legisense_password@db:5432/legisense_dev
+      - REDIS_URL=redis://redis:6379/0
+      - SECRET_KEY=dev-secret-key-not-for-production
+      - ALLOWED_HOSTS=localhost,127.0.0.1,backend,frontend
+      - CORS_ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000,http://localhost:8080,http://127.0.0.1:8080
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
+      - OPENROUTER_MODEL=${OPENROUTER_MODEL:-openai/gpt-4o-mini}
+    volumes:
+      - ./legisense_backend:/app
+      - backend_dev_media:/app/media
+      - backend_dev_documents:/app/documents
+    ports:
+      - "8000:8000"
+    networks:
+      - legisense_network
+    depends_on:
+      - db
+      - redis
+    command: python manage.py runserver 0.0.0.0:8000
+
+  # Flutter Frontend (Development)
+  frontend:
+    build:
+      context: ./legisense
+      dockerfile: Dockerfile.dev
+    container_name: legisense_frontend_dev
+    restart: unless-stopped
+    environment:
+      - FLUTTER_WEB_AUTO_DETECT=true
+    volumes:
+      - ./legisense:/app
+      - /app/build
+      - /app/.dart_tool
+    ports:
+      - "8080:8080"
+    networks:
+      - legisense_network
+    depends_on:
+      - backend
+    command: flutter run -d web-server --web-port 8080 --web-hostname 0.0.0.0
+
+volumes:
+  postgres_dev_data:
+    driver: local
+  redis_dev_data:
+    driver: local
+  backend_dev_media:
+    driver: local
+  backend_dev_documents:
+    driver: local
+
+networks:
+  legisense_network:
+    driver: bridge

@@ -1,0 +1,134 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:15-alpine
+    container_name: legisense_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: legisense
+      POSTGRES_USER: legisense
+      POSTGRES_PASSWORD: legisense_password
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    ports:
+      - "5432:5432"
+    networks:
+      - legisense_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U legisense -d legisense"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis for caching and session storage
+  redis:
+    image: redis:7-alpine
+    container_name: legisense_redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass legisense_redis_password
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - legisense_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # Django Backend
+  backend:
+    build:
+      context: ./legisense_backend
+      dockerfile: Dockerfile
+    container_name: legisense_backend
+    restart: unless-stopped
+    environment:
+      - DEBUG=false
+      - DATABASE_URL=postgresql://legisense:legisense_password@db:5432/legisense
+      - REDIS_URL=redis://:legisense_redis_password@redis:6379/0
+      - SECRET_KEY=your-super-secret-key-change-in-production
+      - ALLOWED_HOSTS=localhost,127.0.0.1,backend,frontend
+      - CORS_ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000,http://localhost:80,http://127.0.0.1:80
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
+      - OPENROUTER_MODEL=${OPENROUTER_MODEL:-openai/gpt-4o-mini}
+    volumes:
+      - backend_media:/app/media
+      - backend_documents:/app/documents
+      - backend_static:/app/staticfiles
+    ports:
+      - "8000:8000"
+    networks:
+      - legisense_network
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/api/', timeout=10)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Flutter Frontend
+  frontend:
+    build:
+      context: ./legisense
+      dockerfile: Dockerfile
+    container_name: legisense_frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    networks:
+      - legisense_network
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Nginx Reverse Proxy (Optional - for production)
+  nginx:
+    image: nginx:alpine
+    container_name: legisense_nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    networks:
+      - legisense_network
+    depends_on:
+      - frontend
+      - backend
+    profiles:
+      - production
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  backend_media:
+    driver: local
+  backend_documents:
+    driver: local
+  backend_static:
+    driver: local
+
+networks:
+  legisense_network:
+    driver: bridge

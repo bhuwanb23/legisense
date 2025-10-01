@@ -52,9 +52,7 @@ class _DocumentListSectionState extends State<DocumentListSection> {
 
   /// Ensure repository is initialized
   void _ensureRepositoryInitialized() {
-    if (_repo == null) {
-      _repo = ParsedDocumentsRepository(baseUrl: ApiConfig.baseUrl);
-    }
+    _repo ??= ParsedDocumentsRepository(baseUrl: ApiConfig.baseUrl);
   }
 
   Future<void> _loadDocuments() async {
