@@ -22,7 +22,7 @@ class UploadZone extends StatefulWidget {
 class _UploadZoneState extends State<UploadZone> {
   final bool _isDragOver = false;
   bool _isLoading = false;
-  late final ParsedDocumentsRepository _repo;
+  late ParsedDocumentsRepository _repo;
   String _loadingLabel = 'Opening picker...';
   String? _apiBaseOverride;
   Timer? _refreshTimer;
@@ -57,43 +57,27 @@ class _UploadZoneState extends State<UploadZone> {
         _loadingLabel = i18n['upload.loading.openPicker'] ?? 'Opening picker...';
       });
 
-      // Dev override: if a local Windows file exists at the given path, use it
-      // immediately (useful when testing from emulator/device that can't reach
-      // the PC file picker). If the file doesn't exist, fall back to picker.
-      final String devPath = r'C:\Users\Bhuwan\Downloads\sample_text.pdf';
+      // Use the native file picker so the user always selects the document.
       File? selectedFile;
-      if (File(devPath).existsSync()) {
-        selectedFile = File(devPath);
-      }
 
-      final FilePickerResult? result = selectedFile == null
-          ? await FilePicker.platform.pickFiles(
+      final FilePickerResult? result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
-        allowedExtensions: const ['pdf', 'doc', 'docx', 'ppt', 'pptx'],
+        allowedExtensions: const ['pdf'],
         withData: false,
         allowMultiple: false,
-      )
-          : null;
+      );
       if (!mounted) return;
 
-      if (selectedFile != null || (result != null && result.files.isNotEmpty)) {
-        if (selectedFile == null) {
-          final PlatformFile file = result!.files.single;
-          if (file.extension?.toLowerCase() != 'pdf') {
-            final i18n = HomeI18n.mapFor(LanguageScope.maybeOf(context)?.language ?? AppLanguage.en);
-            if (!mounted) return;
-            _showErrorDialog(i18n['upload.error.onlyPdf'] ?? 'Only PDF is supported for parsing at the moment.');
-            return;
-          }
-          final String? path = file.path;
-          if (path == null) {
-            final i18n = HomeI18n.mapFor(LanguageScope.maybeOf(context)?.language ?? AppLanguage.en);
-            if (!mounted) return;
-            _showErrorDialog(i18n['upload.error.pathUnavailable'] ?? 'File path unavailable.');
-            return;
-          }
-          selectedFile = File(path);
+      if (result != null && result.files.isNotEmpty) {
+        final PlatformFile file = result.files.single;
+        final String? path = file.path;
+        if (path == null) {
+          final i18n = HomeI18n.mapFor(LanguageScope.maybeOf(context)?.language ?? AppLanguage.en);
+          if (!mounted) return;
+          _showErrorDialog(i18n['upload.error.pathUnavailable'] ?? 'File path unavailable.');
+          return;
         }
+        selectedFile = File(path);
 
         // Ensure extension is PDF for backend parsing
         final String lower = selectedFile.path.toLowerCase();
@@ -356,7 +340,7 @@ class _UploadZoneState extends State<UploadZone> {
             SizedBox(height: isSmall ? AppTheme.spacingXS : AppTheme.spacingXS + 2),
             
             Text(
-              i18n['upload.subtitle'] ?? 'Select a PDF, DOC/DOCX, or PPT/PPTX to process',
+              i18n['upload.subtitle'] ?? 'Select a PDF to process',
               style: AppTheme.bodySmall,
             )
                 .animate()
