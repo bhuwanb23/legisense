@@ -111,12 +111,8 @@ class PenaltyForecastPanel extends StatelessWidget {
         ),
 
         const SizedBox(height: 8),
-        Text(
-          (i18n['penalty.summary'] ?? 'By {month}, total owed ≈ ₹{amount} (base + fees + penalties).')
-              .replaceFirst('{month}', 'Month 6')
-              .replaceFirst('{amount}', '20,800'),
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(color: const Color(0xFF374151)),
-        ),
+        // Derive the summary from the actual (or mock) forecast rows.
+        _PenaltySummary(rows: rows, i18n: i18n),
       ],
     );
   }
@@ -187,6 +183,30 @@ class PenaltyForecastPanel extends StatelessWidget {
       {'month': 'Month 3', 'base': 12000, 'fees': 1500, 'penalties': 2500, 'total': 16000},
       {'month': 'Month 6', 'base': 12000, 'fees': 2600, 'penalties': 6200, 'total': 20800},
     ];
+  }
+}
+
+/// Renders the forecast summary line using the highest-total month from the
+/// actual (or mock) rows instead of hard-coded values.
+class _PenaltySummary extends StatelessWidget {
+  const _PenaltySummary({required this.rows, required this.i18n});
+
+  final List<Map<String, dynamic>> rows;
+  final Map<String, String> i18n;
+
+  @override
+  Widget build(BuildContext context) {
+    final Map<String, dynamic>? summaryRow = rows.isEmpty
+        ? null
+        : rows.reduce((a, b) => (a['total'] as num) >= (b['total'] as num) ? a : b);
+    final String month = summaryRow?['month']?.toString() ?? 'Month 6';
+    final String amount = (summaryRow?['total'] as num? ?? 0).toString();
+    return Text(
+      (i18n['penalty.summary'] ?? 'By {month}, total owed ≈ ₹{amount} (base + fees + penalties).')
+          .replaceFirst('{month}', month)
+          .replaceFirst('{amount}', amount),
+      style: Theme.of(context).textTheme.bodySmall?.copyWith(color: const Color(0xFF374151)),
+    );
   }
 }
 
