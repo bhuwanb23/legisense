@@ -45,7 +45,9 @@ def run_extraction(document_content: str = "") -> Dict[str, Any]:
         response_format={"type": "json_object"},
     )
 
-    content: str = data.get("choices", [{}])[0].get("message", {}).get("content", "")
+    # Guard against an empty or missing "choices" list (IndexError otherwise)
+    _choices = data.get("choices") or []
+    content: str = _choices[0].get("message", {}).get("content", "") if _choices and isinstance(_choices[0], dict) else ""
     if not content:
         raise RuntimeError("Empty response content from OpenRouter")
 
