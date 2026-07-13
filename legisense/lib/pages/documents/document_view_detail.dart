@@ -35,7 +35,7 @@ class _DocumentViewDetailState extends State<DocumentViewDetail> {
   @override
   Widget build(BuildContext context) {
     if (widget.docId != null && widget.docId!.startsWith('server-')) {
-      final int id = int.parse(widget.docId!.split('-').last);
+      final int id = int.tryParse(widget.docId!.split('-').last) ?? 0;
       final repo = ParsedDocumentsRepository(baseUrl: ApiConfig.baseUrl);
       return FutureBuilder<SampleDocument>(
         future: repo.fetchDocumentDetail(id),
