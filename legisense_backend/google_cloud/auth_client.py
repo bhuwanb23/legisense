@@ -108,7 +108,8 @@ class MockAuthClient:
         self.sessions[token.access_token] = {
             "user_id": uid,
             "created_at": datetime.now(),
-            "expires_at": datetime.now() + timedelta(hours=1)
+            "expires_at": datetime.now() + timedelta(hours=1),
+            "refresh_token": token.refresh_token
         }
         
         return AuthResult(
@@ -161,7 +162,8 @@ class MockAuthClient:
         self.sessions[token.access_token] = {
             "user_id": user.uid,
             "created_at": datetime.now(),
-            "expires_at": datetime.now() + timedelta(hours=1)
+            "expires_at": datetime.now() + timedelta(hours=1),
+            "refresh_token": token.refresh_token
         }
         
         return AuthResult(
@@ -229,13 +231,14 @@ class MockAuthClient:
         self.sessions[token.access_token] = {
             "user_id": user.uid,
             "created_at": datetime.now(),
-            "expires_at": datetime.now() + timedelta(hours=1)
+            "expires_at": datetime.now() + timedelta(hours=1),
+            "refresh_token": token.refresh_token
         }
         
         return AuthResult(
             user=user,
             token=token,
-            is_new_user=user.created_at == datetime.now()
+            is_new_user=user.created_at.date() == datetime.now().date()
         )
     
     async def verify_id_token(self, id_token: str) -> Optional[User]:
