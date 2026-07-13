@@ -15,6 +15,7 @@ class _ChatOverlayState extends State<ChatOverlay> with TickerProviderStateMixin
   bool _isOpen = false;
   final List<_ChatMessage> _messages = <_ChatMessage>[
     const _ChatMessage(
+      id: 0,
       role: _ChatRole.assistant,
       text:
           'I am Legisense AI. I specialize in legal documents, compliance, and jurisdiction-related questions. I will answer clearly and honestly, and I will note when laws can vary by jurisdiction. How can I help you today?',
@@ -31,8 +32,11 @@ class _ChatOverlayState extends State<ChatOverlay> with TickerProviderStateMixin
   bool _hasUnread = false;
   bool _isSending = false;
   Animation<Offset> _panelOffset = const AlwaysStoppedAnimation<Offset>(Offset.zero);
-  
-  // Translation toggle state - maps message index to show original (true) or translated (false)
+
+  // Monotonic counter for stable message ids (used to key translation toggles).
+  int _messageIdCounter = 1;
+
+  // Translation toggle state - maps message id to show original (true) or translated (false)
   final Map<int, bool> _showOriginalText = {};
 
   @override
@@ -69,9 +73,9 @@ class _ChatOverlayState extends State<ChatOverlay> with TickerProviderStateMixin
     });
   }
 
-  void _toggleMessageTranslation(int messageIndex) {
+  void _toggleMessageTranslation(int messageId) {
     setState(() {
-      _showOriginalText[messageIndex] = !(_showOriginalText[messageIndex] ?? false);
+      _showOriginalText[messageId] = !(_showOriginalText[messageId] ?? false);
     });
   }
 
@@ -80,6 +84,7 @@ class _ChatOverlayState extends State<ChatOverlay> with TickerProviderStateMixin
     if (text.isEmpty) return;
     setState(() {
       _messages.add(_ChatMessage(
+        id: _messageIdCounter++,
         role: _ChatRole.user, 
         text: text,
         originalText: null,
@@ -111,8 +116,9 @@ class _ChatOverlayState extends State<ChatOverlay> with TickerProviderStateMixin
       final isTranslated = response['translated'] == true;
       final language = response['language']?.toString();
       
-      setState(() {
+       setState(() {
         _messages.add(_ChatMessage(
+          id: _messageIdCounter++,
           role: _ChatRole.assistant, 
           text: replyText.isEmpty ? '...' : replyText,
           originalText: originalText,
@@ -123,8 +129,9 @@ class _ChatOverlayState extends State<ChatOverlay> with TickerProviderStateMixin
       });
     } catch (e) {
       if (!mounted) return;
-      setState(() {
+       setState(() {
         _messages.add(_ChatMessage(
+          id: _messageIdCounter++,
           role: _ChatRole.assistant, 
           text: 'Error: $e',
           originalText: null,
@@ -286,7 +293,7 @@ class _ChatOverlayState extends State<ChatOverlay> with TickerProviderStateMixin
                                       final textColor = isUser ? Colors.white : theme.colorScheme.onSurface;
                                       
                                       // Determine which text to show
-                                      final showOriginal = _showOriginalText[index] ?? false;
+                                      final showOriginal = _showOriginalText[msg.id] ?? false;
                                       final displayText = showOriginal && msg.originalText != null 
                                           ? msg.originalText! 
                                           : msg.text;
@@ -321,7 +328,7 @@ class _ChatOverlayState extends State<ChatOverlay> with TickerProviderStateMixin
                                                   mainAxisSize: MainAxisSize.min,
                                                   children: [
                                                     GestureDetector(
-                                                      onTap: () => _toggleMessageTranslation(index),
+                                                      onTap: () => _toggleMessageTranslation(msg.id),
                                                       child: Container(
                                                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                                         decoration: BoxDecoration(
@@ -524,12 +531,14 @@ class _ChatOverlayState extends State<ChatOverlay> with TickerProviderStateMixin
 enum _ChatRole { user, assistant }
 
 class _ChatMessage {
+  final int id;
   final _ChatRole role;
   final String text;
   final String? originalText;
   final bool? isTranslated;
   final String? language;
   const _ChatMessage({
+    required this.id,
     required this.role, 
     required this.text,
     this.originalText,
