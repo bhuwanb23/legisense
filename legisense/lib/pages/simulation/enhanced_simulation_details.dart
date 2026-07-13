@@ -309,10 +309,10 @@ class _EnhancedSimulationDetailsPageState extends State<EnhancedSimulationDetail
     final dynamic scenarioRaw = _parameters['scenario'];
     final SimulationScenario scenario =
         scenarioRaw is SimulationScenario ? scenarioRaw : _parseScenario(scenarioRaw?.toString());
-    final missedPayments = _parameters['missedPayments'] as int;
-    final earlyTermination = _parameters['earlyTermination'] as bool;
-    final delayDays = _parameters['delayDays'] as int;
-    final interestRate = _parameters['interestRate'] as double;
+    final missedPayments = _parameters['missedPayments'] as int? ?? 0;
+    final earlyTermination = _parameters['earlyTermination'] as bool? ?? false;
+    final delayDays = _parameters['delayDays'] as int? ?? 0;
+    final interestRate = _parameters['interestRate'] as double? ?? 0.0;
 
     // Update session data
     if (_dynamicSimulationData!['session'] != null) {
@@ -340,12 +340,16 @@ class _EnhancedSimulationDetailsPageState extends State<EnhancedSimulationDetail
     // Increase penalty forecasts based on missed payments
     if (_dynamicSimulationData!['penalty_forecast'] != null) {
       final forecasts = List<Map<String, dynamic>>.from(_dynamicSimulationData!['penalty_forecast']);
+      final penaltyMultiplier = 1.0 + (missedPayments * 0.5); // 50% increase per missed payment
+      final interestMultiplier = 1.0 + (interestRate / 100.0);
+      num applyMultiplier(num value) =>
+          (value * penaltyMultiplier * interestMultiplier).round();
       for (int i = 0; i < forecasts.length; i++) {
         final forecast = Map<String, dynamic>.from(forecasts[i]);
-        final baseAmount = (forecast['amount'] as num? ?? 0).toDouble();
-        final penaltyMultiplier = 1.0 + (missedPayments * 0.5); // 50% increase per missed payment
-        final interestMultiplier = 1.0 + (interestRate / 100.0);
-        forecast['amount'] = (baseAmount * penaltyMultiplier * interestMultiplier).round();
+        forecast['base_amount'] = applyMultiplier(forecast['base_amount'] as num? ?? 0);
+        forecast['fees_amount'] = applyMultiplier(forecast['fees_amount'] as num? ?? 0);
+        forecast['penalties_amount'] = applyMultiplier(forecast['penalties_amount'] as num? ?? 0);
+        forecast['total_amount'] = applyMultiplier(forecast['total_amount'] as num? ?? 0);
         forecasts[i] = forecast;
       }
       _dynamicSimulationData!['penalty_forecast'] = forecasts;
@@ -427,12 +431,6 @@ class _EnhancedSimulationDetailsPageState extends State<EnhancedSimulationDetail
     }
   }
 
-  /// Manually refresh the simulation data and trigger UI update
-  void refreshSimulationData() {
-    developer.log('🔄 Manual refresh triggered', name: 'EnhancedSimulationDetailsPage');
-    _calculateDynamicData();
-  }
-
   /// Force UI update with current data
   void forceUIUpdate() {
     if (mounted) {
@@ -506,8 +504,7 @@ class _EnhancedSimulationDetailsPageState extends State<EnhancedSimulationDetail
                     // Show loading indicator if translating or initial loading
                     if (_isTranslating || _isInitialLoading) _buildTranslationLoader(i18n),
 
-                    // Debug: Manual translation trigger button (remove in production)
-                    if (!_isTranslating && !_isInitialLoading) _buildDebugTranslationButton(i18n),
+                    // Debug translation trigger button removed from production UI.
 
                     // Only show content when not loading
                     if (!_isInitialLoading) ...[
@@ -890,62 +887,4 @@ class _EnhancedSimulationDetailsPageState extends State<EnhancedSimulationDetail
     );
   }
 
-  Widget _buildDebugTranslationButton(Map<String, String> i18n) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    final scope = LanguageScope.maybeOf(context);
-                    final currentLanguage = scope?.language.name ?? 'en';
-                    if (currentLanguage != 'en') {
-                      setState(() {
-                        _isTranslating = true;
-                        _isInitialLoading = true;
-                      });
-                      _loadTranslatedSimulationData(currentLanguage);
-                    }
-                  },
-                  icon: const Icon(Icons.translate, size: 16),
-                  label: Text('If not translated then click here (${LanguageScope.maybeOf(context)?.language.name ?? 'en'})'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.orange,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              ElevatedButton.icon(
-                onPressed: () {
-                  refreshSimulationData();
-                },
-                icon: const Icon(Icons.refresh, size: 16),
-                label: const Text('Refresh UI'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Current Language: ${LanguageScope.maybeOf(context)?.language.name ?? 'en'} | Previous: $_currentLanguage',
-            style: const TextStyle(fontSize: 12, color: Colors.grey),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Data Hash: ${_dynamicSimulationData?.hashCode ?? 0} | Parameters: ${_parameters.toString()}',
-            style: const TextStyle(fontSize: 10, color: Colors.grey),
-          ),
-        ],
-      ),
-    );
-  }
 }
