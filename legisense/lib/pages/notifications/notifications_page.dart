@@ -16,11 +16,14 @@ class _NotificationsPageState extends State<NotificationsPage> {
 
   @override
   Widget build(BuildContext context) {
-    final List<AppNotificationItem> items = [
-      const AppNotificationItem(title: 'Document parsed successfully', description: 'Your recent upload is ready for review.', time: '2m ago', icon: Icons.check_circle, color: Color(0xFF10B981)),
-      const AppNotificationItem(title: 'High-risk clause detected', description: 'Clause 4.2 may require attention.', time: '1h ago', icon: Icons.warning_amber_rounded, color: Color(0xFFF59E0B)),
-      const AppNotificationItem(title: 'New policy update available', description: 'Review new compliance checklist.', time: 'Yesterday', icon: Icons.system_update_alt, color: Color(0xFF2563EB)),
+    final List<AppNotificationItem> allItems = [
+      const AppNotificationItem(title: 'Document parsed successfully', description: 'Your recent upload is ready for review.', time: '2m ago', icon: Icons.check_circle, color: Color(0xFF10B981), category: 'updates'),
+      const AppNotificationItem(title: 'High-risk clause detected', description: 'Clause 4.2 may require attention.', time: '1h ago', icon: Icons.warning_amber_rounded, color: Color(0xFFF59E0B), category: 'warnings'),
+      const AppNotificationItem(title: 'New policy update available', description: 'Review new compliance checklist.', time: 'Yesterday', icon: Icons.system_update_alt, color: Color(0xFF2563EB), category: 'system'),
     ];
+    final List<AppNotificationItem> items = filter == 'all'
+        ? allItems
+        : allItems.where((i) => i.category == filter).toList();
 
     return Scaffold(
       backgroundColor: const Color(0xFFF9FAFB),
