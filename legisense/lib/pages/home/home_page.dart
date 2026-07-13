@@ -91,6 +91,14 @@ class _HomePageState extends State<HomePage> {
                             curve: Curves.easeOut,
                           )
                           ,
+
+                      // Recent Files section
+                      const RecentFiles()
+                          .animate()
+                          .fadeIn(
+                            duration: AppTheme.animationSlow,
+                          )
+                          ,
                       
                       // Bottom padding for better scrolling (smaller)
                       const SizedBox(height: AppTheme.spacingM),
