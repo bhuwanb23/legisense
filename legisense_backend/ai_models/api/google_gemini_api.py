@@ -126,9 +126,13 @@ class GoogleGeminiAPI:
             parts = content["parts"]
             if not parts:
                 raise KeyError("content.parts is empty")
-            text = parts[0]["text"]
+            # When thinkingConfig.thinkingBudget > 0, Gemini may emit internal
+            # thought parts followed by one or more text parts. Concatenate all
+            # text parts, skipping any parts without a text field (e.g. thoughts).
+            text_parts = [p.get("text", "") for p in parts if isinstance(p, dict) and p.get("text")]
+            text = "".join(text_parts)
             if not isinstance(text, str):
-                raise TypeError("content.parts[0].text is not a string")
+                raise TypeError("content.parts text is not a string")
             return text
         except Exception as exc:  # noqa: BLE001 - surface parsing problems cleanly
             raise GeminiAPIError(f"Unexpected response shape: {data}") from exc
