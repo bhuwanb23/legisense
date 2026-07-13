@@ -95,10 +95,9 @@ class DocumentTranslator:
                 translated_clauses = []
                 for clause in translated_analysis['clauses']:
                     translated_clause = clause.copy()
-                    if 'category' in translated_clause:
-                        translated_clause['category'] = self.translate_text(
-                            translated_clause['category'], target_language, source_language
-                        )
+                    # 'category' is a controlled English vocabulary used for
+                    # grouping/filtering; do NOT translate it to avoid corrupting
+                    # canonical values. Leave the original English value as-is.
                     if 'original_snippet' in translated_clause:
                         translated_clause['original_snippet'] = self.translate_text(
                             translated_clause['original_snippet'], target_language, source_language
