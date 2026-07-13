@@ -56,7 +56,8 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   void dispose() {
-    _languageController.dispose();
+    // Do NOT dispose the shared global language controller; it is owned by the
+    // app shell and must survive this page being disposed/popped.
     super.dispose();
   }
 
