@@ -42,6 +42,9 @@ RUN ${FLUTTER_HOME}/bin/flutter config --enable-web && \
 # Build stage
 FROM base as build
 
+# Configurable backend API base URL (defaults to the deployed Render instance)
+ARG LEGISENSE_API_BASE=https://legisense-1.onrender.com
+
 # Set working directory
 WORKDIR /app
 
@@ -55,7 +58,7 @@ RUN ${FLUTTER_HOME}/bin/flutter pub get
 COPY . .
 
 # Build for web
-RUN ${FLUTTER_HOME}/bin/flutter build web --release --web-renderer html
+RUN ${FLUTTER_HOME}/bin/flutter build web --release --web-renderer html --dart-define=LEGISENSE_API_BASE=$LEGISENSE_API_BASE
 
 # Production stage
 FROM nginx:alpine as production
@@ -66,10 +69,8 @@ COPY --from=build /app/build/web /usr/share/nginx/html
 # Copy custom nginx configuration
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Create nginx user and set permissions
-RUN addgroup -g 1001 -S nginx && \
-    adduser -S -D -H -u 1001 -h /var/cache/nginx -s /sbin/nologin -G nginx -g nginx nginx && \
-    chown -R nginx:nginx /usr/share/nginx/html && \
+# Set permissions (nginx user/group already exist in nginx:alpine)
+RUN chown -R nginx:nginx /usr/share/nginx/html && \
     chown -R nginx:nginx /var/cache/nginx && \
     chown -R nginx:nginx /var/log/nginx && \
     chown -R nginx:nginx /etc/nginx/conf.d && \
@@ -84,7 +85,7 @@ EXPOSE 80
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost/ || exit 1
+    CMD wget -qO- http://localhost/ || exit 1
 
 # Start nginx
 CMD ["nginx", "-g", "daemon off;"]
