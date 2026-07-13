@@ -182,7 +182,7 @@ class _DocumentListSectionState extends State<DocumentListSection> {
                   final String title = (item['file_name'] ?? 'Document').toString();
                   final int pages = (item['num_pages'] ?? 0) as int;
                   final String meta = 'PDF • $pages page${pages == 1 ? '' : 's'}';
-                  final int id = (item['id'] as int);
+                  final int id = (item['id'] as int?) ?? 0;
                   return TweenAnimationBuilder<double>(
                     tween: Tween(begin: 0, end: 1),
                     duration: Duration(milliseconds: 300 + index * 60),
@@ -269,7 +269,7 @@ class _DocumentListSectionState extends State<DocumentListSection> {
                                           final String message = result['message'] ?? '';
                                           
                                           // Step 2: Fetch the simulation data
-                                          final sessionId = result['session_id'] as int;
+                                          final sessionId = result['session_id'] as int? ?? 0;
                                           final simulationData = await _repo!.fetchSimulationData(sessionId: sessionId);
                                           
                                           if (!context.mounted) return;
