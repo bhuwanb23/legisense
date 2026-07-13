@@ -37,10 +37,10 @@ check_docker() {
     fi
 }
 
-# Function to check if docker-compose is available
+# Function to check if docker compose is available
 check_docker_compose() {
-    if ! command -v docker-compose &> /dev/null; then
-        print_error "docker-compose is not installed. Please install it and try again."
+    if ! command -v docker compose &> /dev/null; then
+        print_error "docker compose is not installed. Please install it and try again."
         exit 1
     fi
 }
@@ -71,7 +71,7 @@ start_prod() {
     check_env
     
     # Start services
-    docker-compose up --build -d
+    docker compose up --build -d
     
     # Wait for services to be ready
     print_status "Waiting for services to be ready..."
@@ -79,11 +79,11 @@ start_prod() {
     
     # Run migrations
     print_status "Running database migrations..."
-    docker-compose exec backend python manage.py migrate
+    docker compose exec backend python manage.py migrate
     
     # Collect static files
     print_status "Collecting static files..."
-    docker-compose exec backend python manage.py collectstatic --noinput
+    docker compose exec backend python manage.py collectstatic --noinput
     
     print_success "Production environment started!"
     print_status "Frontend: http://localhost:3000"
@@ -95,7 +95,7 @@ start_prod() {
 # Function to stop production environment
 stop_prod() {
     print_status "Stopping Legisense production environment..."
-    docker-compose down
+    docker compose down
     print_success "Production environment stopped!"
 }
 
@@ -124,7 +124,7 @@ start_prod_nginx() {
     fi
     
     # Start services with Nginx
-    docker-compose --profile production up --build -d
+    docker compose --profile production up --build -d
     
     # Wait for services to be ready
     print_status "Waiting for services to be ready..."
@@ -132,11 +132,11 @@ start_prod_nginx() {
     
     # Run migrations
     print_status "Running database migrations..."
-    docker-compose exec backend python manage.py migrate
+    docker compose exec backend python manage.py migrate
     
     # Collect static files
     print_status "Collecting static files..."
-    docker-compose exec backend python manage.py collectstatic --noinput
+    docker compose exec backend python manage.py collectstatic --noinput
     
     print_success "Production environment with Nginx started!"
     print_status "Application: https://localhost"
@@ -148,31 +148,31 @@ view_logs() {
     local service=${1:-""}
     if [ -n "$service" ]; then
         print_status "Viewing logs for $service..."
-        docker-compose logs -f "$service"
+        docker compose logs -f "$service"
     else
         print_status "Viewing logs for all services..."
-        docker-compose logs -f
+        docker compose logs -f
     fi
 }
 
 # Function to run database migrations
 run_migrations() {
     print_status "Running database migrations..."
-    docker-compose exec backend python manage.py migrate
+    docker compose exec backend python manage.py migrate
     print_success "Database migrations completed!"
 }
 
 # Function to create superuser
 create_superuser() {
     print_status "Creating Django superuser..."
-    docker-compose exec backend python manage.py createsuperuser
+    docker compose exec backend python manage.py createsuperuser
     print_success "Superuser created!"
 }
 
 # Function to collect static files
 collect_static() {
     print_status "Collecting static files..."
-    docker-compose exec backend python manage.py collectstatic --noinput
+    docker compose exec backend python manage.py collectstatic --noinput
     print_success "Static files collected!"
 }
 
@@ -180,7 +180,7 @@ collect_static() {
 backup_database() {
     local backup_file="backup_$(date +%Y%m%d_%H%M%S).sql"
     print_status "Creating database backup: $backup_file"
-    docker-compose exec -T db pg_dump -U legisense legisense > "$backup_file"
+    docker compose exec -T db pg_dump -U legisense legisense > "$backup_file"
     print_success "Database backup created: $backup_file"
 }
 
@@ -201,7 +201,7 @@ restore_database() {
     read -r response
     if [[ "$response" =~ ^[Yy]$ ]]; then
         print_status "Restoring database from $backup_file..."
-        docker-compose exec -T db psql -U legisense legisense < "$backup_file"
+        docker compose exec -T db psql -U legisense legisense < "$backup_file"
         print_success "Database restored from $backup_file"
     else
         print_status "Database restore cancelled"
@@ -217,7 +217,7 @@ scale_services() {
     print_status "Backend workers: $backend_scale"
     print_status "Frontend instances: $frontend_scale"
     
-    docker-compose up --scale backend="$backend_scale" --scale frontend="$frontend_scale" -d
+    docker compose up --scale backend="$backend_scale" --scale frontend="$frontend_scale" -d
     print_success "Services scaled successfully!"
 }
 
@@ -225,7 +225,7 @@ scale_services() {
 show_status() {
     print_status "Legisense Production Environment Status:"
     echo ""
-    docker-compose ps
+    docker compose ps
     echo ""
     print_status "Service URLs:"
     print_status "  Frontend: http://localhost:3000"
@@ -252,10 +252,10 @@ update() {
     print_status "Updating Legisense services..."
     
     # Pull latest images
-    docker-compose pull
+    docker compose pull
     
     # Rebuild and restart services
-    docker-compose up --build -d
+    docker compose up --build -d
     
     # Run migrations
     run_migrations
@@ -272,7 +272,7 @@ cleanup() {
     read -r response
     if [[ "$response" =~ ^[Yy]$ ]]; then
         print_status "Cleaning up Docker resources..."
-        docker-compose down -v
+        docker compose down -v
         docker system prune -af
         print_success "Cleanup completed!"
     else
