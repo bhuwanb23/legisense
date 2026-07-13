@@ -9,11 +9,15 @@ import '../pages/documents/data/sample_documents.dart';
 /// Simple in-memory repository that uploads a PDF to the backend and stores
 /// the parsed result as a `SampleDocument`-compatible object for display.
 class ApiConfig {
-  /// Resolves a sensible default base URL depending on environment.
-  /// Updated to use the hosted Render.com server.
-  static String get baseUrl {
-    return 'https://legisense-1.onrender.com';
-  }
+  /// Base URL for the backend API.
+  ///
+  /// Override at build/run time so the app can target a local or self-hosted
+  /// backend instead of the hardcoded Render instance:
+  ///   flutter run --dart-define=LEGISENSE_API_BASE=http://10.0.2.2:8000
+  static const String baseUrl = String.fromEnvironment(
+    'LEGISENSE_API_BASE',
+    defaultValue: 'https://legisense-1.onrender.com',
+  );
 }
 
 class ParsedDocumentsRepository {
@@ -28,7 +32,7 @@ class ParsedDocumentsRepository {
 
   Future<List<Map<String, dynamic>>> fetchDocuments() async {
     final uri = Uri.parse('$baseUrl/api/documents/');
-    final res = await http.get(uri);
+    final res = await http.get(uri).timeout(const Duration(seconds: 30));
     if (res.statusCode != 200) {
       // Check if response is HTML (Django error page)
       String errorMessage = res.body;
@@ -50,13 +54,13 @@ class ParsedDocumentsRepository {
 
   Future<SampleDocument> fetchDocumentDetail(int id) async {
     final uri = Uri.parse('$baseUrl/api/documents/$id/');
-    final res = await http.get(uri);
+    final res = await http.get(uri).timeout(const Duration(seconds: 30));
     if (res.statusCode != 200) {
       throw HttpException('Detail failed (${res.statusCode}): ${res.body}');
     }
     final Map<String, dynamic> data = json.decode(res.body) as Map<String, dynamic>;
     final String title = (data['file_name'] ?? 'Document').toString();
-    final int numPages = (data['num_pages'] ?? 0) as int;
+    final int numPages = (data['num_pages'] as num?)?.toInt() ?? 0;
     // analysis_available is returned for UI chips; currently unused here.
     final List<dynamic> pages = (data['pages'] ?? []) as List<dynamic>;
     final List<String> textBlocks = pages
@@ -78,7 +82,7 @@ class ParsedDocumentsRepository {
 
   Future<Map<String, dynamic>> fetchAnalysis(int id) async {
     final uri = Uri.parse('$baseUrl/api/documents/$id/analysis/');
-    final res = await http.get(uri);
+    final res = await http.get(uri).timeout(const Duration(seconds: 30));
     if (res.statusCode != 200) {
       throw HttpException('Analysis failed (${res.statusCode}): ${res.body}');
     }
@@ -104,7 +108,8 @@ class ParsedDocumentsRepository {
     final request = http.MultipartRequest('POST', uri)
       ..files.add(await http.MultipartFile.fromPath('file', pdfFile.path));
 
-    final response = await http.Response.fromStream(await request.send());
+    final response = await http.Response.fromStream(await request.send())
+        .timeout(const Duration(seconds: 60));
     if (response.statusCode < 200 || response.statusCode >= 300) {
       // Check if response is HTML (Django error page)
       String errorMessage = response.body;
@@ -124,10 +129,10 @@ class ParsedDocumentsRepository {
     }
 
     final Map<String, dynamic> data = json.decode(response.body) as Map<String, dynamic>;
-    final int serverId = (data['id'] ?? 0) as int;
+    final int serverId = (data['id'] as num?)?.toInt() ?? 0;
     // Prefer server-returned original filename; fallback to picked file name
     final String title = (data['file_name'] ?? pdfFile.path.split(Platform.pathSeparator).last).toString();
-    final int numPages = (data['num_pages'] ?? 0) as int;
+    final int numPages = (data['num_pages'] as num?)?.toInt() ?? 0;
     final List<dynamic> pages = (data['pages'] ?? []) as List<dynamic>;
 
     final List<String> textBlocks = pages
@@ -156,7 +161,8 @@ class ParsedDocumentsRepository {
   /// Returns a map with at least { "status": "ok", "session_id": int } on success.
   Future<Map<String, dynamic>> simulateDocument({required int id}) async {
     final uri = Uri.parse('$baseUrl/api/documents/$id/simulate/');
-    final res = await http.post(uri, headers: {"Content-Type": "application/json"});
+    final res = await http.post(uri, headers: {"Content-Type": "application/json"})
+        .timeout(const Duration(seconds: 30));
     if (res.statusCode != 200) {
       throw HttpException('Simulate failed (${res.statusCode}): ${res.body}');
     }
@@ -168,7 +174,7 @@ class ParsedDocumentsRepository {
   /// Returns a map with simulation session and related data.
   Future<Map<String, dynamic>> fetchSimulationData({required int sessionId}) async {
     final uri = Uri.parse('$baseUrl/api/simulations/$sessionId/');
-    final res = await http.get(uri);
+    final res = await http.get(uri).timeout(const Duration(seconds: 30));
     if (res.statusCode != 200) {
       throw HttpException('Simulation fetch failed (${res.statusCode}): ${res.body}');
     }
@@ -180,7 +186,7 @@ class ParsedDocumentsRepository {
   /// Returns a map with simulation count and latest session info.
   Future<Map<String, dynamic>> checkDocumentSimulations({required int documentId}) async {
     final uri = Uri.parse('$baseUrl/api/documents/$documentId/simulations/');
-    final res = await http.get(uri);
+    final res = await http.get(uri).timeout(const Duration(seconds: 30));
     if (res.statusCode != 200) {
       throw HttpException('Simulation check failed (${res.statusCode}): ${res.body}');
     }
@@ -214,7 +220,7 @@ class ParsedDocumentsRepository {
     required String language,
   }) async {
     final uri = Uri.parse('$baseUrl/api/documents/$documentId/translations/$language/');
-    final res = await http.get(uri);
+    final res = await http.get(uri).timeout(const Duration(seconds: 30));
     if (res.statusCode != 200) {
       throw HttpException('Translation fetch failed (${res.statusCode}): ${res.body}');
     }
@@ -226,7 +232,7 @@ class ParsedDocumentsRepository {
   /// Returns a map with available translations.
   Future<Map<String, dynamic>> listDocumentTranslations({required int documentId}) async {
     final uri = Uri.parse('$baseUrl/api/documents/$documentId/translations/');
-    final res = await http.get(uri);
+    final res = await http.get(uri).timeout(const Duration(seconds: 30));
     if (res.statusCode != 200) {
       throw HttpException('Translation list failed (${res.statusCode}): ${res.body}');
     }
@@ -246,7 +252,8 @@ class ParsedDocumentsRepository {
       data = await fetchAnalysis(documentId);
     } else {
       // First get the analysis to extract the analysis ID
-      final analysisResponse = await http.get(Uri.parse('$baseUrl/api/documents/$documentId/analysis/'));
+      final analysisResponse = await http.get(Uri.parse('$baseUrl/api/documents/$documentId/analysis/'))
+          .timeout(const Duration(seconds: 30));
       if (analysisResponse.statusCode != 200) {
         throw Exception('Failed to fetch analysis: ${analysisResponse.statusCode}');
       }
@@ -260,10 +267,11 @@ class ParsedDocumentsRepository {
       // Try to fetch translated analysis
       try {
         final uri = Uri.parse('$baseUrl/api/analysis/$analysisId/translations/$language/');
-        final response = await http.get(uri);
+        final response = await http.get(uri)
+            .timeout(const Duration(seconds: 30));
         if (response.statusCode == 200) {
           final responseData = json.decode(response.body) as Map<String, dynamic>;
-          data = responseData['analysis'];
+          data = responseData['analysis'] as Map<String, dynamic>? ?? {};
         } else {
           throw Exception('Failed to fetch translation: ${response.statusCode}');
         }
@@ -275,13 +283,14 @@ class ParsedDocumentsRepository {
             translateUri,
             headers: {'Content-Type': 'application/json'},
             body: json.encode({'language': language}),
-          );
+          ).timeout(const Duration(seconds: 30));
           if (translateResponse.statusCode == 200) {
             final fetchUri = Uri.parse('$baseUrl/api/analysis/$analysisId/translations/$language/');
-            final fetchResponse = await http.get(fetchUri);
+            final fetchResponse = await http.get(fetchUri)
+                .timeout(const Duration(seconds: 30));
             if (fetchResponse.statusCode == 200) {
               final responseData = json.decode(fetchResponse.body) as Map<String, dynamic>;
-              data = responseData['analysis'];
+              data = responseData['analysis'] as Map<String, dynamic>? ?? {};
             } else {
               throw Exception('Failed to fetch created translation: ${fetchResponse.statusCode}');
             }
@@ -336,7 +345,7 @@ class ParsedDocumentsRepository {
     }
 
     final String title = (data['file_name'] ?? 'Document').toString();
-    final int numPages = (data['num_pages'] ?? 0) as int;
+    final int numPages = (data['num_pages'] as num?)?.toInt() ?? 0;
     final List<dynamic> pages = (data['pages'] ?? []) as List<dynamic>;
     final List<String> textBlocks = pages
         .map((e) => (e as Map<String, dynamic>)['text']?.toString() ?? '')
@@ -368,7 +377,7 @@ class ParsedDocumentsRepository {
       uri,
       headers: {'Content-Type': 'application/json'},
       body: json.encode({'language': language}),
-    );
+    ).timeout(const Duration(seconds: 30));
     developer.log('📡 Translation response: ${res.statusCode} - ${res.body}', name: 'ParsedDocumentsRepository');
     if (res.statusCode != 200) {
       throw HttpException('Simulation translation failed (${res.statusCode}): ${res.body}');
@@ -383,7 +392,7 @@ class ParsedDocumentsRepository {
   }) async {
     final uri = Uri.parse('$baseUrl/api/simulations/$sessionId/translations/$language/');
     developer.log('📡 Getting translated simulation: $uri', name: 'ParsedDocumentsRepository');
-    final res = await http.get(uri);
+    final res = await http.get(uri).timeout(const Duration(seconds: 30));
     developer.log('📡 Get translation response: ${res.statusCode} - ${res.body.substring(0, res.body.length > 200 ? 200 : res.body.length)}...', name: 'ParsedDocumentsRepository');
     if (res.statusCode != 200) {
       throw HttpException('Get simulation translation failed (${res.statusCode}): ${res.body}');
@@ -394,13 +403,13 @@ class ParsedDocumentsRepository {
   /// List all available translations for a simulation session
   Future<List<String>> listSimulationTranslations({required int sessionId}) async {
     final uri = Uri.parse('$baseUrl/api/simulations/$sessionId/translations/');
-    final res = await http.get(uri);
+    final res = await http.get(uri).timeout(const Duration(seconds: 30));
     if (res.statusCode != 200) {
       throw HttpException('List simulation translations failed (${res.statusCode}): ${res.body}');
     }
     final Map<String, dynamic> data = json.decode(res.body) as Map<String, dynamic>;
     final List<dynamic> languages = (data['available_languages'] ?? []) as List<dynamic>;
-    return languages.map((lang) => (lang as Map<String, dynamic>)['language'] as String).toList();
+    return languages.map((lang) => (lang as Map<String, dynamic>?)?['language'] as String? ?? '').toList();
   }
 
   /// Fetch simulation data with language support
@@ -415,7 +424,7 @@ class ParsedDocumentsRepository {
       // This would depend on your existing simulation API structure
       final uri = Uri.parse('$baseUrl/api/simulations/$sessionId/');
       developer.log('📡 Fetching original simulation from: $uri', name: 'ParsedDocumentsRepository');
-      final res = await http.get(uri);
+      final res = await http.get(uri).timeout(const Duration(seconds: 30));
       if (res.statusCode != 200) {
         throw HttpException('Get simulation failed (${res.statusCode}): ${res.body}');
       }
@@ -481,7 +490,7 @@ class ParsedDocumentsRepository {
         'language': language,
         // You can pass thinking_budget: 0 to disable thinking if desired
       }),
-    );
+    ).timeout(const Duration(seconds: 30));
     if (res.statusCode != 200) {
       throw HttpException('Chat failed (${res.statusCode}): ${res.body}');
     }
