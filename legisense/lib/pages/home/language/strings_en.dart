@@ -41,7 +41,7 @@ const homeStringsEn = {
   'quick.profile.subtitle': 'Account settings',
   // Upload Zone
   'upload.title': 'Upload a Document',
-  'upload.subtitle': 'Select a PDF, DOC/DOCX, or PPT/PPTX to process',
+  'upload.subtitle': 'Select a PDF to process',
   'upload.button.upload': 'Upload Document',
   'upload.button.browse': 'Browse Files',
   'upload.loading.openPicker': 'Opening picker...',
