@@ -18,10 +18,30 @@ def _require(obj: Dict[str, Any], key: str, expected_type: Tuple[type, ...]) -> 
     return val
 
 
+def _optional(obj: Dict[str, Any], key: str, expected_type: Tuple[type, ...]) -> Any:
+    if key not in obj:
+        return None
+    val = obj[key]
+    if val is not None and not isinstance(val, expected_type):
+        exp = ", ".join(t.__name__ for t in expected_type)
+        raise ParseError(f"Key '{key}' must be of type(s): {exp}")
+    return val
+
+
 def parse_models_json(data: str) -> Dict[str, Any]:
     """
-    Parse and lightly validate the JSON extracted from simulation.py as per
-    prompts/simulation_models_extraction_prompt.txt.
+    Parse and lightly validate the JSON produced by
+    run_simulation_models_extraction.py / document_simulation_prompt.txt.
+
+    The real extraction output uses a session/timeline/penalty schema:
+
+        {
+          "session": {"title", "scenario", "parameters", "jurisdiction", ...},
+          "timeline": [{"order", "title", "description", ...}],
+          "penalty_forecast": [...],
+          "exit_comparisons": [...],
+          "risk_alerts": [...]
+        }
 
     Returns the loaded dictionary if valid; raises ParseError otherwise.
     """
@@ -30,72 +50,59 @@ def parse_models_json(data: str) -> Dict[str, Any]:
     except json.JSONDecodeError as e:
         raise ParseError(f"Invalid JSON: {e}") from e
 
+    if not isinstance(obj, dict):
+        raise ParseError("Top-level JSON must be an object")
+
     # Required root keys
-    _require(obj, "file", (str,))
-    _require(obj, "extracted_at", (str,))
-    models = _require(obj, "models", (list,))
-    enums = _require(obj, "enums", (list,))
-    relationships = _require(obj, "relationships", (list,))
-    _require(obj, "derived", (dict,))
+    _require(obj, "session", (dict,))
+    _optional(obj, "timeline", (list,))
+    _optional(obj, "penalty_forecast", (list,))
+    _optional(obj, "exit_comparisons", (list,))
+    _optional(obj, "risk_alerts", (list,))
 
-    # Validate models
-    for m in models:
-        if not isinstance(m, dict):
-            raise ParseError("Each model must be an object")
-        _require(m, "name", (str,))
-        # optional docstring can be str or None
-        if "docstring" in m and m["docstring"] is not None and not isinstance(m["docstring"], str):
-            raise ParseError("model.docstring must be string or null")
-        meta = _require(m, "meta", (dict,))
-        # optional ordering
-        if "ordering" in meta and meta["ordering"] is not None and not isinstance(meta["ordering"], list):
-            raise ParseError("meta.ordering must be list or null")
-        str_repr = _require(m, "str_repr", (dict,))
-        _require(str_repr, "template", (str,))
-        fields = _require(m, "fields", (list,))
-        if len(fields) == 0:
-            raise ParseError(f"model {m['name']} has no fields")
-        for f in fields:
-            if not isinstance(f, dict):
-                raise ParseError("field must be an object")
-            _require(f, "name", (str,))
-            _require(f, "kind", (str,))
-            # related can be dict or null
-            if "related" in f and f["related"] is not None and not isinstance(f["related"], dict):
-                raise ParseError("field.related must be object or null")
+    # Validate session
+    session = _require(obj, "session", (dict,))
+    _require(session, "title", (str,))
+    if "parameters" in session and session["parameters"] is not None:
+        if not isinstance(session["parameters"], dict):
+            raise ParseError("session.parameters must be an object or null")
 
-    # Validate enums
-    for e in enums:
-        if not isinstance(e, dict):
-            raise ParseError("each enum must be an object")
-        _require(e, "name", (str,))
-        _require(e, "source_model", (str,))
-        _require(e, "source_field", (str,))
-        members = _require(e, "members", (list,))
-        for mem in members:
-            if not isinstance(mem, dict):
-                raise ParseError("enum.member must be an object")
-            _require(mem, "key", (str,))
-            _require(mem, "label", (str,))
+    # Validate timeline entries
+    for node in obj.get("timeline", []) or []:
+        if not isinstance(node, dict):
+            raise ParseError("each timeline node must be an object")
+        _require(node, "order", (int,))
+        _require(node, "title", (str,))
+        _optional(node, "description", (str,))
+        _optional(node, "detailed_description", (str,))
+        if "risks" in node and node["risks"] is not None and not isinstance(node["risks"], list):
+            raise ParseError("timeline node risks must be a list or null")
 
-    # Validate relationships
-    for r in relationships:
-        if not isinstance(r, dict):
-            raise ParseError("each relationship must be an object")
-        _require(r, "from_model", (str,))
-        _require(r, "from_field", (str,))
-        _require(r, "to_model", (str,))
-        _require(r, "cardinality", (str,))
+    # Validate penalty forecasts
+    for forecast in obj.get("penalty_forecast", []) or []:
+        if not isinstance(forecast, dict):
+            raise ParseError("each penalty_forecast entry must be an object")
+        _require(forecast, "label", (str,))
+
+    # Validate exit comparisons
+    for comparison in obj.get("exit_comparisons", []) or []:
+        if not isinstance(comparison, dict):
+            raise ParseError("each exit_comparison entry must be an object")
+        _require(comparison, "label", (str,))
+
+    # Validate risk alerts
+    for alert in obj.get("risk_alerts", []) or []:
+        if not isinstance(alert, dict):
+            raise ParseError("each risk_alert entry must be an object")
+        _require(alert, "message", (str,))
 
     return obj
 
 
-def get_model(obj: Dict[str, Any], name: str) -> Optional[Dict[str, Any]]:
-    for m in obj.get("models", []):
-        if m.get("name") == name:
-            return m
-    return None
+def get_session(obj: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    session = obj.get("session")
+    return session if isinstance(session, dict) else None
 
 
-def list_foreign_keys(model: Dict[str, Any]) -> List[Dict[str, Any]]:
-    return [f for f in model.get("fields", []) if f.get("related") and f["related"].get("type") == "ForeignKey"]
+def list_timeline_nodes(obj: Dict[str, Any]) -> List[Dict[str, Any]]:
+    return [n for n in obj.get("timeline", []) if isinstance(n, dict)]
