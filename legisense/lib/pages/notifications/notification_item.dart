@@ -2,13 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AppNotificationItem extends StatelessWidget {
-  const AppNotificationItem({super.key, required this.title, required this.time, this.description, this.icon, this.color});
+  const AppNotificationItem({
+    super.key,
+    required this.title,
+    required this.time,
+    this.description,
+    this.icon,
+    this.color,
+    this.category,
+  });
 
   final String title;
   final String time;
   final String? description;
   final IconData? icon;
   final Color? color;
+  final String? category;
 
   @override
   Widget build(BuildContext context) {
