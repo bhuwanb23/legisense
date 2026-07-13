@@ -69,17 +69,6 @@ class OpenRouterClient:
         if response_format is not None:
             payload["response_format"] = response_format
 
-        # Debug info: model, key presence, key prefix and length
-        key_prefix = (self.api_key or "")[:10]
-        print(json.dumps({
-            "openrouter_request": {
-                "model": self.model,
-                "has_key": bool(self.api_key),
-                "key_prefix": key_prefix,
-                "key_length": len(self.api_key or ""),
-            }
-        }))
-
         resp = requests.post(self.base_url, headers=headers, data=json.dumps(payload), timeout=90)
         if resp.status_code >= 400:
             print(f"[OpenRouter] Error {resp.status_code}: {resp.text}")
