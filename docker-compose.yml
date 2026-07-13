@@ -30,6 +30,8 @@ services:
     container_name: legisense_redis
     restart: unless-stopped
     command: redis-server --appendonly yes --requirepass legisense_redis_password
+    environment:
+      - REDIS_PASSWORD=legisense_redis_password
     volumes:
       - redis_data:/data
     ports:
@@ -37,7 +39,7 @@ services:
     networks:
       - legisense_network
     healthcheck:
-      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      test: ["CMD-SHELL", "redis-cli -a \"$$REDIS_PASSWORD\" ping | grep PONG"]
       interval: 10s
       timeout: 3s
       retries: 5
