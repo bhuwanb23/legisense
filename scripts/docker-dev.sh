@@ -37,10 +37,10 @@ check_docker() {
     fi
 }
 
-# Function to check if docker-compose is available
+# Function to check if docker compose is available
 check_docker_compose() {
-    if ! command -v docker-compose &> /dev/null; then
-        print_error "docker-compose is not installed. Please install it and try again."
+    if ! command -v docker compose &> /dev/null; then
+        print_error "docker compose is not installed. Please install it and try again."
         exit 1
     fi
 }
@@ -59,7 +59,7 @@ start_dev() {
     fi
     
     # Start services
-    docker-compose -f docker-compose.dev.yml up --build -d
+    docker compose -f docker compose.dev.yml up --build -d
     
     print_success "Development environment started!"
     print_status "Frontend: http://localhost:8080"
@@ -71,7 +71,7 @@ start_dev() {
 # Function to stop development environment
 stop_dev() {
     print_status "Stopping Legisense development environment..."
-    docker-compose -f docker-compose.dev.yml down
+    docker compose -f docker compose.dev.yml down
     print_success "Development environment stopped!"
 }
 
@@ -87,31 +87,31 @@ view_logs() {
     local service=${1:-""}
     if [ -n "$service" ]; then
         print_status "Viewing logs for $service..."
-        docker-compose -f docker-compose.dev.yml logs -f "$service"
+        docker compose -f docker compose.dev.yml logs -f "$service"
     else
         print_status "Viewing logs for all services..."
-        docker-compose -f docker-compose.dev.yml logs -f
+        docker compose -f docker compose.dev.yml logs -f
     fi
 }
 
 # Function to run database migrations
 run_migrations() {
     print_status "Running database migrations..."
-    docker-compose -f docker-compose.dev.yml exec backend python manage.py migrate
+    docker compose -f docker compose.dev.yml exec backend python manage.py migrate
     print_success "Database migrations completed!"
 }
 
 # Function to create superuser
 create_superuser() {
     print_status "Creating Django superuser..."
-    docker-compose -f docker-compose.dev.yml exec backend python manage.py createsuperuser
+    docker compose -f docker compose.dev.yml exec backend python manage.py createsuperuser
     print_success "Superuser created!"
 }
 
 # Function to collect static files
 collect_static() {
     print_status "Collecting static files..."
-    docker-compose -f docker-compose.dev.yml exec backend python manage.py collectstatic --noinput
+    docker compose -f docker compose.dev.yml exec backend python manage.py collectstatic --noinput
     print_success "Static files collected!"
 }
 
@@ -120,10 +120,10 @@ run_tests() {
     local service=${1:-"backend"}
     if [ "$service" = "backend" ]; then
         print_status "Running backend tests..."
-        docker-compose -f docker-compose.dev.yml exec backend python manage.py test
+        docker compose -f docker compose.dev.yml exec backend python manage.py test
     elif [ "$service" = "frontend" ]; then
         print_status "Running frontend tests..."
-        docker-compose -f docker-compose.dev.yml exec frontend flutter test
+        docker compose -f docker compose.dev.yml exec frontend flutter test
     else
         print_error "Invalid service. Use 'backend' or 'frontend'"
         exit 1
@@ -134,7 +134,7 @@ run_tests() {
 # Function to clean up
 cleanup() {
     print_status "Cleaning up Docker resources..."
-    docker-compose -f docker-compose.dev.yml down -v
+    docker compose -f docker compose.dev.yml down -v
     docker system prune -f
     print_success "Cleanup completed!"
 }
@@ -143,7 +143,7 @@ cleanup() {
 show_status() {
     print_status "Legisense Development Environment Status:"
     echo ""
-    docker-compose -f docker-compose.dev.yml ps
+    docker compose -f docker compose.dev.yml ps
     echo ""
     print_status "Service URLs:"
     print_status "  Frontend: http://localhost:8080"
