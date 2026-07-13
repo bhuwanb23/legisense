@@ -202,7 +202,7 @@ class _DocumentListPanelState extends State<DocumentListPanel> {
                     final String title = (item['file_name'] ?? 'Document').toString();
                     final int pages = (item['num_pages'] ?? 0) as int;
                     final String meta = 'PDF • $pages page${pages == 1 ? '' : 's'}';
-                    final int id = (item['id'] as int);
+                    final int id = (item['id'] as int?) ?? 0;
                     return TweenAnimationBuilder<double>(
                       tween: Tween(begin: 0, end: 1),
                       duration: Duration(milliseconds: 300 + index * 60),
