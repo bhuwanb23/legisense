@@ -66,6 +66,8 @@ services:
     build:
       context: ./legisense
       dockerfile: Dockerfile.dev
+      args:
+        LEGISENSE_API_BASE: "http://localhost:8000"
     container_name: legisense_frontend_dev
     restart: unless-stopped
     environment:
