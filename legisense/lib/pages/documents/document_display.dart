@@ -333,7 +333,7 @@ class _DocumentDisplayPanelState extends State<DocumentDisplayPanel>
                                 if (widget.document != null) ...[
                                   const SizedBox(height: 1),
                                   Text(
-                                    'tmpmzdho1yj.pdf',
+                                    widget.document!.title,
                                     style: AppTheme.caption.copyWith(
                                       color: AppTheme.textSecondary,
                                       fontSize: 10.5,
@@ -678,11 +678,11 @@ class _DocumentDisplayPanelState extends State<DocumentDisplayPanel>
     return GestureDetector(
       onHorizontalDragEnd: (details) {
         // Swipe left to go to next page
-        if (details.primaryVelocity! > 0) {
+        if ((details.primaryVelocity ?? 0) > 0) {
           _goToPreviousPage();
         }
-        // Swipe right to go to previous page
-        else if (details.primaryVelocity! < 0) {
+        // Swipe right to previous page
+        else if ((details.primaryVelocity ?? 0) < 0) {
           _goToNextPage();
         }
       },
@@ -1453,7 +1453,7 @@ class _DocumentDisplayPanelState extends State<DocumentDisplayPanel>
     
     try {
       final repo = ParsedDocumentsRepository(baseUrl: ApiConfig.baseUrl);
-      final documentId = int.parse(widget.document!.id.replaceFirst('server-', ''));
+      final documentId = int.tryParse(widget.document!.id.replaceFirst('server-', '')) ?? 0;
       final languageCode = _getLanguageCode(language);
       
       final translatedDoc = await repo.fetchDocumentDetailWithLanguage(
