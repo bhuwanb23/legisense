@@ -47,7 +47,9 @@ def call_openrouter_for_analysis(pages: List[str], meta: Dict[str, Any]) -> Dict
         temperature=0.2,
         max_tokens=2200,
     )
-    content = data.get("choices", [{}])[0].get("message", {}).get("content", "{}")
+    # Guard against an empty or missing "choices" list (IndexError otherwise)
+    _choices = data.get("choices") or []
+    content = _choices[0].get("message", {}).get("content", "{}") if _choices and isinstance(_choices[0], dict) else "{}"
 
     # Attempt to parse JSON; if it fails, try a repair pass
     try:
@@ -66,7 +68,8 @@ def call_openrouter_for_analysis(pages: List[str], meta: Dict[str, Any]) -> Dict
             temperature=0.0,
             max_tokens=2200,
         )
-        content2 = data2.get("choices", [{}])[0].get("message", {}).get("content", "{}")
+        _choices2 = data2.get("choices") or []
+        content2 = _choices2[0].get("message", {}).get("content", "{}") if _choices2 and isinstance(_choices2[0], dict) else "{}"
         try:
             return validate_and_normalize(json.loads(content2))
         except Exception:
