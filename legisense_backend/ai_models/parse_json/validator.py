@@ -28,7 +28,7 @@ def validate_and_normalize(payload: Dict[str, Any]) -> Dict[str, Any]:
             continue
         category = str(c.get("category", "")).strip()
         if category not in VALID_CLAUSE_CATEGORIES:
-            category = "Payment Terms" if category == "" else category
+            category = "Other"
         risk = str(c.get("risk", "low")).lower()
         if risk not in VALID_RISK:
             risk = "low"
