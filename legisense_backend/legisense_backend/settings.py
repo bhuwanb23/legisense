@@ -24,13 +24,12 @@ load_dotenv(BASE_DIR / '.env')
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-@+l*_-b!o$3bv9pv*6=)dc-9nv^jqluhyhj_a%!n14oeh)68o)'
+SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-CHANGE-ME-in-production')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DEBUG', 'true').lower() == 'true'
+DEBUG = os.getenv('DEBUG', 'false').lower() == 'true'
 
-# ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '*').split(',')
-ALLOWED_HOSTS = ["*", "192.168.31.67","bhuwanb23.pythonanywhere.com"]
+ALLOWED_HOSTS = [h.strip() for h in os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',') if h.strip()]
 
 
 
@@ -154,12 +153,6 @@ OPENROUTER_API_KEY = os.getenv('OPENROUTER_API_KEY', '')
 OPENROUTER_MODEL = os.getenv('OPENROUTER_MODEL', 'openai/gpt-4o-mini')
 
 # CORS settings
-CORS_ALLOW_ALL_ORIGINS = True  # Allow all origins for Flutter app
+CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "http://localhost:8080",
-    "http://127.0.0.1:8080",
-    "https://legisense-1.onrender.com",  # Add your Render.com domain
-]
+CORS_ALLOWED_ORIGINS = [o.strip() for o in os.getenv('CORS_ALLOWED_ORIGINS', '').split(',') if o.strip()]
