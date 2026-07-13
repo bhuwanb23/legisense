@@ -43,6 +43,11 @@ def parse_pdf_view(request: HttpRequest):
     if not uploaded_file:
         return JsonResponse({"error": "No file uploaded."}, status=400)
 
+    file_name = uploaded_file.name or ""
+    content_type = getattr(uploaded_file, "content_type", "") or ""
+    if not file_name.lower().endswith(".pdf") and content_type != "application/pdf":
+        return JsonResponse({"error": "Only PDF files are allowed."}, status=400)
+
     # Save to a temporary file to pass a filesystem path to the parser
     with tempfile.NamedTemporaryFile(delete=False, suffix=Path(uploaded_file.name).suffix) as tmp:
         for chunk in uploaded_file.chunks():
@@ -689,7 +694,7 @@ def chat_gemini_view(request: HttpRequest):
     model = payload.get("model") or None
     thinking_budget = payload.get("thinking_budget")
     language = payload.get("language", "en")
-    system_instruction = payload.get("system_instruction") or _GEMINI_SYSTEM_PROMPT
+    system_instruction = _GEMINI_SYSTEM_PROMPT
     if not prompt:
         return JsonResponse({"error": "prompt is required"}, status=400)
 
