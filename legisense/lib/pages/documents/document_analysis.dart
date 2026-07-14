@@ -66,7 +66,7 @@ class _AnalysisPanelState extends State<AnalysisPanel> {
           final message = e.toString();
           final bool isPending = message.contains('404') || message.contains('Analysis not available');
           if (isPending) {
-            final DateTime deadline = DateTime.now().add(const Duration(seconds: 30));
+            final DateTime deadline = DateTime.now().add(const Duration(seconds: 120));
             Map<String, dynamic>? polled;
             while (DateTime.now().isBefore(deadline) && mounted) {
               await Future.delayed(const Duration(seconds: 2));
