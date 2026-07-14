@@ -1,650 +1,408 @@
 <div align="center">
 
-# <strong>🌐 Legisense – AI‑Powered Legal Companion</strong>
+# Legisense — AI-Powered Legal Companion
 
-[![Flutter](https://img.shields.io/badge/Flutter-3.22%2B-02569B?logo=flutter&logoColor=white)](https://flutter.dev)
-[![Django](https://img.shields.io/badge/Django-4.x-092E20?logo=django&logoColor=white)](https://www.djangoproject.com/)
-[![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
-[![License](https://img.shields.io/badge/License-MIT-informational)](#license)
+[![Flutter](https://img.shields.io/badge/Flutter-3.x-02569B?logo=flutter&logoColor=white)](https://flutter.dev)
+[![Django](https://img.shields.io/badge/Django-5.2-092E20?logo=django&logoColor=white)](https://www.djangoproject.com/)
+[![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![Celery](https://img.shields.io/badge/Celery-5.4-37814A?logo=celery&logoColor=white)](https://docs.celeryq.dev/)
+[![License](https://img.shields.io/badge/License-MIT-informational)](LICENSE)
+
+**A citizen-first, India-first legal AI companion that reads contracts, explains them in plain language, and simulates real-world consequences before you sign.**
 
 </div>
 
 ---
 
-## 🚨 Problem
-- **Low legal literacy in India**: 70%+ struggle with legal jargon across everyday contracts (rentals, loans, insurance, ToS).
-- **Hidden risks**: Users unknowingly accept auto‑renewals, penalties, and unfair clauses leading to disputes and losses.
-- **Access gap**: SMEs, freelancers, tenants often can’t afford lawyers; billions lost annually to fraud/unfair terms.
-- **Existing tools misaligned**: Solutions like Spellbook, DoNotPay, LawGeex, LegalZoom target lawyers/Western markets, not Indian citizens.
+## Table of Contents
+
+- [Overview](#overview)
+- [Features](#features)
+- [Architecture](#architecture)
+- [Technology Stack](#technology-stack)
+- [Project Structure](#project-structure)
+- [Prerequisites](#prerequisites)
+- [Quick Start (Docker)](#quick-start-docker)
+- [Manual Setup](#manual-setup)
+- [Background Processing (Celery Worker)](#background-processing-celery-worker)
+- [Configuration](#configuration)
+- [API Reference](#api-reference)
+- [Key Code Paths](#key-code-paths)
+- [Development](#development)
+- [Deployment](#deployment)
+- [Roadmap](#roadmap)
+- [Contributing](#contributing)
+- [License](#license)
+- [Disclaimer](#disclaimer)
 
 ---
 
-## 🌟 Vision
-Build a trustworthy AI co‑pilot that makes legal documents:
-- **Understandable**: Simplifies contracts into plain language.
-- **Actionable**: Simulates what‑if outcomes and obligations.
-- **Protective**: Flags hidden risks and unfair terms.
-- **Empathetic**: Guides users with clarity, stress detection, and multilingual support.
+## Overview
+
+Most people in India — tenants, freelancers, small-business owners — cannot afford a lawyer to review the contracts they sign every day (rent agreements, loans, insurance, terms of service). The language is dense, the risks are hidden, and the consequences (auto-renewals, penalties, foreclosure) only appear after something goes wrong.
+
+**Legisense** is a mobile-first companion that closes that gap:
+
+- **Understandable** — it turns legal jargon into plain-language summaries at three reading levels.
+- **Actionable** — it runs *what-if* simulations ("miss 2 EMIs → default in 90 days → foreclosure in 6 months").
+- **Protective** — it flags unfair clauses and red-flag risks with clear "why it matters" explanations.
+- **Multilingual** — English, Hindi, Tamil, and Telugu.
+- **Empathetic** — guides users with checklists, negotiation drafts, and links to legal-aid resources.
 
 ---
 
-## 💡 Solution — Legisense
-An AI‑powered Legal Empathy & Simulation Companion that:
-- **Simplifies** contracts into accessible language.
-- **Analyzes** clauses, flags risks, and explains “why it matters”.
-- **Simulates** real‑world outcomes (e.g., “Miss 2 EMIs → Default in 90 days → Foreclosure in 6 months”).
-- **Adapts** to local laws (e.g., Karnataka vs Maharashtra eviction rules).
-- **Supports** empathetically, detecting stress/confusion and adapting tone.
-- **Guides action** with checklists, negotiation drafts, and links to NGOs/legal aid.
+## Features
+
+- **PDF Upload & Parsing** — extract text from contracts (pdfminer / pdfplumber) and persist the document with its pages.
+- **AI Contract Analysis** — structured, JSON-backed analysis of clauses, risks, and obligations via OpenRouter LLMs.
+- **What-If Simulation** — generates a scenario model (timeline, penalty forecast, exit comparisons, narratives, long-term projection, risk alerts) from the document.
+- **Penalty Forecasts** — visualized month-by-month financial exposure.
+- **Gemini Chat** — an in-app legal assistant powered by Google Gemini, with automatic translation of responses.
+- **Multilingual Support** — English ↔ Hindi / Tamil / Telugu for documents, analysis, simulations, and chat.
+- **Notifications** — category-filtered alerts and recent-activity surfaces.
+- **Profiles & Preferences** — reading level, preferred language, and history.
 
 ---
 
-## 📱 App Structure (Pages)
+## Architecture
 
-### 🔹 Basic Pages
-- **Home Page**: Quick insights, recent documents, alerts, and central “Upload Document” button.
-- **Documents Page**: List of uploads → open in Display (abstract text view) or Analysis (risk & summaries).
-- **Profile Page**: History, saved simulations, preferences (readability level, languages, privacy).
-- **Simulation Page (Entry)**: Hub to run what‑if contract simulations.
+Legisense is a two-package monorepo: a **Flutter** front end and a **Django + Django REST Framework** back end, with a **Celery + Redis** worker for long-running analysis and an **nginx** reverse proxy in production.
 
-### 🔹 Document Analyzer
-- **Document Display Page**: Extracted text + original scans with highlighting and search.
-- **Document Analysis Page**: Clause explanations, red‑flag alerts, risk scoring, checklists, and Q&A with citations.
-
-### 🔹 Document Simulation
-- **Simulation Overview Page**: Topic grid (obligations, penalties, exits, comparative, jurisdiction, forecasts) + what‑if toggles.
-- **Simulation Details Page**: Interactive flowchart + timeline of obligations and outcomes.
-- **Enhanced Simulation Page**: Rich scenario inputs, jurisdiction filters, narrative outcomes, contextual risk alerts, export/save.
-
----
-
-## ⚙️ Technical Flow (5 Layers)
-
-### 📊 Processing Pipeline Flowchart
 ```mermaid
-graph TD
-    A[📄 Document Upload] --> B[☁️ Cloud Storage]
-    B --> C[📢 Pub/Sub Trigger]
-    C --> D[🔍 Document AI Processing]
-    D --> E[🛡️ Cloud DLP Redaction]
-    E --> F[🧠 Vertex AI Embeddings]
-    F --> G[🔍 Matching Engine Index]
-    G --> H[💾 Firestore Storage]
-    H --> I[🤖 Gemini Analysis]
-    I --> J[📊 Risk Scoring]
-    J --> K[🎯 Simulation Generation]
-    K --> L[📱 Flutter App Display]
-    
-    M[👤 Firebase Auth] --> L
-    N[📈 BigQuery Analytics] --> O[📊 Looker Dashboards]
-    H --> N
-    I --> N
+flowchart LR
+    U[User] -->|Flutter app| FE[Frontend :3000 / :8080]
+    FE -->|HTTPS /api| NG[Nginx :80]
+    NG --> BE[Django + DRF :8000]
+    BE -->|enqueue| CEL[Celery Worker]
+    CEL --> RED[(Redis :6379)]
+    CEL -->|analysis| OR[OpenRouter LLM]
+    BE -->|chat| GEM[Google Gemini]
+    BE --> DB[(PostgreSQL :5432 / SQLite)]
+    BE --> MEDIA[Media & Static Storage]
 ```
 
-### 🏗️ Google Cloud Architecture Diagram
-```mermaid
-graph TB
-    subgraph "🌐 Frontend Layer"
-        FA[📱 Flutter App]
-        FB[🌐 Web Interface]
-    end
-    
-    subgraph "🔐 Authentication & Security"
-        AUTH[🔑 Firebase Auth]
-        IAM[👤 IAM Roles]
-        VPC[🛡️ VPC-SC]
-        CMEK[🔐 CMEK]
-    end
-    
-    subgraph "📡 API Gateway"
-        EP[🌐 Cloud Endpoints]
-        RUN[☁️ Cloud Run]
-    end
-    
-    subgraph "📄 Document Processing"
-        GCS[💾 Cloud Storage]
-        PUB[📢 Pub/Sub]
-        DOCAI[🔍 Document AI]
-        DLP[🛡️ Cloud DLP]
-    end
-    
-    subgraph "🧠 AI & Knowledge"
-        VERTEX[🤖 Vertex AI]
-        GEMINI[💬 Gemini 1.5 Pro/Flash]
-        EMBED[🧮 Embeddings API]
-        MATCH[🔍 Matching Engine]
-        FUNC[⚙️ Function Calling]
-    end
-    
-    subgraph "💾 Data Storage"
-        FIRESTORE[🔥 Firestore]
-        BIGQUERY[📊 BigQuery]
-    end
-    
-    subgraph "📊 Monitoring & Analytics"
-        LOOKER[📈 Looker Studio]
-        LOGS[📝 Cloud Logging]
-    end
-    
-    FA --> AUTH
-    FB --> AUTH
-    AUTH --> EP
-    EP --> RUN
-    RUN --> GCS
-    RUN --> PUB
-    PUB --> DOCAI
-    DOCAI --> DLP
-    DLP --> VERTEX
-    VERTEX --> GEMINI
-    VERTEX --> EMBED
-    EMBED --> MATCH
-    MATCH --> FIRESTORE
-    GEMINI --> FUNC
-    FUNC --> BIGQUERY
-    FIRESTORE --> LOOKER
-    BIGQUERY --> LOOKER
-    RUN --> LOGS
-    
-    IAM -.-> RUN
-    VPC -.-> GCS
-    CMEK -.-> FIRESTORE
-```
+**Request flow (document analysis):**
 
-### 🔄 Layer-by-Layer Breakdown
-- **Ingestion**: Upload → Cloud Storage → Pub/Sub trigger → metadata extraction
-- **Preprocessing**: Document AI (OCR/parsing) → Cloud DLP (PII redaction) → clean text → clause detection
-- **Analysis**: Vertex AI Embeddings → Matching Engine → Gemini 1.5 Pro/Flash → summaries, risks, Q&A
-- **Application Logic**: Function Calling → Clause Explorer, Red‑Flag Reports, What‑If Simulation, Checklists
-- **User Layer**: Firebase Auth → Flutter app → Home, Documents, Analyzer, Simulation, Profile
+1. Frontend uploads a PDF to `POST /api/parse-pdf/`.
+2. The backend stores the file, extracts text, and creates a `pending` analysis record.
+3. A **Celery task** (`api.tasks.process_document_analysis`) runs the LLM analysis asynchronously (works for documents of **any** length) and persists the result, then triggers translations.
+4. The frontend polls `GET /api/documents/<id>/analysis/` until the analysis is `success` and renders it.
 
-### 🏗️ Architecture Notes
-- **Current OSS stack (this repo)**: Flutter app (`legisense/`) + Django API (`legisense_backend/`)
-- **Production cloud architecture**: Google Cloud (Cloud Run, Firestore, Document AI, Vertex AI) for scale‑out
-- **Serverless design**: Auto-scaling, pay-per-use, event-driven processing
+> **Why a worker?** Analysis calls an external LLM and can take well beyond a normal HTTP request budget, especially for multi-page contracts. Offloading it to Celery keeps uploads fast and the API responsive. If Redis/`REDIS_URL` is not configured, the app gracefully falls back to a background thread so it still works in minimal local setups.
 
 ---
 
-## ☁️ Google Cloud Tools & Services
+## Technology Stack
 
-### 📄 1. Document Ingestion & Processing
+| Layer | Technology | Purpose |
+|-------|------------|---------|
+| Frontend | Flutter (Dart 3) | Cross-platform mobile-first UI |
+| Backend | Django 5.2 + Django REST Framework | API, business logic, ORM |
+| Async Workers | Celery 5.4 + Redis | Background document analysis & translation |
+| LLM — Analysis | OpenRouter (configurable model) | Contract analysis & simulation generation |
+| LLM — Chat | Google Gemini | Conversational legal assistant |
+| Database | PostgreSQL (prod) / SQLite (dev) | Persistent storage |
+| Web Server | Gunicorn + nginx | WSGI serving & reverse proxy |
+| Optional | Ollama | Self-hosted LLM alternative |
 
-| Service | Purpose | Key Features |
-|---------|---------|--------------|
-| **Google Cloud Storage (GCS)** | Store uploaded PDFs, DOCX, images | • Multi-regional storage<br>• Lifecycle management<br>• Signed URLs for secure access |
-| **Cloud Run** | API layer for upload, preprocessing, analysis orchestration | • Serverless containers<br>• Auto-scaling (0-1000 instances)<br>• Pay-per-request pricing |
-| **Cloud Pub/Sub** | Event-driven pipeline trigger | • Asynchronous processing<br>• Guaranteed delivery<br>• Dead letter queues |
+---
 
-### 🔍 2. Document Parsing & Cleaning
+## Project Structure
 
-| Service | Purpose | Key Features |
-|---------|---------|--------------|
-| **Document AI (DocAI)** | OCR, Contract Parser, Form Extractor | • Contract-specific parsing<br>• Entity extraction (dates, amounts, parties)<br>• Form field detection |
-| **Cloud DLP** | Detect & redact sensitive data | • PII detection (Aadhaar, PAN, names)<br>• Custom data types<br>• De-identification templates |
-
-### 🧠 3. Knowledge & Retrieval
-
-| Service | Purpose | Key Features |
-|---------|---------|--------------|
-| **Vertex AI Embeddings** | Convert document clauses into semantic vectors | • Text embedding models<br>• Multi-language support<br>• Batch processing |
-| **Vertex AI Matching Engine** | ANN-based search for clause retrieval | • Vector similarity search<br>• Real-time indexing<br>• Filtering capabilities |
-| **BigQuery** | Store structured legal data for analytics | • SQL-based queries<br>• Real-time analytics<br>• ML integration |
-| **Firestore** | Store user metadata, doc metadata, analysis results | • NoSQL document store<br>• Real-time updates<br>• Offline support |
-
-### 🤖 4. Reasoning & Generative AI
-
-| Service | Purpose | Key Features |
-|---------|---------|--------------|
-| **Vertex AI Gemini 1.5 Pro** | Deep analysis, risk scoring, simulation generation | • 1M+ token context<br>• Multimodal capabilities<br>• Function calling |
-| **Vertex AI Gemini 1.5 Flash** | Quick summaries, real-time Q&A, UX responsiveness | • Fast inference<br>• Cost-effective<br>• Streaming responses |
-| **Vertex AI Function Calling** | Tools for legal analysis functions | • `extract_clauses()`<br>• `score_risk()`<br>• `simulate_outcomes()`<br>• `generate_checklist()` |
-
-### 🔐 5. Application & Security
-
-| Service | Purpose | Key Features |
-|---------|---------|--------------|
-| **Firebase Auth / Identity Platform** | Secure login (email, phone, OAuth) | • Multi-factor authentication<br>• Social logins<br>• Custom claims |
-| **Cloud Endpoints / API Gateway** | Manage API requests securely | • Rate limiting<br>• API key management<br>• Request/response logging |
-| **VPC-SC (Service Controls)** | Network-level isolation of sensitive data | • Data perimeter security<br>• Service-to-service controls<br>• Compliance boundaries |
-| **CMEK (Customer-Managed Encryption Keys)** | User-controlled encryption | • Key rotation<br>• Audit logging<br>• Compliance support |
-| **IAM (Identity & Access Management)** | Least privilege access for roles | • Role-based access control<br>• Service accounts<br>• Resource-level permissions |
-
-### 📊 6. Monitoring & Analytics
-
-| Service | Purpose | Key Features |
-|---------|---------|--------------|
-| **Looker Studio + BigQuery** | Dashboards for evaluation, performance monitoring | • Real-time dashboards<br>• Custom metrics<br>• Export capabilities |
-| **Cloud Logging** | Centralized logging and monitoring | • Structured logging<br>• Log-based metrics<br>• Error reporting |
-
-### 💰 Cost Optimization Strategy
-
-| Layer | Service | Cost Model | Optimization |
-|-------|---------|------------|--------------|
-| **Storage** | Cloud Storage | $0.020/GB/month | Lifecycle policies, compression |
-| **Processing** | Cloud Run | $0.40/vCPU-hour | Auto-scaling, cold starts |
-| **AI/ML** | Vertex AI | $0.50/1M tokens | Caching, batch processing |
-| **Database** | Firestore | $0.18/100K reads | Query optimization, indexing |
-| **Analytics** | BigQuery | $5/TB processed | Partitioning, clustering |
-
-### 🔄 Data Flow Architecture
-
-```mermaid
-sequenceDiagram
-    participant U as 👤 User
-    participant F as 📱 Flutter App
-    participant A as 🔐 Firebase Auth
-    participant R as ☁️ Cloud Run
-    participant S as 💾 Cloud Storage
-    participant P as 📢 Pub/Sub
-    participant D as 🔍 Document AI
-    participant L as 🛡️ Cloud DLP
-    participant V as 🤖 Vertex AI
-    participant E as 🔍 Matching Engine
-    participant FS as 🔥 Firestore
-    participant BQ as 📊 BigQuery
-    participant LS as 📈 Looker Studio
-
-    U->>F: Upload Document
-    F->>A: Authenticate User
-    A-->>F: Auth Token
-    F->>R: POST /api/parse-pdf
-    R->>S: Store Document
-    R->>P: Publish Upload Event
-    P->>D: Trigger Processing
-    D->>D: OCR & Parse Contract
-    D->>L: Extract & Redact PII
-    L-->>D: Cleaned Text
-    D->>V: Generate Embeddings
-    V->>E: Index Vectors
-    E->>FS: Store Metadata
-    V->>V: Gemini Analysis
-    V->>FS: Store Analysis Results
-    V->>BQ: Store Analytics Data
-    R-->>F: Analysis Complete
-    F->>U: Display Results
-    BQ->>LS: Generate Dashboards
 ```
-
-### 🏗️ Service Integration Map
-
-```mermaid
-mindmap
-  root((Legisense<br/>Google Cloud))
-    Document Processing
-      Cloud Storage
-        Multi-regional
-        Lifecycle Management
-        Signed URLs
-      Document AI
-        Contract Parser
-        OCR Engine
-        Form Extractor
-      Cloud DLP
-        PII Detection
-        Data Redaction
-        Custom Types
-    AI & Knowledge
-      Vertex AI
-        Gemini 1.5 Pro
-        Gemini 1.5 Flash
-        Embeddings API
-        Function Calling
-      Matching Engine
-        Vector Search
-        Real-time Indexing
-        Similarity Matching
-    Data Storage
-      Firestore
-        User Data
-        Document Metadata
-        Analysis Results
-      BigQuery
-        Legal Analytics
-        Performance Metrics
-        Compliance Reports
-    Security & Auth
-      Firebase Auth
-        Multi-factor Auth
-        Social Logins
-        Custom Claims
-      IAM
-        Role-based Access
-        Service Accounts
-        Resource Permissions
-      VPC-SC
-        Data Perimeter
-        Service Controls
-        Compliance
-    Monitoring
-      Looker Studio
-        Real-time Dashboards
-        Custom Metrics
-        Export Reports
-      Cloud Logging
-        Structured Logs
-        Error Tracking
-        Performance Monitoring
+legisense/
+├── legisense/                 # Flutter frontend
+│   ├── lib/
+│   │   ├── api/            # HTTP repositories (ParsedDocumentsRepository, etc.)
+│   │   ├── pages/          # Home, Documents, Simulation, Notifications, Profile
+│   │   ├── theme/          # App theme helpers
+│   │   └── utils/         # Responsive / navigation helpers
+│   ├── assets/            # Images, logos
+│   ├── pubspec.yaml
+│   └── Dockerfile          # Multi-stage Flutter → nginx build
+├── legisense_backend/        # Django backend
+│   ├── api/               # Views, models, URLs, Celery tasks
+│   ├── ai_models/         # LLM clients (OpenRouter, Gemini), analysis & simulation
+│   ├── translation/        # Multilingual translation service
+│   ├── documents/         # PDF parsing
+│   ├── google_cloud/      # Cloud client config (mock mode supported)
+│   ├── legisense_backend/  # Settings, Celery app, WSGI/ASGI
+│   ├── requirements.txt
+│   └── Dockerfile
+├── scripts/                # docker-dev / docker-prod / start-worker helpers
+├── nginx/                 # nginx.conf for production
+├── docker-compose.yml      # Production composition (backend + worker + db + redis + nginx)
+├── docker-compose.dev.yml  # Development composition
+├── env.example
+├── docker.md
+├── CONTRIBUTING.md
+└── README.md
 ```
 
 ---
 
-## 🔑 Features
-- **Plain‑Language Summaries**: 3 levels — basic, standard, detailed.
-- **Clause Explorer**: Risks, why‑it‑matters, suggested actions.
-- **Red‑Flag Report**: Sorted by severity.
-- **Contract‑to‑Life Simulation**: Obligations → breaches → consequences.
-- **Jurisdiction‑Aware Guidance**: State‑level rules.
-- **Empathetic Support**: Stress detection, adaptive tone, resources.
-- **Actionable Guidance**: Checklists, draft letters, connect to aid.
-- **Multilingual**: English ↔ Hindi/Marathi.
-- **Privacy Controls**: Ephemeral mode, local redaction.
+## Prerequisites
+
+- **Docker** 20.10+ and **Docker Compose** v2 (recommended path), **or**
+- **Flutter** 3.x (Dart 3) + **Python** 3.11+ for a manual local setup.
+- **Git**.
+- API keys for live AI features:
+  - `OPENROUTER_API_KEY` (contract analysis & simulation)
+  - `GOOGLE_GEMINI_API_KEY` (chat assistant)
 
 ---
 
-## 🚀 Why Unique (Differentiation)
+## Quick Start (Docker)
 
-| Existing Tools (Spellbook, LawGeex, DoNotPay, LegalZoom) | Legisense |
-| --- | --- |
-| Lawyer‑focused, Western markets | Citizen‑first, India‑first |
-| Reactive: Summarization & review | Proactive: Simulation & empathy |
-| Expensive ($15–20/doc avg) | Affordable (~$3–4/doc) |
-| English‑heavy, complex UI | Multilingual, mobile‑first, simple |
-| No emotional support | Empathetic + stress‑aware guidance |
+This is the recommended way to run the whole stack.
 
----
+### 1. Clone and configure
 
-## 📊 Feasibility, Scalability, Viability
-- **Feasibility**: Serverless GCP reference (Cloud Run, Firestore, Document AI, Vertex AI); MVP in 6–8 weeks.
-- **Scalability**: Serverless infra auto‑scales; cost grows with usage.
-- **Viability**: Freemium (free summary + red flags; paid simulations). Low processing cost (~$0.30–0.50/doc).
-- **Market Opportunity**: India → 500M+ smartphone users; 70% low legal literacy.
-- **Sustainability**: Efficient infra, caching, reuse, green defaults.
-
----
-
-## 📈 Impact
-- **Prevents fraud & unfair penalties** → saves billions annually.
-- **Reduces legal burden** for SMEs, freelancers, tenants.
-- **Increases access to justice** for citizens without lawyers.
-- **Empowers with foresight** via simulations of obligations.
-- **Improves legal literacy** through plain explanations and scenarios.
-
----
-
-## 💰 Implementation Cost (Lean MVP)
-- **Storage + Hosting**: 20%
-- **Document AI Parsing**: 25%
-- **AI Analysis**: 30%
-- **Database (Firestore/BigQuery)**: 10%
-- **Security + Compliance**: 10%
-- **Misc (APIs, logs)**: 5%
-
-➡️ Estimated cost per doc: **$3–4** vs **$15–20** for enterprise tools.
-
----
-
-## 🔗 Quick Links
-- **Frontend (Flutter)**: `legisense/`
-- **Backend (Django)**: `legisense_backend/`
-- **Design Prototypes**: `prototype_design/`
-
----
-
-## 🚀 Getting Started
-
-### Prerequisites
-- Docker Desktop (Windows/Mac) or Docker Engine (Linux)
-- Git
-
-### Quick Start with Docker (Recommended)
-
-#### 1. Clone and Setup
 ```bash
 git clone <your-repository-url>
 cd legisense
 cp env.example .env
+# Edit .env: set DEBUG=false, a strong SECRET_KEY, and your API keys
 ```
 
-#### 2. Start Development Environment
+### 2. Start the stack
+
 ```bash
-# On Windows
-scripts\docker-dev.bat start
+# Production-like (nginx + worker + postgres + redis)
+docker compose up --build -d
 
-# On Linux/Mac
-./scripts/docker-dev.sh start
+# Or development (hot-reload, frontend on :8080)
+docker compose -f docker-compose.dev.yml up --build -d
 ```
 
-#### 3. Access Your Application
-- **Frontend**: http://localhost:8080
-- **Backend API**: http://localhost:8000/api/
-- **Admin Panel**: http://localhost:8000/admin/
+### 3. Apply migrations & create an admin user
 
-#### 4. Create Admin User
 ```bash
-# On Windows
-scripts\docker-dev.bat superuser
-
-# On Linux/Mac
-./scripts/docker-dev.sh superuser
+docker compose exec backend python manage.py migrate
+docker compose exec backend python manage.py createsuperuser
 ```
 
-### Production Deployment
-```bash
-# Configure environment
-nano .env  # Set DEBUG=false, secure SECRET_KEY, and API keys
+### 4. Access the application
 
-# Start production
-scripts\docker-prod.bat start  # Windows
-./scripts/docker-prod.sh start  # Linux/Mac
-```
+| Service | Production | Development |
+|---------|------------|-------------|
+| Frontend | http://localhost:3000 | http://localhost:8080 |
+| Backend API | http://localhost:8000/api/ | http://localhost:8000/api/ |
+| Admin | http://localhost:8000/admin/ | http://localhost:8000/admin/ |
+| PostgreSQL | localhost:5432 | localhost:5432 |
+| Redis | localhost:6379 | localhost:6379 |
 
-### Manual Setup (Alternative)
+---
 
-#### Prerequisites
-- Flutter 3.22+ (Dart 3)
-- Python 3.10+
+## Manual Setup
 
-#### 1) Backend (Django)
+### Backend (Django)
+
 ```bash
 cd legisense_backend
 python -m venv venv
 # Windows
 venv\Scripts\activate
-# macOS/Linux
-# source venv/bin/activate
+# macOS / Linux
+source venv/bin/activate
 
 pip install -r requirements.txt
 python manage.py migrate
 python manage.py runserver 0.0.0.0:8000
 ```
-Backend runs at `http://localhost:8000` (Android emulator uses `http://10.0.2.2:8000`).
 
-#### 2) Frontend (Flutter)
+In a **second terminal**, start the background worker (required for analysis of any document):
+
+```bash
+cd legisense_backend
+source venv/bin/activate        # or venv\Scripts\activate
+celery -A legisense_backend worker -l info
+# or simply:  ./../scripts/start-worker.sh   (Linux/macOS)
+#                        scripts\start-worker.bat  (Windows)
+```
+
+The backend listens on `http://localhost:8000` (use `http://10.0.2.2:8000` from the Android emulator).
+
+### Frontend (Flutter)
+
 ```bash
 cd legisense
 flutter pub get
-flutter run
+flutter run                                  # device / emulator
+flutter run --dart-define=LEGISENSE_API_BASE=http://localhost:8000   # web / desktop
 ```
 
-Web/Desktop example:
+The frontend reads the backend base URL from the compile-time define `LEGISENSE_API_BASE`. When omitted it falls back to a sensible default; always pass it explicitly for local development.
+
+---
+
+## Background Processing (Celery Worker)
+
+Analysis and translation are handled asynchronously:
+
+- The API creates a `pending` analysis and enqueues `api.tasks.process_document_analysis`.
+- The **worker** runs the LLM analysis (any document length), persists the result, and triggers multilingual translations.
+- The frontend polls `GET /api/documents/<id>/analysis/` and renders the result when ready.
+- **Fallback:** if `REDIS_URL` is unset, the app runs the same pipeline in a background thread — no Redis required for a minimal local run.
+
+Run the worker with the provided helpers:
+
 ```bash
-flutter run --dart-define=LEGISENSE_API_BASE=http://localhost:8000
+# Linux / macOS
+./scripts/start-worker.sh
+
+# Windows
+scripts\start-worker.bat
 ```
 
----
+Or directly:
 
-## 🐳 Docker Architecture (Development)
-
-The application is fully containerized with the following services for local development:
-
-```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Flutter Web   │    │  Django Backend │    │   PostgreSQL    │
-│   (Frontend)    │◄──►│   (API Server)  │◄──►│   (Database)    │
-│   Port: 8080    │    │   Port: 8000    │    │   Port: 5432    │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-                                │
-                                ▼
-                       ┌─────────────────┐
-                       │     Redis       │
-                       │   (Cache)       │
-                       │   Port: 6379    │
-                       └─────────────────┘
-```
-
-> **Note**: For production deployment, see the [Google Cloud Architecture](#️-technical-flow-5-layers) section above, which provides serverless, auto-scaling infrastructure with Document AI, Vertex AI, and other Google Cloud services.
-
-### Docker Services
-- **Frontend**: Flutter web app with Nginx
-- **Backend**: Django with Gunicorn
-- **Database**: PostgreSQL with initialization
-- **Cache**: Redis for sessions and caching
-- **Proxy**: Nginx for production load balancing
-
-### Management Scripts
-- `scripts/docker-dev.bat` (Windows) / `scripts/docker-dev.sh` (Linux/Mac) - Development management
-- `scripts/docker-prod.bat` (Windows) / `scripts/docker-prod.sh` (Linux/Mac) - Production management
-
-### Common Docker Commands
 ```bash
-# Development
-scripts\docker-dev.bat start      # Start development environment
-scripts\docker-dev.bat logs       # View logs
-scripts\docker-dev.bat migrate    # Run database migrations
-scripts\docker-dev.bat stop       # Stop services
-scripts\docker-dev.bat cleanup    # Clean up resources
-
-# Production
-scripts\docker-prod.bat start     # Start production environment
-scripts\docker-prod.bat monitor   # Monitor services
-scripts\docker-prod.bat backup    # Backup database
-scripts\docker-prod.bat scale 3 2 # Scale services
+celery -A legisense_backend worker -l info
 ```
 
----
-
-## ⚙️ Configuration
-Flutter app reads the backend base URL via a compile‑time define:
-
-| Var | Default | Notes |
-| --- | --- | --- |
-| `LEGISENSE_API_BASE` | `http://10.0.2.2:8000` | Default for Android emulators. Use `http://localhost:8000` for local web/desktop. |
+The `docker-compose.yml` already includes a `worker` service that starts automatically.
 
 ---
 
-## 🧩 Key Code Paths
-- **App entry & shell**: `legisense/lib/main.dart`
-  - `SafeArea` wrapping
-  - `IndexedStack` + global bottom nav
-- **Nav bar**: `legisense/lib/components/bottom_nav_bar.dart`
-- **Documents**:
-  - Page: `legisense/lib/pages/documents/documents_page.dart`
-  - Analysis (polling fallback): `legisense/lib/pages/documents/document_analysis.dart`
-  - Repository (HTTP): `legisense/lib/api/parsed_documents_repository.dart`
-- **Simulation**: `legisense/lib/pages/simulation/`
-- **Notifications**: `legisense/lib/pages/notifications/notifications_page.dart`
-- **Theme helpers**: `legisense/lib/theme/app_theme.dart`
-- **Responsive helpers**: `legisense/lib/utils/responsive.dart`
+## Configuration
+
+All configuration is environment-driven (see `env.example`). The Flutter app is configured at build time via `LEGISENSE_API_BASE`.
+
+| Variable | Default | Notes |
+|----------|---------|-------|
+| `DATABASE_URL` | _(empty → SQLite)_ | PostgreSQL DSN for production, e.g. `postgresql://user:pass@host:5432/db` |
+| `REDIS_URL` | _(empty)_ | Redis broker for Celery, e.g. `redis://:pass@host:6379/0`. Enables the async worker. |
+| `SECRET_KEY` | dev placeholder | **Set a strong secret in production.** |
+| `DEBUG` | `false` | Enable only in development. |
+| `ALLOWED_HOSTS` | `localhost,127.0.0.1` | Comma-separated trusted hosts. |
+| `CORS_ALLOWED_ORIGINS` | _(empty)_ | Comma-separated frontend origins allowed by CORS. |
+| `OPENROUTER_API_KEY` | _(empty)_ | Required for contract analysis & simulation. |
+| `OPENROUTER_MODEL` | `openai/gpt-4o-mini` | Model used for analysis/simulation. |
+| `GOOGLE_GEMINI_API_KEY` | _(empty)_ | Required for the chat assistant. |
+| `OLLAMA_BASE_URL` | _(empty)_ | Optional self-hosted LLM endpoint. |
+| `GCP_CLIENT_MODE` | `mock` | `mock` keeps cloud clients local; switch to `real` only with GCP credentials. |
 
 ---
 
-## 🧪 Backend Endpoints (high level)
-- `GET /api/documents/` — list documents
-- `GET /api/documents/{id}/` — document detail
-- `GET /api/documents/{id}/analysis/` — analysis JSON
-- `POST /api/parse-pdf/` — upload and parse a PDF
+## API Reference
+
+Base path: `/api/`. All analysis/simulation endpoints return JSON.
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/parse-pdf/` | Upload & parse a PDF; creates a pending analysis. |
+| `GET` | `/documents/` | List parsed documents. |
+| `GET` | `/documents/<id>/` | Document detail (pages, metadata, file URL). |
+| `GET` | `/documents/<id>/analysis/` | Analysis JSON (404 until `success`). |
+| `POST` | `/documents/<id>/analyze/` | (Re)trigger analysis (queues a worker task or runs synchronously). |
+| `POST` | `/documents/<id>/simulate/` | Generate a what-if simulation session for a document. |
+| `GET` | `/documents/<id>/simulations/` | List simulation sessions for a document. |
+| `POST` | `/simulations/import/` | Import a simulation payload. |
+| `GET` | `/simulations/<id>/` | Simulation session detail. |
+| `POST` | `/documents/<id>/translate/` | Translate document content to a language. |
+| `GET` | `/documents/<id>/translations/` | List document translations. |
+| `GET` | `/documents/<id>/translations/<lang>/` | Get a document translation. |
+| `POST` | `/analysis/<id>/translate/` | Translate an analysis to a language. |
+| `GET` | `/analysis/<id>/translations/` | List analysis translations. |
+| `GET` | `/analysis/<id>/translations/<lang>/` | Get an analysis translation. |
+| `POST` | `/simulations/<id>/translate/` | Translate a simulation to a language. |
+| `GET` | `/simulations/<id>/translations/` | List simulation translations. |
+| `GET` | `/simulations/<id>/translations/<lang>/` | Get a simulation translation. |
+| `POST` | `/chat/gemini/` | Chat with the Gemini legal assistant (JSON `{prompt, model?, language?}`). |
+
+Supported translation languages: **English (`en`), Hindi (`hi`), Tamil (`ta`), Telugu (`te`)**.
 
 ---
 
-## 🛠️ Development Notes
-- Prefer `Color.withValues(alpha: ...)` (replaces deprecated `withOpacity()`).
-- Notifications page uses a responsive header and persistent bottom nav.
-- Global navigation helper: `navigateToPage(int index)` in `main.dart`.
+## Key Code Paths
+
+**Frontend (`legisense/lib`)**
+
+- App shell & navigation: `main.dart` (`SafeArea` + `IndexedStack` + bottom nav), `components/bottom_nav_bar.dart`
+- Documents: `pages/documents/documents_page.dart`, `document_display.dart`, `document_analysis.dart` (polls for analysis)
+- Data layer: `api/parsed_documents_repository.dart` (`LEGISENSE_API_BASE` define, timeouts, null-safe casts)
+- Simulation: `pages/simulation/`
+- Notifications: `pages/notifications/notifications_page.dart`
+- Theme & responsive helpers: `theme/app_theme.dart`, `utils/responsive.dart`
+
+**Backend (`legisense_backend`)**
+
+- Settings & Celery app: `legisense_backend/settings.py`, `legisense_backend/celery.py`
+- API: `api/views.py`, `api/urls.py`, `api/models.py`, `api/tasks.py`
+- LLM clients & pipelines: `ai_models/api/openrouter_api.py`, `ai_models/api/google_gemini_api.py`, `ai_models/run_analysis.py`, `ai_models/run_simulation_models_extraction.py`
+- Translation: `translation/translator.py`
+- PDF parsing: `documents/pdf_document_parser.py`
 
 ---
 
-## 🖼️ Screenshots
-Add screenshots/GIFs into `assets/` and update paths:
+## Development
 
-| Home | Documents | Notifications |
-| :--: | :-------: | :-----------: |
-| ![Home](assets/screenshots/home.png) | ![Docs](assets/screenshots/documents.png) | ![Notifications](assets/screenshots/notifications.png) |
-
----
-
-## 🗺️ Roadmap
-- [ ] Authentication & user sessions
-- [ ] Persistent notifications & settings
-- [ ] Real‑time progress for long parses
-- [ ] Role‑based access and sharing
-
----
-
-## 📦 Build
-
-### Docker Build
 ```bash
-# Development build
-docker-compose -f docker-compose.dev.yml build
+# Backend checks
+cd legisense_backend
+python manage.py check
+python -m py_compile -m api.views api.tasks          # syntax check changed modules
+python manage.py test                                  # test suite
 
-# Production build
-docker-compose build
+# Frontend checks
+cd legisense
+flutter analyze
+flutter test
 ```
 
-### Manual Build
-```bash
-# Android
-flutter build apk
+Notes:
 
-# iOS
-flutter build ios
-
-# Web
-flutter build web
-```
+- Prefer `Color.withValues(alpha: ...)` over the deprecated `withOpacity()`.
+- The analysis page polls for completion; for large documents allow up to ~2 minutes before showing a retry.
+- Keep navigation wrapped in `SafeArea` to avoid status-bar overlap.
 
 ---
 
-## 🧯 Troubleshooting
+## Deployment
 
-### Docker Issues
-- **Port already in use**: Check what's using the port with `netstat -ano | findstr :8080` and kill the process
-- **Services not starting**: Check logs with `scripts\docker-dev.bat logs`
-- **Database issues**: Reset with `scripts\docker-dev.bat cleanup` then `scripts\docker-dev.bat start`
-- **Permission issues**: Ensure Docker has proper permissions and restart Docker Desktop
+1. Copy `env.example` to `.env` and set:
+   - `DEBUG=false`
+   - A strong, unique `SECRET_KEY`
+   - `ALLOWED_HOSTS` and `CORS_ALLOWED_ORIGINS` for your domain
+   - `DATABASE_URL` (PostgreSQL), `REDIS_URL` (Redis)
+   - Your LLM API keys
+2. Build & start with Compose (see `docker.md` for the full reference):
 
-### General Issues
-- **Android networking**: use `http://10.0.2.2:8000` for the emulator.
-- **Analysis 404 initially**: UI polls for ~30s, then shows a friendly message.
-- **Overlap with status bar**: ensure `SafeArea` wraps page bodies (already applied).
+   ```bash
+   docker compose up --build -d
+   docker compose exec backend python manage.py migrate
+   docker compose exec backend python manage.py collectstatic --noinput
+   ```
 
----
+3. Terminate TLS at nginx (certificates in `nginx/ssl/`) and keep the backend off the public internet.
 
-## ✅ In Summary
-
-**Legisense** is a citizen‑first, India‑first legal AI companion that not only explains contracts but also simulates consequences, adapts to local laws, and supports users empathetically — bridging a major access‑to‑justice gap while remaining feasible, scalable, and affordable.
-
-### 🏗️ Architecture Summary
-
-| Layer | Technology Stack | Purpose |
-|-------|------------------|---------|
-| **Frontend** | Flutter (Cross-platform) | Mobile-first, responsive UI |
-| **Backend** | Django + Cloud Run | API orchestration, business logic |
-| **Document Processing** | Document AI + Cloud DLP | OCR, parsing, PII redaction |
-| **AI/ML** | Vertex AI (Gemini 1.5) | Analysis, simulation, Q&A |
-| **Storage** | Firestore + BigQuery | User data, analytics, knowledge base |
-| **Security** | Firebase Auth + IAM | Authentication, authorization |
-| **Monitoring** | Looker Studio + Cloud Logging | Dashboards, performance tracking |
-
-### 🚀 Key Differentiators
-
-- **🇮🇳 India-First**: Built for Indian legal system, languages, and user needs
-- **🤖 AI-Powered**: Advanced document analysis with Gemini 1.5 Pro/Flash
-- **📊 Simulation Engine**: What-if scenarios for contract outcomes
-- **🛡️ Privacy-Focused**: Local processing options, PII redaction
-- **💰 Cost-Effective**: ~$3-4 per document vs $15-20 for enterprise tools
-- **📱 Mobile-First**: Flutter app for maximum accessibility
+See [`docker.md`](docker.md) for services, volumes, backups, scaling, and troubleshooting.
 
 ---
 
-## 📄 License
-MIT — see the `LICENSE` file (if not present, feel free to add one).
+## Roadmap
+
+- Real authentication & user sessions (the auth client currently supports a mock mode).
+- Persistent notifications and richer settings.
+- Real-time progress indicators for long-running analyses.
+- Role-based access and document sharing.
+- Optional Google Cloud integration (Document AI, Vertex AI) behind `GCP_CLIENT_MODE=real`.
+
+---
+
+## Contributing
+
+Contributions are welcome. Please read [`CONTRIBUTING.md`](CONTRIBUTING.md) for branch conventions, setup, testing, and pull-request expectations before opening a PR.
+
+---
+
+## License
+
+Legisense is released under the **MIT License** — see the [`LICENSE`](LICENSE) file.
+
+---
+
+## Disclaimer
+
+Legisense is an educational tool that provides **general information**, not legal advice. It does not create an attorney–client relationship, and its output may be inaccurate or incomplete. Always consult a qualified legal professional for decisions that affect your rights or obligations.
