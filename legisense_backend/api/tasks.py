@@ -2,7 +2,10 @@ from __future__ import annotations
 
 import logging
 
-from celery import shared_task
+try:
+    from celery import shared_task
+except ImportError:  # celery not installed -> use a plain synchronous function
+    shared_task = None
 
 logger = logging.getLogger(__name__)
 
@@ -59,10 +62,15 @@ def perform_analysis(doc_id: int) -> None:
             logger.exception("Analysis translation failed for %s: %s", analysis_obj.id, exc)
 
 
-@shared_task(name="api.tasks.process_document_analysis", bind=True, max_retries=2)
-def process_document_analysis(self, doc_id: int) -> None:
-    try:
+if shared_task is not None:
+    @shared_task(name="api.tasks.process_document_analysis", bind=True, max_retries=2)
+    def process_document_analysis(self, doc_id: int) -> None:
+        try:
+            perform_analysis(doc_id)
+        except Exception as exc:  # noqa: BLE001
+            logger.exception("process_document_analysis failed for %s", doc_id)
+            raise self.retry(exc=exc, countdown=15)
+else:
+    def process_document_analysis(doc_id: int) -> None:
+        """Synchronous fallback used only when Celery is unavailable."""
         perform_analysis(doc_id)
-    except Exception as exc:  # noqa: BLE001
-        logger.exception("process_document_analysis failed for %s", doc_id)
-        raise self.retry(exc=exc, countdown=15)
