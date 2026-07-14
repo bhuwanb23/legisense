@@ -1,7 +1,9 @@
 from pathlib import Path
 import tempfile
 import json
+import logging
 
+from django.conf import settings
 from django.http import JsonResponse, HttpRequest
 from django.views.decorators.csrf import csrf_exempt
 from django.core.files.base import ContentFile
@@ -17,10 +19,12 @@ from .models import (
     SimulationLongTermPointTranslation, SimulationRiskAlertTranslation
 )
 from documents.pdf_document_parser import extract_pdf_text
-from ai_models.run_analysis import call_openrouter_for_analysis
 from translation.translator import DocumentTranslator
 import threading
 from ai_models.api.google_gemini_api import GoogleGeminiAPI, GeminiAPIError
+from .tasks import perform_analysis, process_document_analysis
+
+logger = logging.getLogger(__name__)
 
 # Default system prompt for Gemini chat
 _GEMINI_SYSTEM_PROMPT = (
@@ -101,50 +105,21 @@ def parse_pdf_view(request: HttpRequest):
     response["file_url"] = doc.uploaded_file.url if doc.uploaded_file else None
     response["file_name"] = doc.file_name
 
-    # Create analysis record with pending status (non-blocking)
-    analysis_obj, _ = DocumentAnalysis.objects.update_or_create(
+    # Create analysis record (pending) and process it in the background.
+    # Works for documents of ANY length: a Celery worker (when REDIS_URL is set)
+    # processes it asynchronously; otherwise a daemon thread runs it inline so
+    # the request returns immediately while the frontend polls for completion.
+    DocumentAnalysis.objects.update_or_create(
         document=doc,
-        defaults={
-            "status": "pending",
-            "output_json": {},
-            "model": "openrouter",
-        },
+        defaults={"status": "pending", "output_json": {}, "model": "openrouter"},
     )
-    
-    # Trigger analysis asynchronously (non-blocking)
-    try:
-        meta = {"file_name": doc.file_name, "num_pages": doc.num_pages}
-        pages = [p.get("text", "") for p in data.get("pages", [])]
-        
-        # For production, we'll do a quick analysis or skip it initially
-        # to prevent timeouts. Full analysis can be done via a separate endpoint.
-        if len(pages) <= 3:  # Only analyze small documents synchronously
-            analysis_payload = call_openrouter_for_analysis(pages, meta)
-            analysis_obj.status = "success" if analysis_payload else "failed"
-            analysis_obj.output_json = analysis_payload or {}
-            analysis_obj.save()
-        else:
-            # For larger documents, mark as pending for background processing
-            analysis_obj.status = "pending"
-            analysis_obj.save()
-            
-    except Exception as exc:  # noqa: BLE001
-        analysis_obj.status = "failed"
-        analysis_obj.error = str(exc)
-        analysis_obj.save()
 
-    # Trigger translations for all supported languages (background process)
-    if analysis_obj and analysis_obj.status == "success":
-        try:
-            # Translate document content for all languages
-            _translate_document_async(doc.id, data)
-            # Translate analysis for all languages
-            _translate_analysis_async(analysis_obj.id, analysis_obj.output_json)
-        except Exception as exc:  # noqa: BLE001
-            # Log error but don't fail the upload
-            print(f"Background translation failed for document {doc.id}: {exc}")
+    if getattr(settings, "CELERY_ENABLED", False):
+        process_document_analysis.delay(doc.id)
+    else:
+        _run_analysis_background(doc.id)
 
-    response["analysis_available"] = DocumentAnalysis.objects.filter(document=doc, status="success").exists()
+    response["analysis_available"] = False
     return JsonResponse(response)
 
 
@@ -183,27 +158,15 @@ def parsed_doc_analyze_view(request: HttpRequest, pk: int):
     if request.method != "POST":
         return JsonResponse({"error": "Method not allowed"}, status=405)
     doc = get_object_or_404(ParsedDocument, pk=pk)
-    payload = doc.payload or {}
-    pages = [p.get("text", "") for p in payload.get("pages", [])]
-    meta = {"file_name": doc.file_name, "num_pages": doc.num_pages}
-    try:
-        analysis_payload = call_openrouter_for_analysis(pages, meta)
-        obj, _ = DocumentAnalysis.objects.update_or_create(
-            document=doc,
-            defaults={
-                "status": "success" if analysis_payload else "failed",
-                "output_json": analysis_payload or {},
-                "model": "openrouter",
-                "error": "" if analysis_payload else "empty response",
-            },
-        )
-        return JsonResponse({"status": obj.status, "analysis": obj.output_json})
-    except Exception as exc:  # noqa: BLE001
-        obj, _ = DocumentAnalysis.objects.update_or_create(
-            document=doc,
-            defaults={"status": "failed", "error": str(exc)},
-        )
-        return JsonResponse({"error": str(exc)}, status=500)
+    if getattr(settings, "CELERY_ENABLED", False):
+        process_document_analysis.delay(doc.id)
+        return JsonResponse({"status": "queued", "message": "Analysis queued"})
+    perform_analysis(doc.id)
+    obj = DocumentAnalysis.objects.filter(document=doc).first()
+    return JsonResponse({
+        "status": obj.status if obj else "failed",
+        "analysis": obj.output_json if obj else {},
+    })
 
 
 @csrf_exempt
@@ -243,13 +206,36 @@ def parsed_doc_simulate_view(request: HttpRequest, pk: int):
         extracted = run_extraction(document_content=document_content)
         print(f"🤖 LLM extracted data: {extracted}")
     except Exception as exc:  # noqa: BLE001
-        # Return error instead of mock data
-        print(f"❌ Simulation extraction failed: {exc}")
-        return JsonResponse({
-            "error": "Simulation generation failed",
-            "message": "Unable to generate simulation data. Please try again later.",
-            "details": str(exc)
-        }, status=500)
+        # Graceful fallback: return a minimal valid session instead of a hard 500
+        logger.warning("Simulation extraction failed for document %s: %s", doc.id, exc)
+        extracted = {
+            "session": {
+                "title": f"Simulation for {doc.file_name}",
+                "scenario": "normal",
+                "parameters": {"source": "fallback"},
+                "jurisdiction": "",
+                "jurisdiction_note": "",
+            },
+            "timeline": [],
+            "penalty_forecast": [
+                {
+                    "label": "Month 1",
+                    "base_amount": 0,
+                    "fees_amount": 0,
+                    "penalties_amount": 0,
+                    "total_amount": 0,
+                }
+            ],
+            "exit_comparisons": [],
+            "narratives": [],
+            "long_term": [],
+            "risk_alerts": [
+                {
+                    "level": "info",
+                    "message": "Simulation data could not be generated. Please try again later.",
+                }
+            ],
+        }
 
     # Map extracted JSON to our import payload shape using LLM data
     session_data = extracted.get("session", {})
@@ -737,7 +723,7 @@ def chat_gemini_view(request: HttpRequest):
                 "language": language
             })
             
-    except (ValueError, GeminiAPIError) as exc:  # missing key or API error
+    except (ValueError, GeminiAPIError, RuntimeError) as exc:  # missing key or API error
         return JsonResponse({"error": str(exc)}, status=500)
 
 
@@ -943,6 +929,17 @@ def _translate_analysis_async(analysis_id: int, analysis_json: dict):
     # Run in background thread
     thread = threading.Thread(target=translate_worker)
     thread.daemon = True
+    thread.start()
+
+
+def _run_analysis_background(document_id: int):
+    """Fallback runner used when Celery/Redis is unavailable.
+
+    Runs the same analysis pipeline as the worker, but in a daemon thread so
+    the upload request can return promptly while the frontend polls for the
+    finished analysis.
+    """
+    thread = threading.Thread(target=perform_analysis, args=(document_id,), daemon=True)
     thread.start()
 
 
