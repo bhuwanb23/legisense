@@ -76,7 +76,14 @@ docker-compose up -d --build
 ### Cache (Redis)
 - **Container**: `legisense_redis`
 - **Port**: 6379
-- **Purpose**: Session storage and caching
+- **Purpose**: Session storage, caching, and the Celery broker
+
+### Background Worker (Celery)
+- **Container**: `legisense_worker`
+- **Command**: `celery -A legisense_backend worker -l info`
+- **Purpose**: Asynchronous document analysis and translations
+- Starts automatically in `docker compose up`. For local (non-Docker) runs use `scripts/start-worker.sh` / `scripts\start-worker.bat`.
+- **Note**: If `REDIS_URL` is not set, the app falls back to a background thread and still works without Redis.
 
 ### Reverse Proxy (Nginx) - Production Only
 - **Container**: `legisense_nginx`
