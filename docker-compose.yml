@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # PostgreSQL Database
   db:
@@ -79,6 +77,35 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+
+  # Celery Worker (background document analysis)
+  worker:
+    build:
+      context: ./legisense_backend
+      dockerfile: Dockerfile
+    container_name: legisense_worker
+    restart: unless-stopped
+    command: celery -A legisense_backend worker -l info
+    environment:
+      - DEBUG=false
+      - DATABASE_URL=postgresql://legisense:legisense_password@db:5432/legisense
+      - REDIS_URL=redis://:legisense_redis_password@redis:6379/0
+      - SECRET_KEY=your-super-secret-key-change-in-production
+      - ALLOWED_HOSTS=localhost,127.0.0.1,backend,frontend
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
+      - OPENROUTER_MODEL=${OPENROUTER_MODEL:-openai/gpt-4o-mini}
+    volumes:
+      - backend_media:/app/media
+      - backend_documents:/app/documents
+    networks:
+      - legisense_network
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
 
   # Flutter Frontend
   frontend:
