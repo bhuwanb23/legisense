@@ -27,6 +27,10 @@ flutter pub get
 flutter run
 ```
 
+Design system: [`app/DESIGN.md`](app/DESIGN.md)
+
+**Splash** → first launch opens **Onboarding**; returning users go to **Home**.
+
 ## License
 
 MIT — see `LICENSE`.
