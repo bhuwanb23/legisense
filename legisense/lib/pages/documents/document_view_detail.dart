@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'document_display.dart';
-import 'document_analysis.dart';
-import 'components/components.dart';
-import 'data/sample_documents.dart';
-import '../../api/parsed_documents_repository.dart';
 import '../../components/bottom_nav_bar.dart';
 import '../../main.dart';
+import '../../theme/app_theme.dart';
 import '../profile/language/language_scope.dart';
 import 'language/strings.dart';
 
+/// Document detail shell — content returns when the new API is connected.
 class DocumentViewDetail extends StatefulWidget {
-  const DocumentViewDetail({super.key, required this.title, required this.meta, this.docId});
+  const DocumentViewDetail({
+    super.key,
+    required this.title,
+    required this.meta,
+    this.docId,
+  });
 
   final String title;
   final String meta;
@@ -22,152 +24,102 @@ class DocumentViewDetail extends StatefulWidget {
 }
 
 class _DocumentViewDetailState extends State<DocumentViewDetail> {
-  int _tabIndex = 0; // 0 = Text, 1 = Analysis
-  final int _currentPageIndex = 1; // Documents page index
+  static const int _currentPageIndex = 1;
 
   void _onPageChanged(int index) {
     if (index == _currentPageIndex) return;
-    // Switch the root tab and pop back to the root so the persistent navbar remains
     navigateToPage(index);
     Navigator.of(context).popUntil((route) => route.isFirst);
   }
 
   @override
   Widget build(BuildContext context) {
-    if (widget.docId != null && widget.docId!.startsWith('server-')) {
-      final int id = int.tryParse(widget.docId!.split('-').last) ?? 0;
-      final repo = ParsedDocumentsRepository(baseUrl: ApiConfig.baseUrl);
-      return FutureBuilder<SampleDocument>(
-        future: repo.fetchDocumentDetail(id),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState != ConnectionState.done) {
-            return Container(
-              color: const Color(0xFFF8FAFC),
-              child: const Center(child: CircularProgressIndicator()),
-            );
-          }
-          if (snapshot.hasError) {
-            final i18n = DocumentsI18n.mapFor(LanguageScope.maybeOf(context)?.language ?? AppLanguage.en);
-            return Container(
-              color: const Color(0xFFF8FAFC),
+    final i18n = DocumentsI18n.mapFor(
+      LanguageScope.maybeOf(context)?.language ?? AppLanguage.en,
+    );
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC),
+      body: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(8, 8, 16, 8),
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back),
+                    onPressed: () => Navigator.of(context).maybePop(),
+                  ),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          widget.title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: GoogleFonts.inter(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: AppTheme.textPrimary,
+                          ),
+                        ),
+                        Text(
+                          widget.meta,
+                          style: GoogleFonts.inter(
+                            fontSize: 12,
+                            color: AppTheme.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
               child: Center(
                 child: Padding(
-                  padding: const EdgeInsets.all(16.0),
+                  padding: const EdgeInsets.all(24),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(
-                        Icons.error_outline,
-                        size: 64,
-                        color: Colors.red,
+                      Icon(
+                        Icons.description_outlined,
+                        size: 48,
+                        color: AppTheme.textSecondary.withValues(alpha: 0.45),
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        i18n['docs.detail.failed'] ?? 'Failed to load document',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.red,
+                        i18n['docs.detail.empty'] ?? 'Document preview unavailable',
+                        style: GoogleFonts.inter(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        i18n['docs.detail.check'] ?? 'Please check your internet connection and ensure the server is running.',
+                        i18n['docs.detail.emptyHint'] ??
+                            'Viewer and analysis will reconnect with the new backend.',
                         textAlign: TextAlign.center,
-                        style: TextStyle(color: Colors.grey),
-                      ),
-                      const SizedBox(height: 16),
-                      ElevatedButton(
-                        onPressed: () {
-                          setState(() {});
-                        },
-                        child: Text(i18n['docs.detail.retry'] ?? 'Retry'),
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          color: AppTheme.textSecondary,
+                        ),
                       ),
                     ],
                   ),
                 ),
               ),
-            );
-          }
-          final current = snapshot.data;
-          return _buildScaffold(current);
-        },
-      );
-    }
-
-    final SampleDocument? current = null;
-    return _buildScaffold(current);
-  }
-
-  Widget _buildScaffold(SampleDocument? current) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
-      body: Column(
-        children: [
-          // Custom App Bar
-          Container(
-            color: Colors.white,
-            padding: EdgeInsets.only(
-              top: MediaQuery.of(context).padding.top + 16,
-              left: 16,
-              right: 16,
-              bottom: 8,
             ),
-            child: Column(
-              children: [
-                Row(
-                  children: [
-                    IconButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      icon: const Icon(Icons.arrow_back, color: Color(0xFF111827)),
-                    ),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            widget.title,
-                            style: GoogleFonts.inter(
-                              color: const Color(0xFF111827),
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          Text(
-                            widget.meta,
-                            style: GoogleFonts.inter(
-                              color: const Color(0xFF6B7280),
-                              fontSize: 12,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                // Tabs
-                DetailTabs(
-                  index: _tabIndex,
-                  onChange: (i) => setState(() => _tabIndex = i),
-                ),
-              ],
+            BottomNavBar(
+              currentIndex: _currentPageIndex,
+              onTap: _onPageChanged,
             ),
-          ),
-          // Content
-          Expanded(
-            child: _tabIndex == 0
-                ? DocumentDisplayPanel(document: current)
-                : AnalysisPanel(document: current),
-          ),
-        ],
-      ),
-      bottomNavigationBar: BottomNavBar(
-        currentIndex: _currentPageIndex,
-        onTap: _onPageChanged,
+          ],
+        ),
       ),
     );
   }
 }
-
-
