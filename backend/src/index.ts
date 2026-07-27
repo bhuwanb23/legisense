@@ -18,14 +18,6 @@ app.get('/health', (_req, res) => {
   });
 });
 
-app.get('/', (_req, res) => {
-  res.json({
-    name: 'Legisense API',
-    version: '1.0.0',
-    docs: 'Routes will be added as features are rebuilt.',
-  });
-});
-
 app.listen(port, () => {
   console.log(`Legisense API listening on http://localhost:${port}`);
 });

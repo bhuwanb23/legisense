@@ -1,21 +1,9 @@
-# Legisense Backend
-
-Minimal Express + TypeScript API scaffold. Feature routes will be added as we rebuild.
-
-## Setup
+# Backend
 
 ```bash
-cd backend
-cp .env.example .env
 npm install
+cp .env.example .env
 npm run dev
 ```
 
-## Endpoints
-
-| Method | Path | Description |
-|--------|------|-------------|
-| `GET` | `/health` | Health check |
-| `GET` | `/` | Service info |
-
-Default port: **3001** (`PORT` in `.env`).
+`GET /health` → `{ status: "ok" }`

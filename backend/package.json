@@ -2,7 +2,7 @@
   "name": "legisense-backend",
   "version": "1.0.0",
   "private": true,
-  "description": "Legisense API — Node.js + Express",
+  "description": "Legisense API — Node.js + Express (base)",
   "main": "dist/index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",
