@@ -1,0 +1,67 @@
+const documentsStringsEn = {
+  // DocumentsPage
+  'docs.header.title': 'Documents',
+  // DocumentList
+  'docs.list.title': 'Document List',
+  'docs.empty': 'No documents uploaded yet',
+  'docs.error.load': 'Failed to load documents',
+  'docs.retry': 'Retry',
+  'docs.meta.pdf': 'PDF',
+  'docs.meta.pages': 'pages',
+  // DocumentViewDetail
+  'docs.detail.failed': 'Failed to load document',
+  'docs.detail.check': 'Please check your internet connection and ensure the server is running.',
+  'docs.detail.retry': 'Retry',
+  // AnalysisPanel
+  'docs.analysis.title': 'Analysis & Insights',
+  'docs.analysis.failed': 'Failed to load analysis',
+  'docs.analysis.pending': 'Analysis not available',
+  'docs.clauses': 'Clause Breakdown',
+  'docs.flags': 'Risk Flags & Warnings',
+  'docs.context': 'Comparative Context',
+  'docs.suggested': 'Suggested Questions',
+  // DocumentDisplayPanel
+  'docs.viewer.title': 'Document Viewer',
+  'docs.viewer.noSelection': 'No Document Selected',
+  'docs.viewer.selectHint': 'Choose a document from the list to view its content and analysis',
+  'docs.viewer.selectCta': 'Select a document to get started',
+  'docs.viewer.page': 'Page',
+  'docs.viewer.of': 'of',
+  'docs.viewer.words': 'Words',
+  'docs.viewer.chars': 'Chars',
+  'docs.viewer.read': 'Read',
+  'docs.viewer.characters': 'characters',
+  'docs.tab.text': 'Text',
+  'docs.tab.analysis': 'Analysis',
+  'docs.action.bookmark': 'Bookmark',
+  'docs.action.note': 'Add Note',
+  'docs.action.highlight': 'Highlight',
+  // Language Selector
+  'docs.language.select': 'Select Language',
+  'docs.language.english': 'English',
+  'docs.language.hindi': 'हिन्दी',
+  'docs.language.tamil': 'தமிழ்',
+  'docs.language.telugu': 'తెలుగు',
+  // Translation
+  'docs.translating': 'Translating document...',
+  'docs.translation.progress': 'This may take a few moments...',
+  // Analysis Components
+  'analysis.tldr.title': 'TL;DR Summary',
+  'analysis.clauses.title': 'Clause Breakdown',
+  'analysis.flags.title': 'Risk Flags & Warnings',
+  'analysis.context.title': 'Comparative Context',
+  'analysis.questions.title': 'Suggested Questions',
+  'analysis.simulation.cta': 'Run Simulation',
+  'analysis.simulation.subtitle': 'Transform clauses into timelines and outcomes',
+  'analysis.simulation.open': 'Open',
+  'analysis.risk.low': 'Low Risk',
+  'analysis.risk.medium': 'Medium Risk',
+  'analysis.risk.high': 'High Risk',
+  'analysis.risk.label': 'Risk',
+  'analysis.simple.terms': 'In simple terms',
+  'analysis.standard': 'Standard',
+  'analysis.contract': 'Contract',
+  'analysis.assessment': 'Assessment',
+};
+
+
