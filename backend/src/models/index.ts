@@ -8,3 +8,4 @@ export { chatMessages, type ChatMessage, type NewChatMessage } from './chatMessa
 export { notifications, type Notification, type NewNotification } from './notification';
 export { sessions, type Session, type NewSession } from './session';
 export { usageLogs, type UsageLog, type NewUsageLog } from './usageLog';
+export { queueJobs, type QueueJob } from './queueJob';

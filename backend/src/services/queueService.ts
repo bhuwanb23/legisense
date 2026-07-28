@@ -1,78 +1,262 @@
+import { EventEmitter } from 'events';
+import { getDb } from '../config/database';
+import { queueJobs } from '../models';
+import { sql } from 'drizzle-orm';
+import { persistNow } from '../config/database';
+
 export interface Job {
   id: string;
   documentId: number;
   userId: number;
-  status: 'pending' | 'processing' | 'completed' | 'failed';
+  status: 'pending' | 'processing' | 'completed' | 'failed' | 'retrying';
   createdAt: string;
   error?: string;
 }
 
+export interface QueueServiceOptions {
+  maxConcurrency?: number;
+  defaultTimeoutMs?: number;
+  defaultMaxRetries?: number;
+  pollIntervalMs?: number;
+}
+
 type JobWorker = (documentId: number, userId: number) => Promise<void>;
 
-class QueueService {
-  private jobs: Job[] = [];
-  private processing = false;
+class QueueService extends EventEmitter {
   private worker: JobWorker | null = null;
+  private activeJobs = 0;
+  private maxConcurrency: number;
+  private defaultTimeoutMs: number;
+  private defaultMaxRetries: number;
+  private shutDownRequested = false;
+  private timers = new Map<string, NodeJS.Timeout>();
+  private pollTimer: NodeJS.Timeout | null = null;
+
+  constructor(options?: QueueServiceOptions) {
+    super();
+    this.maxConcurrency = options?.maxConcurrency ?? 2;
+    this.defaultTimeoutMs = options?.defaultTimeoutMs ?? 300000;
+    this.defaultMaxRetries = options?.defaultMaxRetries ?? 3;
+  }
 
   setWorker(worker: JobWorker): void {
     this.worker = worker;
   }
 
   enqueue(documentId: number, userId: number): Job {
+    return this.enqueueWithOptions(documentId, userId);
+  }
+
+  enqueueWithOptions(
+    documentId: number,
+    userId: number,
+    options?: { priority?: number; timeoutMs?: number; maxRetries?: number }
+  ): Job {
+    const db = getDb();
+    const id = `job_${Date.now()}_${documentId}_${Math.random().toString(36).slice(2, 6)}`;
+
+    db.insert(queueJobs).values({
+      id,
+      documentId,
+      userId,
+      status: 'pending',
+      priority: options?.priority ?? 0,
+      retryCount: 0,
+      maxRetries: options?.maxRetries ?? this.defaultMaxRetries,
+      timeoutMs: options?.timeoutMs ?? this.defaultTimeoutMs,
+    }).run();
+
+    persistNow();
+
     const job: Job = {
-      id: `job_${Date.now()}_${documentId}`,
+      id,
       documentId,
       userId,
       status: 'pending',
       createdAt: new Date().toISOString(),
     };
 
-    this.jobs.push(job);
     console.log(`Job enqueued: ${job.id} for document ${documentId}`);
-
+    this.emit('job:queued', { ...job });
     this.processNext();
 
     return job;
   }
 
   private async processNext(): Promise<void> {
-    if (this.processing || !this.worker) return;
+    if (this.shutDownRequested) return;
+    if (!this.worker) return;
+    if (this.activeJobs >= this.maxConcurrency) return;
 
-    const nextJob = this.jobs.find((j) => j.status === 'pending');
-    if (!nextJob) return;
+    const db = getDb();
 
-    this.processing = true;
-    nextJob.status = 'processing';
+    const pendingRows = db.select().from(queueJobs).where(
+      sql`${queueJobs.status} = 'pending'`
+    ).all();
+
+    if (pendingRows.length === 0) return;
+
+    pendingRows.sort((a, b) => {
+      if (b.priority !== a.priority) return b.priority - a.priority;
+      return a.createdAt.localeCompare(b.createdAt);
+    });
+
+    const nextJob = pendingRows[0];
+
+    this.activeJobs++;
+
+    db.run(sql`UPDATE ${queueJobs} SET status = 'processing', started_at = datetime('now') WHERE id = ${nextJob.id}`);
+    persistNow();
+
+    this.emit('job:started', {
+      id: nextJob.id,
+      documentId: nextJob.documentId,
+      userId: nextJob.userId,
+    });
+
+    const timer = setTimeout(() => this.handleTimeout(nextJob.id), nextJob.timeoutMs);
+    this.timers.set(nextJob.id, timer);
 
     try {
       await this.worker(nextJob.documentId, nextJob.userId);
-      nextJob.status = 'completed';
-      console.log(`Job completed: ${nextJob.id}`);
+
+      clearTimeout(timer);
+      this.timers.delete(nextJob.id);
+
+      db.run(sql`UPDATE ${queueJobs} SET status = 'completed', completed_at = datetime('now') WHERE id = ${nextJob.id}`);
+      persistNow();
+
+      this.emit('job:completed', { id: nextJob.id, documentId: nextJob.documentId });
     } catch (err) {
-      nextJob.status = 'failed';
-      nextJob.error = err instanceof Error ? err.message : String(err);
-      console.error(`Job failed: ${nextJob.id}`, nextJob.error);
+      clearTimeout(timer);
+      this.timers.delete(nextJob.id);
+
+      const errorMessage = err instanceof Error ? err.message : String(err);
+
+      if (nextJob.retryCount < nextJob.maxRetries) {
+        const newRetryCount = nextJob.retryCount + 1;
+        const backoffMs = Math.min(1000 * Math.pow(2, newRetryCount), 30000);
+
+        db.run(sql`UPDATE ${queueJobs} SET status = 'retrying', retry_count = ${newRetryCount}, error = ${errorMessage} WHERE id = ${nextJob.id}`);
+        persistNow();
+
+        this.emit('job:retrying', {
+          id: nextJob.id,
+          documentId: nextJob.documentId,
+          retryCount: newRetryCount,
+          error: errorMessage,
+        });
+
+        setTimeout(() => {
+          db.run(sql`UPDATE ${queueJobs} SET status = 'pending' WHERE id = ${nextJob.id}`);
+          persistNow();
+          this.processNext();
+        }, backoffMs);
+      } else {
+        db.run(sql`UPDATE ${queueJobs} SET status = 'failed', error = ${errorMessage}, completed_at = datetime('now') WHERE id = ${nextJob.id}`);
+        persistNow();
+
+        this.emit('job:failed', { id: nextJob.id, documentId: nextJob.documentId, error: errorMessage });
+      }
     } finally {
-      this.processing = false;
+      this.activeJobs--;
       this.processNext();
     }
   }
 
+  private handleTimeout(jobId: string): void {
+    const db = getDb();
+    const rows = db.select().from(queueJobs).where(
+      sql`${queueJobs.id} = ${jobId} AND ${queueJobs.status} = 'processing'`
+    ).all();
+
+    if (rows.length > 0) {
+      db.run(sql`UPDATE ${queueJobs} SET status = 'failed', error = 'Job timed out', completed_at = datetime('now') WHERE id = ${jobId}`);
+      persistNow();
+      this.emit('job:failed', { id: jobId, error: 'Job timed out' });
+    }
+  }
+
   getJob(jobId: string): Job | undefined {
-    return this.jobs.find((j) => j.id === jobId);
+    const db = getDb();
+    const rows = db.select().from(queueJobs).where(sql`${queueJobs.id} = ${jobId}`).all();
+    return rows.length > 0 ? this.mapJob(rows[0]) : undefined;
   }
 
   getJobsByDocument(documentId: number): Job[] {
-    return this.jobs.filter((j) => j.documentId === documentId);
+    const db = getDb();
+    const rows = db.select().from(queueJobs).where(sql`${queueJobs.documentId} = ${documentId}`).all();
+    return rows.map((r) => this.mapJob(r));
   }
 
-  getStats(): { total: number; pending: number; processing: number; completed: number; failed: number } {
+  getPendingJobs(): Job[] {
+    const db = getDb();
+    const rows = db.select().from(queueJobs).where(
+      sql`${queueJobs.status} IN ('pending', 'retrying')`
+    ).all();
+    return rows.map((r) => this.mapJob(r));
+  }
+
+  getStats(): { total: number; pending: number; processing: number; completed: number; failed: number; retrying: number } {
+    const db = getDb();
+    const result = db.all(sql`
+      SELECT
+        COUNT(*) as total,
+        SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending,
+        SUM(CASE WHEN status = 'processing' THEN 1 ELSE 0 END) as processing,
+        SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed,
+        SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END) as failed,
+        SUM(CASE WHEN status = 'retrying' THEN 1 ELSE 0 END) as retrying
+      FROM queue_jobs
+    `) as Array<{ total: number; pending: number; processing: number; completed: number; failed: number; retrying: number }>;
+    return result[0] || { total: 0, pending: 0, processing: 0, completed: 0, failed: 0, retrying: 0 };
+  }
+
+  async shutdown(timeoutMs = 30000): Promise<void> {
+    this.shutDownRequested = true;
+    if (this.pollTimer) {
+      clearInterval(this.pollTimer);
+      this.pollTimer = null;
+    }
+
+    if (this.activeJobs === 0) return;
+
+    return new Promise((resolve) => {
+      const interval = setInterval(() => {
+        if (this.activeJobs === 0) {
+          clearInterval(interval);
+          resolve();
+          return;
+        }
+      }, 200);
+
+      setTimeout(() => {
+        clearInterval(interval);
+        const db = getDb();
+        db.run(sql`UPDATE ${queueJobs} SET status = 'failed', error = 'Shutdown timeout' WHERE status = 'processing'`);
+        persistNow();
+        this.activeJobs = 0;
+        resolve();
+      }, timeoutMs);
+    });
+  }
+
+  get activeJobCount(): number {
+    return this.activeJobs;
+  }
+
+  get isShuttingDown(): boolean {
+    return this.shutDownRequested;
+  }
+
+  private mapJob(row: typeof queueJobs.$inferSelect): Job {
     return {
-      total: this.jobs.length,
-      pending: this.jobs.filter((j) => j.status === 'pending').length,
-      processing: this.jobs.filter((j) => j.status === 'processing').length,
-      completed: this.jobs.filter((j) => j.status === 'completed').length,
-      failed: this.jobs.filter((j) => j.status === 'failed').length,
+      id: row.id,
+      documentId: row.documentId,
+      userId: row.userId,
+      status: row.status as Job['status'],
+      createdAt: row.createdAt,
+      error: row.error || undefined,
     };
   }
 }

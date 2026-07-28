@@ -7,7 +7,7 @@ import { sql } from 'drizzle-orm';
 import {
   users, documents, analysisResults,
   clauses, riskItems, deadlines, chatMessages,
-  notifications, sessions, usageLogs,
+  notifications, sessions, usageLogs, queueJobs,
 } from './models';
 import {
   corsMiddleware,
@@ -213,7 +213,22 @@ async function start() {
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
   )`);
 
-  console.log('All 10 tables created/verified.');
+  await db.run(sql`CREATE TABLE IF NOT EXISTS ${queueJobs} (
+    id TEXT PRIMARY KEY,
+    document_id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
+    status TEXT NOT NULL DEFAULT 'pending',
+    priority INTEGER NOT NULL DEFAULT 0,
+    retry_count INTEGER NOT NULL DEFAULT 0,
+    max_retries INTEGER NOT NULL DEFAULT 3,
+    timeout_ms INTEGER NOT NULL DEFAULT 300000,
+    error TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    started_at TEXT,
+    completed_at TEXT
+  )`);
+
+  console.log('All 11 tables created/verified.');
   persistNow();
 
   startAnalysisWorker();
