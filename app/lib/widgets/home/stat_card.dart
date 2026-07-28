@@ -3,6 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../theme/app_theme.dart';
 
+/// Compact stat card for the 2x2 grid — matches the Dribbble
+/// device card pattern with icon, value, and label.
 class StatCard extends StatelessWidget {
   const StatCard({
     super.key,
@@ -20,15 +22,15 @@ class StatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(14, 16, 14, 16),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.cloud,
-        borderRadius: BorderRadius.circular(AppRadii.md),
+        borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
             color: AppColors.primaryNavy.withValues(alpha: 0.06),
-            blurRadius: 18,
-            offset: const Offset(0, 6),
+            blurRadius: 16,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -36,35 +38,38 @@ class StatCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            width: 36,
-            height: 36,
+            width: 40,
+            height: 40,
             decoration: BoxDecoration(
               color: accent
-                  ? AppColors.accentSky.withValues(alpha: 0.25)
+                  ? AppColors.brightBlue.withValues(alpha: 0.12)
                   : AppColors.skyWash,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(icon, size: 18, color: AppColors.primaryNavy),
+            child: Icon(
+              icon,
+              size: 20,
+              color: accent ? AppColors.brightBlue : AppColors.primaryNavy,
+            ),
           ),
           const SizedBox(height: 14),
           Text(
             value,
             style: GoogleFonts.epilogue(
-              fontSize: 24,
+              fontSize: 22,
               fontWeight: FontWeight.w700,
               color: AppColors.primaryNavy,
               letterSpacing: -0.5,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 2),
           Text(
             label,
-            maxLines: 2,
+            maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: GoogleFonts.epilogue(
               fontSize: 12,
               fontWeight: FontWeight.w500,
-              height: 1.3,
               color: AppColors.inkSoft,
             ),
           ),
