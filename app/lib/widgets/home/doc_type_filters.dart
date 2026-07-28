@@ -4,6 +4,8 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../data/dashboard_mock.dart';
 import '../../theme/app_theme.dart';
 
+/// Horizontal pill-shaped document type filters — matches the Dribbble
+/// smart-home filter pattern (All, Living room, Kitchen, etc.).
 class DocTypeFilters extends StatelessWidget {
   const DocTypeFilters({
     super.key,
@@ -17,15 +19,15 @@ class DocTypeFilters extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 86,
+      height: 44,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: DashboardMock.filters.length,
-        separatorBuilder: (_, _) => const SizedBox(width: 14),
+        separatorBuilder: (_, _) => const SizedBox(width: 10),
         itemBuilder: (context, index) {
           final filter = DashboardMock.filters[index];
           final selected = filter.id == selectedId;
-          return _FilterDisc(
+          return _FilterPill(
             filter: filter,
             selected: selected,
             onTap: () => onSelected(filter.id),
@@ -36,8 +38,8 @@ class DocTypeFilters extends StatelessWidget {
   }
 }
 
-class _FilterDisc extends StatelessWidget {
-  const _FilterDisc({
+class _FilterPill extends StatelessWidget {
+  const _FilterPill({
     required this.filter,
     required this.selected,
     required this.onTap,
@@ -51,46 +53,33 @@ class _FilterDisc extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: SizedBox(
-        width: 64,
-        child: Column(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        decoration: BoxDecoration(
+          color: selected ? AppColors.primaryNavy : AppColors.cloud,
+          borderRadius: BorderRadius.circular(AppRadii.pill),
+          border: selected
+              ? null
+              : Border.all(
+                  color: AppColors.borderMuted.withValues(alpha: 0.7),
+                ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 180),
-              width: 54,
-              height: 54,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: selected ? AppColors.primaryNavy : AppColors.cloud,
-                border: selected
-                    ? null
-                    : Border.all(color: AppColors.borderMuted),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.primaryNavy.withValues(
-                      alpha: selected ? 0.2 : 0.06,
-                    ),
-                    blurRadius: selected ? 14 : 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Icon(
-                filter.icon,
-                size: 22,
-                color: selected ? AppColors.cloud : AppColors.primaryNavy,
-              ),
+            Icon(
+              filter.icon,
+              size: 16,
+              color: selected ? AppColors.cloud : AppColors.primaryNavy,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(width: 8),
             Text(
               filter.label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center,
               style: GoogleFonts.epilogue(
-                fontSize: 11,
-                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                color: selected ? AppColors.primaryNavy : AppColors.inkSoft,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: selected ? AppColors.cloud : AppColors.primaryNavy,
               ),
             ),
           ],
