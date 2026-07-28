@@ -3,7 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../theme/app_theme.dart';
 
-/// Minimal auth chrome — soft wash, no decorative clutter.
+/// Auth scaffold — soft gradient background, vertically centered content,
+/// matching the Dribbble card-based inspiration.
 class AuthScaffold extends StatelessWidget {
   const AuthScaffold({
     super.key,
@@ -29,20 +30,19 @@ class AuthScaffold extends StatelessWidget {
     return Scaffold(
       body: DecoratedBox(
         decoration: const BoxDecoration(
-          gradient: RadialGradient(
-            center: Alignment(0, -0.85),
-            radius: 1.15,
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
             colors: [
-              Color(0xFFD7E9FA),
-              AppColors.skyMist,
-              Color(0xFFFBFCFE),
+              Color(0xFFF0F6FD),
+              Color(0xFFF8FBFE),
+              AppColors.cloud,
             ],
-            stops: [0.0, 0.45, 1.0],
+            stops: [0.0, 0.5, 1.0],
           ),
         ),
         child: SafeArea(
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Padding(
                 padding: const EdgeInsets.fromLTRB(8, 4, 20, 0),
@@ -63,52 +63,73 @@ class AuthScaffold extends StatelessWidget {
               ),
               Expanded(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.fromLTRB(28, 8, 28, 28),
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
+                      const SizedBox(height: 12),
                       if (hero != null) ...[
                         hero!,
-                        const SizedBox(height: 28),
+                        const SizedBox(height: 24),
                       ],
-                      if (title != null) ...[
-                        Text(
-                          title!,
-                          style: GoogleFonts.epilogue(
-                            fontSize: 28,
-                            fontWeight: FontWeight.w700,
-                            height: 1.15,
-                            letterSpacing: -0.7,
-                            color: AppColors.primaryNavy,
-                          ),
-                        ),
-                        if (subtitle != null) ...[
-                          const SizedBox(height: 8),
-                          Text(
-                            subtitle!,
-                            style: GoogleFonts.epilogue(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w400,
-                              height: 1.45,
-                              color: AppColors.inkSoft,
-                            ),
-                          ),
-                        ],
-                        const SizedBox(height: 28),
-                      ],
+                      if (title != null || subtitle != null)
+                        _Header(title: title, subtitle: subtitle),
                       body,
+                      if (footer != null) ...[
+                        const SizedBox(height: 24),
+                        footer!,
+                      ],
+                      const SizedBox(height: 24),
                     ],
                   ),
                 ),
               ),
-              if (footer != null)
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(28, 0, 28, 24),
-                  child: footer!,
-                ),
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _Header extends StatelessWidget {
+  const _Header({this.title, this.subtitle});
+
+  final String? title;
+  final String? subtitle;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 28),
+      child: Column(
+        children: [
+          if (title != null)
+            Text(
+              title!,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.epilogue(
+                fontSize: 26,
+                fontWeight: FontWeight.w700,
+                height: 1.2,
+                letterSpacing: -0.5,
+                color: AppColors.primaryNavy,
+              ),
+            ),
+          if (subtitle != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              subtitle!,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.epilogue(
+                fontSize: 13,
+                fontWeight: FontWeight.w400,
+                height: 1.5,
+                color: AppColors.inkSoft,
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }
