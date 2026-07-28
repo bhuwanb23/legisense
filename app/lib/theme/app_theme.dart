@@ -12,6 +12,7 @@ abstract final class AppColors {
   static const accentSoft = Color(0xFFB7D6F2);
   static const progressIdle = Color(0xFFC9DDF0);
   static const shadow = Color(0x140B2C5E);
+  static const brightBlue = Color(0xFF2B7FFF);
   static const error = Color(0xFFB42318);
   static const borderMuted = Color(0xFFD7E6F5);
 }

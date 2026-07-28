@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../theme/app_theme.dart';
 
-/// Pill CTA with trailing arrow disc — inspiration layout.
+/// Full-width bright blue pill CTA — matches the Dribbble inspiration.
 class AuthPrimaryButton extends StatelessWidget {
   const AuthPrimaryButton({
     super.key,
@@ -26,62 +26,39 @@ class AuthPrimaryButton extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadii.pill),
         onTap: enabled ? onPressed : null,
         child: Ink(
-          height: 58,
+          height: 56,
           decoration: BoxDecoration(
-            color: enabled ? AppColors.primaryNavy : AppColors.accentSoft,
+            color: enabled ? AppColors.brightBlue : AppColors.accentSoft,
             borderRadius: BorderRadius.circular(AppRadii.pill),
             boxShadow: enabled
                 ? [
                     BoxShadow(
-                      color: AppColors.primaryNavy.withValues(alpha: 0.22),
-                      blurRadius: 22,
-                      offset: const Offset(0, 10),
+                      color: AppColors.brightBlue.withValues(alpha: 0.3),
+                      blurRadius: 20,
+                      offset: const Offset(0, 8),
                     ),
                   ]
                 : null,
           ),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(22, 0, 8, 0),
-            child: Row(
-              children: [
-                Expanded(
-                  child: loading
-                      ? const Center(
-                          child: SizedBox(
-                            width: 22,
-                            height: 22,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2.2,
-                              color: AppColors.cloud,
-                            ),
-                          ),
-                        )
-                      : Text(
-                          label,
-                          style: GoogleFonts.epilogue(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.cloud,
-                            letterSpacing: -0.2,
-                          ),
-                        ),
-                ),
-                if (!loading)
-                  Container(
-                    width: 42,
-                    height: 42,
-                    decoration: const BoxDecoration(
+          child: Center(
+            child: loading
+                ? const SizedBox(
+                    width: 22,
+                    height: 22,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.2,
                       color: AppColors.cloud,
-                      shape: BoxShape.circle,
                     ),
-                    child: const Icon(
-                      Icons.arrow_forward_rounded,
-                      color: AppColors.primaryNavy,
-                      size: 20,
+                  )
+                : Text(
+                    label,
+                    style: GoogleFonts.epilogue(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.cloud,
+                      letterSpacing: -0.2,
                     ),
                   ),
-              ],
-            ),
           ),
         ),
       ),
