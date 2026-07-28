@@ -3,6 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../services/session_prefs.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/auth/auth_card.dart';
+import '../../widgets/auth/auth_illustration.dart';
 import '../../widgets/auth/auth_or_divider.dart';
 import '../../widgets/auth/auth_primary_button.dart';
 import '../../widgets/auth/auth_scaffold.dart';
@@ -71,8 +73,7 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return AuthScaffold(
-      title: 'Welcome Back!',
-      subtitle: 'Sign in to keep reviewing contracts with clarity.',
+      showBack: false,
       trailing: TextButton(
         onPressed: () {
           Navigator.of(context).push(
@@ -86,67 +87,106 @@ class _LoginPageState extends State<LoginPage> {
           style: GoogleFonts.epilogue(
             fontSize: 13,
             fontWeight: FontWeight.w600,
-            color: AppColors.inkSoft,
+            color: AppColors.brightBlue,
           ),
         ),
       ),
-      body: Form(
-        key: _formKey,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            AuthTextField(
-              label: 'Mobile Number or Email',
-              icon: Icons.person_outline_rounded,
-              controller: _contact,
-              hint: 'you@email.com',
-              keyboardType: TextInputType.emailAddress,
-              textInputAction: TextInputAction.next,
-              autofillHints: const [AutofillHints.username],
-              validator: (v) {
-                if (v == null || v.trim().isEmpty) {
-                  return 'Enter email or phone';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
-            AuthTextField(
-              label: 'Password',
-              icon: Icons.lock_outline_rounded,
-              controller: _password,
-              obscureText: true,
-              textInputAction: TextInputAction.done,
-              autofillHints: const [AutofillHints.password],
-              validator: (v) {
-                if (v == null || v.isEmpty) return 'Enter your password';
-                return null;
-              },
-            ),
-            const SizedBox(height: 28),
-            AuthPrimaryButton(
-              label: 'Login',
-              loading: _loading,
-              onPressed: _submit,
-            ),
-            const SizedBox(height: 28),
-            const AuthOrDivider(label: 'or sign in with'),
-            const SizedBox(height: 20),
-            AuthSocialRow(
-              onGoogle: () => showAuthComingSoon(context, 'Google'),
-              onGithub: () => showAuthComingSoon(context, 'GitHub'),
-              onApple: () => showAuthComingSoon(context, 'Apple'),
-            ),
-            const SizedBox(height: 32),
-            Center(
-              child: Text.rich(
+      body: AuthCard(
+        child: Form(
+          key: _formKey,
+          child: Column(
+            children: [
+              const AuthIllustration(type: AuthIllustrationType.login),
+              const SizedBox(height: 24),
+              Text(
+                'Sign In',
+                style: GoogleFonts.epilogue(
+                  fontSize: 26,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.primaryNavy,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Enter valid user name & password to continue',
+                style: GoogleFonts.epilogue(
+                  fontSize: 13,
+                  color: AppColors.inkSoft,
+                ),
+              ),
+              const SizedBox(height: 28),
+              AuthTextField(
+                label: 'User name',
+                icon: Icons.person_outline_rounded,
+                controller: _contact,
+                hint: 'User name',
+                keyboardType: TextInputType.emailAddress,
+                textInputAction: TextInputAction.next,
+                autofillHints: const [AutofillHints.username],
+                validator: (v) {
+                  if (v == null || v.trim().isEmpty) {
+                    return 'Enter email or phone';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+              AuthTextField(
+                label: 'Password',
+                icon: Icons.lock_outline_rounded,
+                controller: _password,
+                hint: 'Password',
+                obscureText: true,
+                textInputAction: TextInputAction.done,
+                autofillHints: const [AutofillHints.password],
+                validator: (v) {
+                  if (v == null || v.isEmpty) return 'Enter your password';
+                  return null;
+                },
+              ),
+              const SizedBox(height: 8),
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => const ForgotPasswordPage(),
+                      ),
+                    );
+                  },
+                  child: Text(
+                    'Forget password',
+                    style: GoogleFonts.epilogue(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.brightBlue,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              AuthPrimaryButton(
+                label: 'Login',
+                loading: _loading,
+                onPressed: _submit,
+              ),
+              const SizedBox(height: 24),
+              const AuthOrDivider(label: 'Or Continue with'),
+              const SizedBox(height: 20),
+              AuthSocialRow(
+                onGoogle: () => showAuthComingSoon(context, 'Google'),
+                onFacebook: () => showAuthComingSoon(context, 'Facebook'),
+              ),
+              const SizedBox(height: 24),
+              Text.rich(
                 TextSpan(
                   style: GoogleFonts.epilogue(
                     fontSize: 14,
                     color: AppColors.inkSoft,
                   ),
                   children: [
-                    const TextSpan(text: "Don't have an account? "),
+                    const TextSpan(text: "Haven't any account? "),
                     WidgetSpan(
                       alignment: PlaceholderAlignment.baseline,
                       baseline: TextBaseline.alphabetic,
@@ -163,7 +203,7 @@ class _LoginPageState extends State<LoginPage> {
                           style: GoogleFonts.epilogue(
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
-                            color: AppColors.primaryNavy,
+                            color: AppColors.brightBlue,
                           ),
                         ),
                       ),
@@ -171,8 +211,8 @@ class _LoginPageState extends State<LoginPage> {
                   ],
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
