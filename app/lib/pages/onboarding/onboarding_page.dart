@@ -105,8 +105,7 @@ class OnboardingPage extends StatelessWidget {
                         const SizedBox(height: 18),
                         AuthSocialRow(
                           onGoogle: () => showAuthComingSoon(context, 'Google'),
-                          onGithub: () => showAuthComingSoon(context, 'GitHub'),
-                          onApple: () => showAuthComingSoon(context, 'Apple'),
+                          onFacebook: () => showAuthComingSoon(context, 'Facebook'),
                         ),
                         const SizedBox(height: 22),
                         Center(
