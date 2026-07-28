@@ -3,9 +3,10 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../services/session_prefs.dart';
 import '../../theme/app_theme.dart';
-import '../home/home_page.dart';
+import '../../widgets/auth/auth_primary_button.dart';
+import '../auth/register_page.dart';
 
-/// Placeholder onboarding — full flow lands in a later pass.
+/// Lightweight onboarding gate before Register.
 class OnboardingPage extends StatelessWidget {
   const OnboardingPage({super.key});
 
@@ -13,7 +14,7 @@ class OnboardingPage extends StatelessWidget {
     await SessionPrefs.setOnboardingSeen();
     if (!context.mounted) return;
     Navigator.of(context).pushReplacement(
-      MaterialPageRoute<void>(builder: (_) => const HomePage()),
+      MaterialPageRoute<void>(builder: (_) => const RegisterPage()),
     );
   }
 
@@ -83,38 +84,9 @@ class OnboardingPage extends StatelessWidget {
                   ),
                 ),
                 const Spacer(),
-                DecoratedBox(
-                  decoration: BoxDecoration(
-                    color: AppColors.cloud,
-                    borderRadius: BorderRadius.circular(AppRadii.pill),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: AppColors.shadow,
-                        blurRadius: 28,
-                        offset: Offset(0, 10),
-                      ),
-                    ],
-                  ),
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(AppRadii.pill),
-                      onTap: () => _continue(context),
-                      child: SizedBox(
-                        height: 56,
-                        child: Center(
-                          child: Text(
-                            'Continue',
-                            style: GoogleFonts.spectral(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.primaryNavy,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
+                AuthPrimaryButton(
+                  label: 'Continue',
+                  onPressed: () => _continue(context),
                 ),
               ],
             ),

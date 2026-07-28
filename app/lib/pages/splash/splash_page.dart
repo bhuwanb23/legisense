@@ -6,6 +6,7 @@ import 'package:lottie/lottie.dart';
 
 import '../../services/session_prefs.dart';
 import '../../theme/app_theme.dart';
+import '../auth/login_page.dart';
 import '../home/home_page.dart';
 import '../onboarding/onboarding_page.dart';
 
@@ -66,13 +67,17 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
   }
 
   Future<void> _scheduleRedirect() async {
-    final seen = await SessionPrefs.hasSeenOnboarding();
+    final destination = await SessionPrefs.resolveSplashDestination();
     if (!mounted) return;
 
     _redirectTimer = Timer(_redirectDelay, () {
       if (!mounted || _navigated) return;
       _navigated = true;
-      final next = seen ? const HomePage() : const OnboardingPage();
+      final Widget next = switch (destination) {
+        SplashDestination.home => const HomePage(),
+        SplashDestination.login => const LoginPage(),
+        SplashDestination.onboarding => const OnboardingPage(),
+      };
       Navigator.of(context).pushReplacement(
         PageRouteBuilder<void>(
           transitionDuration: const Duration(milliseconds: 520),

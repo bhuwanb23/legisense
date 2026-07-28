@@ -41,6 +41,7 @@ rounded:
   md: "24px"
   lg: "32px"
   pill: "999px"
+  field: "16px"
 spacing:
   xs: "8px"
   sm: "12px"
@@ -131,15 +132,33 @@ Never use Inter, Roboto, Arial, or system UI as display.
 ### Progress indicator (onboarding)
 - Active: navy capsule; idle: soft square ticks.
 
+### Auth (Register / Login / OTP / Reset / Profile)
+Inspired by Dribbble login/signup layout grammar — **not** its purple glass cube.
+
+| Token / component | Spec |
+|-------------------|------|
+| Field radius | `16px` (`rounded.field`) |
+| Field border | `accent-soft`; focus ring `primary-navy` 1.5px |
+| Field height | ~56px inner padding 16 horizontal |
+| Primary CTA | Full-width **navy fill**, white Spectral 18, height 56, soft offset shadow |
+| Social CTA | Cloud fill, soft border, Epilogue 15 medium, height 52 |
+| Toggle | Soft sky active track; navy thumb |
+| OTP box | 48–52px square, radius 12, navy digit Epilogue Bold |
+| Screen padding | 28–32px horizontal |
+
+Demo OTP for mock: `123456`. Social (Google/GitHub) is UI-only until backend.
+
 ## Do's and Don'ts
 
 **Do**
 - Keep the monochromatic blue world consistent across splash → onboarding → home.
 - Prefer one authored motion moment (logo entrance) over scattered micro-animations.
 - Route splash by first-run preference; never strand the user on splash.
+- Use navy filled primary buttons on auth screens (Dribbble black → brand navy).
 
 **Don't**
 - Don’t put a Continue button on the splash (it auto-advances).
 - Don’t use purple gradients, cream+terracotta editorial tropes, or dark neon tech looks.
+- Don’t copy the iridescent glass cube / black-white SaaS chrome from auth moodboards.
 - Don’t use cards in the splash hero.
 - Don’t overlay badges/chips on the logo.
