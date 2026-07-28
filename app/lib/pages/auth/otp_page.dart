@@ -7,6 +7,8 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../data/auth_constants.dart';
 import '../../services/session_prefs.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/auth/auth_card.dart';
+import '../../widgets/auth/auth_illustration.dart';
 import '../../widgets/auth/auth_primary_button.dart';
 import '../../widgets/auth/auth_scaffold.dart';
 import '../shell/main_shell.dart';
@@ -117,122 +119,144 @@ class _OtpPageState extends State<OtpPage> {
     final masked = AuthMock.maskContact(widget.contact);
 
     return AuthScaffold(
-      title: 'Enter code',
-      subtitle: 'Sent to $masked',
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: List.generate(_length, (i) {
-              return SizedBox(
-                width: AppSizes.otpBox,
-                height: AppSizes.otpBox,
-                child: TextField(
-                  controller: _controllers[i],
-                  focusNode: _focusNodes[i],
-                  textAlign: TextAlign.center,
-                  keyboardType: TextInputType.number,
-                  maxLength: 1,
-                  style: GoogleFonts.epilogue(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.primaryNavy,
-                  ),
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  decoration: InputDecoration(
-                    counterText: '',
-                    contentPadding: EdgeInsets.zero,
-                    filled: true,
-                    fillColor: const Color(0xFFF3F7FC),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide.none,
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide.none,
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: const BorderSide(
-                        color: AppColors.primaryNavy,
-                        width: 1.4,
-                      ),
-                    ),
-                  ),
-                  onChanged: (v) => _onChanged(i, v),
-                ),
-              );
-            }),
-          ),
-          if (_error != null) ...[
-            const SizedBox(height: 12),
+      body: AuthCard(
+        child: Column(
+          children: [
+            const AuthIllustration(type: AuthIllustrationType.otp),
+            const SizedBox(height: 24),
             Text(
-              _error!,
+              'Enter code',
+              style: GoogleFonts.epilogue(
+                fontSize: 26,
+                fontWeight: FontWeight.w700,
+                color: AppColors.primaryNavy,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Sent to $masked',
               style: GoogleFonts.epilogue(
                 fontSize: 13,
-                color: AppColors.error,
-                fontWeight: FontWeight.w500,
+                color: AppColors.inkSoft,
+              ),
+            ),
+            const SizedBox(height: 28),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: List.generate(_length, (i) {
+                return SizedBox(
+                  width: AppSizes.otpBox,
+                  height: AppSizes.otpBox,
+                  child: TextField(
+                    controller: _controllers[i],
+                    focusNode: _focusNodes[i],
+                    textAlign: TextAlign.center,
+                    keyboardType: TextInputType.number,
+                    maxLength: 1,
+                    style: GoogleFonts.epilogue(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.primaryNavy,
+                    ),
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    decoration: InputDecoration(
+                      counterText: '',
+                      contentPadding: EdgeInsets.zero,
+                      filled: true,
+                      fillColor: AppColors.cloud,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(AppRadii.field),
+                        borderSide: BorderSide(
+                          color: AppColors.borderMuted.withValues(alpha: 0.6),
+                        ),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(AppRadii.field),
+                        borderSide: BorderSide(
+                          color: AppColors.borderMuted.withValues(alpha: 0.6),
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(AppRadii.field),
+                        borderSide: const BorderSide(
+                          color: AppColors.primaryNavy,
+                          width: 1.4,
+                        ),
+                      ),
+                    ),
+                    onChanged: (v) => _onChanged(i, v),
+                  ),
+                );
+              }),
+            ),
+            if (_error != null) ...[
+              const SizedBox(height: 12),
+              Text(
+                _error!,
+                style: GoogleFonts.epilogue(
+                  fontSize: 13,
+                  color: AppColors.error,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+            const SizedBox(height: 28),
+            AuthPrimaryButton(
+              label: 'Verify',
+              loading: _loading,
+              onPressed: _verify,
+            ),
+            const SizedBox(height: 20),
+            Center(
+              child: _secondsLeft > 0
+                  ? Text(
+                      'Resend in ${_secondsLeft}s',
+                      style: GoogleFonts.epilogue(
+                        fontSize: 14,
+                        color: AppColors.inkSoft,
+                      ),
+                    )
+                  : TextButton(
+                      onPressed: () {
+                        for (final c in _controllers) {
+                          c.clear();
+                        }
+                        _focusNodes.first.requestFocus();
+                        _startTimer();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              'OTP resent. Demo: ${AuthMock.demoOtp}',
+                            ),
+                            backgroundColor: AppColors.primaryNavy,
+                            behavior: SnackBarBehavior.floating,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                        );
+                      },
+                      child: Text(
+                        'Resend OTP',
+                        style: GoogleFonts.epilogue(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.brightBlue,
+                        ),
+                      ),
+                    ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Demo: ${AuthMock.demoOtp}',
+              textAlign: TextAlign.center,
+              style: GoogleFonts.epilogue(
+                fontSize: 12,
+                color: AppColors.inkSoft.withValues(alpha: 0.75),
               ),
             ),
           ],
-          const SizedBox(height: 28),
-          AuthPrimaryButton(
-            label: 'Verify',
-            loading: _loading,
-            onPressed: _verify,
-          ),
-          const SizedBox(height: 20),
-          Center(
-            child: _secondsLeft > 0
-                ? Text(
-                    'Resend in ${_secondsLeft}s',
-                    style: GoogleFonts.epilogue(
-                      fontSize: 14,
-                      color: AppColors.inkSoft,
-                    ),
-                  )
-                : TextButton(
-                    onPressed: () {
-                      for (final c in _controllers) {
-                        c.clear();
-                      }
-                      _focusNodes.first.requestFocus();
-                      _startTimer();
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            'OTP resent. Demo: ${AuthMock.demoOtp}',
-                          ),
-                          backgroundColor: AppColors.primaryNavy,
-                          behavior: SnackBarBehavior.floating,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                        ),
-                      );
-                    },
-                    child: Text(
-                      'Resend OTP',
-                      style: GoogleFonts.epilogue(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.primaryNavy,
-                      ),
-                    ),
-                  ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            'Demo: ${AuthMock.demoOtp}',
-            textAlign: TextAlign.center,
-            style: GoogleFonts.epilogue(
-              fontSize: 12,
-              color: AppColors.inkSoft.withValues(alpha: 0.75),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
