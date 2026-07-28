@@ -14,7 +14,7 @@
     "test:pipeline": "tsx tests/pipeline.test.ts",
     "test:auth": "tsx tests/auth.test.ts",
     "test:documents": "tsx tests/documents.test.ts",
-    "test:all": "tsx tests/models.test.ts && tsx tests/middleware.test.ts && tsx tests/pipeline.test.ts && tsx tests/auth.test.ts && tsx tests/documents.test.ts"
+    "test:all": "tsx tests/models.test.ts && tsx tests/middleware.test.ts && tsx tests/pipeline.test.ts && tsx tests/auth.test.ts && tsx tests/documents.test.ts && tsx tests/queue-upgrade.test.ts && tsx tests/socket.test.ts && tsx tests/services.test.ts"
   },
   "engines": {
     "node": ">=20"
@@ -48,6 +48,7 @@
     "@types/node": "^22.10.5",
     "@types/uuid": "^10.0.0",
     "drizzle-kit": "^0.31.10",
+    "socket.io-client": "^4.8.3",
     "tsx": "^4.19.2",
     "typescript": "^5.7.3"
   }

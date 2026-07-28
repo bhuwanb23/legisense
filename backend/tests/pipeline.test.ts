@@ -81,11 +81,11 @@ async function run() {
   assert(isSupportedFormat('pdf'), 'isSupportedFormat(pdf)');
   assert(isSupportedFormat('docx'), 'isSupportedFormat(docx)');
   assert(isSupportedFormat('txt'), 'isSupportedFormat(txt)');
-  assert(!isSupportedFormat('png'), 'isSupportedFormat(png) = false');
+  assert(isSupportedFormat('png'), 'isSupportedFormat(png) = true (OCR support)');
   assert(!isSupportedFormat('doc'), 'isSupportedFormat(doc) = false');
-
   const txtResult = await extractText(Buffer.from('Hello legal world'), 'txt');
-  assert(txtResult === 'Hello legal world', 'extractText for txt returns raw text');
+
+  assert(txtResult.text === 'Hello legal world', 'extractText for txt returns raw text');
 
   const docMessage = getUnsupportedFormatMessage('doc');
   assert(docMessage.includes('.docx'), 'getUnsupportedFormatMessage for .doc mentions .docx');

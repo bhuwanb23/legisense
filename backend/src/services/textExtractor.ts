@@ -1,9 +1,15 @@
 import { PDFParse } from 'pdf-parse';
 import mammoth from 'mammoth';
+import { ocrImage, ocrPdf, isImage } from './ocrService';
 
-export type SupportedFormat = 'pdf' | 'docx' | 'txt';
+export type SupportedFormat = 'pdf' | 'docx' | 'txt' | 'png' | 'jpg' | 'jpeg' | 'gif' | 'bmp';
 
-const SUPPORTED_FORMATS: SupportedFormat[] = ['pdf', 'docx', 'txt'];
+export interface ExtractionResult {
+  text: string;
+  method: 'pdf' | 'docx' | 'txt' | 'ocr' | 'ocr_pdf_fallback';
+}
+
+const SUPPORTED_FORMATS: SupportedFormat[] = ['pdf', 'docx', 'txt', 'png', 'jpg', 'jpeg', 'gif', 'bmp'];
 
 export function isSupportedFormat(format: string): format is SupportedFormat {
   return SUPPORTED_FORMATS.includes(format as SupportedFormat);
@@ -16,38 +22,54 @@ export function getUnsupportedFormatMessage(format: string): string {
   return `File format "${format}" is not supported. Supported formats: ${SUPPORTED_FORMATS.join(', ')}`;
 }
 
-export async function extractText(buffer: Buffer, format: string): Promise<string> {
-  const fmt = format.toLowerCase();
+export async function extractText(buffer: Buffer, format: string): Promise<ExtractionResult> {
+  const fmt = format.toLowerCase() as SupportedFormat;
 
   if (!isSupportedFormat(fmt)) {
     throw new Error(getUnsupportedFormatMessage(fmt));
   }
 
-  switch (fmt) {
+  const { text, method } = await extractRaw(buffer, fmt);
+  return { text: preprocessText(text), method };
+}
+
+async function extractRaw(buffer: Buffer, format: SupportedFormat): Promise<{ text: string; method: ExtractionResult['method'] }> {
+  switch (format) {
     case 'pdf':
       return extractFromPdf(buffer);
     case 'docx':
       return extractFromDocx(buffer);
     case 'txt':
-      return buffer.toString('utf-8');
+      return { text: buffer.toString('utf-8'), method: 'txt' };
+    case 'png':
+    case 'jpg':
+    case 'jpeg':
+    case 'gif':
+    case 'bmp':
+      return { text: await ocrImage(buffer), method: 'ocr' };
     default:
-      throw new Error(`Unknown format: ${fmt}`);
+      throw new Error(`Unknown format: ${format}`);
   }
 }
 
-async function extractFromPdf(buffer: Buffer): Promise<string> {
+async function extractFromPdf(buffer: Buffer): Promise<{ text: string; method: ExtractionResult['method'] }> {
   const parser = new PDFParse({ data: buffer });
   const result = await parser.getText();
   const text = result.text;
 
   if (!text || text.trim().length === 0) {
-    throw new Error('PDF appears to contain no extractable text. It may be a scanned document — try OCR.');
+    // PDF has no extractable text — try OCR
+    const ocrText = await ocrPdf(buffer);
+    if (!ocrText || ocrText.trim().length === 0) {
+      throw new Error('PDF appears to contain no extractable text and OCR produced no output.');
+    }
+    return { text: ocrText, method: 'ocr_pdf_fallback' };
   }
 
-  return text;
+  return { text, method: 'pdf' };
 }
 
-async function extractFromDocx(buffer: Buffer): Promise<string> {
+async function extractFromDocx(buffer: Buffer): Promise<{ text: string; method: ExtractionResult['method'] }> {
   const result = await mammoth.extractRawText({ buffer });
   const text = result.value;
 
@@ -59,5 +81,16 @@ async function extractFromDocx(buffer: Buffer): Promise<string> {
     console.warn('DOCX extraction warnings:', result.messages);
   }
 
-  return text;
+  return { text, method: 'docx' };
+}
+
+function preprocessText(text: string): string {
+  return text
+    .replace(/\r\n/g, '\n')
+    .replace(/\r/g, '\n')
+    .replace(/\t/g, ' ')
+    .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '')
+    .replace(/ {2,}/g, ' ')
+    .replace(/\n{4,}/g, '\n\n\n')
+    .trim();
 }

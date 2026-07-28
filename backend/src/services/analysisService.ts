@@ -20,7 +20,7 @@ export async function analyzeDocumentPipeline(documentId: number, userId: number
 
   try {
     const buffer = readFile(doc.storagePath);
-    const rawText = await extractText(buffer, doc.fileFormat);
+    const { text: rawText } = await extractText(buffer, doc.fileFormat);
 
     updateDocumentRawText(db, documentId, rawText);
 
