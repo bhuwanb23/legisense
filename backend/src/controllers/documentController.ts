@@ -19,7 +19,7 @@ export async function uploadDocument(req: Request, res: Response, next: NextFunc
       return;
     }
 
-    const { originalname, buffer, mimetype } = req.file;
+    const { originalname, buffer } = req.file;
     const format = originalname.split('.').pop()?.toLowerCase() || 'unknown';
 
     const storagePath = saveFile(buffer, originalname, format);
@@ -57,6 +57,187 @@ export async function uploadDocument(req: Request, res: Response, next: NextFunc
         fileFormat: doc.fileFormat,
         fileSize: doc.fileSize,
         uploadStatus: doc.uploadStatus,
+        processingStatus: 'pending',
+        jobId: job.id,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function listDocuments(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    if (!req.user) {
+      res.status(401).json({ success: false, error: { message: 'Unauthorized', code: 'AUTH_REQUIRED', statusCode: 401 } });
+      return;
+    }
+
+    const page = Number(req.query.page) || 1;
+    const limit = Math.min(Number(req.query.limit) || 20, 100);
+    const offset = (page - 1) * limit;
+    const status = (req.query.status as string) || 'all';
+
+    const db = getDb();
+
+    let whereClause = sql`${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = 0`;
+    if (status !== 'all') {
+      whereClause = sql`${whereClause} AND ${documents.processingStatus} = ${status}`;
+    }
+
+    const countRows = db.all(
+      sql`SELECT COUNT(*) as total FROM documents WHERE user_id = ${req.user.id} AND is_deleted = 0`
+    ) as Array<{ total: number }>;
+    const total = countRows[0]?.total || 0;
+
+    const rows = db.select().from(documents).where(whereClause).all();
+
+    const paginated = rows.slice(offset, offset + limit);
+
+    res.json({
+      success: true,
+      data: {
+        documents: paginated.map((doc) => ({
+          id: doc.id,
+          originalName: doc.originalName,
+          fileFormat: doc.fileFormat,
+          fileSize: doc.fileSize,
+          sourceType: doc.sourceType,
+          uploadStatus: doc.uploadStatus,
+          processingStatus: doc.processingStatus,
+          createdAt: doc.createdAt,
+        })),
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+        },
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function getDocument(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    if (!req.user) {
+      res.status(401).json({ success: false, error: { message: 'Unauthorized', code: 'AUTH_REQUIRED', statusCode: 401 } });
+      return;
+    }
+
+    const documentId = Number(req.params.id);
+    const db = getDb();
+
+    const rows = db.select().from(documents).where(
+      sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = 0`
+    ).all();
+
+    const doc = rows[0];
+    if (!doc) {
+      throw new NotFoundError('Document');
+    }
+
+    res.json({
+      success: true,
+      data: {
+        id: doc.id,
+        originalName: doc.originalName,
+        fileFormat: doc.fileFormat,
+        fileSize: doc.fileSize,
+        sourceType: doc.sourceType,
+        sourceUrl: doc.sourceUrl,
+        uploadStatus: doc.uploadStatus,
+        processingStatus: doc.processingStatus,
+        pageCount: doc.pageCount,
+        detectedLanguage: doc.detectedLanguage,
+        createdAt: doc.createdAt,
+        updatedAt: doc.updatedAt,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function deleteDocument(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    if (!req.user) {
+      res.status(401).json({ success: false, error: { message: 'Unauthorized', code: 'AUTH_REQUIRED', statusCode: 401 } });
+      return;
+    }
+
+    const documentId = Number(req.params.id);
+    const db = getDb();
+
+    const rows = db.select().from(documents).where(
+      sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = 0`
+    ).all();
+
+    if (!rows[0]) {
+      throw new NotFoundError('Document');
+    }
+
+    db.run(
+      sql`UPDATE ${documents} SET is_deleted = 1, updated_at = datetime('now') WHERE id = ${documentId}`
+    );
+
+    persistNow();
+
+    res.json({
+      success: true,
+      data: { message: 'Document deleted successfully' },
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function pasteText(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    if (!req.user) {
+      res.status(401).json({ success: false, error: { message: 'Unauthorized', code: 'AUTH_REQUIRED', statusCode: 401 } });
+      return;
+    }
+
+    const { text, title } = req.body;
+    const docTitle = title || 'Pasted Text';
+    const storagePath = saveFile(Buffer.from(text, 'utf-8'), `${docTitle}.txt`, 'txt');
+
+    const db = getDb();
+
+    db.insert(documents).values({
+      userId: req.user.id,
+      originalName: docTitle,
+      storagePath,
+      fileFormat: 'txt',
+      fileSize: Buffer.byteLength(text, 'utf-8'),
+      sourceType: 'paste',
+      rawText: text,
+      uploadStatus: 'uploaded',
+      processingStatus: 'pending',
+    }).run();
+
+    const allDocs = db.select().from(documents).where(sql`${documents.storagePath} = ${storagePath}`).all();
+    const doc = allDocs[0];
+
+    if (!doc) {
+      throw new Error('Failed to create document record');
+    }
+
+    persistNow();
+
+    const job = queueService.enqueue(doc.id, req.user.id);
+
+    res.status(202).json({
+      success: true,
+      data: {
+        documentId: doc.id,
+        originalName: doc.originalName,
+        fileFormat: 'txt',
+        fileSize: doc.fileSize,
+        sourceType: 'paste',
         processingStatus: 'pending',
         jobId: job.id,
       },
