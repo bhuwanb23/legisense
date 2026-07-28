@@ -16,6 +16,8 @@ import {
   errorHandler,
   notFoundHandler,
 } from './middleware';
+import documentRoutes from './routes/documentRoutes';
+import { startAnalysisWorker } from './jobs/analysisWorker';
 
 const app = express();
 const port = Number(process.env.PORT) || 3001;
@@ -32,6 +34,8 @@ app.get('/health', (_req, res) => {
     timestamp: new Date().toISOString(),
   });
 });
+
+app.use('/api/documents', documentRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);
@@ -199,6 +203,8 @@ async function start() {
 
   console.log('All 10 tables created/verified.');
   persistNow();
+
+  startAnalysisWorker();
 
   app.listen(port, () => {
     console.log(`Legisense API listening on http://localhost:${port}`);

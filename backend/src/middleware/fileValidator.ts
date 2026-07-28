@@ -1,5 +1,5 @@
 import multer from 'multer';
-import { Request } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { InvalidFileTypeError, FileTooLargeError } from '../utils/errors';
 
 const MAX_SIZE = 10 * 1024 * 1024;
@@ -46,7 +46,7 @@ export function handleMulterError(
   err: Error,
   _req: Request,
   _res: Response,
-  next: Function
+  next: NextFunction
 ): void {
   if (err instanceof multer.MulterError) {
     if (err.code === 'LIMIT_FILE_SIZE') {
