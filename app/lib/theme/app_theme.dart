@@ -15,6 +15,14 @@ abstract final class AppColors {
   static const brightBlue = Color(0xFF2B7FFF);
   static const error = Color(0xFFB42318);
   static const borderMuted = Color(0xFFD7E6F5);
+  static const riskLow = Color(0xFF1B6B3A);
+  static const riskLowBg = Color(0xFFE8F5EE);
+  static const riskMedium = Color(0xFF9A5B00);
+  static const riskMediumBg = Color(0xFFFFF4E5);
+  static const riskHigh = Color(0xFFB42318);
+  static const riskHighBg = Color(0xFFFDECEC);
+  static const riskMissing = Color(0xFF5A6A7A);
+  static const riskMissingBg = Color(0xFFEEF2F6);
 }
 
 abstract final class AppRadii {

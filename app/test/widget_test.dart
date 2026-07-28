@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:legisense/data/analysis_mock.dart';
 import 'package:legisense/main.dart';
 import 'package:legisense/models/pending_upload.dart';
+import 'package:legisense/pages/analysis/analysis_results_page.dart';
 import 'package:legisense/pages/auth/login_page.dart';
 import 'package:legisense/pages/auth/otp_page.dart';
 import 'package:legisense/pages/processing/processing_page.dart';
@@ -35,9 +37,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Welcome Back!'), findsOneWidget);
+    expect(find.text('Sign In'), findsOneWidget);
     expect(find.text('Login'), findsOneWidget);
-    expect(find.text('Mobile Number or Email'), findsOneWidget);
   });
 
   testWidgets('OTP page shows masked contact', (tester) async {
@@ -52,7 +53,7 @@ void main() {
     expect(find.text('Verify'), findsOneWidget);
   });
 
-  testWidgets('Main shell shows home dashboard CTA', (tester) async {
+  testWidgets('Main shell shows home dashboard', (tester) async {
     SharedPreferences.setMockInitialValues({
       'user_display_name': 'Bhuwan',
       'user_email': 'bhuwan@test.com',
@@ -63,8 +64,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Upload / Scan Document'), findsOneWidget);
-    expect(find.textContaining('ready to review a document'), findsOneWidget);
+    expect(find.textContaining('Legal'), findsOneWidget);
+    expect(find.text('Quick stats'), findsOneWidget);
     expect(find.text('Home'), findsWidgets);
   });
 
@@ -106,5 +107,20 @@ void main() {
 
     await tester.tap(find.text('Cancel'));
     await tester.pump();
+  });
+
+  testWidgets('Analysis results shows risk score and actions', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: AnalysisResultsPage(result: AnalysisMock.sample()),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+
+    expect(find.textContaining('RentAgreement_2024'), findsOneWidget);
+    expect(find.text('RISK SCORE'), findsOneWidget);
+    expect(find.text('Chat'), findsOneWidget);
+    expect(find.text('Export'), findsOneWidget);
   });
 }

@@ -172,9 +172,17 @@ Fonts: Epilogue throughout app chrome (no Inter/system). Mock stats/docs until b
 | Proceed | Navy pill; enabled only after a selection |
 | Scan preview | Crop guide frame · Retake / Use Photo · mock OCR spinner |
 | Processing | Lottie mark · 6 step checklist · ETA · legal tip · Cancel |
-| Completion | Auto-push Analysis stub |
+| Completion | Auto-push Analysis results |
 
-Mock only — no real OCR/backend yet.
+### Analysis Results (Pages 13–16)
+| Page | Spec |
+|------|------|
+| 13 Master | Identity card · animated risk gauge (fl_chart) · quick stats · tabs Summary/Clauses/Plain English/Risks · Chat/Export/Compare actions |
+| 14 Summary | Overview · parties · critical dates table · breach scenarios |
+| 15 Clauses | Search · All/High/Med/Low/Missing filters · expandable cards · Plain English sheet |
+| 16 Risk | Big gauge · pie breakdown · expandable category cards → clause list |
+
+Score bands: green 0–33 · amber 34–66 · red 67–100. Mock rental agreement payload until backend.
 
 ## Do's and Don'ts
 
