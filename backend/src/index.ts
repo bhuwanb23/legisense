@@ -19,6 +19,10 @@ import {
 import documentRoutes from './routes/documentRoutes';
 import authRoutes from './routes/authRoutes';
 import userRoutes from './routes/userRoutes';
+import analysisRoutes from './routes/analysisRoutes';
+import chatRoutes from './routes/chatRoutes';
+import deadlineRoutes from './routes/deadlineRoutes';
+import notificationRoutes from './routes/notificationRoutes';
 import { startAnalysisWorker } from './jobs/analysisWorker';
 
 const app = express();
@@ -40,6 +44,10 @@ app.get('/health', (_req, res) => {
 app.use('/api/documents', documentRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/analysis', analysisRoutes);
+app.use('/api/chat', chatRoutes);
+app.use('/api/deadlines', deadlineRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);
