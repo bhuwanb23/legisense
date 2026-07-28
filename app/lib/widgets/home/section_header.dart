@@ -1,0 +1,70 @@
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+
+import '../../theme/app_theme.dart';
+
+/// Reusable section header with title and optional action button —
+/// matches the Dribbble "Manage your device" + `+` pattern.
+class SectionHeader extends StatelessWidget {
+  const SectionHeader({
+    super.key,
+    required this.title,
+    this.actionLabel,
+    this.onAction,
+    this.showAddButton = false,
+  });
+
+  final String title;
+  final String? actionLabel;
+  final VoidCallback? onAction;
+  final bool showAddButton;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            title,
+            style: GoogleFonts.epilogue(
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              color: AppColors.primaryNavy,
+              letterSpacing: -0.3,
+            ),
+          ),
+        ),
+        if (showAddButton)
+          Material(
+            color: AppColors.brightBlue,
+            shape: const CircleBorder(),
+            child: InkWell(
+              customBorder: const CircleBorder(),
+              onTap: onAction,
+              child: const SizedBox(
+                width: 36,
+                height: 36,
+                child: Icon(
+                  Icons.add_rounded,
+                  color: AppColors.cloud,
+                  size: 22,
+                ),
+              ),
+            ),
+          )
+        else if (actionLabel != null)
+          TextButton(
+            onPressed: onAction,
+            child: Text(
+              actionLabel!,
+              style: GoogleFonts.epilogue(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: AppColors.brightBlue,
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
