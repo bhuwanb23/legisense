@@ -164,6 +164,18 @@ Layout DNA from soft smart-home dashboards (greeting header, navy hero, circular
 
 Fonts: Epilogue throughout app chrome (no Inter/system). Mock stats/docs until backend.
 
+### Upload (Page 11) & Processing (Page 12)
+| Element | Spec |
+|---------|------|
+| Upload options | 2×2 soft white tiles: File · Scan · Paste · URL |
+| Meta | Max 20 MB · PDF/DOC/DOCX/TXT · privacy encryption note |
+| Proceed | Navy pill; enabled only after a selection |
+| Scan preview | Crop guide frame · Retake / Use Photo · mock OCR spinner |
+| Processing | Lottie mark · 6 step checklist · ETA · legal tip · Cancel |
+| Completion | Auto-push Analysis stub |
+
+Mock only — no real OCR/backend yet.
+
 ## Do's and Don'ts
 
 **Do**

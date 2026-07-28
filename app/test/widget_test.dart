@@ -3,9 +3,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:legisense/main.dart';
+import 'package:legisense/models/pending_upload.dart';
 import 'package:legisense/pages/auth/login_page.dart';
 import 'package:legisense/pages/auth/otp_page.dart';
+import 'package:legisense/pages/processing/processing_page.dart';
 import 'package:legisense/pages/shell/main_shell.dart';
+import 'package:legisense/pages/upload/upload_page.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -63,5 +66,45 @@ void main() {
     expect(find.text('Upload / Scan Document'), findsOneWidget);
     expect(find.textContaining('ready to review a document'), findsOneWidget);
     expect(find.text('Home'), findsWidgets);
+  });
+
+  testWidgets('Upload page shows four options and disabled Proceed', (tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(home: Scaffold(body: UploadPage())),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Upload File'), findsOneWidget);
+    expect(find.text('Scan'), findsOneWidget);
+    expect(find.text('Paste Text'), findsOneWidget);
+    expect(find.text('Import URL'), findsOneWidget);
+    expect(find.text('Proceed'), findsOneWidget);
+    expect(
+      find.textContaining('encrypted and auto-deleted'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('Processing page shows steps and cancel', (tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: ProcessingPage(
+          upload: PendingUpload(
+            source: UploadSource.paste,
+            title: 'Demo paste',
+            detail: '120 chars',
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(find.text('Analyzing your document'), findsOneWidget);
+    expect(find.text('Document received'), findsOneWidget);
+    expect(find.text('Cancel'), findsOneWidget);
+
+    await tester.tap(find.text('Cancel'));
+    await tester.pump();
   });
 }
