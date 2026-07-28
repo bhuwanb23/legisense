@@ -41,7 +41,7 @@ rounded:
   md: "24px"
   lg: "32px"
   pill: "999px"
-  field: "16px"
+  field: "18px"
 spacing:
   xs: "8px"
   sm: "12px"
@@ -133,20 +133,20 @@ Never use Inter, Roboto, Arial, or system UI as display.
 - Active: navy capsule; idle: soft square ticks.
 
 ### Auth (Register / Login / OTP / Reset / Profile)
-Inspired by Dribbble login/signup layout grammar — **not** its purple glass cube.
+Layout DNA from soft consumer auth references (icon fields, pill CTA + arrow disc, circular socials, airy stack) — **Legisense navy/sky tokens only**, never coral/pink dating palettes.
+
+**Minimalist rules:** ≤3 fields on Register/Login · short titles · no terms toggles / remember-me chrome · Epilogue everywhere on auth (no mixed “perfect” display faces).
 
 | Token / component | Spec |
 |-------------------|------|
-| Field radius | `16px` (`rounded.field`) |
-| Field border | `accent-soft`; focus ring `primary-navy` 1.5px |
-| Field height | ~56px inner padding 16 horizontal |
-| Primary CTA | Full-width **navy fill**, white Spectral 18, height 56, soft offset shadow |
-| Social CTA | Cloud fill, soft border, Epilogue 15 medium, height 52 |
-| Toggle | Soft sky active track; navy thumb |
-| OTP box | 48–52px square, radius 12, navy digit Epilogue Bold |
-| Screen padding | 28–32px horizontal |
+| Field | Soft fill `#F3F7FC`, radius **18**, leading icon, focus navy 1.4px |
+| Primary CTA | Navy pill, Epilogue Bold white, trailing **white arrow disc**, height 58 |
+| Social | Circular discs (Google / Apple / GitHub), not full-width slabs |
+| Divider | Hairline + “or sign up/in with” |
+| OTP | Soft-fill boxes, radius 16, Epilogue Bold digits |
+| Screen padding | 28px horizontal; title 28 / subtitle 14 |
 
-Demo OTP for mock: `123456`. Social (Google/GitHub) is UI-only until backend.
+Demo OTP: `123456`. Social is UI-only until backend.
 
 ## Do's and Don'ts
 

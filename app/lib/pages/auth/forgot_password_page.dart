@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../theme/app_theme.dart';
 import '../../widgets/auth/auth_primary_button.dart';
 import '../../widgets/auth/auth_scaffold.dart';
 import '../../widgets/auth/auth_text_field.dart';
@@ -27,7 +26,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   Future<void> _submit() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     setState(() => _loading = true);
-    await Future<void>.delayed(const Duration(milliseconds: 400));
+    await Future<void>.delayed(const Duration(milliseconds: 350));
     if (!mounted) return;
     setState(() => _loading = false);
 
@@ -42,7 +41,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   Widget build(BuildContext context) {
     return AuthScaffold(
       title: 'Forgot password',
-      subtitle: 'Enter your email and we’ll send a reset link.',
+      subtitle: 'We’ll email you a reset link.',
       body: Form(
         key: _formKey,
         child: Column(
@@ -50,8 +49,9 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
           children: [
             AuthTextField(
               label: 'Email',
+              icon: Icons.mail_outline_rounded,
               controller: _email,
-              hint: 'you@example.com',
+              hint: 'you@email.com',
               keyboardType: TextInputType.emailAddress,
               textInputAction: TextInputAction.done,
               autofillHints: const [AutofillHints.email],
@@ -63,16 +63,11 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                 return null;
               },
             ),
-            const SizedBox(height: AppSpacing.xl),
+            const SizedBox(height: 28),
             AuthPrimaryButton(
               label: 'Send Reset Link',
               loading: _loading,
               onPressed: _submit,
-            ),
-            const SizedBox(height: AppSpacing.md),
-            TextButton(
-              onPressed: () => Navigator.of(context).maybePop(),
-              child: const Text('Back to Login'),
             ),
           ],
         ),

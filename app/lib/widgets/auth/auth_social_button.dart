@@ -1,62 +1,79 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../theme/app_theme.dart';
 
-enum AuthSocialProvider { google, github }
+enum AuthSocialProvider { google, github, apple }
 
-class AuthSocialButton extends StatelessWidget {
-  const AuthSocialButton({
+/// Circular social marks — inspiration row, not full-width slabs.
+class AuthSocialRow extends StatelessWidget {
+  const AuthSocialRow({
     super.key,
-    required this.provider,
-    required this.onPressed,
+    required this.onGoogle,
+    required this.onGithub,
+    this.onApple,
   });
 
-  final AuthSocialProvider provider;
-  final VoidCallback onPressed;
+  final VoidCallback onGoogle;
+  final VoidCallback onGithub;
+  final VoidCallback? onApple;
 
   @override
   Widget build(BuildContext context) {
-    final isGoogle = provider == AuthSocialProvider.google;
-    final label = isGoogle ? 'Continue with Google' : 'Continue with GitHub';
-    final icon = isGoogle ? FontAwesomeIcons.google : FontAwesomeIcons.github;
-
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: AppColors.cloud,
-        borderRadius: BorderRadius.circular(AppRadii.field),
-        border: Border.all(color: AppColors.borderMuted),
-        boxShadow: const [
-          BoxShadow(
-            color: AppColors.shadow,
-            blurRadius: 12,
-            offset: Offset(0, 4),
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        _SocialDisc(
+          icon: FontAwesomeIcons.google,
+          onTap: onGoogle,
+        ),
+        const SizedBox(width: 18),
+        if (onApple != null) ...[
+          _SocialDisc(
+            icon: FontAwesomeIcons.apple,
+            onTap: onApple!,
           ),
+          const SizedBox(width: 18),
         ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(AppRadii.field),
-          onTap: onPressed,
-          child: SizedBox(
-            height: AppSizes.socialButtonHeight,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                FaIcon(icon, size: 18, color: AppColors.primaryNavy),
-                const SizedBox(width: AppSpacing.sm),
-                Text(
-                  label,
-                  style: GoogleFonts.epilogue(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.primaryNavy,
-                  ),
-                ),
-              ],
-            ),
+        _SocialDisc(
+          icon: FontAwesomeIcons.github,
+          onTap: onGithub,
+        ),
+      ],
+    );
+  }
+}
+
+class _SocialDisc extends StatelessWidget {
+  const _SocialDisc({required this.icon, required this.onTap});
+
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        customBorder: const CircleBorder(),
+        onTap: onTap,
+        child: Ink(
+          width: 52,
+          height: 52,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: AppColors.cloud,
+            border: Border.all(color: AppColors.borderMuted),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.primaryNavy.withValues(alpha: 0.06),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Center(
+            child: FaIcon(icon, size: 18, color: AppColors.primaryNavy),
           ),
         ),
       ),
@@ -67,9 +84,10 @@ class AuthSocialButton extends StatelessWidget {
 void showAuthComingSoon(BuildContext context, String provider) {
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
-      content: Text('$provider sign-in will connect with the backend soon.'),
+      content: Text('$provider sign-in comes with the backend.'),
       backgroundColor: AppColors.primaryNavy,
       behavior: SnackBarBehavior.floating,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
     ),
   );
 }

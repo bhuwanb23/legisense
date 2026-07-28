@@ -8,7 +8,6 @@ import '../../widgets/auth/auth_primary_button.dart';
 import '../../widgets/auth/auth_scaffold.dart';
 import '../../widgets/auth/auth_social_button.dart';
 import '../../widgets/auth/auth_text_field.dart';
-import '../../widgets/auth/auth_toggle_row.dart';
 import '../home/home_page.dart';
 import 'forgot_password_page.dart';
 import 'profile_setup_page.dart';
@@ -25,7 +24,6 @@ class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   final _contact = TextEditingController();
   final _password = TextEditingController();
-  bool _rememberMe = false;
   bool _loading = false;
 
   @override
@@ -38,10 +36,9 @@ class _LoginPageState extends State<LoginPage> {
     final remember = await SessionPrefs.rememberMe();
     final email = await SessionPrefs.userEmail();
     if (!mounted) return;
-    setState(() {
-      _rememberMe = remember;
-      if (remember && email != null) _contact.text = email;
-    });
+    if (remember && email != null) {
+      setState(() => _contact.text = email);
+    }
   }
 
   @override
@@ -56,7 +53,7 @@ class _LoginPageState extends State<LoginPage> {
     setState(() => _loading = true);
 
     await SessionPrefs.setOnboardingSeen();
-    await SessionPrefs.setRememberMe(_rememberMe);
+    await SessionPrefs.setRememberMe(true);
     await SessionPrefs.setUserEmail(_contact.text.trim());
     await SessionPrefs.setLoggedIn(true);
 
@@ -74,8 +71,8 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return AuthScaffold(
-      title: 'Welcome back',
-      subtitle: 'Log in to continue to Legisense.',
+      title: 'Welcome Back!',
+      subtitle: 'Sign in to keep reviewing contracts with clarity.',
       trailing: TextButton(
         onPressed: () {
           Navigator.of(context).push(
@@ -85,7 +82,7 @@ class _LoginPageState extends State<LoginPage> {
           );
         },
         child: Text(
-          'Forgot password?',
+          'Forgot?',
           style: GoogleFonts.epilogue(
             fontSize: 13,
             fontWeight: FontWeight.w600,
@@ -99,9 +96,10 @@ class _LoginPageState extends State<LoginPage> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             AuthTextField(
-              label: 'Email / Phone',
+              label: 'Mobile Number or Email',
+              icon: Icons.person_outline_rounded,
               controller: _contact,
-              hint: 'you@example.com or phone',
+              hint: 'you@email.com',
               keyboardType: TextInputType.emailAddress,
               textInputAction: TextInputAction.next,
               autofillHints: const [AutofillHints.username],
@@ -112,9 +110,10 @@ class _LoginPageState extends State<LoginPage> {
                 return null;
               },
             ),
-            const SizedBox(height: AppSpacing.md),
+            const SizedBox(height: 16),
             AuthTextField(
               label: 'Password',
+              icon: Icons.lock_outline_rounded,
               controller: _password,
               obscureText: true,
               textInputAction: TextInputAction.done,
@@ -124,60 +123,53 @@ class _LoginPageState extends State<LoginPage> {
                 return null;
               },
             ),
-            const SizedBox(height: AppSpacing.md),
-            AuthToggleRow(
-              label: 'Remember me next time',
-              value: _rememberMe,
-              onChanged: (v) => setState(() => _rememberMe = v),
-            ),
-            const SizedBox(height: AppSpacing.lg),
+            const SizedBox(height: 28),
             AuthPrimaryButton(
               label: 'Login',
               loading: _loading,
               onPressed: _submit,
             ),
-            const SizedBox(height: AppSpacing.lg),
-            const AuthOrDivider(),
-            const SizedBox(height: AppSpacing.lg),
-            AuthSocialButton(
-              provider: AuthSocialProvider.google,
-              onPressed: () => showAuthComingSoon(context, 'Google'),
+            const SizedBox(height: 28),
+            const AuthOrDivider(label: 'or sign in with'),
+            const SizedBox(height: 20),
+            AuthSocialRow(
+              onGoogle: () => showAuthComingSoon(context, 'Google'),
+              onGithub: () => showAuthComingSoon(context, 'GitHub'),
+              onApple: () => showAuthComingSoon(context, 'Apple'),
             ),
-            const SizedBox(height: AppSpacing.sm),
-            AuthSocialButton(
-              provider: AuthSocialProvider.github,
-              onPressed: () => showAuthComingSoon(context, 'GitHub'),
-            ),
-            const SizedBox(height: AppSpacing.xl),
+            const SizedBox(height: 32),
             Center(
-              child: Wrap(
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: [
-                  Text(
-                    "Don't have an account? ",
-                    style: GoogleFonts.epilogue(
-                      fontSize: 14,
-                      color: AppColors.inkSoft,
-                    ),
+              child: Text.rich(
+                TextSpan(
+                  style: GoogleFonts.epilogue(
+                    fontSize: 14,
+                    color: AppColors.inkSoft,
                   ),
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.of(context).pushReplacement(
-                        MaterialPageRoute<void>(
-                          builder: (_) => const RegisterPage(),
+                  children: [
+                    const TextSpan(text: "Don't have an account? "),
+                    WidgetSpan(
+                      alignment: PlaceholderAlignment.baseline,
+                      baseline: TextBaseline.alphabetic,
+                      child: GestureDetector(
+                        onTap: () {
+                          Navigator.of(context).pushReplacement(
+                            MaterialPageRoute<void>(
+                              builder: (_) => const RegisterPage(),
+                            ),
+                          );
+                        },
+                        child: Text(
+                          'Sign up',
+                          style: GoogleFonts.epilogue(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.primaryNavy,
+                          ),
                         ),
-                      );
-                    },
-                    child: Text(
-                      'Sign up',
-                      style: GoogleFonts.epilogue(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.primaryNavy,
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ],

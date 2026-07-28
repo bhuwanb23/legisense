@@ -8,7 +8,6 @@ import '../../widgets/auth/auth_primary_button.dart';
 import '../../widgets/auth/auth_scaffold.dart';
 import '../../widgets/auth/auth_social_button.dart';
 import '../../widgets/auth/auth_text_field.dart';
-import '../../widgets/auth/auth_toggle_row.dart';
 import 'login_page.dart';
 import 'otp_page.dart';
 
@@ -21,39 +20,32 @@ class RegisterPage extends StatefulWidget {
 
 class _RegisterPageState extends State<RegisterPage> {
   final _formKey = GlobalKey<FormState>();
-  final _name = TextEditingController();
   final _email = TextEditingController();
-  final _password = TextEditingController();
-  final _confirm = TextEditingController();
   final _phone = TextEditingController();
-  bool _agreed = false;
+  final _password = TextEditingController();
   bool _loading = false;
 
   @override
   void dispose() {
-    _name.dispose();
     _email.dispose();
-    _password.dispose();
-    _confirm.dispose();
     _phone.dispose();
+    _password.dispose();
     super.dispose();
   }
 
+  String? get _passwordHint {
+    final v = _password.text;
+    if (v.isEmpty) return null;
+    if (v.length >= 10) return 'Strong';
+    if (v.length >= 8) return 'Good';
+    return 'Weak';
+  }
+
   Future<void> _submit() async {
-    if (!_agreed) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please agree to Terms & Privacy Policy.'),
-          backgroundColor: AppColors.primaryNavy,
-        ),
-      );
-      return;
-    }
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
     setState(() => _loading = true);
     await SessionPrefs.setOnboardingSeen();
-    await SessionPrefs.setDisplayName(_name.text.trim());
     await SessionPrefs.setUserEmail(_email.text.trim());
     if (!mounted) return;
     setState(() => _loading = false);
@@ -71,31 +63,18 @@ class _RegisterPageState extends State<RegisterPage> {
   @override
   Widget build(BuildContext context) {
     return AuthScaffold(
-      title: "Let's Get Started",
-      subtitle: 'Create your Legisense account to continue.',
+      title: 'Create Account',
+      subtitle: 'Join Legisense in under a minute.',
       body: Form(
         key: _formKey,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             AuthTextField(
-              label: 'Full Name',
-              controller: _name,
-              hint: 'Your full name',
-              textInputAction: TextInputAction.next,
-              autofillHints: const [AutofillHints.name],
-              validator: (v) {
-                if (v == null || v.trim().length < 2) {
-                  return 'Enter your full name';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: AppSpacing.md),
-            AuthTextField(
               label: 'Email',
+              icon: Icons.mail_outline_rounded,
               controller: _email,
-              hint: 'you@example.com',
+              hint: 'you@email.com',
               keyboardType: TextInputType.emailAddress,
               textInputAction: TextInputAction.next,
               autofillHints: const [AutofillHints.email],
@@ -107,99 +86,99 @@ class _RegisterPageState extends State<RegisterPage> {
                 return null;
               },
             ),
-            const SizedBox(height: AppSpacing.md),
+            const SizedBox(height: 16),
+            AuthTextField(
+              label: 'Mobile Number',
+              icon: Icons.phone_outlined,
+              controller: _phone,
+              hint: '+91 XXXXX XXXXX',
+              keyboardType: TextInputType.phone,
+              textInputAction: TextInputAction.next,
+              autofillHints: const [AutofillHints.telephoneNumber],
+              validator: (v) {
+                final digits = (v ?? '').replaceAll(RegExp(r'\D'), '');
+                if (digits.length < 10) return 'Enter a valid number';
+                return null;
+              },
+            ),
+            const SizedBox(height: 16),
             AuthTextField(
               label: 'Password',
+              icon: Icons.lock_outline_rounded,
               controller: _password,
               obscureText: true,
-              textInputAction: TextInputAction.next,
+              textInputAction: TextInputAction.done,
               autofillHints: const [AutofillHints.newPassword],
+              onChanged: (_) => setState(() {}),
+              trailing: _passwordHint == null
+                  ? null
+                  : Padding(
+                      padding: const EdgeInsets.only(right: 12),
+                      child: Center(
+                        child: Text(
+                          _passwordHint!,
+                          style: GoogleFonts.epilogue(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.accentSky,
+                          ),
+                        ),
+                      ),
+                    ),
               validator: (v) {
                 if (v == null || v.length < 8) {
-                  return 'Use at least 8 characters';
+                  return 'At least 8 characters';
                 }
                 return null;
               },
             ),
-            const SizedBox(height: AppSpacing.md),
-            AuthTextField(
-              label: 'Confirm Password',
-              controller: _confirm,
-              obscureText: true,
-              textInputAction: TextInputAction.next,
-              validator: (v) {
-                if (v != _password.text) return 'Passwords do not match';
-                return null;
-              },
-            ),
-            const SizedBox(height: AppSpacing.md),
-            AuthTextField(
-              label: 'Phone Number',
-              controller: _phone,
-              hint: '+91 XXXXX XXXXX',
-              keyboardType: TextInputType.phone,
-              textInputAction: TextInputAction.done,
-              autofillHints: const [AutofillHints.telephoneNumber],
-              validator: (v) {
-                final digits = (v ?? '').replaceAll(RegExp(r'\D'), '');
-                if (digits.length < 10) return 'Enter a valid phone number';
-                return null;
-              },
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            AuthToggleRow(
-              label: 'I agree to Terms & Privacy Policy',
-              value: _agreed,
-              onChanged: (v) => setState(() => _agreed = v),
-            ),
-            const SizedBox(height: AppSpacing.lg),
+            const SizedBox(height: 28),
             AuthPrimaryButton(
-              label: 'Sign Up',
+              label: 'Sign up',
               loading: _loading,
               onPressed: _submit,
             ),
-            const SizedBox(height: AppSpacing.lg),
-            const AuthOrDivider(),
-            const SizedBox(height: AppSpacing.lg),
-            AuthSocialButton(
-              provider: AuthSocialProvider.google,
-              onPressed: () => showAuthComingSoon(context, 'Google'),
+            const SizedBox(height: 28),
+            const AuthOrDivider(label: 'or sign up with'),
+            const SizedBox(height: 20),
+            AuthSocialRow(
+              onGoogle: () => showAuthComingSoon(context, 'Google'),
+              onGithub: () => showAuthComingSoon(context, 'GitHub'),
+              onApple: () => showAuthComingSoon(context, 'Apple'),
             ),
-            const SizedBox(height: AppSpacing.sm),
-            AuthSocialButton(
-              provider: AuthSocialProvider.github,
-              onPressed: () => showAuthComingSoon(context, 'GitHub'),
-            ),
-            const SizedBox(height: AppSpacing.xl),
+            const SizedBox(height: 32),
             Center(
-              child: Wrap(
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: [
-                  Text(
-                    'Already have an account? ',
-                    style: GoogleFonts.epilogue(
-                      fontSize: 14,
-                      color: AppColors.inkSoft,
-                    ),
+              child: Text.rich(
+                TextSpan(
+                  style: GoogleFonts.epilogue(
+                    fontSize: 14,
+                    color: AppColors.inkSoft,
                   ),
-                  GestureDetector(
-                    onTap: () {
-                      Navigator.of(context).pushReplacement(
-                        MaterialPageRoute<void>(
-                          builder: (_) => const LoginPage(),
+                  children: [
+                    const TextSpan(text: 'Already have an account? '),
+                    WidgetSpan(
+                      alignment: PlaceholderAlignment.baseline,
+                      baseline: TextBaseline.alphabetic,
+                      child: GestureDetector(
+                        onTap: () {
+                          Navigator.of(context).pushReplacement(
+                            MaterialPageRoute<void>(
+                              builder: (_) => const LoginPage(),
+                            ),
+                          );
+                        },
+                        child: Text(
+                          'Sign in',
+                          style: GoogleFonts.epilogue(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.primaryNavy,
+                          ),
                         ),
-                      );
-                    },
-                    child: Text(
-                      'Login',
-                      style: GoogleFonts.epilogue(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.primaryNavy,
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ],

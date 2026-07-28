@@ -95,9 +95,8 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
   Widget build(BuildContext context) {
     return AuthScaffold(
       showBack: false,
-      title: 'Set up your profile',
-      subtitle:
-          'This pre-sets jurisdiction and personalizes how Legisense explains contracts.',
+      title: 'Your profile',
+      subtitle: 'A few details so explanations fit your context.',
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [

@@ -21,7 +21,7 @@ abstract final class AppRadii {
   static const md = 24.0;
   static const lg = 32.0;
   static const pill = 999.0;
-  static const field = 16.0;
+  static const field = 18.0;
 }
 
 abstract final class AppSpacing {

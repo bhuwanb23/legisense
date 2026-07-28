@@ -117,8 +117,8 @@ class _OtpPageState extends State<OtpPage> {
     final masked = AuthMock.maskContact(widget.contact);
 
     return AuthScaffold(
-      title: 'Verify OTP',
-      subtitle: 'OTP sent to $masked',
+      title: 'Enter code',
+      subtitle: 'Sent to $masked',
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -144,20 +144,20 @@ class _OtpPageState extends State<OtpPage> {
                     counterText: '',
                     contentPadding: EdgeInsets.zero,
                     filled: true,
-                    fillColor: AppColors.cloud,
+                    fillColor: const Color(0xFFF3F7FC),
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppRadii.sm),
-                      borderSide: const BorderSide(color: AppColors.accentSoft),
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide.none,
                     ),
                     enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppRadii.sm),
-                      borderSide: const BorderSide(color: AppColors.accentSoft),
+                      borderRadius: BorderRadius.circular(16),
+                      borderSide: BorderSide.none,
                     ),
                     focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(AppRadii.sm),
+                      borderRadius: BorderRadius.circular(16),
                       borderSide: const BorderSide(
                         color: AppColors.primaryNavy,
-                        width: 1.5,
+                        width: 1.4,
                       ),
                     ),
                   ),
@@ -167,7 +167,7 @@ class _OtpPageState extends State<OtpPage> {
             }),
           ),
           if (_error != null) ...[
-            const SizedBox(height: AppSpacing.md),
+            const SizedBox(height: 12),
             Text(
               _error!,
               style: GoogleFonts.epilogue(
@@ -177,17 +177,17 @@ class _OtpPageState extends State<OtpPage> {
               ),
             ),
           ],
-          const SizedBox(height: AppSpacing.lg),
+          const SizedBox(height: 28),
           AuthPrimaryButton(
             label: 'Verify',
             loading: _loading,
             onPressed: _verify,
           ),
-          const SizedBox(height: AppSpacing.lg),
+          const SizedBox(height: 20),
           Center(
             child: _secondsLeft > 0
                 ? Text(
-                    'Resend OTP in ${_secondsLeft}s',
+                    'Resend in ${_secondsLeft}s',
                     style: GoogleFonts.epilogue(
                       fontSize: 14,
                       color: AppColors.inkSoft,
@@ -203,9 +203,13 @@ class _OtpPageState extends State<OtpPage> {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text(
-                            'OTP resent. Demo code: ${AuthMock.demoOtp}',
+                            'OTP resent. Demo: ${AuthMock.demoOtp}',
                           ),
                           backgroundColor: AppColors.primaryNavy,
+                          behavior: SnackBarBehavior.floating,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
                         ),
                       );
                     },
@@ -219,13 +223,13 @@ class _OtpPageState extends State<OtpPage> {
                     ),
                   ),
           ),
-          const SizedBox(height: AppSpacing.md),
+          const SizedBox(height: 12),
           Text(
-            'Demo tip: enter ${AuthMock.demoOtp}',
+            'Demo: ${AuthMock.demoOtp}',
             textAlign: TextAlign.center,
             style: GoogleFonts.epilogue(
               fontSize: 12,
-              color: AppColors.inkSoft.withValues(alpha: 0.8),
+              color: AppColors.inkSoft.withValues(alpha: 0.75),
             ),
           ),
         ],

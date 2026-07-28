@@ -31,9 +31,9 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Welcome back'), findsOneWidget);
+    expect(find.text('Welcome Back!'), findsOneWidget);
     expect(find.text('Login'), findsOneWidget);
-    expect(find.text('Continue with Google'), findsOneWidget);
+    expect(find.text('Mobile Number or Email'), findsOneWidget);
   });
 
   testWidgets('OTP page shows masked contact', (tester) async {
@@ -44,7 +44,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('OTP sent to'), findsOneWidget);
+    expect(find.textContaining('Sent to'), findsOneWidget);
     expect(find.text('Verify'), findsOneWidget);
   });
 }

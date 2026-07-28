@@ -31,14 +31,16 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
   Future<void> _submit() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     setState(() => _loading = true);
-    await Future<void>.delayed(const Duration(milliseconds: 400));
+    await Future<void>.delayed(const Duration(milliseconds: 350));
     if (!mounted) return;
     setState(() => _loading = false);
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Password updated. Please log in.'),
+      SnackBar(
+        content: const Text('Password updated. Please log in.'),
         backgroundColor: AppColors.primaryNavy,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       ),
     );
 
@@ -51,8 +53,8 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
   @override
   Widget build(BuildContext context) {
     return AuthScaffold(
-      title: 'Reset password',
-      subtitle: 'Choose a new password for ${widget.email}.',
+      title: 'New password',
+      subtitle: 'For ${widget.email}',
       body: Form(
         key: _formKey,
         child: Column(
@@ -60,20 +62,22 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
           children: [
             AuthTextField(
               label: 'New Password',
+              icon: Icons.lock_outline_rounded,
               controller: _password,
               obscureText: true,
               textInputAction: TextInputAction.next,
               autofillHints: const [AutofillHints.newPassword],
               validator: (v) {
                 if (v == null || v.length < 8) {
-                  return 'Use at least 8 characters';
+                  return 'At least 8 characters';
                 }
                 return null;
               },
             ),
-            const SizedBox(height: AppSpacing.md),
+            const SizedBox(height: 16),
             AuthTextField(
               label: 'Confirm Password',
+              icon: Icons.lock_outline_rounded,
               controller: _confirm,
               obscureText: true,
               textInputAction: TextInputAction.done,
@@ -82,7 +86,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                 return null;
               },
             ),
-            const SizedBox(height: AppSpacing.xl),
+            const SizedBox(height: 28),
             AuthPrimaryButton(
               label: 'Reset Password',
               loading: _loading,
