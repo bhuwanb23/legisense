@@ -6,6 +6,7 @@ import '../../theme/app_theme.dart';
 import '../../widgets/analysis/risk_style.dart';
 import '../../widgets/analysis/soft_card.dart';
 import 'risk_dashboard_page.dart';
+import 'plain_language_page.dart';
 
 enum _ClauseFilter { all, high, medium, low, missing }
 
@@ -67,44 +68,6 @@ class _ClauseBreakdownPageState extends State<ClauseBreakdownPage> {
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       ),
-    );
-  }
-
-  void _showPlainEnglish(AnalysisClause clause) {
-    showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: AppColors.cloud,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (context) {
-        return Padding(
-          padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                'Plain English — ${clause.title}',
-                style: GoogleFonts.epilogue(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.primaryNavy,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                clause.plainEnglish,
-                style: GoogleFonts.epilogue(
-                  fontSize: 15,
-                  height: 1.5,
-                  color: AppColors.inkSoft,
-                ),
-              ),
-            ],
-          ),
-        );
-      },
     );
   }
 
@@ -271,7 +234,16 @@ class _ClauseBreakdownPageState extends State<ClauseBreakdownPage> {
                                 spacing: 8,
                                 children: [
                                   TextButton(
-                                    onPressed: () => _showPlainEnglish(c),
+                                    onPressed: () {
+                                      Navigator.of(context).push(
+                                        MaterialPageRoute<void>(
+                                          builder: (_) => PlainLanguagePage(
+                                            result: widget.result,
+                                            initialClauseId: c.id,
+                                          ),
+                                        ),
+                                      );
+                                    },
                                     child: Text(
                                       'See Plain English',
                                       style: GoogleFonts.epilogue(

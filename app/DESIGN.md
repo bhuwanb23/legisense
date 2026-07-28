@@ -184,6 +184,14 @@ Fonts: Epilogue throughout app chrome (no Inter/system). Mock stats/docs until b
 
 Score bands: green 0–33 · amber 34–66 · red 67–100. Mock rental agreement payload until backend.
 
+### Plain Language (Page 17) & Document History (Page 18)
+| Page | Spec |
+|------|------|
+| 17 Translator | Original ↔ Plain English toggle · Stacked / Flip · Grade 5/8/Standard · tappable glossary terms · links to Clauses + Chat |
+| 18 History | Search · All/Lease/NDA/Employment/Others · Newest/Riskiest/Oldest · View/Share/Delete cards · + Upload |
+
+Documents tab hosts Page 18.
+
 ## Do's and Don'ts
 
 **Do**

@@ -6,8 +6,10 @@ import 'package:legisense/data/analysis_mock.dart';
 import 'package:legisense/main.dart';
 import 'package:legisense/models/pending_upload.dart';
 import 'package:legisense/pages/analysis/analysis_results_page.dart';
+import 'package:legisense/pages/analysis/plain_language_page.dart';
 import 'package:legisense/pages/auth/login_page.dart';
 import 'package:legisense/pages/auth/otp_page.dart';
+import 'package:legisense/pages/documents/documents_page.dart';
 import 'package:legisense/pages/processing/processing_page.dart';
 import 'package:legisense/pages/shell/main_shell.dart';
 import 'package:legisense/pages/upload/upload_page.dart';
@@ -122,5 +124,30 @@ void main() {
     expect(find.text('RISK SCORE'), findsOneWidget);
     expect(find.text('Chat'), findsOneWidget);
     expect(find.text('Export'), findsOneWidget);
+  });
+
+  testWidgets('Plain language page shows toggle and glossary', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: PlainLanguagePage(result: AnalysisMock.sample()),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Original'), findsOneWidget);
+    expect(find.text('Plain English'), findsOneWidget);
+    expect(find.text('Grade 8'), findsOneWidget);
+    expect(find.text('Clauses'), findsOneWidget);
+  });
+
+  testWidgets('Documents history shows search and cards', (tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(home: Scaffold(body: DocumentsPage())),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('My Documents'), findsOneWidget);
+    expect(find.textContaining('Vendor NDA'), findsOneWidget);
+    expect(find.text('View'), findsWidgets);
   });
 }

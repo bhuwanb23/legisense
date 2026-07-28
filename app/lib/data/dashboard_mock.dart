@@ -41,6 +41,8 @@ abstract final class DashboardMock {
       typeLabel: 'NDA',
       risk: DocRisk.low,
       relativeDate: '2h ago',
+      riskScore: 28,
+      daysAgo: 0,
     ),
     MockDocument(
       id: '2',
@@ -49,6 +51,8 @@ abstract final class DashboardMock {
       typeLabel: 'Lease',
       risk: DocRisk.medium,
       relativeDate: 'Yesterday',
+      riskScore: 58,
+      daysAgo: 1,
     ),
     MockDocument(
       id: '3',
@@ -57,6 +61,8 @@ abstract final class DashboardMock {
       typeLabel: 'Employment',
       risk: DocRisk.high,
       relativeDate: '3 days ago',
+      riskScore: 74,
+      daysAgo: 3,
     ),
     MockDocument(
       id: '4',
@@ -65,6 +71,8 @@ abstract final class DashboardMock {
       typeLabel: 'Loan',
       risk: DocRisk.medium,
       relativeDate: '1 week ago',
+      riskScore: 61,
+      daysAgo: 7,
     ),
     MockDocument(
       id: '5',
@@ -73,12 +81,46 @@ abstract final class DashboardMock {
       typeLabel: 'Insurance',
       risk: DocRisk.low,
       relativeDate: '2 weeks ago',
+      riskScore: 22,
+      daysAgo: 14,
+    ),
+    MockDocument(
+      id: '6',
+      title: 'RentAgreement_2024.pdf',
+      typeId: 'lease',
+      typeLabel: 'Rental Agreement',
+      risk: DocRisk.high,
+      relativeDate: '2 days ago',
+      riskScore: 72,
+      daysAgo: 2,
     ),
   ];
 
   static List<MockDocument> filtered(String typeId) {
     if (typeId == 'all') return recentDocuments;
     return recentDocuments.where((d) => d.typeId == typeId).toList();
+  }
+
+  /// History chips: All / Lease / NDA / Employment / Others
+  static List<MockDocument> historyFiltered(String chipId) {
+    return switch (chipId) {
+      'lease' => recentDocuments
+          .where((d) => d.typeId == 'lease' || d.typeLabel.contains('Rent'))
+          .toList(),
+      'nda' => recentDocuments.where((d) => d.typeId == 'nda').toList(),
+      'employment' =>
+        recentDocuments.where((d) => d.typeId == 'employment').toList(),
+      'others' => recentDocuments
+          .where(
+            (d) =>
+                d.typeId != 'lease' &&
+                d.typeId != 'nda' &&
+                d.typeId != 'employment' &&
+                !d.typeLabel.contains('Rent'),
+          )
+          .toList(),
+      _ => List<MockDocument>.from(recentDocuments),
+    };
   }
 }
 
@@ -116,6 +158,8 @@ class MockDocument {
     required this.typeLabel,
     required this.risk,
     required this.relativeDate,
+    this.riskScore = 50,
+    this.daysAgo = 0,
   });
 
   final String id;
@@ -124,4 +168,6 @@ class MockDocument {
   final String typeLabel;
   final DocRisk risk;
   final String relativeDate;
+  final int riskScore;
+  final int daysAgo;
 }

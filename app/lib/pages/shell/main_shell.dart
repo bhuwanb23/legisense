@@ -36,7 +36,7 @@ class _MainShellState extends State<MainShell> {
             onOpenDocuments: () => goToTab(1),
             onOpenNotifications: () => goToTab(3),
           ),
-          const DocumentsPage(),
+          DocumentsPage(onOpenUpload: () => goToTab(2)),
           const UploadPage(),
           const NotificationsPage(),
           const ProfilePage(),

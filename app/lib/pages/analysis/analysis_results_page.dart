@@ -8,6 +8,7 @@ import '../../widgets/analysis/risk_style.dart';
 import '../../widgets/analysis/soft_card.dart';
 import 'clause_breakdown_page.dart';
 import 'document_summary_page.dart';
+import 'plain_language_page.dart';
 import 'risk_dashboard_page.dart';
 
 /// Page 13 — Master analysis results.
@@ -267,7 +268,16 @@ class _AnalysisResultsPageState extends State<AnalysisResultsPage>
                       );
                     },
                   ),
-                  _PlainEnglishTab(result: r),
+                  _PlainEnglishTab(
+                    result: r,
+                    onOpenFull: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => PlainLanguagePage(result: r),
+                        ),
+                      );
+                    },
+                  ),
                   _RisksTab(
                     result: r,
                     onOpenDashboard: () {
@@ -506,46 +516,62 @@ class _ClausesPreviewTab extends StatelessWidget {
 }
 
 class _PlainEnglishTab extends StatelessWidget {
-  const _PlainEnglishTab({required this.result});
+  const _PlainEnglishTab({
+    required this.result,
+    required this.onOpenFull,
+  });
 
   final AnalysisResult result;
+  final VoidCallback onOpenFull;
 
   @override
   Widget build(BuildContext context) {
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-      children: result.clauses
-          .where((c) => c.risk != AnalysisRiskLevel.missing)
-          .take(6)
-          .map(
-            (c) => Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: SoftCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      c.title,
-                      style: GoogleFonts.epilogue(
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.primaryNavy,
+      children: [
+        ...result.clauses
+            .where((c) => c.risk != AnalysisRiskLevel.missing)
+            .take(6)
+            .map(
+              (c) => Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: SoftCard(
+                  onTap: onOpenFull,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        c.title,
+                        style: GoogleFonts.epilogue(
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.primaryNavy,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      c.plainEnglish,
-                      style: GoogleFonts.epilogue(
-                        fontSize: 14,
-                        height: 1.45,
-                        color: AppColors.inkSoft,
+                      const SizedBox(height: 8),
+                      Text(
+                        c.plainEnglish,
+                        style: GoogleFonts.epilogue(
+                          fontSize: 14,
+                          height: 1.45,
+                          color: AppColors.inkSoft,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
-          )
-          .toList(),
+        TextButton(
+          onPressed: onOpenFull,
+          child: Text(
+            'Open plain language translator',
+            style: GoogleFonts.epilogue(
+              fontWeight: FontWeight.w700,
+              color: AppColors.primaryNavy,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
