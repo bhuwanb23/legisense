@@ -4,15 +4,16 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../data/dashboard_mock.dart';
 import '../../services/session_prefs.dart';
 import '../../theme/app_theme.dart';
-import '../../widgets/auth/auth_primary_button.dart';
 import '../../widgets/home/doc_type_filters.dart';
+import '../../widgets/home/featured_doc_card.dart';
 import '../../widgets/home/home_header.dart';
 import '../../widgets/home/recent_doc_tile.dart';
+import '../../widgets/home/section_header.dart';
 import '../../widgets/home/stat_card.dart';
-import '../../widgets/home/welcome_banner.dart';
 import '../analysis/analysis_stub_page.dart';
 
 /// Home dashboard body — hosted inside [MainShell].
+/// Layout inspired by Dribbble smart-home dashboard.
 class HomePage extends StatefulWidget {
   const HomePage({
     super.key,
@@ -70,13 +71,17 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     final docs = DashboardMock.filtered(_filterId);
     final stats = DashboardMock.stats;
+    final recentDoc =
+        DashboardMock.recentDocuments.isNotEmpty
+            ? DashboardMock.recentDocuments.first
+            : null;
 
     return DecoratedBox(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [AppColors.skyMist, AppColors.skyWash],
+          colors: [AppColors.skyMist, AppColors.cloud],
         ),
       ),
       child: SafeArea(
@@ -91,93 +96,83 @@ class _HomePageState extends State<HomePage> {
                     greeting: _timeGreeting,
                     name: _name,
                     onNotifications: widget.onOpenNotifications,
+                    onSearch: _onSearch,
                   ),
-                  const SizedBox(height: 22),
-                  WelcomeBanner(name: _name),
-                  const SizedBox(height: 18),
-                  AuthPrimaryButton(
-                    label: 'Upload / Scan Document',
-                    onPressed: widget.onOpenUpload,
-                  ),
-                  const SizedBox(height: 28),
+                  const SizedBox(height: 24),
                   Text(
-                    'Document types',
+                    'Your Legal\nDashboard',
                     style: GoogleFonts.epilogue(
-                      fontSize: 16,
+                      fontSize: 30,
                       fontWeight: FontWeight.w700,
+                      height: 1.15,
+                      letterSpacing: -0.8,
                       color: AppColors.primaryNavy,
                     ),
                   ),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 24),
                   DocTypeFilters(
                     selectedId: _filterId,
                     onSelected: (id) => setState(() => _filterId = id),
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Quick stats',
-                    style: GoogleFonts.epilogue(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.primaryNavy,
+                  const SizedBox(height: 24),
+                  if (recentDoc != null)
+                    FeaturedDocCard(
+                      document: recentDoc,
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (_) =>
+                                AnalysisStubPage(document: recentDoc),
+                          ),
+                        );
+                      },
                     ),
+                  const SizedBox(height: 28),
+                  SectionHeader(
+                    title: 'Quick stats',
+                    showAddButton: false,
+                    actionLabel: 'See all',
+                    onAction: widget.onOpenDocuments,
                   ),
                   const SizedBox(height: 14),
-                  Row(
+                  GridView.count(
+                    crossAxisCount: 2,
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    mainAxisSpacing: 12,
+                    crossAxisSpacing: 12,
+                    childAspectRatio: 1.3,
                     children: [
-                      Expanded(
-                        child: StatCard(
-                          label: 'Total analyzed',
-                          value: '${stats.totalAnalyzed}',
-                          icon: Icons.analytics_outlined,
-                        ),
+                      StatCard(
+                        label: 'Total analyzed',
+                        value: '${stats.totalAnalyzed}',
+                        icon: Icons.analytics_outlined,
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: StatCard(
-                          label: 'High risk',
-                          value: '${stats.highRisk}',
-                          icon: Icons.warning_amber_rounded,
-                          accent: true,
-                        ),
+                      StatCard(
+                        label: 'High risk',
+                        value: '${stats.highRisk}',
+                        icon: Icons.warning_amber_rounded,
+                        accent: true,
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: StatCard(
-                          label: 'Deadlines',
-                          value: '${stats.pendingDeadlines}',
-                          icon: Icons.event_outlined,
-                        ),
+                      StatCard(
+                        label: 'Deadlines',
+                        value: '${stats.pendingDeadlines}',
+                        icon: Icons.event_outlined,
+                      ),
+                      StatCard(
+                        label: 'Documents',
+                        value: '${DashboardMock.recentDocuments.length}',
+                        icon: Icons.folder_outlined,
                       ),
                     ],
                   ),
                   const SizedBox(height: 28),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          'Recent documents',
-                          style: GoogleFonts.epilogue(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.primaryNavy,
-                          ),
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: widget.onOpenDocuments,
-                        child: Text(
-                          'See all',
-                          style: GoogleFonts.epilogue(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.accentSky,
-                          ),
-                        ),
-                      ),
-                    ],
+                  SectionHeader(
+                    title: 'Recent documents',
+                    showAddButton: true,
+                    onAction: widget.onOpenUpload,
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 14),
                   if (docs.isEmpty)
                     Padding(
                       padding: const EdgeInsets.symmetric(vertical: 24),
@@ -213,6 +208,20 @@ class _HomePageState extends State<HomePage> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  void _onSearch() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Search comes with the backend.',
+          style: GoogleFonts.epilogue(fontSize: 14),
+        ),
+        backgroundColor: AppColors.primaryNavy,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       ),
     );
   }
