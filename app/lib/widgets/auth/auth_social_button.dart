@@ -1,53 +1,62 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../../theme/app_theme.dart';
 
-enum AuthSocialProvider { google, github, apple }
+enum AuthSocialProvider { google, facebook, apple }
 
-/// Circular social marks — inspiration row, not full-width slabs.
+/// Pill-shaped social login buttons — matches the Dribbble inspiration
+/// with Google + Facebook labels and icons.
 class AuthSocialRow extends StatelessWidget {
   const AuthSocialRow({
     super.key,
     required this.onGoogle,
-    required this.onGithub,
+    required this.onFacebook,
     this.onApple,
   });
 
   final VoidCallback onGoogle;
-  final VoidCallback onGithub;
+  final VoidCallback onFacebook;
   final VoidCallback? onApple;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
+    return Column(
       children: [
-        _SocialDisc(
+        _SocialPill(
           icon: FontAwesomeIcons.google,
+          label: 'Google',
           onTap: onGoogle,
         ),
-        const SizedBox(width: 18),
+        const SizedBox(height: 12),
+        _SocialPill(
+          icon: FontAwesomeIcons.facebookF,
+          label: 'Facebook',
+          onTap: onFacebook,
+        ),
         if (onApple != null) ...[
-          _SocialDisc(
+          const SizedBox(height: 12),
+          _SocialPill(
             icon: FontAwesomeIcons.apple,
+            label: 'Apple',
             onTap: onApple!,
           ),
-          const SizedBox(width: 18),
         ],
-        _SocialDisc(
-          icon: FontAwesomeIcons.github,
-          onTap: onGithub,
-        ),
       ],
     );
   }
 }
 
-class _SocialDisc extends StatelessWidget {
-  const _SocialDisc({required this.icon, required this.onTap});
+class _SocialPill extends StatelessWidget {
+  const _SocialPill({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
 
   final IconData icon;
+  final String label;
   final VoidCallback onTap;
 
   @override
@@ -55,25 +64,31 @@ class _SocialDisc extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        customBorder: const CircleBorder(),
+        borderRadius: BorderRadius.circular(AppRadii.pill),
         onTap: onTap,
         child: Ink(
-          width: 52,
           height: 52,
           decoration: BoxDecoration(
-            shape: BoxShape.circle,
             color: AppColors.cloud,
-            border: Border.all(color: AppColors.borderMuted),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.primaryNavy.withValues(alpha: 0.06),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
+            borderRadius: BorderRadius.circular(AppRadii.pill),
+            border: Border.all(
+              color: AppColors.borderMuted.withValues(alpha: 0.7),
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              FaIcon(icon, size: 18, color: AppColors.primaryNavy),
+              const SizedBox(width: 10),
+              Text(
+                label,
+                style: GoogleFonts.epilogue(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.primaryNavy,
+                ),
               ),
             ],
-          ),
-          child: Center(
-            child: FaIcon(icon, size: 18, color: AppColors.primaryNavy),
           ),
         ),
       ),
