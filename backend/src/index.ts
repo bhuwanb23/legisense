@@ -2,6 +2,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 import express from 'express';
+import http from 'http';
 import { initDatabase, closeDatabase, persistNow } from './config/database';
 import { sql } from 'drizzle-orm';
 import {
@@ -24,8 +25,10 @@ import chatRoutes from './routes/chatRoutes';
 import deadlineRoutes from './routes/deadlineRoutes';
 import notificationRoutes from './routes/notificationRoutes';
 import { startAnalysisWorker } from './jobs/analysisWorker';
+import { initSocketIO, closeSocketIO } from './services/socketService';
 
 const app = express();
+const server = http.createServer(app);
 const port = Number(process.env.PORT) || 3001;
 
 app.use(corsMiddleware);
@@ -231,9 +234,11 @@ async function start() {
   console.log('All 11 tables created/verified.');
   persistNow();
 
+  initSocketIO(server);
+
   startAnalysisWorker();
 
-  app.listen(port, () => {
+  server.listen(port, () => {
     console.log(`Legisense API listening on http://localhost:${port}`);
   });
 }
@@ -243,12 +248,14 @@ start().catch((err) => {
   process.exit(1);
 });
 
-process.on('SIGINT', () => {
+process.on('SIGINT', async () => {
+  await closeSocketIO();
   closeDatabase();
   process.exit(0);
 });
 
-process.on('SIGTERM', () => {
+process.on('SIGTERM', async () => {
+  await closeSocketIO();
   closeDatabase();
   process.exit(0);
 });
