@@ -21,7 +21,7 @@ export async function analyzeDocumentPipeline(documentId: number, userId: number
   updateDocumentStatus(documentId, 'processing');
 
   try {
-    const buffer = readFile(doc.storagePath);
+    const buffer = await readFile(doc.storagePath);
     const { text: rawText } = await extractText(buffer, doc.fileFormat);
 
     updateDocumentRawText(documentId, rawText);
