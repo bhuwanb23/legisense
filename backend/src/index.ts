@@ -1,5 +1,6 @@
-import cors from 'cors';
 import dotenv from 'dotenv';
+dotenv.config();
+
 import express from 'express';
 import { initDatabase, closeDatabase, persistNow } from './config/database';
 import { sql } from 'drizzle-orm';
@@ -8,13 +9,20 @@ import {
   clauses, riskItems, deadlines, chatMessages,
   notifications, sessions, usageLogs,
 } from './models';
-
-dotenv.config();
+import {
+  corsMiddleware,
+  requestLogger,
+  rateLimiter,
+  errorHandler,
+  notFoundHandler,
+} from './middleware';
 
 const app = express();
 const port = Number(process.env.PORT) || 3001;
 
-app.use(cors());
+app.use(corsMiddleware);
+app.use(requestLogger);
+app.use(rateLimiter);
 app.use(express.json());
 
 app.get('/health', (_req, res) => {
@@ -24,6 +32,9 @@ app.get('/health', (_req, res) => {
     timestamp: new Date().toISOString(),
   });
 });
+
+app.use(notFoundHandler);
+app.use(errorHandler);
 
 async function start() {
   const db = await initDatabase();
