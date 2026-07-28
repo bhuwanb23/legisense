@@ -1,13 +1,15 @@
 import { getDb } from '../config/database';
-import { documents, analysisResults, clauses, riskItems, deadlines } from '../models';
+import { documents, analysisResults, clauses, riskItems, deadlines, notifications, usageLogs } from '../models';
 import { sql } from 'drizzle-orm';
 import { readFile } from '../storage/fileStorage';
 import { extractText } from './textExtractor';
 import { analyzeDocument, type AiAnalysisResult } from './aiService';
 import { persistNow } from '../config/database';
+import { emitToUser } from './socketService';
 
 export async function analyzeDocumentPipeline(documentId: number, userId: number): Promise<void> {
   const db = getDb();
+  const startTime = Date.now();
 
   const rows = db.select().from(documents).where(sql`${documents.id} = ${documentId}`).all();
   const doc = rows[0];
@@ -16,46 +18,87 @@ export async function analyzeDocumentPipeline(documentId: number, userId: number
     throw new Error(`Document ${documentId} not found`);
   }
 
-  updateDocumentStatus(db, documentId, 'processing');
+  updateDocumentStatus(documentId, 'processing');
 
   try {
     const buffer = readFile(doc.storagePath);
     const { text: rawText } = await extractText(buffer, doc.fileFormat);
 
-    updateDocumentRawText(db, documentId, rawText);
+    updateDocumentRawText(documentId, rawText);
 
     const aiResult = await analyzeDocument(rawText);
 
-    saveAnalysisResults(db, documentId, userId, aiResult);
+    const processingTime = (Date.now() - startTime) / 1000;
 
-    updateDocumentStatus(db, documentId, 'completed');
+    db.insert(usageLogs).values({
+      userId: doc.userId,
+      action: 'analysis:complete',
+      documentId,
+      processingTime,
+    }).run();
+
+    saveAnalysisResults(documentId, doc.userId, aiResult, processingTime);
+
+    updateDocumentStatus(documentId, 'completed');
+
+    createNotification(documentId, doc.userId, 'analysis_complete', 'Analysis Complete', `Analysis of "${doc.originalName}" is complete.`);
+
+    emitToUser(doc.userId, 'analysis:complete', { documentId });
+
     persistNow();
-
-    console.log(`Analysis complete for document ${documentId}`);
   } catch (err) {
-    updateDocumentStatus(db, documentId, 'failed');
+    const message = err instanceof Error ? err.message : String(err);
+
+    db.insert(usageLogs).values({
+      userId: doc.userId,
+      action: 'analysis:failed',
+      documentId,
+      processingTime: (Date.now() - startTime) / 1000,
+    }).run();
+
+    updateDocumentStatus(documentId, 'failed');
+
+    createNotification(documentId, doc.userId, 'analysis_failed', 'Analysis Failed', `Analysis of "${doc.originalName}" failed: ${message}`);
+
+    emitToUser(doc.userId, 'analysis:failed', { documentId, error: message });
+
     persistNow();
 
-    const message = err instanceof Error ? err.message : String(err);
     console.error(`Analysis failed for document ${documentId}:`, message);
     throw err;
   }
 }
 
-function updateDocumentStatus(db: any, documentId: number, status: string): void {
+function updateDocumentStatus(documentId: number, status: string): void {
+  const db = getDb();
   db.run(sql`UPDATE ${documents} SET processing_status = ${status}, updated_at = datetime('now') WHERE id = ${documentId}`);
 }
 
-function updateDocumentRawText(db: any, documentId: number, rawText: string): void {
+function updateDocumentRawText(documentId: number, rawText: string): void {
+  const db = getDb();
   db.run(sql`UPDATE ${documents} SET raw_text = ${rawText}, updated_at = datetime('now') WHERE id = ${documentId}`);
 }
 
+function createNotification(documentId: number, userId: number, type: string, title: string, body: string): void {
+  const db = getDb();
+  db.insert(notifications).values({
+    userId,
+    type,
+    title,
+    body,
+    documentId,
+    isRead: false,
+  }).run();
+}
+
 function saveAnalysisResults(
-  db: any,
   documentId: number,
   userId: number,
-  ai: AiAnalysisResult
+  ai: AiAnalysisResult,
+  processingTime: number
 ): void {
+  const db = getDb();
+
   db.insert(analysisResults).values({
     documentId,
     userId,
@@ -71,7 +114,7 @@ function saveAnalysisResults(
     keyObligations: JSON.stringify(ai.keyObligations),
     missingClauses: JSON.stringify(ai.missingClauses),
     jurisdictionFlags: JSON.stringify([]),
-    processingTime: 0,
+    processingTime,
     aiModelUsed: 'gemini-1.5-flash',
   }).run();
 
