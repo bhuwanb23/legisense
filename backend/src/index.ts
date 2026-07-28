@@ -3,7 +3,11 @@ import dotenv from 'dotenv';
 import express from 'express';
 import { initDatabase, closeDatabase, persistNow } from './config/database';
 import { sql } from 'drizzle-orm';
-import { users, documents, analysisResults } from './models';
+import {
+  users, documents, analysisResults,
+  clauses, riskItems, deadlines, chatMessages,
+  notifications, sessions, usageLogs,
+} from './models';
 
 dotenv.config();
 
@@ -83,7 +87,106 @@ async function start() {
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
   )`);
 
-  console.log('All tables created/verified.');
+  await db.run(sql`CREATE TABLE IF NOT EXISTS ${clauses} (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    document_id INTEGER NOT NULL REFERENCES documents(id),
+    analysis_id INTEGER NOT NULL REFERENCES analysis_results(id),
+    clause_number INTEGER,
+    clause_title TEXT,
+    original_text TEXT NOT NULL,
+    plain_english_text TEXT,
+    risk_level TEXT,
+    risk_score REAL,
+    risk_reason TEXT,
+    risk_category TEXT,
+    counter_suggestion TEXT,
+    is_flagged INTEGER NOT NULL DEFAULT 0,
+    page_number INTEGER,
+    start_position INTEGER,
+    end_position INTEGER,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  )`);
+
+  await db.run(sql`CREATE TABLE IF NOT EXISTS ${riskItems} (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    analysis_id INTEGER NOT NULL REFERENCES analysis_results(id),
+    clause_id INTEGER REFERENCES clauses(id),
+    risk_type TEXT NOT NULL,
+    title TEXT NOT NULL,
+    description TEXT,
+    severity TEXT NOT NULL,
+    severity_score REAL,
+    recommendation TEXT,
+    legal_reference TEXT,
+    jurisdiction TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  )`);
+
+  await db.run(sql`CREATE TABLE IF NOT EXISTS ${deadlines} (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    document_id INTEGER NOT NULL REFERENCES documents(id),
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    title TEXT NOT NULL,
+    description TEXT,
+    due_date TEXT NOT NULL,
+    recurrence TEXT,
+    urgency_level TEXT,
+    reminder_sent INTEGER NOT NULL DEFAULT 0,
+    reminder_date TEXT,
+    is_completed INTEGER NOT NULL DEFAULT 0,
+    is_dismissed INTEGER NOT NULL DEFAULT 0,
+    calendar_exported INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  )`);
+
+  await db.run(sql`CREATE TABLE IF NOT EXISTS ${chatMessages} (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    document_id INTEGER NOT NULL REFERENCES documents(id),
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    session_id TEXT NOT NULL,
+    role TEXT NOT NULL,
+    message TEXT NOT NULL,
+    cited_clause_ids TEXT,
+    cited_pages TEXT,
+    tokens_used INTEGER,
+    response_time REAL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  )`);
+
+  await db.run(sql`CREATE TABLE IF NOT EXISTS ${notifications} (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    type TEXT NOT NULL,
+    title TEXT NOT NULL,
+    body TEXT,
+    document_id INTEGER REFERENCES documents(id),
+    is_read INTEGER NOT NULL DEFAULT 0,
+    action_url TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  )`);
+
+  await db.run(sql`CREATE TABLE IF NOT EXISTS ${sessions} (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    refresh_token TEXT NOT NULL UNIQUE,
+    device_info TEXT,
+    ip_address TEXT,
+    expires_at TEXT NOT NULL,
+    is_revoked INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  )`);
+
+  await db.run(sql`CREATE TABLE IF NOT EXISTS ${usageLogs} (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    action TEXT NOT NULL,
+    document_id INTEGER REFERENCES documents(id),
+    tokens_consumed INTEGER,
+    processing_time REAL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  )`);
+
+  console.log('All 10 tables created/verified.');
   persistNow();
 
   app.listen(port, () => {
