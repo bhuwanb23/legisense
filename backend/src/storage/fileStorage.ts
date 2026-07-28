@@ -3,6 +3,7 @@ import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 
 const UPLOAD_DIR = path.resolve(process.env.UPLOAD_DIR || path.join(__dirname, '../../uploads'));
+const USE_SUPABASE = process.env.STORAGE_BACKEND === 'supabase';
 
 function ensureUploadDir(): void {
   if (!fs.existsSync(UPLOAD_DIR)) {
@@ -10,39 +11,45 @@ function ensureUploadDir(): void {
   }
 }
 
-function sanitizeFilename(originalName: string): string {
-  const ext = path.extname(originalName).toLowerCase();
-  const safeExt = ['.pdf', '.docx', '.doc', '.txt', '.png', '.jpg', '.jpeg', '.webp'].includes(ext)
-    ? ext
-    : '.bin';
-  return `${uuidv4()}${safeExt}`;
+function generateFilename(originalName: string, format: string): string {
+  const ext = format === 'docx' ? '.docx' : format === 'pdf' ? '.pdf' : format === 'txt' ? '.txt' : path.extname(originalName).toLowerCase();
+  return `${uuidv4()}${ext}`;
 }
 
-export function saveFile(buffer: Buffer, originalName: string, format: string): string {
-  ensureUploadDir();
+export async function saveFile(buffer: Buffer, originalName: string, format: string): Promise<string> {
+  const filename = generateFilename(originalName, format);
 
-  const ext = format === 'docx' ? '.docx' : format === 'pdf' ? '.pdf' : format === 'txt' ? '.txt' : path.extname(originalName).toLowerCase();
-  const filename = `${uuidv4()}${ext}`;
-  const filePath = path.join(UPLOAD_DIR, filename);
-
-  fs.writeFileSync(filePath, buffer);
+  if (USE_SUPABASE) {
+    const { saveFileSupabase } = await import('./supabaseStorage');
+    await saveFileSupabase(buffer, filename);
+  } else {
+    ensureUploadDir();
+    fs.writeFileSync(path.join(UPLOAD_DIR, filename), buffer);
+  }
 
   return filename;
 }
 
-export function readFile(storagePath: string): Buffer {
-  const fullPath = path.join(UPLOAD_DIR, storagePath);
+export async function readFile(storagePath: string): Promise<Buffer> {
+  if (USE_SUPABASE) {
+    const { readFileSupabase } = await import('./supabaseStorage');
+    return readFileSupabase(storagePath);
+  }
 
+  const fullPath = path.join(UPLOAD_DIR, storagePath);
   if (!fs.existsSync(fullPath)) {
     throw new Error(`File not found: ${storagePath}`);
   }
-
   return fs.readFileSync(fullPath);
 }
 
-export function deleteFile(storagePath: string): void {
-  const fullPath = path.join(UPLOAD_DIR, storagePath);
+export async function deleteFile(storagePath: string): Promise<void> {
+  if (USE_SUPABASE) {
+    const { deleteFileSupabase } = await import('./supabaseStorage');
+    return deleteFileSupabase(storagePath);
+  }
 
+  const fullPath = path.join(UPLOAD_DIR, storagePath);
   if (fs.existsSync(fullPath)) {
     fs.unlinkSync(fullPath);
   }

@@ -51,26 +51,26 @@ async function run() {
   console.log('\n── 1. File Storage ──');
 
   const testContent = Buffer.from('This is a test legal document for pipeline testing.');
-  const savedPath = saveFile(testContent, 'test-agreement.txt', 'txt');
+  const savedPath = await saveFile(testContent, 'test-agreement.txt', 'txt');
   assert(typeof savedPath === 'string' && savedPath.length > 0, 'saveFile returns a filename');
   assert(savedPath.endsWith('.txt'), 'saveFile preserves .txt extension', savedPath);
   assert(fs.existsSync(path.join(getUploadDir(), savedPath)), 'File exists on disk');
 
-  const readBuffer = readFile(savedPath);
+  const readBuffer = await readFile(savedPath);
   assert(readBuffer.equals(testContent), 'readFile returns original content');
   assert(readBuffer.length === testContent.length, 'readFile buffer length matches');
 
-  const savedPdf = saveFile(Buffer.from('PDF fake'), 'contract.pdf', 'pdf');
+  const savedPdf = await saveFile(Buffer.from('PDF fake'), 'contract.pdf', 'pdf');
   assert(savedPdf.endsWith('.pdf'), 'saveFile preserves .pdf extension', savedPdf);
 
-  const savedDocx = saveFile(Buffer.from('DOCX fake'), 'agreement.docx', 'docx');
+  const savedDocx = await saveFile(Buffer.from('DOCX fake'), 'agreement.docx', 'docx');
   assert(savedDocx.endsWith('.docx'), 'saveFile preserves .docx extension', savedDocx);
 
-  deleteFile(savedPdf);
+  await deleteFile(savedPdf);
   assert(!fs.existsSync(path.join(getUploadDir(), savedPdf)), 'deleteFile removes file');
 
   let threwOnMissing = false;
-  try { readFile('nonexistent-file.txt'); } catch { threwOnMissing = true; }
+  try { await readFile('nonexistent-file.txt'); } catch { threwOnMissing = true; }
   assert(threwOnMissing, 'readFile throws for missing file');
 
   // ═══════════════════════════════════════════════════
@@ -291,7 +291,7 @@ async function run() {
   console.log('\n── 10. Integration Flow ──');
 
   // Simulate the flow: create doc → update status → save analysis → read back
-  const flowDoc = saveFile(Buffer.from('Flow test contract content'), 'flow-contract.txt', 'txt');
+  const flowDoc = await saveFile(Buffer.from('Flow test contract content'), 'flow-contract.txt', 'txt');
 
   db.insert(documents).values({
     userId: testUserId,
@@ -342,9 +342,9 @@ async function run() {
   // ═══════════════════════════════════════════════════
   //  CLEANUP & SUMMARY
   // ═══════════════════════════════════════════════════
-  deleteFile(savedPath);
-  deleteFile(flowDoc);
-  deleteFile(savedDocx);
+  await deleteFile(savedPath);
+  await deleteFile(flowDoc);
+  await deleteFile(savedDocx);
 
   closeDatabase();
 

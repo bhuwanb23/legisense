@@ -22,7 +22,7 @@ export async function uploadDocument(req: Request, res: Response, next: NextFunc
     const { originalname, buffer } = req.file;
     const format = originalname.split('.').pop()?.toLowerCase() || 'unknown';
 
-    const storagePath = saveFile(buffer, originalname, format);
+    const storagePath = await saveFile(buffer, originalname, format);
 
     const db = getDb();
     const sourceType = req.body.source_type || 'file_upload';
@@ -203,7 +203,7 @@ export async function pasteText(req: Request, res: Response, next: NextFunction)
 
     const { text, title } = req.body;
     const docTitle = title || 'Pasted Text';
-    const storagePath = saveFile(Buffer.from(text, 'utf-8'), `${docTitle}.txt`, 'txt');
+    const storagePath = await saveFile(Buffer.from(text, 'utf-8'), `${docTitle}.txt`, 'txt');
 
     const db = getDb();
 
