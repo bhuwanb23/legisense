@@ -3,6 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../services/session_prefs.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/auth/auth_card.dart';
+import '../../widgets/auth/auth_illustration.dart';
 import '../../widgets/auth/auth_or_divider.dart';
 import '../../widgets/auth/auth_primary_button.dart';
 import '../../widgets/auth/auth_scaffold.dart';
@@ -20,25 +22,17 @@ class RegisterPage extends StatefulWidget {
 
 class _RegisterPageState extends State<RegisterPage> {
   final _formKey = GlobalKey<FormState>();
+  final _fullName = TextEditingController();
   final _email = TextEditingController();
-  final _phone = TextEditingController();
   final _password = TextEditingController();
   bool _loading = false;
 
   @override
   void dispose() {
+    _fullName.dispose();
     _email.dispose();
-    _phone.dispose();
     _password.dispose();
     super.dispose();
-  }
-
-  String? get _passwordHint {
-    final v = _password.text;
-    if (v.isEmpty) return null;
-    if (v.length >= 10) return 'Strong';
-    if (v.length >= 8) return 'Good';
-    return 'Weak';
   }
 
   Future<void> _submit() async {
@@ -63,99 +57,126 @@ class _RegisterPageState extends State<RegisterPage> {
   @override
   Widget build(BuildContext context) {
     return AuthScaffold(
-      title: 'Create Account',
-      subtitle: 'Join Legisense in under a minute.',
-      body: Form(
-        key: _formKey,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            AuthTextField(
-              label: 'Email',
-              icon: Icons.mail_outline_rounded,
-              controller: _email,
-              hint: 'you@email.com',
-              keyboardType: TextInputType.emailAddress,
-              textInputAction: TextInputAction.next,
-              autofillHints: const [AutofillHints.email],
-              validator: (v) {
-                final value = v?.trim() ?? '';
-                if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
-                  return 'Enter a valid email';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
-            AuthTextField(
-              label: 'Mobile Number',
-              icon: Icons.phone_outlined,
-              controller: _phone,
-              hint: '+91 XXXXX XXXXX',
-              keyboardType: TextInputType.phone,
-              textInputAction: TextInputAction.next,
-              autofillHints: const [AutofillHints.telephoneNumber],
-              validator: (v) {
-                final digits = (v ?? '').replaceAll(RegExp(r'\D'), '');
-                if (digits.length < 10) return 'Enter a valid number';
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
-            AuthTextField(
-              label: 'Password',
-              icon: Icons.lock_outline_rounded,
-              controller: _password,
-              obscureText: true,
-              textInputAction: TextInputAction.done,
-              autofillHints: const [AutofillHints.newPassword],
-              onChanged: (_) => setState(() {}),
-              trailing: _passwordHint == null
-                  ? null
-                  : Padding(
-                      padding: const EdgeInsets.only(right: 12),
-                      child: Center(
-                        child: Text(
-                          _passwordHint!,
-                          style: GoogleFonts.epilogue(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.accentSky,
-                          ),
-                        ),
+      body: AuthCard(
+        child: Form(
+          key: _formKey,
+          child: Column(
+            children: [
+              const AuthIllustration(type: AuthIllustrationType.register),
+              const SizedBox(height: 24),
+              Text(
+                'Sign Up',
+                style: GoogleFonts.epilogue(
+                  fontSize: 26,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.primaryNavy,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Use proper information to continue',
+                style: GoogleFonts.epilogue(
+                  fontSize: 13,
+                  color: AppColors.inkSoft,
+                ),
+              ),
+              const SizedBox(height: 28),
+              AuthTextField(
+                label: 'Full name',
+                icon: Icons.person_outline_rounded,
+                controller: _fullName,
+                hint: 'Full name',
+                textInputAction: TextInputAction.next,
+                autofillHints: const [AutofillHints.name],
+                validator: (v) {
+                  if (v == null || v.trim().isEmpty) {
+                    return 'Enter your name';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+              AuthTextField(
+                label: 'Email address',
+                icon: Icons.mail_outline_rounded,
+                controller: _email,
+                hint: 'Email address',
+                keyboardType: TextInputType.emailAddress,
+                textInputAction: TextInputAction.next,
+                autofillHints: const [AutofillHints.email],
+                validator: (v) {
+                  final value = v?.trim() ?? '';
+                  if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
+                    return 'Enter a valid email';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+              AuthTextField(
+                label: 'Password',
+                icon: Icons.lock_outline_rounded,
+                controller: _password,
+                hint: 'Password',
+                obscureText: true,
+                textInputAction: TextInputAction.done,
+                autofillHints: const [AutofillHints.newPassword],
+                validator: (v) {
+                  if (v == null || v.length < 8) {
+                    return 'At least 8 characters';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 20),
+              Text.rich(
+                TextSpan(
+                  style: GoogleFonts.epilogue(
+                    fontSize: 12,
+                    color: AppColors.inkSoft,
+                  ),
+                  children: [
+                    const TextSpan(text: 'By signing up, you are agree to our '),
+                    TextSpan(
+                      text: 'Terms & Conditions',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.brightBlue,
                       ),
                     ),
-              validator: (v) {
-                if (v == null || v.length < 8) {
-                  return 'At least 8 characters';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 28),
-            AuthPrimaryButton(
-              label: 'Sign up',
-              loading: _loading,
-              onPressed: _submit,
-            ),
-            const SizedBox(height: 28),
-            const AuthOrDivider(label: 'or sign up with'),
-            const SizedBox(height: 20),
-            AuthSocialRow(
-              onGoogle: () => showAuthComingSoon(context, 'Google'),
-              onGithub: () => showAuthComingSoon(context, 'GitHub'),
-              onApple: () => showAuthComingSoon(context, 'Apple'),
-            ),
-            const SizedBox(height: 32),
-            Center(
-              child: Text.rich(
+                    const TextSpan(text: ' and '),
+                    TextSpan(
+                      text: 'Privacy Policy',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.brightBlue,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+              AuthPrimaryButton(
+                label: 'Create Account',
+                loading: _loading,
+                onPressed: _submit,
+              ),
+              const SizedBox(height: 24),
+              const AuthOrDivider(label: 'Or Continue with'),
+              const SizedBox(height: 20),
+              AuthSocialRow(
+                onGoogle: () => showAuthComingSoon(context, 'Google'),
+                onFacebook: () => showAuthComingSoon(context, 'Facebook'),
+              ),
+              const SizedBox(height: 24),
+              Text.rich(
                 TextSpan(
                   style: GoogleFonts.epilogue(
                     fontSize: 14,
                     color: AppColors.inkSoft,
                   ),
                   children: [
-                    const TextSpan(text: 'Already have an account? '),
+                    const TextSpan(text: 'Already have an Account? '),
                     WidgetSpan(
                       alignment: PlaceholderAlignment.baseline,
                       baseline: TextBaseline.alphabetic,
@@ -172,7 +193,7 @@ class _RegisterPageState extends State<RegisterPage> {
                           style: GoogleFonts.epilogue(
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
-                            color: AppColors.primaryNavy,
+                            color: AppColors.brightBlue,
                           ),
                         ),
                       ),
@@ -180,8 +201,8 @@ class _RegisterPageState extends State<RegisterPage> {
                   ],
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
