@@ -14,7 +14,7 @@
     "test:pipeline": "tsx tests/pipeline.test.ts",
     "test:auth": "tsx tests/auth.test.ts",
     "test:documents": "tsx tests/documents.test.ts",
-    "test:all": "tsx tests/models.test.ts && tsx tests/middleware.test.ts && tsx tests/pipeline.test.ts && tsx tests/auth.test.ts && tsx tests/documents.test.ts && tsx tests/queue-upgrade.test.ts && tsx tests/socket.test.ts && tsx tests/services.test.ts"
+    "test:all": "tsx tests/models.test.ts && tsx tests/middleware.test.ts && tsx tests/pipeline.test.ts && tsx tests/auth.test.ts && tsx tests/documents.test.ts && tsx tests/queue-upgrade.test.ts && tsx tests/socket.test.ts && tsx tests/services.test.ts && tsx tests/chunk.test.ts"
   },
   "engines": {
     "node": ">=20"
