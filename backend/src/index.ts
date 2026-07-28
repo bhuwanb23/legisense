@@ -17,6 +17,8 @@ import {
   notFoundHandler,
 } from './middleware';
 import documentRoutes from './routes/documentRoutes';
+import authRoutes from './routes/authRoutes';
+import userRoutes from './routes/userRoutes';
 import { startAnalysisWorker } from './jobs/analysisWorker';
 
 const app = express();
@@ -36,6 +38,8 @@ app.get('/health', (_req, res) => {
 });
 
 app.use('/api/documents', documentRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

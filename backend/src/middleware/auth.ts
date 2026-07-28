@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 import { UnauthorizedError } from '../utils/errors';
 import { getDb } from '../config/database';
 import { users } from '../models';
@@ -111,13 +112,13 @@ export function optionalAuth(req: Request, _res: Response, next: NextFunction): 
 }
 
 export function generateToken(payload: JwtPayload): string {
-  return jwt.sign(payload, JWT_SECRET, {
+  return jwt.sign({ ...payload, jti: crypto.randomUUID() }, JWT_SECRET, {
     expiresIn: 7 * 24 * 60 * 60, // 7 days in seconds
   } as jwt.SignOptions);
 }
 
 export function generateRefreshToken(payload: JwtPayload): string {
-  return jwt.sign(payload, JWT_SECRET, {
+  return jwt.sign({ ...payload, jti: crypto.randomUUID() }, JWT_SECRET, {
     expiresIn: 30 * 24 * 60 * 60, // 30 days in seconds
   } as jwt.SignOptions);
 }

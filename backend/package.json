@@ -12,13 +12,15 @@
     "test": "tsx tests/models.test.ts",
     "test:middleware": "tsx tests/middleware.test.ts",
     "test:pipeline": "tsx tests/pipeline.test.ts",
-    "test:all": "tsx tests/models.test.ts && tsx tests/middleware.test.ts && tsx tests/pipeline.test.ts"
+    "test:auth": "tsx tests/auth.test.ts",
+    "test:all": "tsx tests/models.test.ts && tsx tests/middleware.test.ts && tsx tests/pipeline.test.ts && tsx tests/auth.test.ts"
   },
   "engines": {
     "node": ">=20"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
+    "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "drizzle-orm": "^0.45.2",
