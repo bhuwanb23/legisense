@@ -7,8 +7,8 @@ import 'package:lottie/lottie.dart';
 import '../../services/session_prefs.dart';
 import '../../theme/app_theme.dart';
 import '../auth/login_page.dart';
-import '../home/home_page.dart';
 import '../onboarding/onboarding_page.dart';
+import '../shell/main_shell.dart';
 
 /// Page 1 — Splash Screen
 ///
@@ -74,7 +74,7 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
       if (!mounted || _navigated) return;
       _navigated = true;
       final Widget next = switch (destination) {
-        SplashDestination.home => const HomePage(),
+        SplashDestination.home => const MainShell(),
         SplashDestination.login => const LoginPage(),
         SplashDestination.onboarding => const OnboardingPage(),
       };

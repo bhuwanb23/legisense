@@ -148,6 +148,22 @@ Layout DNA from soft consumer auth references (icon fields, pill CTA + arrow dis
 
 Demo OTP: `123456`. Social is UI-only until backend.
 
+### Home dashboard (Page 10)
+Layout DNA from soft smart-home dashboards (greeting header, navy hero, circular filters, soft cards, elevated center nav) — **Legisense navy/sky only**.
+
+| Element | Spec |
+|---------|------|
+| Background | Sky mist → wash vertical gradient |
+| Header | Avatar initial · time greeting · bold name · bell → Notifications tab |
+| Welcome banner | Navy card, radius 24, white Epilogue 20: “Hello [Name], ready to review a document?” |
+| Primary CTA | Same auth navy pill + arrow disc: “Upload / Scan Document” |
+| Type filters | Horizontal circular discs; active = navy fill |
+| Stat cards | White, radius 24, soft offset shadow; Total / High Risk / Deadlines |
+| Recent docs | Soft tiles; risk chip; tap → Analysis stub |
+| Bottom nav | 5 items; center Upload elevated navy `+` disc |
+
+Fonts: Epilogue throughout app chrome (no Inter/system). Mock stats/docs until backend.
+
 ## Do's and Don'ts
 
 **Do**
@@ -155,6 +171,7 @@ Demo OTP: `123456`. Social is UI-only until backend.
 - Prefer one authored motion moment (logo entrance) over scattered micro-animations.
 - Route splash by first-run preference; never strand the user on splash.
 - Use navy filled primary buttons on auth screens (Dribbble black → brand navy).
+- Keep dashboard cards soft-white with navy accents; center Upload is the only elevated disc.
 
 **Don't**
 - Don’t put a Continue button on the splash (it auto-advances).
@@ -162,3 +179,4 @@ Demo OTP: `123456`. Social is UI-only until backend.
 - Don’t copy the iridescent glass cube / black-white SaaS chrome from auth moodboards.
 - Don’t use cards in the splash hero.
 - Don’t overlay badges/chips on the logo.
+- Don’t borrow orange/purple accents from smart-home moodboards onto the dashboard.

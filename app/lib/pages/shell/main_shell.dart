@@ -1,0 +1,51 @@
+import 'package:flutter/material.dart';
+
+import '../../widgets/home/app_bottom_nav.dart';
+import '../documents/documents_page.dart';
+import '../home/home_page.dart';
+import '../notifications/notifications_page.dart';
+import '../profile/profile_page.dart';
+import '../upload/upload_page.dart';
+
+/// Post-auth root — 5 tabs with elevated Upload.
+class MainShell extends StatefulWidget {
+  const MainShell({super.key, this.initialIndex = 0});
+
+  final int initialIndex;
+
+  @override
+  State<MainShell> createState() => _MainShellState();
+}
+
+class _MainShellState extends State<MainShell> {
+  late int _index = widget.initialIndex;
+
+  void goToTab(int index) {
+    if (index < 0 || index > 4) return;
+    setState(() => _index = index);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: IndexedStack(
+        index: _index,
+        children: [
+          HomePage(
+            onOpenUpload: () => goToTab(2),
+            onOpenDocuments: () => goToTab(1),
+            onOpenNotifications: () => goToTab(3),
+          ),
+          const DocumentsPage(),
+          const UploadPage(),
+          const NotificationsPage(),
+          const ProfilePage(),
+        ],
+      ),
+      bottomNavigationBar: AppBottomNav(
+        currentIndex: _index,
+        onChanged: goToTab,
+      ),
+    );
+  }
+}

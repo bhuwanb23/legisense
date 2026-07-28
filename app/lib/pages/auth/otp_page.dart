@@ -9,7 +9,7 @@ import '../../services/session_prefs.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/auth/auth_primary_button.dart';
 import '../../widgets/auth/auth_scaffold.dart';
-import '../home/home_page.dart';
+import '../shell/main_shell.dart';
 import 'profile_setup_page.dart';
 
 class OtpPage extends StatefulWidget {
@@ -91,7 +91,7 @@ class _OtpPageState extends State<OtpPage> {
 
     final next = widget.isNewUser
         ? const ProfileSetupPage()
-        : const HomePage();
+        : const MainShell();
 
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute<void>(builder: (_) => next),

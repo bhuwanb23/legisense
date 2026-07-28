@@ -8,7 +8,7 @@ import '../../widgets/auth/auth_primary_button.dart';
 import '../../widgets/auth/auth_scaffold.dart';
 import '../../widgets/auth/auth_social_button.dart';
 import '../../widgets/auth/auth_text_field.dart';
-import '../home/home_page.dart';
+import '../shell/main_shell.dart';
 import 'forgot_password_page.dart';
 import 'profile_setup_page.dart';
 import 'register_page.dart';
@@ -61,7 +61,7 @@ class _LoginPageState extends State<LoginPage> {
     if (!mounted) return;
     setState(() => _loading = false);
 
-    final next = profileDone ? const HomePage() : const ProfileSetupPage();
+    final next = profileDone ? const MainShell() : const ProfileSetupPage();
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute<void>(builder: (_) => next),
       (_) => false,

@@ -9,7 +9,7 @@ import '../../services/session_prefs.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/auth/auth_primary_button.dart';
 import '../../widgets/auth/auth_scaffold.dart';
-import '../home/home_page.dart';
+import '../shell/main_shell.dart';
 
 class ProfileSetupPage extends StatefulWidget {
   const ProfileSetupPage({super.key});
@@ -76,11 +76,22 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
     setState(() => _loading = true);
     await SessionPrefs.setLoggedIn(true);
     await SessionPrefs.setProfileComplete(true);
+    final email = await SessionPrefs.userEmail();
+    final existingName = await SessionPrefs.displayName();
+    if (existingName == null || existingName.isEmpty) {
+      if (email != null && email.contains('@')) {
+        final local = email.split('@').first.trim();
+        if (local.isNotEmpty) {
+          final pretty = local[0].toUpperCase() + local.substring(1);
+          await SessionPrefs.setDisplayName(pretty);
+        }
+      }
+    }
     if (!mounted) return;
     setState(() => _loading = false);
 
     Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute<void>(builder: (_) => const HomePage()),
+      MaterialPageRoute<void>(builder: (_) => const MainShell()),
       (_) => false,
     );
   }

@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:legisense/main.dart';
 import 'package:legisense/pages/auth/login_page.dart';
 import 'package:legisense/pages/auth/otp_page.dart';
+import 'package:legisense/pages/shell/main_shell.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -46,5 +47,21 @@ void main() {
 
     expect(find.textContaining('Sent to'), findsOneWidget);
     expect(find.text('Verify'), findsOneWidget);
+  });
+
+  testWidgets('Main shell shows home dashboard CTA', (tester) async {
+    SharedPreferences.setMockInitialValues({
+      'user_display_name': 'Bhuwan',
+      'user_email': 'bhuwan@test.com',
+    });
+
+    await tester.pumpWidget(
+      const MaterialApp(home: MainShell()),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Upload / Scan Document'), findsOneWidget);
+    expect(find.textContaining('ready to review a document'), findsOneWidget);
+    expect(find.text('Home'), findsWidgets);
   });
 }
