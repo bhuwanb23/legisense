@@ -3,7 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../theme/app_theme.dart';
 
-/// 5-tab bar with elevated center Upload disc.
+/// 5-tab bar with elevated center Upload disc — matches the Dribbble
+/// bottom nav pattern with rounded pill active indicator.
 class AppBottomNav extends StatelessWidget {
   const AppBottomNav({
     super.key,
@@ -61,11 +62,11 @@ class AppBottomNav extends StatelessWidget {
                           height: 58,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: AppColors.primaryNavy,
+                            color: AppColors.brightBlue,
                             boxShadow: [
                               BoxShadow(
-                                color: AppColors.primaryNavy.withValues(
-                                  alpha: 0.28,
+                                color: AppColors.brightBlue.withValues(
+                                  alpha: 0.3,
                                 ),
                                 blurRadius: 18,
                                 offset: const Offset(0, 8),
@@ -122,7 +123,7 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = selected ? AppColors.primaryNavy : AppColors.inkSoft;
+    final color = selected ? AppColors.brightBlue : AppColors.inkSoft;
 
     return Expanded(
       child: InkWell(
