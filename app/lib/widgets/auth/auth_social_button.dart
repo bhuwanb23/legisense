@@ -6,8 +6,6 @@ import '../../theme/app_theme.dart';
 
 enum AuthSocialProvider { google, facebook, apple }
 
-/// Pill-shaped social login buttons — matches the Dribbble inspiration
-/// with Google + Facebook labels and icons.
 class AuthSocialRow extends StatelessWidget {
   const AuthSocialRow({
     super.key,
@@ -22,73 +20,42 @@ class AuthSocialRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    return Row(
       children: [
-        _SocialPill(
-          icon: FontAwesomeIcons.google,
-          label: 'Google',
-          onTap: onGoogle,
-        ),
-        const SizedBox(height: 12),
-        _SocialPill(
-          icon: FontAwesomeIcons.facebookF,
-          label: 'Facebook',
-          onTap: onFacebook,
-        ),
+        Expanded(child: _SocialDisc(icon: FontAwesomeIcons.google, onTap: onGoogle)),
+        const SizedBox(width: 12),
+        Expanded(child: _SocialDisc(icon: FontAwesomeIcons.facebookF, onTap: onFacebook)),
         if (onApple != null) ...[
-          const SizedBox(height: 12),
-          _SocialPill(
-            icon: FontAwesomeIcons.apple,
-            label: 'Apple',
-            onTap: onApple!,
-          ),
+          const SizedBox(width: 12),
+          Expanded(child: _SocialDisc(icon: FontAwesomeIcons.apple, onTap: onApple!)),
         ],
       ],
     );
   }
 }
 
-class _SocialPill extends StatelessWidget {
-  const _SocialPill({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-  });
+class _SocialDisc extends StatelessWidget {
+  const _SocialDisc({required this.icon, required this.onTap});
 
   final IconData icon;
-  final String label;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.transparent,
+      color: AppColors.surface,
+      borderRadius: BorderRadius.circular(AppRadii.pill),
       child: InkWell(
         borderRadius: BorderRadius.circular(AppRadii.pill),
         onTap: onTap,
         child: Ink(
           height: 52,
           decoration: BoxDecoration(
-            color: AppColors.cloud,
             borderRadius: BorderRadius.circular(AppRadii.pill),
-            border: Border.all(
-              color: AppColors.borderMuted.withValues(alpha: 0.7),
-            ),
+            boxShadow: AppShadows.soft,
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              FaIcon(icon, size: 18, color: AppColors.primaryNavy),
-              const SizedBox(width: 10),
-              Text(
-                label,
-                style: GoogleFonts.epilogue(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.primaryNavy,
-                ),
-              ),
-            ],
+          child: Center(
+            child: FaIcon(icon, size: 18, color: AppColors.ink),
           ),
         ),
       ),
@@ -99,8 +66,11 @@ class _SocialPill extends StatelessWidget {
 void showAuthComingSoon(BuildContext context, String provider) {
   ScaffoldMessenger.of(context).showSnackBar(
     SnackBar(
-      content: Text('$provider sign-in comes with the backend.'),
-      backgroundColor: AppColors.primaryNavy,
+      content: Text(
+        '$provider sign-in comes with the backend.',
+        style: GoogleFonts.plusJakartaSans(),
+      ),
+      backgroundColor: AppColors.ink,
       behavior: SnackBarBehavior.floating,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
     ),
