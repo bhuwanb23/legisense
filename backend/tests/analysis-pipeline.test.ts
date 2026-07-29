@@ -575,6 +575,130 @@ async function run() {
   }
 
   // ═══════════════════════════════════════════════════
+  //  13. Risk Score Dashboard
+  // ═══════════════════════════════════════════════════
+  console.log('\n── 13. Risk Score Dashboard ──');
+
+  const { calculateOverallRiskScore } = await import('../src/services/analysisService');
+
+  {
+    const result = calculateOverallRiskScore([
+      { riskScore: 20, riskLevel: 'low' } as any,
+      { riskScore: 20, riskLevel: 'low' } as any,
+    ]);
+    assert(result.overallScore <= 33, 'All low clauses → low score');
+    assert(result.riskLevel === 'low', 'All low clauses → riskLevel low');
+  }
+
+  {
+    const result = calculateOverallRiskScore([
+      { riskScore: 80, riskLevel: 'high' } as any,
+      { riskScore: 75, riskLevel: 'high' } as any,
+    ]);
+    assert(result.overallScore >= 67, 'All high clauses → high score');
+    assert(result.riskLevel === 'high', 'All high clauses → riskLevel high');
+  }
+
+  {
+    const result = calculateOverallRiskScore([
+      { riskScore: 45, riskLevel: 'medium' } as any,
+      { riskScore: 50, riskLevel: 'medium' } as any,
+    ]);
+    assert(result.overallScore >= 34 && result.overallScore <= 66, 'All medium clauses → medium score');
+    assert(result.riskLevel === 'medium', 'All medium clauses → riskLevel medium');
+  }
+
+  {
+    const result = calculateOverallRiskScore([
+      { riskScore: 95, riskLevel: 'high' } as any,
+      { riskScore: 10, riskLevel: 'low' } as any,
+    ]);
+    assert(result.overallScore >= 60, 'Critical clause (95) forces minimum 60, got ' + result.overallScore);
+    assert(result.riskLevel === 'high', 'Critical clause → riskLevel high');
+  }
+
+  {
+    const result = calculateOverallRiskScore([]);
+    assert(result.overallScore === 0, 'Empty clauses → score 0');
+    assert(result.riskLevel === 'low', 'Empty clauses → riskLevel low');
+  }
+
+  {
+    const result = calculateOverallRiskScore([
+      { riskScore: 100, riskLevel: 'high' } as any,
+    ]);
+    assert(result.overallScore === 100, 'Single clause at 100 → score 100');
+    assert(result.riskLevel === 'high', 'Single clause at 100 → riskLevel high');
+  }
+
+  {
+    const result = calculateOverallRiskScore([
+      { riskScore: 0, riskLevel: 'low' } as any,
+    ]);
+    assert(result.overallScore === 0, 'Single clause at 0 → score 0');
+    assert(result.riskLevel === 'low', 'Single clause at 0 → riskLevel low');
+  }
+
+  {
+    const result = calculateOverallRiskScore([
+      { riskScore: 33, riskLevel: 'low' } as any,
+    ]);
+    assert(result.overallScore === 33, 'Score 33 → still low (got ' + result.overallScore + ')');
+    assert(result.riskLevel === 'low', 'Score 33 → riskLevel low');
+  }
+
+  {
+    const result = calculateOverallRiskScore([
+      { riskScore: 34, riskLevel: 'medium' } as any,
+    ]);
+    assert(result.overallScore === 34, 'Score 34 → medium boundary (got ' + result.overallScore + ')');
+    assert(result.riskLevel === 'medium', 'Score 34 → riskLevel medium');
+  }
+
+  {
+    const result = calculateOverallRiskScore([
+      { riskScore: 66, riskLevel: 'medium' } as any,
+    ]);
+    assert(result.overallScore === 66, 'Score 66 → medium boundary (got ' + result.overallScore + ')');
+    assert(result.riskLevel === 'medium', 'Score 66 → riskLevel medium');
+  }
+
+  {
+    const result = calculateOverallRiskScore([
+      { riskScore: 67, riskLevel: 'high' } as any,
+    ]);
+    assert(result.overallScore === 67, 'Score 67 → high boundary (got ' + result.overallScore + ')');
+    assert(result.riskLevel === 'high', 'Score 67 → riskLevel high');
+  }
+
+  {
+    const result = calculateOverallRiskScore([
+      { riskScore: 89, riskLevel: 'high' } as any,
+    ]);
+    assert(result.overallScore === 89, 'Score 89 → high without floor (got ' + result.overallScore + ')');
+    assert(result.riskLevel === 'high', 'Score 89 → riskLevel high');
+  }
+
+  {
+    const result = calculateOverallRiskScore([
+      { riskScore: 90, riskLevel: 'high' } as any,
+    ]);
+    assert(result.overallScore >= 60, 'Score 90 → floor kicks in, got ' + result.overallScore);
+    assert(result.overallScore === 90, 'Score 90 → stays 90 since 90 > 60 (got ' + result.overallScore + ')');
+    assert(result.riskLevel === 'high', 'Score 90 → riskLevel high');
+  }
+
+  {
+    const result = calculateOverallRiskScore([
+      { riskScore: 80, riskLevel: 'high' } as any,
+      { riskScore: 30, riskLevel: 'low' } as any,
+      { riskScore: 50, riskLevel: 'medium' } as any,
+    ]);
+    assert(result.overallScore > 0 && result.overallScore <= 100, 'Mixed clauses produce valid score (got ' + result.overallScore + ')');
+    assert(['low', 'medium', 'high'].includes(result.riskLevel), 'Mixed clauses produce valid riskLevel');
+  }
+
+  // ═══════════════════════════════════════════════════
   //  CLEANUP & SUMMARY
   // ═══════════════════════════════════════════════════
   closeDatabase();
