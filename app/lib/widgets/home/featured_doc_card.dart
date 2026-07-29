@@ -4,8 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../data/dashboard_mock.dart';
 import '../../theme/app_theme.dart';
 
-/// Large featured document card — matches the Dribbble smart-home
-/// device card pattern with image area, info, and status indicator.
+/// Hero feature card — TripGlide destination card grammar for a document.
 class FeaturedDocCard extends StatelessWidget {
   const FeaturedDocCard({
     super.key,
@@ -18,119 +17,172 @@ class FeaturedDocCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final risk = _riskStyle(document.risk);
+    final risk = switch (document.risk) {
+      DocRisk.low => ('Low risk', AppColors.riskLow),
+      DocRisk.medium => ('Medium risk', AppColors.riskMedium),
+      DocRisk.high => ('High risk', AppColors.riskHigh),
+    };
 
     return Material(
-      color: AppColors.cloud,
-      borderRadius: BorderRadius.circular(20),
+      color: Colors.transparent,
       child: InkWell(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadii.lg),
         onTap: onTap,
         child: Ink(
+          height: 360,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppRadii.md),
-            border: Border.all(color: AppColors.rule),
+            borderRadius: BorderRadius.circular(AppRadii.lg),
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Color(0xFF2C2C2C),
+                Color(0xFF1A1A1A),
+                Color(0xFF3A3A3A),
+              ],
+            ),
+            boxShadow: AppShadows.card,
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          child: Stack(
             children: [
-              Container(
-                height: 140,
-                width: double.infinity,
-                decoration: BoxDecoration(
-                  color: AppColors.paper2,
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(20),
+              Positioned(
+                top: -40,
+                right: -30,
+                child: Container(
+                  width: 180,
+                  height: 180,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white.withValues(alpha: 0.06),
                   ),
                 ),
-                child: Stack(
+              ),
+              Positioned(
+                bottom: 80,
+                left: -20,
+                child: Container(
+                  width: 120,
+                  height: 120,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.white.withValues(alpha: 0.04),
+                  ),
+                ),
+              ),
+              Positioned(
+                top: 18,
+                right: 18,
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.55)),
+                  ),
+                  child: const Icon(
+                    Icons.bookmark_border_rounded,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 22,
+                right: 22,
+                bottom: 22,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Center(
-                      child: Icon(
-                        Icons.description_outlined,
-                        size: 56,
-                        color: AppColors.accentSky.withValues(alpha: 0.6),
+                    Text(
+                      document.typeLabel,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.white.withValues(alpha: 0.75),
                       ),
                     ),
-                    Positioned(
-                      top: 12,
-                      right: 12,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 5,
-                        ),
-                        decoration: BoxDecoration(
-                          color: risk.bg,
-                          borderRadius: BorderRadius.circular(AppRadii.pill),
-                        ),
-                        child: Text(
-                          risk.label,
-                          style: GoogleFonts.epilogue(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w700,
-                            color: risk.fg,
+                    const SizedBox(height: 4),
+                    Text(
+                      document.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w700,
+                        height: 1.2,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Icon(Icons.shield_outlined,
+                            size: 16, color: risk.$2),
+                        const SizedBox(width: 6),
+                        Text(
+                          '${document.riskScore} · ${risk.$1}',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white.withValues(alpha: 0.9),
                           ),
                         ),
+                        const SizedBox(width: 8),
+                        Text(
+                          '· ${document.relativeDate}',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 12,
+                            color: Colors.white.withValues(alpha: 0.55),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Container(
+                      height: 52,
+                      padding: const EdgeInsets.only(left: 20, right: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.45),
+                        borderRadius: BorderRadius.circular(AppRadii.pill),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              'Open analysis',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                          Container(
+                            width: 40,
+                            height: 40,
+                            decoration: const BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.arrow_forward_rounded,
+                              color: AppColors.ink,
+                              size: 20,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
               ),
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      document.title,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.epilogue(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.primaryNavy,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.schedule_rounded,
-                          size: 14,
-                          color: AppColors.inkSoft.withValues(alpha: 0.6),
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          document.relativeDate,
-                          style: GoogleFonts.epilogue(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                            color: AppColors.inkSoft,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 3,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.paper2,
-                            borderRadius: BorderRadius.circular(AppRadii.pill),
-                          ),
-                          child: Text(
-                            document.typeLabel,
-                            style: GoogleFonts.epilogue(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.primaryNavy,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+              Positioned(
+                top: 72,
+                left: 28,
+                child: Icon(
+                  Icons.description_outlined,
+                  size: 72,
+                  color: Colors.white.withValues(alpha: 0.12),
                 ),
               ),
             ],
@@ -138,25 +190,5 @@ class FeaturedDocCard extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  static ({String label, Color bg, Color fg}) _riskStyle(DocRisk risk) {
-    return switch (risk) {
-      DocRisk.low => (
-          label: 'Low Risk',
-          bg: const Color(0xFFE8F5EE),
-          fg: const Color(0xFF1B6B3A),
-        ),
-      DocRisk.medium => (
-          label: 'Medium',
-          bg: const Color(0xFFFFF4E5),
-          fg: const Color(0xFF9A5B00),
-        ),
-      DocRisk.high => (
-          label: 'High Risk',
-          bg: const Color(0xFFFDECEC),
-          fg: AppColors.error,
-        ),
-    };
   }
 }
