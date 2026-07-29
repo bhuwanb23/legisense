@@ -1,6 +1,6 @@
 import { initDatabase, getDb, closeDatabase, persistNow } from '../src/config/database';
 import { sql } from 'drizzle-orm';
-import { users, documents, analysisResults, clauses } from '../src/models';
+import { users, documents, analysisResults, clauses, riskItems } from '../src/models';
 import { AnalysisOutputSchema, PartySchema, ClauseSchema } from '../src/schemas/analysisSchemas';
 import { buildAnalysisUserPrompt, parseAiResponse } from '../src/prompts/analysisPrompt';
 import { chunkText, mergeAnalysisResults, estimateTotalRequestTokens } from '../src/services/chunkingService';
@@ -717,6 +717,140 @@ async function run() {
     ]);
     assert(result.overallScore > 0 && result.overallScore <= 100, 'Mixed clauses produce valid score (got ' + result.overallScore + ')');
     assert(['low', 'medium', 'high'].includes(result.riskLevel), 'Mixed clauses produce valid riskLevel');
+  }
+
+  // ═══════════════════════════════════════════════════
+  //  14. Risk Categorization
+  // ═══════════════════════════════════════════════════
+  console.log('\n── 14. Risk Categorization ──');
+
+  {
+    const { ClauseSchema, RiskItemSchema } = await import('../src/schemas/analysisSchemas');
+    const clause = ClauseSchema.parse({
+      clauseNumber: 1, clauseTitle: 'IP Clause', originalText: 'IP text.', plainEnglishText: 'IP.',
+      riskLevel: 'low', riskScore: 10, riskReason: '', riskCategory: 'intellectual_property', counterSuggestion: '',
+    });
+    assert(clause.riskCategory === 'intellectual_property', 'ClauseSchema accepts intellectual_property');
+
+    const operational = ClauseSchema.parse({
+      clauseNumber: 2, clauseTitle: 'Ops Clause', originalText: 'Ops text.', plainEnglishText: 'Ops.',
+      riskLevel: 'low', riskScore: 10, riskReason: '', riskCategory: 'operational', counterSuggestion: '',
+    });
+    assert(operational.riskCategory === 'operational', 'ClauseSchema accepts operational');
+
+    const riskItem = RiskItemSchema.parse({
+      riskType: 'intellectual_property', title: 'IP Risk', description: 'IP issue.',
+      severity: 'high', severityScore: 70, recommendation: '', legalReference: '',
+    });
+    assert(riskItem.riskType === 'intellectual_property', 'RiskItemSchema accepts intellectual_property');
+  }
+
+  {
+    const db = getDb();
+    const testDocId = db.insert(documents).values({
+      userId, originalName: 'risk-cat-test.pdf', storagePath: 'test.txt',
+      fileFormat: 'txt', fileSize: 100, sourceType: 'file', uploadStatus: 'uploaded',
+      processingStatus: 'analyzed', rawText: 'Test.',
+    }).lastInsertRowid as number;
+
+    const analysisId = db.insert(analysisResults).values({
+      documentId: testDocId, userId,
+      documentType: 'NDA', overallRiskScore: 50, riskLevel: 'medium',
+      fairnessScore: 50, favorsParty: 'Balanced', summary: 'Test.',
+      keyParties: '[]', criticalDates: '[]', keyObligations: '[]',
+      missingClauses: '[]', jurisdictionFlags: '[]', breachScenarios: '[]',
+      processingTime: 1, aiModelUsed: 'test',
+    }).lastInsertRowid as number;
+
+    db.insert(clauses).values({
+      documentId: testDocId, analysisId,
+      clauseNumber: 1, clauseTitle: 'Payment', originalText: 'Pay $100.', plainEnglishText: 'Payment terms.',
+      riskLevel: 'high', riskScore: 80, riskReason: 'High payment obligation.',
+      riskCategory: 'financial', counterSuggestion: 'Negotiate better terms.',
+    }).run();
+
+    db.insert(clauses).values({
+      documentId: testDocId, analysisId,
+      clauseNumber: 2, clauseTitle: 'Confidentiality', originalText: 'Keep secret.', plainEnglishText: 'NDA.',
+      riskLevel: 'low', riskScore: 15, riskReason: 'Standard NDA.',
+      riskCategory: 'legal', counterSuggestion: '',
+    }).run();
+
+    db.insert(clauses).values({
+      documentId: testDocId, analysisId,
+      clauseNumber: 3, clauseTitle: 'Termination', originalText: '30 days notice.', plainEnglishText: 'Term terms.',
+      riskLevel: 'medium', riskScore: 50, riskReason: 'Notice period is short.',
+      riskCategory: 'termination', counterSuggestion: 'Extend to 60 days.',
+    }).run();
+
+    db.insert(clauses).values({
+      documentId: testDocId, analysisId,
+      clauseNumber: 4, clauseTitle: 'Data Privacy', originalText: 'Collect data.', plainEnglishText: 'Privacy terms.',
+      riskLevel: 'critical', riskScore: 95, riskReason: 'Broad data collection.',
+      riskCategory: 'privacy', counterSuggestion: 'Limit data collection.',
+    }).run();
+
+    const clauseRows = db.select().from(clauses).where(sql`${clauses.analysisId} = ${analysisId}`).all();
+    assert(clauseRows.length === 4, 'Clauses inserted for risk categorization test (got ' + clauseRows.length + ')');
+
+    const grouped: Record<string, typeof clauseRows> = {};
+    for (const c of clauseRows) {
+      const cat = c.riskCategory || 'other';
+      if (!grouped[cat]) grouped[cat] = [];
+      grouped[cat].push(c);
+    }
+    assert(Object.keys(grouped).length === 4, 'Clauses grouped into 4 categories (got ' + Object.keys(grouped).length + ')');
+    assert(grouped.financial.length === 1, 'financial category has 1 clause');
+    assert(grouped.legal.length === 1, 'legal category has 1 clause');
+    assert(grouped.termination.length === 1, 'termination category has 1 clause');
+    assert(grouped.privacy.length === 1, 'privacy category has 1 clause');
+
+    for (const [category, catClauses] of Object.entries(grouped)) {
+      const maxRiskClause = catClauses.reduce((best, c) =>
+        (c.riskScore ?? 0) > (best.riskScore ?? 0) ? c : best
+        , catClauses[0]);
+
+      const score = maxRiskClause.riskScore ?? 0;
+      const severity = score >= 90 ? 'critical' : score >= 67 ? 'high' : score >= 34 ? 'medium' : 'low';
+      const label = category.charAt(0).toUpperCase() + category.slice(1);
+
+      db.insert(riskItems).values({
+        analysisId,
+        clauseId: maxRiskClause.id,
+        riskType: category,
+        title: `${label} Risk — ${catClauses.length} clause${catClauses.length > 1 ? 's' : ''} found`,
+        description: maxRiskClause.riskReason || maxRiskClause.plainEnglishText || `Clauses categorized as ${label}.`,
+        severity,
+        severityScore: score,
+        recommendation: maxRiskClause.counterSuggestion || 'Review this clause for potential risk mitigation.',
+        legalReference: '',
+      }).run();
+    }
+
+    const generatedRiskItems = db.select().from(riskItems).where(
+      sql`${riskItems.analysisId} = ${analysisId} AND ${riskItems.clauseId} IS NOT NULL`
+    ).all();
+    assert(generatedRiskItems.length === 4, '4 risk items generated from 4 categories (got ' + generatedRiskItems.length + ')');
+
+    const privacyItem = generatedRiskItems.find((r) => r.riskType === 'privacy');
+    assert(privacyItem !== undefined, 'Privacy category has a risk item');
+    assert(privacyItem?.severity === 'critical', 'Privacy risk has critical severity (got ' + privacyItem?.severity + ')');
+    assert(privacyItem?.severityScore === 95, 'Privacy risk has score 95 (got ' + privacyItem?.severityScore + ')');
+
+    const financialItem = generatedRiskItems.find((r) => r.riskType === 'financial');
+    assert(financialItem !== undefined, 'Financial category has a risk item');
+    assert(financialItem?.severity === 'high', 'Financial risk has high severity (got ' + financialItem?.severity + ')');
+
+    const terminationItem = generatedRiskItems.find((r) => r.riskType === 'termination');
+    assert(terminationItem !== undefined, 'Termination category has a risk item');
+    assert(terminationItem?.severity === 'medium', 'Termination risk has medium severity (got ' + terminationItem?.severity + ')');
+
+    const legalItem = generatedRiskItems.find((r) => r.riskType === 'legal');
+    assert(legalItem !== undefined, 'Legal category has a risk item');
+    assert(legalItem?.severity === 'low', 'Legal risk has low severity (got ' + legalItem?.severity + ')');
+
+    const privacyClauses = clauseRows.filter((c) => c.riskCategory === 'privacy');
+    assert(privacyClauses.length === 1, 'Filtered clauses by privacy category returns 1 clause');
   }
 
   // ═══════════════════════════════════════════════════
