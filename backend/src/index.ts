@@ -231,6 +231,12 @@ async function start() {
     completed_at TEXT
   )`);
 
+  try { db.run(sql`ALTER TABLE usage_logs ADD COLUMN provider TEXT`); } catch {}
+  try { db.run(sql`ALTER TABLE usage_logs ADD COLUMN model TEXT`); } catch {}
+  try { db.run(sql`ALTER TABLE usage_logs ADD COLUMN cost REAL`); } catch {}
+  try { db.run(sql`ALTER TABLE usage_logs ADD COLUMN input_tokens INTEGER`); } catch {}
+  try { db.run(sql`ALTER TABLE usage_logs ADD COLUMN output_tokens INTEGER`); } catch {}
+
   console.log('All 11 tables created/verified.');
   persistNow();
 

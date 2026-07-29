@@ -10,6 +10,11 @@ export const usageLogs = sqliteTable('usage_logs', {
   documentId: integer('document_id').references(() => documents.id),
   tokensConsumed: integer('tokens_consumed'),
   processingTime: real('processing_time'),
+  provider: text('provider'),
+  model: text('model'),
+  cost: real('cost'),
+  inputTokens: integer('input_tokens'),
+  outputTokens: integer('output_tokens'),
   createdAt: text('created_at').notNull().default(sql`(datetime('now'))`),
 });
 

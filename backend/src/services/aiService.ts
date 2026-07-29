@@ -1,154 +1,136 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
-import { ANALYSIS_SYSTEM_PROMPT, buildAnalysisUserPrompt, parseAiResponse } from '../prompts/analysisPrompt';
-import { chunkDocument, type Chunk } from './chunkService';
+import { ANALYSIS_SYSTEM_PROMPT, buildAnalysisUserPrompt } from '../prompts/analysisPrompt';
+import { CLAUSE_REWRITE_SYSTEM_PROMPT, buildClauseRewritePrompt } from '../prompts/clauseRewritePrompt';
+import { CHAT_SYSTEM_PROMPT, buildChatUserPrompt } from '../prompts/chatPrompt';
+import { chunkDocument } from './chunkService';
+import { callWithFallback } from './ai';
+import { parseAiResponse } from '../prompts/analysisPrompt';
+import type { AiAnalysisResult } from './aiServiceTypes';
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
-const MODEL_NAME = 'gemini-1.5-flash';
-const DEFAULT_MAX_RETRIES = 3;
-const DEFAULT_TIMEOUT_MS = 60_000;
 const CHUNK_THRESHOLD = 8_000;
 
-let genAI: GoogleGenerativeAI | null = null;
+export { isGeminiConfigured } from './ai/geminiProvider';
+export type { AiAnalysisResult } from './aiServiceTypes';
 
-function getClient(): GoogleGenerativeAI {
-  if (!genAI) {
-    if (!GEMINI_API_KEY) {
-      throw new Error('GEMINI_API_KEY is not set. Add it to your .env file.');
-    }
-    genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-  }
-  return genAI;
+export interface AnalysisOutput {
+  result: AiAnalysisResult;
+  usage: {
+    provider: string;
+    model: string;
+    inputTokens: number;
+    outputTokens: number;
+    totalTokens: number;
+  };
+  processingTime: number;
 }
 
-export interface AiAnalysisResult {
-  documentType: string;
-  detectedTypeConfidence: number;
-  overallRiskScore: number;
-  riskLevel: string;
-  fairnessScore: number;
-  favorsParty: string;
-  summary: string;
-  keyParties: Array<{ name: string; role: string; obligations: string[] }>;
-  criticalDates: Array<{ label: string; date: string; urgency: string }>;
-  keyObligations: Array<{ party: string; obligation: string }>;
-  missingClauses: string[];
-  clauses: Array<{
-    clauseNumber: number;
-    clauseTitle: string;
-    originalText: string;
-    plainEnglishText: string;
-    riskLevel: string;
-    riskScore: number;
-    riskReason: string;
-    riskCategory: string;
-    counterSuggestion: string;
-  }>;
-  riskItems: Array<{
-    riskType: string;
-    title: string;
-    description: string;
-    severity: string;
-    severityScore: number;
-    recommendation: string;
-    legalReference: string;
-  }>;
-  deadlines: Array<{
-    title: string;
-    description: string;
-    dueDate: string;
-    recurrence: string;
-  }>;
-}
+export async function analyzeDocument(
+  text: string,
+  context?: { pageCount?: number; language?: string },
+): Promise<AnalysisOutput> {
+  const startTime = Date.now();
 
-export async function analyzeDocument(text: string): Promise<AiAnalysisResult> {
   if (text.length <= CHUNK_THRESHOLD) {
-    return analyzeSingle(text);
+    const out = await analyzeSingle(text, context);
+    const processingTime = (Date.now() - startTime) / 1000;
+    return { result: out.result, usage: out.usage, processingTime };
   }
 
-  return analyzeInChunks(text);
+  const out = await analyzeInChunks(text, context);
+  const processingTime = (Date.now() - startTime) / 1000;
+  return { result: out.result, usage: out.usage, processingTime };
 }
 
-async function analyzeSingle(text: string): Promise<AiAnalysisResult> {
-  const response = await callGemini(text);
-  return validateAndCleanResult(response);
-}
-
-async function analyzeInChunks(fullText: string): Promise<AiAnalysisResult> {
-  const chunks = chunkDocument(fullText);
-  const chunkResults: AiAnalysisResult[] = [];
-
-  for (const chunk of chunks) {
-    const partial = await analyzeChunk(chunk);
-    chunkResults.push(partial);
-  }
-
-  return mergeChunkResults(chunkResults, fullText);
-}
-
-async function analyzeChunk(chunk: Chunk): Promise<AiAnalysisResult> {
-  const prefix = `[This is chunk ${chunk.index + 1} of a legal document. Extract all findings from this portion. Return the same JSON structure. Portion to analyze:\n\n`;
-  const text = prefix + chunk.text;
-  const response = await callGemini(text);
-  return validateAndCleanResult(response);
-}
-
-async function callGemini(text: string): Promise<Record<string, unknown>> {
-  const client = getClient();
-  const model = client.getGenerativeModel({
-    model: MODEL_NAME,
-    systemInstruction: ANALYSIS_SYSTEM_PROMPT,
-  });
-
+async function analyzeSingle(
+  text: string,
+  context?: { pageCount?: number; language?: string },
+): Promise<{ result: AiAnalysisResult; usage: { provider: string; model: string; inputTokens: number; outputTokens: number; totalTokens: number } }> {
+  const systemPrompt = ANALYSIS_SYSTEM_PROMPT;
   const userPrompt = buildAnalysisUserPrompt(text);
 
-  let lastError: Error | null = null;
+  const { response, providerUsed } = await callWithFallback(
+    { systemPrompt, userPrompt, temperature: 0.3 },
+    { ...context, task: 'analysis' },
+  );
 
-  for (let attempt = 0; attempt < DEFAULT_MAX_RETRIES; attempt++) {
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS);
+  const parsed = typeof response.text === 'string' ? parseAiResponse(response.text) : response.text;
+  const result = validateAndCleanResult(parsed);
 
-      const result = await model.generateContent(userPrompt);
-      clearTimeout(timeoutId);
-
-      const responseText = result.response.text();
-
-      if (!responseText) {
-        throw new Error('Gemini returned an empty response');
-      }
-
-      return parseAiResponse(responseText);
-    } catch (err) {
-      lastError = err instanceof Error ? err : new Error(String(err));
-
-      if (isRetryableError(lastError) && attempt < DEFAULT_MAX_RETRIES - 1) {
-        const delay = Math.pow(2, attempt) * 1000;
-        await new Promise((r) => setTimeout(r, delay));
-        continue;
-      }
-
-      throw lastError;
-    }
-  }
-
-  throw lastError || new Error('AI request failed');
+  return {
+    result,
+    usage: {
+      provider: providerUsed,
+      model: response.model,
+      inputTokens: response.usage.inputTokens,
+      outputTokens: response.usage.outputTokens,
+      totalTokens: response.usage.totalTokens,
+    },
+  };
 }
 
-function isRetryableError(err: Error): boolean {
-  const msg = err.message.toLowerCase();
-  return (
-    msg.includes('timeout') ||
-    msg.includes('rate limit') ||
-    msg.includes('quota') ||
-    msg.includes('429') ||
-    msg.includes('503') ||
-    msg.includes('unavailable') ||
-    msg.includes('internal') ||
-    msg.includes('network') ||
-    msg.includes('socket') ||
-    msg.includes('econnreset') ||
-    msg.includes('deadline')
+async function analyzeInChunks(
+  fullText: string,
+  context?: { pageCount?: number; language?: string },
+): Promise<{ result: AiAnalysisResult; usage: { provider: string; model: string; inputTokens: number; outputTokens: number; totalTokens: number } }> {
+  const chunks = chunkDocument(fullText);
+  const chunkResults: AiAnalysisResult[] = [];
+  let totalInput = 0;
+  let totalOutput = 0;
+  let lastProvider = '';
+  let lastModel = '';
+
+  for (const chunk of chunks) {
+    const prefix = `[This is chunk ${chunk.index + 1} of a legal document. Extract all findings from this portion. Return the same JSON structure. Portion to analyze:\n\n`;
+    const text = prefix + chunk.text;
+    const partial = await analyzeSingle(text, context);
+    chunkResults.push(partial.result);
+    totalInput += partial.usage.inputTokens;
+    totalOutput += partial.usage.outputTokens;
+    lastProvider = partial.usage.provider || lastProvider;
+    lastModel = partial.usage.model || lastModel;
+  }
+
+  return {
+    result: mergeChunkResults(chunkResults, fullText),
+    usage: {
+      provider: lastProvider,
+      model: lastModel,
+      inputTokens: totalInput,
+      outputTokens: totalOutput,
+      totalTokens: totalInput + totalOutput,
+    },
+  };
+}
+
+export async function rewriteClause(
+  clauseText: string,
+  riskLevel?: string,
+  context?: { pageCount?: number; language?: string },
+): Promise<string> {
+  const systemPrompt = CLAUSE_REWRITE_SYSTEM_PROMPT;
+  const userPrompt = buildClauseRewritePrompt(clauseText, riskLevel);
+
+  const { response } = await callWithFallback(
+    { systemPrompt, userPrompt, temperature: 0.5 },
+    { ...context, task: 'rewrite' },
   );
+
+  return response.text;
+}
+
+export async function chatWithDocument(
+  documentText: string,
+  message: string,
+  context?: { pageCount?: number; language?: string },
+): Promise<string> {
+  const systemPrompt = CHAT_SYSTEM_PROMPT;
+  const userPrompt = buildChatUserPrompt(documentText, message);
+
+  const { response } = await callWithFallback(
+    { systemPrompt, userPrompt, temperature: 0.5 },
+    { ...context, task: 'chat' },
+  );
+
+  return response.text;
 }
 
 function mergeChunkResults(results: AiAnalysisResult[], fullText: string): AiAnalysisResult {
@@ -184,11 +166,8 @@ function mergeChunkResults(results: AiAnalysisResult[], fullText: string): AiAna
 function generateCombinedSummary(results: AiAnalysisResult[], fullText: string): string {
   const summaries = results.map((r) => r.summary).filter(Boolean);
   if (summaries.length === 0) return 'No summary available.';
-
   const merged = summaries.join(' ');
-  if (merged.length > 2000) return merged.slice(0, 2000) + '...';
-
-  return merged;
+  return merged.length > 2000 ? merged.slice(0, 2000) + '...' : merged;
 }
 
 function deduplicateParties(parties: Array<{ name: string; role: string; obligations: string[] }>) {
@@ -227,8 +206,4 @@ function clamp(value: number, min: number, max: number): number {
 function validateRiskLevel(level: string): string {
   const valid = ['low', 'medium', 'high'];
   return valid.includes(level) ? level : 'low';
-}
-
-export function isGeminiConfigured(): boolean {
-  return Boolean(GEMINI_API_KEY);
 }

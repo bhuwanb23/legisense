@@ -6,6 +6,7 @@ import { extractText } from './textExtractor';
 import { analyzeDocument, type AiAnalysisResult } from './aiService';
 import { persistNow } from '../config/database';
 import { emitToUser } from './socketService';
+import { logAiUsage } from './ai';
 
 export async function analyzeDocumentPipeline(documentId: number, userId: number): Promise<void> {
   const db = getDb();
@@ -26,18 +27,28 @@ export async function analyzeDocumentPipeline(documentId: number, userId: number
 
     updateDocumentRawText(documentId, rawText);
 
-    const aiResult = await analyzeDocument(rawText);
+    const aiContext = {
+      pageCount: doc.pageCount || undefined,
+      language: doc.detectedLanguage || undefined,
+    };
 
-    const processingTime = (Date.now() - startTime) / 1000;
+    const { result: aiResult, usage, processingTime } = await analyzeDocument(rawText, aiContext);
+
+    const totalTime = (Date.now() - startTime) / 1000;
 
     db.insert(usageLogs).values({
       userId: doc.userId,
       action: 'analysis:complete',
       documentId,
-      processingTime,
+      tokensConsumed: usage.totalTokens || undefined,
+      processingTime: totalTime,
+      provider: usage.provider || undefined,
+      model: usage.model || undefined,
+      inputTokens: usage.inputTokens || undefined,
+      outputTokens: usage.outputTokens || undefined,
     }).run();
 
-    saveAnalysisResults(documentId, doc.userId, aiResult, processingTime);
+    saveAnalysisResults(documentId, doc.userId, aiResult, processingTime, usage.model || 'unknown');
 
     updateDocumentStatus(documentId, 'completed');
 
@@ -95,7 +106,8 @@ function saveAnalysisResults(
   documentId: number,
   userId: number,
   ai: AiAnalysisResult,
-  processingTime: number
+  processingTime: number,
+  modelUsed?: string,
 ): void {
   const db = getDb();
 
@@ -115,7 +127,7 @@ function saveAnalysisResults(
     missingClauses: JSON.stringify(ai.missingClauses),
     jurisdictionFlags: JSON.stringify([]),
     processingTime,
-    aiModelUsed: 'gemini-1.5-flash',
+    aiModelUsed: modelUsed || 'unknown',
   }).run();
 
   const analysisRows = db.select().from(analysisResults).where(sql`${analysisResults.documentId} = ${documentId}`).all();

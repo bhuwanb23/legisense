@@ -179,6 +179,11 @@ async function setup() {
     document_id INTEGER REFERENCES documents(id),
     tokens_consumed INTEGER,
     processing_time REAL,
+    provider TEXT,
+    model TEXT,
+    cost REAL,
+    input_tokens INTEGER,
+    output_tokens INTEGER,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
   )`);
 
