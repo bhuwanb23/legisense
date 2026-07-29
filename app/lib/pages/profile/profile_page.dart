@@ -91,7 +91,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 children: [
                   Text(
                     'Edit preferences',
-                    style: GoogleFonts.spectral(
+                    style: GoogleFonts.plusJakartaSans(
                       fontSize: 22,
                       fontWeight: FontWeight.w700,
                       color: AppColors.ink,
@@ -147,7 +147,7 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                     child: Text(
                       'Save',
-                      style: GoogleFonts.spectral(
+                      style: GoogleFonts.plusJakartaSans(
                         fontWeight: FontWeight.w600,
                         fontStyle: FontStyle.normal,
                       ),
@@ -190,7 +190,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   backgroundColor: AppColors.paper2,
                   child: Text(
                     initial,
-                    style: GoogleFonts.spectral(
+                    style: GoogleFonts.plusJakartaSans(
                       fontSize: 32,
                       fontWeight: FontWeight.w700,
                       color: AppColors.ink,
@@ -201,7 +201,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 const SizedBox(height: 12),
                 Text(
                   _name,
-                  style: GoogleFonts.spectral(
+                  style: GoogleFonts.plusJakartaSans(
                     fontSize: 22,
                     fontWeight: FontWeight.w700,
                     color: AppColors.ink,
@@ -211,7 +211,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 const SizedBox(height: 4),
                 Text(
                   _email,
-                  style: GoogleFonts.epilogue(
+                  style: GoogleFonts.plusJakartaSans(
                     fontSize: 13,
                     color: AppColors.inkSoft,
                   ),
@@ -235,7 +235,7 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
             child: Text(
               'Edit preferences',
-              style: GoogleFonts.epilogue(fontWeight: FontWeight.w700),
+              style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
             ),
           ),
           const SizedBox(height: 12),
@@ -247,7 +247,7 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
             child: Text(
               'Log out',
-              style: GoogleFonts.epilogue(
+              style: GoogleFonts.plusJakartaSans(
                 fontSize: 15,
                 fontWeight: FontWeight.w700,
               ),
@@ -279,7 +279,7 @@ class _InfoRow extends StatelessWidget {
         children: [
           Text(
             label,
-            style: GoogleFonts.epilogue(
+            style: GoogleFonts.plusJakartaSans(
               fontSize: 12,
               fontWeight: FontWeight.w500,
               color: AppColors.inkSoft,
@@ -288,7 +288,7 @@ class _InfoRow extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             value,
-            style: GoogleFonts.epilogue(
+            style: GoogleFonts.plusJakartaSans(
               fontSize: 16,
               fontWeight: FontWeight.w700,
               color: AppColors.ink,
