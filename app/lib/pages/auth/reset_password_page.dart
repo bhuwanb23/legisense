@@ -65,7 +65,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
               const SizedBox(height: 24),
               Text(
                 'New Password',
-                style: GoogleFonts.epilogue(
+                style: GoogleFonts.plusJakartaSans(
                   fontSize: 26,
                   fontWeight: FontWeight.w700,
                   color: AppColors.primaryNavy,
@@ -74,7 +74,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
               const SizedBox(height: 8),
               Text(
                 'For ${widget.email}',
-                style: GoogleFonts.epilogue(
+                style: GoogleFonts.plusJakartaSans(
                   fontSize: 13,
                   color: AppColors.inkSoft,
                 ),
@@ -117,7 +117,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
               const SizedBox(height: 24),
               Text.rich(
                 TextSpan(
-                  style: GoogleFonts.epilogue(
+                  style: GoogleFonts.plusJakartaSans(
                     fontSize: 14,
                     color: AppColors.inkSoft,
                   ),
@@ -136,7 +136,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                         },
                         child: Text(
                           'Sign in',
-                          style: GoogleFonts.epilogue(
+                          style: GoogleFonts.plusJakartaSans(
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
                             color: AppColors.ink,
