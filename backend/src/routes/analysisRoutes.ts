@@ -5,6 +5,7 @@ import {
   getClauses,
   getRisks,
   getSummary,
+  getRiskDashboard,
 } from '../controllers/analysisController';
 import { authenticate } from '../middleware/auth';
 import { aiRateLimiter } from '../middleware/rateLimiter';
@@ -16,5 +17,6 @@ router.get('/:documentId', authenticate, getAnalysis);
 router.get('/:documentId/clauses', authenticate, getClauses);
 router.get('/:documentId/risks', authenticate, getRisks);
 router.get('/:documentId/summary', authenticate, getSummary);
+router.get('/:documentId/risk-dashboard', authenticate, getRiskDashboard);
 
 export default router;
