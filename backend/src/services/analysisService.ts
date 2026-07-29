@@ -37,9 +37,40 @@ export async function analyzeDocumentPipeline(documentId: number, userId: number
 
     const rawText = await resolveDocumentText(doc, documentId);
 
-    emitToUser(doc.userId, 'analysis:progress', { documentId, progress: 15, stage: 'Estimating document size...' });
+    emitToUser(doc.userId, 'analysis:progress', { documentId, progress: 12, stage: 'Classifying document type...' });
 
-    const totalTokens = estimateTotalRequestTokens(ANALYSIS_SYSTEM_PROMPT, rawText);
+    const classification = await classifyDocument(rawText);
+
+    const typeEntry = getTypeEntry(classification.type);
+    const needsConfirmation = classification.confidence < 60;
+
+    db.run(sql`UPDATE ${documents} SET
+      detected_type = ${classification.type},
+      detected_type_confidence = ${classification.confidence},
+      needs_type_confirmation = ${needsConfirmation ? 1 : 0},
+      updated_at = datetime('now')
+      WHERE id = ${documentId}`);
+
+    emitToUser(doc.userId, 'analysis:progress', {
+      documentId,
+      progress: 15,
+      stage: `Detected: ${typeEntry.typeLabel} (${classification.confidence}% confidence)`,
+    });
+
+    if (needsConfirmation) {
+      emitToUser(doc.userId, 'analysis:needs_confirmation', {
+        documentId,
+        detectedType: classification.type,
+        typeLabel: typeEntry.typeLabel,
+        confidence: classification.confidence,
+      });
+    }
+
+    const selectedPrompt = getPromptForType(classification.type);
+
+    emitToUser(doc.userId, 'analysis:progress', { documentId, progress: 18, stage: 'Estimating document size...' });
+
+    const totalTokens = estimateTotalRequestTokens(selectedPrompt, rawText);
 
     let analysisResult: AnalysisOutput;
     let providerUsed = 'unknown';
@@ -49,7 +80,7 @@ export async function analyzeDocumentPipeline(documentId: number, userId: number
 
     if (totalTokens > CHUNK_TOKEN_LIMIT) {
       emitToUser(doc.userId, 'analysis:progress', { documentId, progress: 20, stage: `Large document (${totalTokens.toLocaleString()} tokens). Splitting into chunks...` });
-      const chunkResult = await analyzeInChunks(rawText, documentId, doc.userId);
+      const chunkResult = await analyzeInChunks(rawText, selectedPrompt, documentId, doc.userId);
       analysisResult = chunkResult.result;
       providerUsed = chunkResult.provider;
       modelUsed = chunkResult.model;
@@ -57,7 +88,7 @@ export async function analyzeDocumentPipeline(documentId: number, userId: number
       totalOutputTokens = chunkResult.outputTokens;
     } else {
       emitToUser(doc.userId, 'analysis:progress', { documentId, progress: 25, stage: 'Analyzing document...' });
-      const singleResult = await analyzeSingle(rawText);
+      const singleResult = await analyzeSingle(rawText, selectedPrompt);
       analysisResult = singleResult.result;
       providerUsed = singleResult.provider;
       modelUsed = singleResult.model;
