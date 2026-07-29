@@ -241,7 +241,7 @@ async function analyzeInChunks(
 }
 
 export function calculateOverallRiskScore(clauses: AnalysisOutput['clauses']): { overallScore: number; riskLevel: 'low' | 'medium' | 'high' } {
-  if (clauses.length === 0) return { overallScore: 0, riskLevel: 'low' };
+  if (clauses.length === 0) return { overallScore: 0, riskLevel: 'low' as const };
 
   let weightedSum = 0;
   let totalWeight = 0;
@@ -259,7 +259,7 @@ export function calculateOverallRiskScore(clauses: AnalysisOutput['clauses']): {
   let overall = Math.round(weightedSum / totalWeight);
   if (hasCritical) overall = Math.max(overall, 60);
 
-  const riskLevel = overall <= 33 ? 'low' : overall <= 66 ? 'medium' : 'high';
+  const riskLevel: 'low' | 'medium' | 'high' = overall <= 33 ? 'low' : overall <= 66 ? 'medium' : 'high';
   return { overallScore: overall, riskLevel };
 }
 
