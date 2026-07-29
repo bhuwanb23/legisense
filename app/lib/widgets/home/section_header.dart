@@ -3,8 +3,6 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../theme/app_theme.dart';
 
-/// Reusable section header with title and optional action button —
-/// matches the Dribbble "Manage your device" + `+` pattern.
 class SectionHeader extends StatelessWidget {
   const SectionHeader({
     super.key,
@@ -26,17 +24,18 @@ class SectionHeader extends StatelessWidget {
         Expanded(
           child: Text(
             title,
-            style: GoogleFonts.epilogue(
-              fontSize: 18,
+            style: GoogleFonts.spectral(
+              fontSize: 20,
               fontWeight: FontWeight.w700,
-              color: AppColors.primaryNavy,
-              letterSpacing: -0.3,
+              color: AppColors.ink,
+              letterSpacing: -0.2,
+              fontStyle: FontStyle.normal,
             ),
           ),
         ),
         if (showAddButton)
           Material(
-            color: AppColors.brightBlue,
+            color: AppColors.ink,
             shape: const CircleBorder(),
             child: InkWell(
               customBorder: const CircleBorder(),
@@ -60,7 +59,7 @@ class SectionHeader extends StatelessWidget {
               style: GoogleFonts.epilogue(
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
-                color: AppColors.brightBlue,
+                color: AppColors.accentGold,
               ),
             ),
           ),
