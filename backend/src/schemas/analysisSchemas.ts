@@ -16,7 +16,7 @@ export const ClauseSchema = z.object({
   riskLevel: z.enum(['none', 'low', 'medium', 'high']),
   riskScore: z.number().min(0).max(100),
   riskReason: z.string(),
-  riskCategory: z.enum(['financial', 'legal', 'privacy', 'termination', 'obligation', 'liability', 'compliance']),
+  riskCategory: z.enum(['financial', 'legal', 'privacy', 'termination', 'obligation', 'liability', 'compliance', 'intellectual_property', 'operational']),
   counterSuggestion: z.string(),
 });
 
@@ -39,7 +39,7 @@ export const BreachScenarioSchema = z.object({
 });
 
 export const RiskItemSchema = z.object({
-  riskType: z.enum(['financial', 'liability', 'privacy', 'termination', 'missing', 'compliance']),
+  riskType: z.enum(['financial', 'liability', 'privacy', 'termination', 'missing', 'compliance', 'legal', 'obligation', 'intellectual_property', 'operational']),
   title: z.string().min(1),
   description: z.string().min(1),
   severity: z.enum(['critical', 'high', 'medium', 'low']),
