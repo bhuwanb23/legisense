@@ -61,7 +61,7 @@ class _AnalysisResultsPageState extends State<AnalysisResultsPage>
         foregroundColor: AppColors.ink,
         title: Text(
           'Analysis',
-          style: GoogleFonts.spectral(
+          style: GoogleFonts.plusJakartaSans(
             fontWeight: FontWeight.w700,
             fontStyle: FontStyle.normal,
           ),
@@ -93,7 +93,7 @@ class _AnalysisResultsPageState extends State<AnalysisResultsPage>
                                   Expanded(
                                     child: Text(
                                       'Document: "${r.documentTitle}"',
-                                      style: GoogleFonts.epilogue(
+                                      style: GoogleFonts.plusJakartaSans(
                                         fontSize: 15,
                                         fontWeight: FontWeight.w700,
                                         color: AppColors.primaryNavy,
@@ -105,7 +105,7 @@ class _AnalysisResultsPageState extends State<AnalysisResultsPage>
                               const SizedBox(height: 10),
                               Text(
                                 'Type: ${r.typeEmoji} ${r.documentType}',
-                                style: GoogleFonts.epilogue(
+                                style: GoogleFonts.plusJakartaSans(
                                   fontSize: 14,
                                   color: AppColors.inkSoft,
                                 ),
@@ -113,7 +113,7 @@ class _AnalysisResultsPageState extends State<AnalysisResultsPage>
                               const SizedBox(height: 6),
                               Text(
                                 'Pages: ${r.pageCount}   |   Parties: ${r.partyCount}',
-                                style: GoogleFonts.epilogue(
+                                style: GoogleFonts.plusJakartaSans(
                                   fontSize: 13,
                                   color: AppColors.inkSoft,
                                 ),
@@ -121,7 +121,7 @@ class _AnalysisResultsPageState extends State<AnalysisResultsPage>
                               const SizedBox(height: 4),
                               Text(
                                 'Analyzed: ${r.analyzedLabel}',
-                                style: GoogleFonts.epilogue(
+                                style: GoogleFonts.plusJakartaSans(
                                   fontSize: 13,
                                   color: AppColors.inkSoft,
                                 ),
@@ -139,7 +139,7 @@ class _AnalysisResultsPageState extends State<AnalysisResultsPage>
                               Text(
                                 r.biasSummary,
                                 textAlign: TextAlign.center,
-                                style: GoogleFonts.epilogue(
+                                style: GoogleFonts.plusJakartaSans(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w600,
                                   height: 1.4,
@@ -158,7 +158,7 @@ class _AnalysisResultsPageState extends State<AnalysisResultsPage>
                                 },
                                 child: Text(
                                   'Open risk dashboard',
-                                  style: GoogleFonts.epilogue(
+                                  style: GoogleFonts.plusJakartaSans(
                                     fontWeight: FontWeight.w700,
                                     color: AppColors.accentSky,
                                   ),
@@ -231,11 +231,11 @@ class _AnalysisResultsPageState extends State<AnalysisResultsPage>
                       labelColor: AppColors.primaryNavy,
                       unselectedLabelColor: AppColors.inkSoft,
                       indicatorColor: AppColors.primaryNavy,
-                      labelStyle: GoogleFonts.epilogue(
+                      labelStyle: GoogleFonts.plusJakartaSans(
                         fontWeight: FontWeight.w700,
                         fontSize: 14,
                       ),
-                      unselectedLabelStyle: GoogleFonts.epilogue(
+                      unselectedLabelStyle: GoogleFonts.plusJakartaSans(
                         fontWeight: FontWeight.w500,
                         fontSize: 14,
                       ),
@@ -381,7 +381,7 @@ class _ActionChipButton extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 label,
-                style: GoogleFonts.epilogue(
+                style: GoogleFonts.plusJakartaSans(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
                   color: AppColors.primaryNavy,
@@ -437,7 +437,7 @@ class _SummaryTab extends StatelessWidget {
         SoftCard(
           child: Text(
             result.overview,
-            style: GoogleFonts.epilogue(
+            style: GoogleFonts.plusJakartaSans(
               fontSize: 14,
               height: 1.5,
               color: AppColors.inkSoft,
@@ -449,7 +449,7 @@ class _SummaryTab extends StatelessWidget {
           onPressed: onOpenFull,
           child: Text(
             'Open full summary',
-            style: GoogleFonts.epilogue(
+            style: GoogleFonts.plusJakartaSans(
               fontWeight: FontWeight.w700,
               color: AppColors.primaryNavy,
             ),
@@ -485,7 +485,7 @@ class _ClausesPreviewTab extends StatelessWidget {
                       Expanded(
                         child: Text(
                           'Clause ${c.number} — ${c.title}',
-                          style: GoogleFonts.epilogue(
+                          style: GoogleFonts.plusJakartaSans(
                             fontWeight: FontWeight.w700,
                             color: AppColors.primaryNavy,
                           ),
@@ -499,7 +499,7 @@ class _ClausesPreviewTab extends StatelessWidget {
                     c.originalText,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.epilogue(
+                    style: GoogleFonts.plusJakartaSans(
                       fontSize: 13,
                       height: 1.4,
                       color: AppColors.inkSoft,
@@ -514,7 +514,7 @@ class _ClausesPreviewTab extends StatelessWidget {
           onPressed: onOpenFull,
           child: Text(
             'See all clauses',
-            style: GoogleFonts.epilogue(
+            style: GoogleFonts.plusJakartaSans(
               fontWeight: FontWeight.w700,
               color: AppColors.primaryNavy,
             ),
@@ -552,7 +552,7 @@ class _PlainEnglishTab extends StatelessWidget {
                     children: [
                       Text(
                         c.title,
-                        style: GoogleFonts.epilogue(
+                        style: GoogleFonts.plusJakartaSans(
                           fontWeight: FontWeight.w700,
                           color: AppColors.primaryNavy,
                         ),
@@ -560,7 +560,7 @@ class _PlainEnglishTab extends StatelessWidget {
                       const SizedBox(height: 8),
                       Text(
                         c.plainEnglish,
-                        style: GoogleFonts.epilogue(
+                        style: GoogleFonts.plusJakartaSans(
                           fontSize: 14,
                           height: 1.45,
                           color: AppColors.inkSoft,
@@ -575,7 +575,7 @@ class _PlainEnglishTab extends StatelessWidget {
           onPressed: onOpenFull,
           child: Text(
             'Open plain language translator',
-            style: GoogleFonts.epilogue(
+            style: GoogleFonts.plusJakartaSans(
               fontWeight: FontWeight.w700,
               color: AppColors.primaryNavy,
             ),
@@ -619,7 +619,7 @@ class _RisksTab extends StatelessWidget {
                   Expanded(
                     child: Text(
                       cat.title,
-                      style: GoogleFonts.epilogue(
+                      style: GoogleFonts.plusJakartaSans(
                         fontWeight: FontWeight.w700,
                         color: AppColors.primaryNavy,
                       ),
@@ -635,7 +635,7 @@ class _RisksTab extends StatelessWidget {
           onPressed: onOpenDashboard,
           child: Text(
             'Open risk dashboard',
-            style: GoogleFonts.epilogue(
+            style: GoogleFonts.plusJakartaSans(
               fontWeight: FontWeight.w700,
               color: AppColors.primaryNavy,
             ),
@@ -659,7 +659,7 @@ class _Count extends StatelessWidget {
       children: [
         Text(
           '$n',
-          style: GoogleFonts.epilogue(
+          style: GoogleFonts.plusJakartaSans(
             fontSize: 20,
             fontWeight: FontWeight.w700,
             color: RiskStyle.color(level),
@@ -667,7 +667,7 @@ class _Count extends StatelessWidget {
         ),
         Text(
           label,
-          style: GoogleFonts.epilogue(
+          style: GoogleFonts.plusJakartaSans(
             fontSize: 11,
             color: AppColors.inkSoft,
           ),
