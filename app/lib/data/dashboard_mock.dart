@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 /// Demo dashboard content until the backend exists.
 abstract final class DashboardMock {
   static const stats = DashboardStats(
-    totalAnalyzed: 24,
-    highRisk: 5,
-    pendingDeadlines: 3,
+    totalAnalyzed: 32,
+    highRisk: 7,
+    pendingDeadlines: 4,
   );
 
   static const filters = <DocTypeFilter>[
@@ -93,6 +93,26 @@ abstract final class DashboardMock {
       relativeDate: '2 days ago',
       riskScore: 72,
       daysAgo: 2,
+    ),
+    MockDocument(
+      id: '7',
+      title: 'Freelance MSA — Pixel Studio',
+      typeId: 'employment',
+      typeLabel: 'Employment',
+      risk: DocRisk.medium,
+      relativeDate: '4 days ago',
+      riskScore: 49,
+      daysAgo: 4,
+    ),
+    MockDocument(
+      id: '8',
+      title: 'Mutual NDA — Northwind',
+      typeId: 'nda',
+      typeLabel: 'NDA',
+      risk: DocRisk.low,
+      relativeDate: '5 days ago',
+      riskScore: 18,
+      daysAgo: 5,
     ),
   ];
 

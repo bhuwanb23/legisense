@@ -2,14 +2,13 @@ import 'package:flutter/material.dart';
 
 import '../../theme/app_theme.dart';
 
-/// White rounded card wrapper for auth pages — centers content like the
-/// Dribbble inspiration with large radius and subtle shadow.
+/// Cloud surface with hairline rule — letter stack for auth forms.
 class AuthCard extends StatelessWidget {
   const AuthCard({
     super.key,
     required this.child,
     this.maxWidth = 420,
-    this.padding = const EdgeInsets.symmetric(horizontal: 28, vertical: 36),
+    this.padding = const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
   });
 
   final Widget child;
@@ -21,20 +20,8 @@ class AuthCard extends StatelessWidget {
     return Center(
       child: ConstrainedBox(
         constraints: BoxConstraints(maxWidth: maxWidth),
-        child: Container(
-          width: double.infinity,
+        child: Padding(
           padding: padding,
-          decoration: BoxDecoration(
-            color: AppColors.cloud,
-            borderRadius: BorderRadius.circular(AppRadii.lg),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.primaryNavy.withValues(alpha: 0.06),
-                blurRadius: 40,
-                offset: const Offset(0, 12),
-              ),
-            ],
-          ),
           child: child,
         ),
       ),

@@ -10,6 +10,9 @@ class SessionPrefs {
   static const _rememberMeKey = 'remember_me';
   static const _emailKey = 'user_email';
   static const _displayNameKey = 'user_display_name';
+  static const _professionKey = 'user_profession';
+  static const _languageKey = 'user_language';
+  static const _stateKey = 'user_state';
 
   static Future<SharedPreferences> get _prefs async =>
       SharedPreferences.getInstance();
@@ -82,6 +85,48 @@ class SessionPrefs {
     }
   }
 
+  static Future<String?> profession() async {
+    final prefs = await _prefs;
+    return prefs.getString(_professionKey);
+  }
+
+  static Future<void> setProfession(String? value) async {
+    final prefs = await _prefs;
+    if (value == null || value.isEmpty) {
+      await prefs.remove(_professionKey);
+    } else {
+      await prefs.setString(_professionKey, value);
+    }
+  }
+
+  static Future<String?> language() async {
+    final prefs = await _prefs;
+    return prefs.getString(_languageKey);
+  }
+
+  static Future<void> setLanguage(String? value) async {
+    final prefs = await _prefs;
+    if (value == null || value.isEmpty) {
+      await prefs.remove(_languageKey);
+    } else {
+      await prefs.setString(_languageKey, value);
+    }
+  }
+
+  static Future<String?> stateRegion() async {
+    final prefs = await _prefs;
+    return prefs.getString(_stateKey);
+  }
+
+  static Future<void> setStateRegion(String? value) async {
+    final prefs = await _prefs;
+    if (value == null || value.isEmpty) {
+      await prefs.remove(_stateKey);
+    } else {
+      await prefs.setString(_stateKey, value);
+    }
+  }
+
   /// Splash destination helper.
   static Future<SplashDestination> resolveSplashDestination() async {
     final loggedIn = await isLoggedIn();
@@ -102,6 +147,9 @@ class SessionPrefs {
     await prefs.remove(_rememberMeKey);
     await prefs.remove(_emailKey);
     await prefs.remove(_displayNameKey);
+    await prefs.remove(_professionKey);
+    await prefs.remove(_languageKey);
+    await prefs.remove(_stateKey);
   }
 }
 

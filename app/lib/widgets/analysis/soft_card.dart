@@ -23,11 +23,12 @@ class SoftCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.cloud,
         borderRadius: BorderRadius.circular(AppRadii.md),
+        border: Border.all(color: AppColors.rule),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primaryNavy.withValues(alpha: 0.06),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
+            color: AppColors.ink.withValues(alpha: 0.05),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -77,10 +78,11 @@ class MiniStatCard extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             value,
-            style: GoogleFonts.epilogue(
-              fontSize: 16,
+            style: GoogleFonts.spectral(
+              fontSize: 18,
               fontWeight: FontWeight.w700,
-              color: AppColors.primaryNavy,
+              color: AppColors.ink,
+              fontStyle: FontStyle.normal,
             ),
           ),
         ],

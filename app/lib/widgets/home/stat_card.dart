@@ -3,8 +3,6 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../theme/app_theme.dart';
 
-/// Compact stat card for the 2x2 grid — matches the Dribbble
-/// device card pattern with icon, value, and label.
 class StatCard extends StatelessWidget {
   const StatCard({
     super.key,
@@ -25,14 +23,8 @@ class StatCard extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.cloud,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primaryNavy.withValues(alpha: 0.06),
-            blurRadius: 16,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(AppRadii.md),
+        border: Border.all(color: AppColors.rule),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -42,24 +34,25 @@ class StatCard extends StatelessWidget {
             height: 40,
             decoration: BoxDecoration(
               color: accent
-                  ? AppColors.brightBlue.withValues(alpha: 0.12)
-                  : AppColors.skyWash,
+                  ? AppColors.accentGold.withValues(alpha: 0.15)
+                  : AppColors.paper2,
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(
               icon,
               size: 20,
-              color: accent ? AppColors.brightBlue : AppColors.primaryNavy,
+              color: accent ? AppColors.accentGold : AppColors.ink,
             ),
           ),
           const SizedBox(height: 14),
           Text(
             value,
-            style: GoogleFonts.epilogue(
-              fontSize: 22,
+            style: GoogleFonts.spectral(
+              fontSize: 24,
               fontWeight: FontWeight.w700,
-              color: AppColors.primaryNavy,
-              letterSpacing: -0.5,
+              color: AppColors.ink,
+              letterSpacing: -0.4,
+              fontStyle: FontStyle.normal,
             ),
           ),
           const SizedBox(height: 2),

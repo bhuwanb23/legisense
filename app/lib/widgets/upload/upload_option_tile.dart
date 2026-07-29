@@ -32,16 +32,9 @@ class UploadOptionTile extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(AppRadii.md),
             border: Border.all(
-              color: selected ? AppColors.primaryNavy : AppColors.borderMuted,
+              color: selected ? AppColors.ink : AppColors.rule,
               width: selected ? 1.6 : 1,
             ),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.primaryNavy.withValues(alpha: 0.06),
-                blurRadius: 14,
-                offset: const Offset(0, 5),
-              ),
-            ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -50,15 +43,13 @@ class UploadOptionTile extends StatelessWidget {
                 width: 42,
                 height: 42,
                 decoration: BoxDecoration(
-                  color: selected
-                      ? AppColors.primaryNavy
-                      : AppColors.skyWash,
-                  borderRadius: BorderRadius.circular(14),
+                  color: selected ? AppColors.ink : AppColors.paper2,
+                  borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
                   icon,
                   size: 22,
-                  color: selected ? AppColors.cloud : AppColors.primaryNavy,
+                  color: selected ? AppColors.cloud : AppColors.ink,
                 ),
               ),
               const SizedBox(height: 14),
@@ -67,7 +58,7 @@ class UploadOptionTile extends StatelessWidget {
                 style: GoogleFonts.epilogue(
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.primaryNavy,
+                  color: AppColors.ink,
                 ),
               ),
               const SizedBox(height: 4),

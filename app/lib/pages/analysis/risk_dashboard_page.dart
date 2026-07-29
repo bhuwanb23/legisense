@@ -69,9 +69,9 @@ class RiskDashboardPage extends StatelessWidget {
     ];
 
     return Scaffold(
-      backgroundColor: AppColors.skyMist,
+      backgroundColor: AppColors.paper,
       appBar: AppBar(
-        backgroundColor: AppColors.skyMist,
+        backgroundColor: AppColors.paper,
         elevation: 0,
         foregroundColor: AppColors.primaryNavy,
         title: Text(

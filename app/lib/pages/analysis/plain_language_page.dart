@@ -5,6 +5,7 @@ import '../../data/analysis_mock.dart';
 import '../../data/legal_glossary.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/analysis/soft_card.dart';
+import '../chat/chat_page.dart';
 import 'clause_breakdown_page.dart';
 
 enum _ViewMode { stacked, flip }
@@ -253,9 +254,9 @@ class _PlainLanguagePageState extends State<PlainLanguagePage> {
     final clauses = _clauses;
 
     return Scaffold(
-      backgroundColor: AppColors.skyMist,
+      backgroundColor: AppColors.paper,
       appBar: AppBar(
-        backgroundColor: AppColors.skyMist,
+        backgroundColor: AppColors.paper,
         elevation: 0,
         foregroundColor: AppColors.primaryNavy,
         title: Text(
@@ -461,10 +462,15 @@ class _PlainLanguagePageState extends State<PlainLanguagePage> {
                   const SizedBox(width: 10),
                   Expanded(
                     child: FilledButton(
-                      onPressed: () =>
-                          _toast('Chat with Document comes next.'),
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (_) => ChatPage(result: widget.result),
+                          ),
+                        );
+                      },
                       style: FilledButton.styleFrom(
-                        backgroundColor: AppColors.primaryNavy,
+                        backgroundColor: AppColors.ink,
                         minimumSize: const Size.fromHeight(48),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(AppRadii.pill),

@@ -129,7 +129,7 @@ class _DocumentsPageState extends State<DocumentsPage> {
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [AppColors.skyMist, AppColors.skyWash],
+          colors: [AppColors.paper, AppColors.paper2],
         ),
       ),
       child: SafeArea(

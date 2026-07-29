@@ -78,6 +78,9 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
     setState(() => _loading = true);
     await SessionPrefs.setLoggedIn(true);
     await SessionPrefs.setProfileComplete(true);
+    await SessionPrefs.setProfession(_profession);
+    await SessionPrefs.setLanguage(_language);
+    await SessionPrefs.setStateRegion(_state);
     final email = await SessionPrefs.userEmail();
     final existingName = await SessionPrefs.displayName();
     if (existingName == null || existingName.isEmpty) {

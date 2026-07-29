@@ -14,42 +14,37 @@ class WelcomeBanner extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(22, 22, 22, 24),
       decoration: BoxDecoration(
-        color: AppColors.primaryNavy,
+        color: AppColors.ink,
         borderRadius: BorderRadius.circular(AppRadii.md),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primaryNavy.withValues(alpha: 0.22),
-            blurRadius: 22,
-            offset: const Offset(0, 10),
+            color: AppColors.ink.withValues(alpha: 0.18),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Text(
-              'Hello $name, ready to review a document?',
-              style: GoogleFonts.epilogue(
-                fontSize: 20,
-                fontWeight: FontWeight.w700,
-                height: 1.3,
-                letterSpacing: -0.4,
-                color: AppColors.cloud,
-              ),
+          Text(
+            'Hello $name',
+            style: GoogleFonts.spectral(
+              fontSize: 24,
+              fontWeight: FontWeight.w700,
+              height: 1.2,
+              color: AppColors.cloud,
+              fontStyle: FontStyle.normal,
             ),
           ),
-          const SizedBox(width: 12),
-          Container(
-            width: 52,
-            height: 52,
-            decoration: BoxDecoration(
-              color: AppColors.cloud.withValues(alpha: 0.14),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.description_outlined,
-              color: AppColors.cloud,
-              size: 26,
+          const SizedBox(height: 6),
+          Text(
+            'Ready to review a document?',
+            style: GoogleFonts.epilogue(
+              fontSize: 14,
+              fontWeight: FontWeight.w400,
+              height: 1.4,
+              color: AppColors.cloud.withValues(alpha: 0.78),
             ),
           ),
         ],

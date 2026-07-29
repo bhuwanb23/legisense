@@ -3,8 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../theme/app_theme.dart';
 
-/// 5-tab bar with elevated center Upload disc — matches the Dribbble
-/// bottom nav pattern with rounded pill active indicator.
+/// 5-tab bar — ink active + gold underline; elevated ink Upload.
 class AppBottomNav extends StatelessWidget {
   const AppBottomNav({
     super.key,
@@ -18,15 +17,9 @@ class AppBottomNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         color: AppColors.cloud,
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primaryNavy.withValues(alpha: 0.08),
-            blurRadius: 24,
-            offset: const Offset(0, -4),
-          ),
-        ],
+        border: Border(top: BorderSide(color: AppColors.rule)),
       ),
       child: SafeArea(
         top: false,
@@ -44,31 +37,29 @@ class AppBottomNav extends StatelessWidget {
               _NavItem(
                 icon: Icons.folder_outlined,
                 activeIcon: Icons.folder_rounded,
-                label: 'Documents',
+                label: 'Docs',
                 selected: currentIndex == 1,
                 onTap: () => onChanged(1),
               ),
               Expanded(
                 child: Center(
                   child: Transform.translate(
-                    offset: const Offset(0, -14),
+                    offset: const Offset(0, -12),
                     child: Material(
                       color: Colors.transparent,
                       child: InkWell(
                         customBorder: const CircleBorder(),
                         onTap: () => onChanged(2),
                         child: Ink(
-                          width: 58,
-                          height: 58,
+                          width: 56,
+                          height: 56,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: AppColors.brightBlue,
+                            color: AppColors.ink,
                             boxShadow: [
                               BoxShadow(
-                                color: AppColors.brightBlue.withValues(
-                                  alpha: 0.3,
-                                ),
-                                blurRadius: 18,
+                                color: AppColors.ink.withValues(alpha: 0.22),
+                                blurRadius: 16,
                                 offset: const Offset(0, 8),
                               ),
                             ],
@@ -76,7 +67,7 @@ class AppBottomNav extends StatelessWidget {
                           child: const Icon(
                             Icons.add_rounded,
                             color: AppColors.cloud,
-                            size: 30,
+                            size: 28,
                           ),
                         ),
                       ),
@@ -87,7 +78,7 @@ class AppBottomNav extends StatelessWidget {
               _NavItem(
                 icon: Icons.notifications_outlined,
                 activeIcon: Icons.notifications_rounded,
-                label: 'Notify',
+                label: 'Alerts',
                 selected: currentIndex == 3,
                 onTap: () => onChanged(3),
               ),
@@ -123,7 +114,7 @@ class _NavItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = selected ? AppColors.brightBlue : AppColors.inkSoft;
+    final color = selected ? AppColors.ink : AppColors.inkSoft;
 
     return Expanded(
       child: InkWell(
@@ -131,7 +122,7 @@ class _NavItem extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(selected ? activeIcon : icon, size: 24, color: color),
+            Icon(selected ? activeIcon : icon, size: 22, color: color),
             const SizedBox(height: 4),
             Text(
               label,
@@ -141,6 +132,16 @@ class _NavItem extends StatelessWidget {
                 fontSize: 11,
                 fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                 color: color,
+              ),
+            ),
+            const SizedBox(height: 4),
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              height: 3,
+              width: selected ? 16 : 0,
+              decoration: BoxDecoration(
+                color: AppColors.accentGold,
+                borderRadius: BorderRadius.circular(2),
               ),
             ),
           ],

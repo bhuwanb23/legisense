@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../theme/app_theme.dart';
 
-/// Shared soft wash chrome for stub tab pages.
+/// Shared paper chrome for tab pages.
 class StubScaffold extends StatelessWidget {
   const StubScaffold({
     super.key,
@@ -18,28 +18,23 @@ class StubScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [AppColors.skyMist, AppColors.skyWash],
-        ),
-      ),
+    return ColoredBox(
+      color: AppColors.paper,
       child: SafeArea(
         bottom: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(28, 24, 28, 24),
+          padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
                 title,
-                style: GoogleFonts.epilogue(
+                style: GoogleFonts.spectral(
                   fontSize: 28,
                   fontWeight: FontWeight.w700,
-                  letterSpacing: -0.6,
-                  color: AppColors.primaryNavy,
+                  letterSpacing: -0.4,
+                  color: AppColors.ink,
+                  fontStyle: FontStyle.normal,
                 ),
               ),
               const SizedBox(height: 8),
@@ -52,8 +47,8 @@ class StubScaffold extends StatelessWidget {
                 ),
               ),
               if (child != null) ...[
-                const SizedBox(height: 28),
-                child!,
+                const SizedBox(height: 24),
+                Expanded(child: child!),
               ],
             ],
           ),
