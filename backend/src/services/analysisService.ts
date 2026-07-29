@@ -329,6 +329,8 @@ function saveAnalysisResults(
       }).run();
     }
 
+    generateRiskItemsFromClauses(analysisId);
+
     for (const deadline of ai.deadlines) {
       db.insert(deadlines).values({
         documentId,
