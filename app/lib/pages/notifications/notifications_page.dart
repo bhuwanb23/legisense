@@ -13,15 +13,18 @@ class NotificationsPage extends StatelessWidget {
 
   void _open(BuildContext context, AppNotification n) {
     if (n.docId != null) {
-      final doc = DashboardMock.recentDocuments.cast<MockDocument?>().firstWhere(
-            (d) => d!.id == n.docId,
-            orElse: () => null,
-          );
+      MockDocument? doc;
+      for (final d in DashboardMock.recentDocuments) {
+        if (d.id == n.docId) {
+          doc = d;
+          break;
+        }
+      }
       if (doc != null) {
         Navigator.of(context).push(
           MaterialPageRoute<void>(
             builder: (_) => AnalysisResultsPage(
-              result: AnalysisResult.fromMockDocument(doc),
+              result: AnalysisResult.fromMockDocument(doc!),
             ),
           ),
         );

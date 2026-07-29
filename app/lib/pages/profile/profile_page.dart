@@ -50,19 +50,23 @@ class _ProfilePageState extends State<ProfilePage> {
     return local[0].toUpperCase() + local.substring(1);
   }
 
-  String get _languageLabel {
-    final match = AuthConstants.languages.cast<MapEntry<String, String>?>().firstWhere(
-          (e) => e!.key == _language,
-          orElse: () => null,
-        );
-    // languages may be a list of maps — check auth_constants
-    return _language;
+  String _languageLabel(String code) {
+    for (final lang in ProfileOptions.languages) {
+      if (lang.code == code) return lang.label;
+    }
+    return code;
   }
 
   Future<void> _editPrefs() async {
-    String profession = _profession == '—' ? AuthConstants.professions.first : _profession;
-    String language = _language;
-    String state = _state == '—' ? AuthConstants.indianStates.first : _state;
+    var profession = ProfileOptions.professions.contains(_profession)
+        ? _profession
+        : ProfileOptions.professions.first;
+    var language = ProfileOptions.languages.any((l) => l.code == _language)
+        ? _language
+        : 'en';
+    var state = IndiaRegions.states.contains(_state)
+        ? _state
+        : IndiaRegions.states.first;
 
     final saved = await showModalBottomSheet<bool>(
       context: context,
@@ -96,39 +100,34 @@ class _ProfilePageState extends State<ProfilePage> {
                   ),
                   const SizedBox(height: 16),
                   DropdownButtonFormField<String>(
-                    value: AuthConstants.professions.contains(profession)
-                        ? profession
-                        : AuthConstants.professions.first,
+                    initialValue: profession,
                     decoration: const InputDecoration(labelText: 'Profession'),
                     items: [
-                      for (final p in AuthConstants.professions)
+                      for (final p in ProfileOptions.professions)
                         DropdownMenuItem(value: p, child: Text(p)),
                     ],
-                    onChanged: (v) => setModal(() => profession = v ?? profession),
+                    onChanged: (v) =>
+                        setModal(() => profession = v ?? profession),
                   ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
-                    value: AuthConstants.languageCodes.contains(language)
-                        ? language
-                        : 'en',
+                    initialValue: language,
                     decoration: const InputDecoration(labelText: 'Language'),
                     items: [
-                      for (final entry in AuthConstants.languageEntries)
+                      for (final lang in ProfileOptions.languages)
                         DropdownMenuItem(
-                          value: entry.key,
-                          child: Text(entry.value),
+                          value: lang.code,
+                          child: Text(lang.label),
                         ),
                     ],
                     onChanged: (v) => setModal(() => language = v ?? language),
                   ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
-                    value: AuthConstants.indianStates.contains(state)
-                        ? state
-                        : AuthConstants.indianStates.first,
+                    initialValue: state,
                     decoration: const InputDecoration(labelText: 'State'),
                     items: [
-                      for (final s in AuthConstants.indianStates)
+                      for (final s in IndiaRegions.states)
                         DropdownMenuItem(value: s, child: Text(s)),
                     ],
                     onChanged: (v) => setModal(() => state = v ?? state),
@@ -223,10 +222,7 @@ class _ProfilePageState extends State<ProfilePage> {
           const SizedBox(height: 28),
           _InfoRow(label: 'Profession', value: _profession),
           const SizedBox(height: 10),
-          _InfoRow(
-            label: 'Language',
-            value: AuthConstants.languageLabel(_language),
-          ),
+          _InfoRow(label: 'Language', value: _languageLabel(_language)),
           const SizedBox(height: 10),
           _InfoRow(label: 'State / region', value: _state),
           const SizedBox(height: 20),
