@@ -132,7 +132,7 @@ class _ProcessingPageState extends State<ProcessingPage> {
                             onPressed: _cancel,
                             child: Text(
                               'Cancel',
-                              style: GoogleFonts.epilogue(
+                              style: GoogleFonts.plusJakartaSans(
                                 fontWeight: FontWeight.w600,
                                 color: AppColors.inkSoft,
                               ),
@@ -151,7 +151,7 @@ class _ProcessingPageState extends State<ProcessingPage> {
                         Text(
                           'Analyzing your document',
                           textAlign: TextAlign.center,
-                          style: GoogleFonts.epilogue(
+                          style: GoogleFonts.plusJakartaSans(
                             fontSize: 22,
                             fontWeight: FontWeight.w700,
                             color: AppColors.primaryNavy,
@@ -164,7 +164,7 @@ class _ProcessingPageState extends State<ProcessingPage> {
                           textAlign: TextAlign.center,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.epilogue(
+                          style: GoogleFonts.plusJakartaSans(
                             fontSize: 14,
                             color: AppColors.inkSoft,
                           ),
@@ -205,7 +205,7 @@ class _ProcessingPageState extends State<ProcessingPage> {
                                 Expanded(
                                   child: Text(
                                     _steps[i],
-                                    style: GoogleFonts.epilogue(
+                                    style: GoogleFonts.plusJakartaSans(
                                       fontSize: 15,
                                       fontWeight: done || active
                                           ? FontWeight.w600
@@ -228,7 +228,7 @@ class _ProcessingPageState extends State<ProcessingPage> {
                               ? 'About ${_secondsLeft}s remaining'
                               : 'Almost done…',
                           textAlign: TextAlign.center,
-                          style: GoogleFonts.epilogue(
+                          style: GoogleFonts.plusJakartaSans(
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
                             color: AppColors.inkSoft,
@@ -252,7 +252,7 @@ class _ProcessingPageState extends State<ProcessingPage> {
                           child: Text(
                             _tip,
                             textAlign: TextAlign.center,
-                            style: GoogleFonts.epilogue(
+                            style: GoogleFonts.plusJakartaSans(
                               fontSize: 13,
                               height: 1.45,
                               color: AppColors.inkSoft,
