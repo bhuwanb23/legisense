@@ -308,6 +308,8 @@ function saveAnalysisResults(
         clauseTitle: clause.clauseTitle,
         originalText: clause.originalText,
         plainEnglishText: clause.plainEnglishText,
+        readingLevel: clause.readingLevel,
+        keyLegalTerms: JSON.stringify(clause.keyLegalTerms),
         riskLevel: clause.riskLevel,
         riskScore: clause.riskScore,
         riskReason: clause.riskReason,
