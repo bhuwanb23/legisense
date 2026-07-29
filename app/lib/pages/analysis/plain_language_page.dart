@@ -52,7 +52,7 @@ class _PlainLanguagePageState extends State<PlainLanguagePage> {
             children: [
               Text(
                 term,
-                style: GoogleFonts.epilogue(
+                style: GoogleFonts.plusJakartaSans(
                   fontSize: 20,
                   fontWeight: FontWeight.w700,
                   color: AppColors.primaryNavy,
@@ -61,7 +61,7 @@ class _PlainLanguagePageState extends State<PlainLanguagePage> {
               const SizedBox(height: 10),
               Text(
                 definition,
-                style: GoogleFonts.epilogue(
+                style: GoogleFonts.plusJakartaSans(
                   fontSize: 15,
                   height: 1.5,
                   color: AppColors.inkSoft,
@@ -97,7 +97,7 @@ class _PlainLanguagePageState extends State<PlainLanguagePage> {
               children: [
                 Text(
                   'Legal glossary',
-                  style: GoogleFonts.epilogue(
+                  style: GoogleFonts.plusJakartaSans(
                     fontSize: 20,
                     fontWeight: FontWeight.w700,
                     color: AppColors.primaryNavy,
@@ -106,7 +106,7 @@ class _PlainLanguagePageState extends State<PlainLanguagePage> {
                 const SizedBox(height: 8),
                 Text(
                   'Tap a highlighted word in the original text, or browse here.',
-                  style: GoogleFonts.epilogue(
+                  style: GoogleFonts.plusJakartaSans(
                     fontSize: 13,
                     color: AppColors.inkSoft,
                   ),
@@ -117,14 +117,14 @@ class _PlainLanguagePageState extends State<PlainLanguagePage> {
                     contentPadding: EdgeInsets.zero,
                     title: Text(
                       e.key,
-                      style: GoogleFonts.epilogue(
+                      style: GoogleFonts.plusJakartaSans(
                         fontWeight: FontWeight.w700,
                         color: AppColors.primaryNavy,
                       ),
                     ),
                     subtitle: Text(
                       e.value,
-                      style: GoogleFonts.epilogue(
+                      style: GoogleFonts.plusJakartaSans(
                         fontSize: 13,
                         color: AppColors.inkSoft,
                       ),
@@ -147,12 +147,12 @@ class _PlainLanguagePageState extends State<PlainLanguagePage> {
     final lower = text.toLowerCase();
     final spans = <InlineSpan>[];
     var i = 0;
-    final baseStyle = GoogleFonts.epilogue(
+    final baseStyle = GoogleFonts.plusJakartaSans(
       fontSize: 14,
       height: 1.5,
       color: AppColors.inkSoft,
     );
-    final linkStyle = GoogleFonts.epilogue(
+    final linkStyle = GoogleFonts.plusJakartaSans(
       fontSize: 14,
       height: 1.5,
       fontWeight: FontWeight.w700,
@@ -250,7 +250,7 @@ class _PlainLanguagePageState extends State<PlainLanguagePage> {
         foregroundColor: AppColors.primaryNavy,
         title: Text(
           'Plain language',
-          style: GoogleFonts.epilogue(fontWeight: FontWeight.w700),
+          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
         ),
         actions: [
           IconButton(
@@ -336,7 +336,7 @@ class _PlainLanguagePageState extends State<PlainLanguagePage> {
                             _ReadingLevel.grade8 => 'Grade 8',
                             _ReadingLevel.standard => 'Standard',
                           },
-                          style: GoogleFonts.epilogue(
+                          style: GoogleFonts.plusJakartaSans(
                             fontSize: 12,
                             fontWeight: FontWeight.w700,
                             color: AppColors.riskLow,
@@ -392,7 +392,7 @@ class _PlainLanguagePageState extends State<PlainLanguagePage> {
                               trailing: const Text('🟢'),
                               child: Text(
                                 _plainForLevel(c.plainEnglish),
-                                style: GoogleFonts.epilogue(
+                                style: GoogleFonts.plusJakartaSans(
                                   fontSize: 14,
                                   height: 1.5,
                                   color: AppColors.primaryNavy,
@@ -403,7 +403,7 @@ class _PlainLanguagePageState extends State<PlainLanguagePage> {
                             padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
                             child: Text(
                               'Clause ${c.number} — ${c.title}',
-                              style: GoogleFonts.epilogue(
+                              style: GoogleFonts.plusJakartaSans(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
                                 color: AppColors.inkSoft,
@@ -444,7 +444,7 @@ class _PlainLanguagePageState extends State<PlainLanguagePage> {
                       ),
                       child: Text(
                         'Clauses',
-                        style: GoogleFonts.epilogue(fontWeight: FontWeight.w700),
+                        style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
                       ),
                     ),
                   ),
@@ -467,7 +467,7 @@ class _PlainLanguagePageState extends State<PlainLanguagePage> {
                       ),
                       child: Text(
                         'Chat',
-                        style: GoogleFonts.epilogue(fontWeight: FontWeight.w700),
+                        style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
                       ),
                     ),
                   ),
@@ -506,7 +506,7 @@ class _ToggleHalf extends StatelessWidget {
             child: Text(
               label,
               textAlign: TextAlign.center,
-              style: GoogleFonts.epilogue(
+              style: GoogleFonts.plusJakartaSans(
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
                 color: selected ? AppColors.cloud : AppColors.inkSoft,
@@ -537,7 +537,7 @@ class _ModeChip extends StatelessWidget {
       selected: selected,
       onSelected: (_) => onTap(),
       selectedColor: AppColors.accentSoft,
-      labelStyle: GoogleFonts.epilogue(
+      labelStyle: GoogleFonts.plusJakartaSans(
         fontWeight: FontWeight.w600,
         fontSize: 12,
         color: AppColors.primaryNavy,
@@ -572,7 +572,7 @@ class _SectionBlock extends StatelessWidget {
             children: [
               Text(
                 title,
-                style: GoogleFonts.epilogue(
+                style: GoogleFonts.plusJakartaSans(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 0.4,
