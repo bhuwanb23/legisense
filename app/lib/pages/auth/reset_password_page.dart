@@ -139,7 +139,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                           style: GoogleFonts.epilogue(
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
-                            color: AppColors.brightBlue,
+                            color: AppColors.ink,
                           ),
                         ),
                       ),

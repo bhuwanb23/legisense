@@ -141,7 +141,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       text: 'Terms & Conditions',
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
-                        color: AppColors.brightBlue,
+                        color: AppColors.ink,
                       ),
                     ),
                     const TextSpan(text: ' and '),
@@ -149,7 +149,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       text: 'Privacy Policy',
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
-                        color: AppColors.brightBlue,
+                        color: AppColors.ink,
                       ),
                     ),
                   ],
@@ -193,7 +193,7 @@ class _RegisterPageState extends State<RegisterPage> {
                           style: GoogleFonts.epilogue(
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
-                            color: AppColors.brightBlue,
+                            color: AppColors.ink,
                           ),
                         ),
                       ),

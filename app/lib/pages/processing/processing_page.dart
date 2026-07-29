@@ -114,15 +114,8 @@ class _ProcessingPageState extends State<ProcessingPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: DecoratedBox(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [AppColors.paper, AppColors.paper2],
-          ),
-        ),
-        child: SafeArea(
+      backgroundColor: AppColors.paper,
+      body: SafeArea(
           child: LayoutBuilder(
             builder: (context, constraints) {
               return SingleChildScrollView(
@@ -274,7 +267,6 @@ class _ProcessingPageState extends State<ProcessingPage> {
             },
           ),
         ),
-      ),
     );
   }
 }

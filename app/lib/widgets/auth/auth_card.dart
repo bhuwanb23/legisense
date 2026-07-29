@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../theme/app_theme.dart';
-
-/// Cloud surface with hairline rule — letter stack for auth forms.
+/// Letter-stack wrapper — content sits on paper without a heavy card.
 class AuthCard extends StatelessWidget {
   const AuthCard({
     super.key,

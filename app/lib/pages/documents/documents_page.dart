@@ -124,14 +124,8 @@ class _DocumentsPageState extends State<DocumentsPage> {
   Widget build(BuildContext context) {
     final docs = _visible;
 
-    return DecoratedBox(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [AppColors.paper, AppColors.paper2],
-        ),
-      ),
+    return ColoredBox(
+      color: AppColors.paper,
       child: SafeArea(
         bottom: false,
         child: Column(

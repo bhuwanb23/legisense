@@ -76,14 +76,8 @@ class _HomePageState extends State<HomePage> {
             ? DashboardMock.recentDocuments.first
             : null;
 
-    return DecoratedBox(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [AppColors.paper, AppColors.cloud],
-        ),
-      ),
+    return ColoredBox(
+      color: AppColors.paper,
       child: SafeArea(
         bottom: false,
         child: CustomScrollView(
@@ -101,12 +95,13 @@ class _HomePageState extends State<HomePage> {
                   const SizedBox(height: 24),
                   Text(
                     'Your Legal\nDashboard',
-                    style: GoogleFonts.epilogue(
-                      fontSize: 30,
+                    style: GoogleFonts.spectral(
+                      fontSize: 32,
                       fontWeight: FontWeight.w700,
                       height: 1.15,
-                      letterSpacing: -0.8,
-                      color: AppColors.primaryNavy,
+                      letterSpacing: -0.5,
+                      color: AppColors.ink,
+                      fontStyle: FontStyle.normal,
                     ),
                   ),
                   const SizedBox(height: 24),

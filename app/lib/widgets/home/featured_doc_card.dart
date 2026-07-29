@@ -28,14 +28,8 @@ class FeaturedDocCard extends StatelessWidget {
         onTap: onTap,
         child: Ink(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.primaryNavy.withValues(alpha: 0.08),
-                blurRadius: 24,
-                offset: const Offset(0, 8),
-              ),
-            ],
+            borderRadius: BorderRadius.circular(AppRadii.md),
+            border: Border.all(color: AppColors.rule),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,

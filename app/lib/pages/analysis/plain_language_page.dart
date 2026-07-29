@@ -36,17 +36,6 @@ class _PlainLanguagePageState extends State<PlainLanguagePage> {
       .where((c) => c.risk != AnalysisRiskLevel.missing)
       .toList();
 
-  void _toast(String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(msg),
-        backgroundColor: AppColors.primaryNavy,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      ),
-    );
-  }
-
   void _showDefinition(String term, String definition) {
     showModalBottomSheet<void>(
       context: context,

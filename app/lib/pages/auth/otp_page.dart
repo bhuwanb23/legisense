@@ -241,7 +241,7 @@ class _OtpPageState extends State<OtpPage> {
                         style: GoogleFonts.epilogue(
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
-                          color: AppColors.brightBlue,
+                          color: AppColors.ink,
                         ),
                       ),
                     ),

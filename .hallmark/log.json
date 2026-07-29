@@ -12,5 +12,12 @@
     "theme": "studied-DNA",
     "enrichment": "none",
     "brief": "Auth minimalist redesign — dating-app layout DNA on Legisense navy/sky"
+  },
+  {
+    "date": "2026-07-29",
+    "macrostructure": "multi-page",
+    "theme": "Ink & Trust (custom)",
+    "enrichment": "none",
+    "brief": "Full app reskin — paper/ink/gold, Spectral+Epilogue; Chat, Notifications, Profile"
   }
 ]

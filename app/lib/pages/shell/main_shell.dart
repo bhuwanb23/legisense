@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../theme/app_theme.dart';
 import '../../widgets/home/app_bottom_nav.dart';
 import '../documents/documents_page.dart';
 import '../home/home_page.dart';
@@ -28,6 +29,7 @@ class _MainShellState extends State<MainShell> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.paper,
       body: IndexedStack(
         index: _index,
         children: [

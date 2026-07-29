@@ -42,11 +42,12 @@ class HomeHeader extends StatelessWidget {
             children: [
               Text(
                 'Hi, $name',
-                style: GoogleFonts.epilogue(
-                  fontSize: 16,
+                style: GoogleFonts.spectral(
+                  fontSize: 18,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.primaryNavy,
+                  color: AppColors.ink,
                   letterSpacing: -0.3,
+                  fontStyle: FontStyle.normal,
                 ),
               ),
               Text(
