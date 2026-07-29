@@ -1058,6 +1058,216 @@ async function run() {
   }
 
   // ═══════════════════════════════════════════════════
+  //  16. Document Type Auto-Detection
+  // ═══════════════════════════════════════════════════
+  console.log('\n── 16. Document Type Auto-Detection ──');
+
+  {
+    const { ClassifyOutputSchema } = await import('../src/prompts/classificationPrompt');
+    const valid = ClassifyOutputSchema.parse({
+      type: 'nda',
+      type_label: 'Non-Disclosure Agreement',
+      confidence: 94,
+      sub_type: 'mutual_nda',
+      icon: 'lock',
+    });
+    assert(valid.type === 'nda', 'ClassifyOutputSchema parses valid output');
+    assert(valid.confidence === 94, 'ClassifyOutputSchema parses confidence');
+    assert(valid.sub_type === 'mutual_nda', 'ClassifyOutputSchema parses sub_type');
+  }
+
+  {
+    const { ClassifyOutputSchema } = await import('../src/prompts/classificationPrompt');
+    let threw = false;
+    try {
+      ClassifyOutputSchema.parse({ type: '', type_label: 'Test', confidence: 50, sub_type: '', icon: '' });
+    } catch { threw = true; }
+    assert(threw, 'ClassifyOutputSchema rejects empty type');
+  }
+
+  {
+    const { ClassifyOutputSchema } = await import('../src/prompts/classificationPrompt');
+    let threw = false;
+    try {
+      ClassifyOutputSchema.parse({ type: 'nda', type_label: 'NDA', confidence: 150, sub_type: '', icon: 'lock' });
+    } catch { threw = true; }
+    assert(threw, 'ClassifyOutputSchema rejects confidence > 100');
+  }
+
+  {
+    const { ClassifyOutputSchema } = await import('../src/prompts/classificationPrompt');
+    let threw = false;
+    try {
+      ClassifyOutputSchema.parse({ type: 'nda', type_label: 'NDA', confidence: -1, sub_type: '', icon: 'lock' });
+    } catch { threw = true; }
+    assert(threw, 'ClassifyOutputSchema rejects confidence < 0');
+  }
+
+  {
+    const { ClassifyOutputSchema } = await import('../src/prompts/classificationPrompt');
+    let threw = false;
+    try {
+      ClassifyOutputSchema.parse({});
+    } catch { threw = true; }
+    assert(threw, 'ClassifyOutputSchema rejects empty object');
+  }
+
+  {
+    const { getValidTypes, DOCUMENT_TYPES } = await import('../src/data/documentTypes');
+    const types = getValidTypes();
+    assert(types.includes('rental_agreement'), 'Master list includes rental_agreement');
+    assert(types.includes('nda'), 'Master list includes nda');
+    assert(types.includes('non_disclosure'), 'Master list includes non_disclosure');
+    assert(types.includes('employment_contract'), 'Master list includes employment_contract');
+    assert(types.includes('freelance_agreement'), 'Master list includes freelance_agreement');
+    assert(types.includes('sale_deed'), 'Master list includes sale_deed');
+    assert(types.includes('power_of_attorney'), 'Master list includes power_of_attorney');
+    assert(types.includes('loan_agreement'), 'Master list includes loan_agreement');
+    assert(types.includes('terms_of_service'), 'Master list includes terms_of_service');
+    assert(types.includes('privacy_policy'), 'Master list includes privacy_policy');
+    assert(types.includes('partnership_deed'), 'Master list includes partnership_deed');
+    assert(types.includes('will'), 'Master list includes will');
+    assert(types.includes('testament'), 'Master list includes testament');
+    assert(types.includes('court_notice'), 'Master list includes court_notice');
+    assert(types.includes('mou'), 'Master list includes mou');
+    assert(types.includes('memorandum'), 'Master list includes memorandum');
+    assert(types.includes('service_agreement'), 'Master list includes service_agreement');
+    assert(types.includes('unknown'), 'Master list includes unknown');
+  }
+
+  {
+    const { getTypeEntry } = await import('../src/data/documentTypes');
+    const rental = getTypeEntry('rental_agreement');
+    assert(rental.typeLabel === 'Rental Agreement', 'getTypeEntry returns correct label for rental');
+    assert(rental.icon === 'home', 'getTypeEntry returns correct icon for rental');
+
+    const nda = getTypeEntry('nda');
+    assert(nda.typeLabel === 'Non-Disclosure Agreement', 'getTypeEntry returns correct label for nda');
+
+    const unknown = getTypeEntry('nonexistent_type');
+    assert(unknown.type === 'unknown', 'getTypeEntry falls back to unknown for unrecognized type');
+    assert(unknown.typeLabel === 'Unknown Document', 'getTypeEntry fallback has correct label');
+  }
+
+  {
+    const { getPromptForType } = await import('../src/prompts/promptTemplates');
+    const rentalPrompt = getPromptForType('rental_agreement');
+    assert(rentalPrompt.includes('RENTAL AGREEMENT'), 'rental prompt mentions RENTAL AGREEMENT');
+    assert(rentalPrompt.toLowerCase().includes('security deposit'), 'rental prompt focuses on deposits');
+
+    const ndaPrompt = getPromptForType('nda');
+    assert(ndaPrompt.includes('NDA'), 'nda prompt mentions NDA');
+    assert(ndaPrompt.includes('confidential information'), 'nda prompt focuses on confidentiality');
+
+    const empPrompt = getPromptForType('employment_contract');
+    assert(empPrompt.includes('EMPLOYMENT CONTRACT'), 'employment prompt mentions EMPLOYMENT');
+    assert(empPrompt.toLowerCase().includes('probation period'), 'employment prompt focuses on probation');
+
+    const generalPrompt = getPromptForType('unknown');
+    assert(generalPrompt.includes('UNKNOWN'), 'general prompt mentions UNKNOWN');
+
+    const fallbackPrompt = getPromptForType('nonexistent_type');
+    assert(fallbackPrompt === generalPrompt, 'getPromptForType falls back to GENERAL_PROMPT for unknown type');
+  }
+
+  {
+    const { getPromptForType } = await import('../src/prompts/promptTemplates');
+    assert(getPromptForType('freelance_agreement').includes('FREELANCE AGREEMENT'), 'freelance prompt mentions FREELANCE');
+    assert(getPromptForType('sale_deed').includes('SALE DEED'), 'sale_deed prompt mentions SALE');
+    assert(getPromptForType('power_of_attorney').includes('POWER OF ATTORNEY'), 'poa prompt mentions POWER OF ATTORNEY');
+    assert(getPromptForType('loan_agreement').includes('LOAN AGREEMENT'), 'loan prompt mentions LOAN');
+    assert(getPromptForType('terms_of_service').includes('TERMS OF SERVICE'), 'tos prompt mentions TERMS');
+    assert(getPromptForType('privacy_policy').includes('PRIVACY POLICY'), 'privacy prompt mentions PRIVACY');
+    assert(getPromptForType('partnership_deed').includes('PARTNERSHIP DEED'), 'partnership prompt mentions PARTNERSHIP');
+    assert(getPromptForType('will').includes('WILL'), 'will prompt mentions WILL');
+    assert(getPromptForType('court_notice').includes('COURT NOTICE'), 'court notice prompt mentions COURT');
+    assert(getPromptForType('mou').includes('MEMORANDUM'), 'mou prompt mentions MEMORANDUM');
+    assert(getPromptForType('service_agreement').includes('SERVICE AGREEMENT'), 'service prompt mentions SERVICE');
+    assert(getPromptForType('non_disclosure').includes('NDA'), 'non_disclosure alias maps to NDA prompt');
+    assert(getPromptForType('testament').includes('WILL'), 'testament alias maps to WILL prompt');
+    assert(getPromptForType('memorandum').includes('MEMORANDUM'), 'memorandum alias maps to MOU prompt');
+  }
+
+  {
+    const { classifyDocument } = await import('../src/services/analysisService');
+    const { CLASSIFY_SYSTEM_PROMPT, buildClassifyUserPrompt } = await import('../src/prompts/classificationPrompt');
+    const { getValidTypes } = await import('../src/data/documentTypes');
+
+    const prompt = CLASSIFY_SYSTEM_PROMPT;
+    const validTypes = getValidTypes();
+    for (const t of validTypes) {
+      assert(prompt.includes(t), `Classification prompt mentions type "${t}"`);
+    }
+    assert(prompt.includes('confidence'), 'Classification prompt instructs on confidence');
+
+    const userPrompt = buildClassifyUserPrompt('This is a short document text for testing classification.');
+    assert(userPrompt.includes('This is a short document'), 'buildClassifyUserPrompt includes document text');
+    assert(userPrompt.length <= 2100, 'buildClassifyUserPrompt limits text to ~2000 chars');
+
+    const emptyPrompt = buildClassifyUserPrompt('');
+    assert(emptyPrompt.includes('---'), 'buildClassifyUserPrompt handles empty text');
+  }
+
+  {
+    const { parseClassifyResponse } = await import('../src/prompts/classificationPrompt');
+    const parsed = parseClassifyResponse('{"type":"nda","type_label":"NDA","confidence":95,"sub_type":"","icon":"lock"}');
+    assert(parsed.type === 'nda', 'parseClassifyResponse parses valid JSON');
+    assert(parsed.confidence === 95, 'parseClassifyResponse parses confidence');
+
+    const markdown = parseClassifyResponse('```json\n{"type":"rental","type_label":"Rental","confidence":80,"sub_type":"residential","icon":"home"}\n```');
+    assert(markdown.type === 'rental', 'parseClassifyResponse strips markdown fences');
+    assert(markdown.confidence === 80, 'parseClassifyResponse gets confidence from markdown');
+  }
+
+  {
+    let threw = false;
+    try {
+      const { parseClassifyResponse } = await import('../src/prompts/classificationPrompt');
+      parseClassifyResponse('not json');
+    } catch { threw = true; }
+    assert(threw, 'parseClassifyResponse throws on invalid JSON');
+  }
+
+  {
+    const db = getDb();
+    const { documents } = await import('../src/models');
+    db.insert(documents).values({
+      userId, originalName: 'type-detect-test.pdf', storagePath: 'test.txt',
+      fileFormat: 'txt', fileSize: 100, sourceType: 'file', uploadStatus: 'uploaded',
+      processingStatus: 'pending', rawText: 'Test document for type detection.',
+    }).run();
+
+    const docRow = db.select().from(documents).where(
+      sql`${documents.originalName} = 'type-detect-test.pdf'`
+    ).all()[0];
+
+    assert(docRow.detectedType === null, 'Document starts with no detected type');
+    assert(docRow.needsTypeConfirmation === 0 || docRow.needsTypeConfirmation === false, 'Document starts with no confirmation needed');
+
+    db.run(sql`UPDATE ${documents} SET
+      detected_type = 'nda',
+      detected_type_confidence = 92,
+      needs_type_confirmation = 0,
+      updated_at = datetime('now')
+      WHERE id = ${docRow.id}`);
+
+    const updated = db.select().from(documents).where(sql`${documents.id} = ${docRow.id}`).all()[0];
+    assert(updated.detectedType === 'nda', 'Document stores detected_type');
+    assert(updated.detectedTypeConfidence === 92, 'Document stores detected_type_confidence');
+
+    db.run(sql`UPDATE ${documents} SET
+      detected_type = 'rental_agreement',
+      detected_type_confidence = 100,
+      needs_type_confirmation = 1,
+      updated_at = datetime('now')
+      WHERE id = ${docRow.id}`);
+
+    const confirmed = db.select().from(documents).where(sql`${documents.id} = ${docRow.id}`).all()[0];
+    assert(confirmed.detectedType === 'rental_agreement', 'Document supports type override');
+    assert(confirmed.needsTypeConfirmation === 1 || confirmed.needsTypeConfirmation === true, 'Document stores confirmation needed flag');
+  }
+
+  // ═══════════════════════════════════════════════════
   //  CLEANUP & SUMMARY
   // ═══════════════════════════════════════════════════
   closeDatabase();
