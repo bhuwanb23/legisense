@@ -3,7 +3,7 @@ import { z } from 'zod';
 export const listDocumentsSchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(100).default(20),
-  status: z.enum(['all', 'pending', 'ocr_processing', 'text_extracted', 'processing', 'completed', 'failed']).default('all'),
+  status: z.enum(['all', 'pending', 'ocr_processing', 'text_extracted', 'processing', 'analyzed', 'completed', 'failed']).default('all'),
 });
 
 export const sourceTypeEnum = z.enum(['file', 'scan', 'paste', 'url']);

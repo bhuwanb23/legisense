@@ -105,7 +105,7 @@ export async function getAnalysis(
     res.json({
       success: true,
       data: {
-        status: 'completed',
+        status: docRows[0].processingStatus,
         analysis: {
           ...analysis,
           keyParties: safeJsonParse(analysis.keyParties),

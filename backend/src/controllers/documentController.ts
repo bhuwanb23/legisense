@@ -448,7 +448,7 @@ export async function getDocumentAnalysis(req: Request, res: Response, next: Nex
     res.json({
       success: true,
       data: {
-        status: 'completed',
+        status: docRows[0].processingStatus,
         analysis: {
           ...analysis,
           keyParties: safeJsonParse(analysis.keyParties),
