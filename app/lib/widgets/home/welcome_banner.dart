@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../theme/app_theme.dart';
 
+/// Shared paper chrome — unused in TripGlide home (kept for compatibility).
 class WelcomeBanner extends StatelessWidget {
   const WelcomeBanner({super.key, required this.name});
 
@@ -15,36 +16,26 @@ class WelcomeBanner extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(22, 22, 22, 24),
       decoration: BoxDecoration(
         color: AppColors.ink,
-        borderRadius: BorderRadius.circular(AppRadii.md),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.ink.withValues(alpha: 0.18),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(AppRadii.lg),
+        boxShadow: AppShadows.card,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             'Hello $name',
-            style: GoogleFonts.spectral(
-              fontSize: 24,
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 22,
               fontWeight: FontWeight.w700,
-              height: 1.2,
-              color: AppColors.cloud,
-              fontStyle: FontStyle.normal,
+              color: AppColors.surface,
             ),
           ),
           const SizedBox(height: 6),
           Text(
             'Ready to review a document?',
-            style: GoogleFonts.epilogue(
+            style: GoogleFonts.plusJakartaSans(
               fontSize: 14,
-              fontWeight: FontWeight.w400,
-              height: 1.4,
-              color: AppColors.cloud.withValues(alpha: 0.78),
+              color: AppColors.surface.withValues(alpha: 0.7),
             ),
           ),
         ],

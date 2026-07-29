@@ -66,9 +66,10 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('Legal'), findsOneWidget);
+    expect(find.textContaining('Welcome to Legisense'), findsOneWidget);
     expect(find.text('Quick stats'), findsOneWidget);
-    expect(find.text('Home'), findsWidgets);
+    expect(find.text('Select your next review'), findsOneWidget);
+    expect(find.byIcon(Icons.home_rounded), findsWidgets);
   });
 
   testWidgets('Upload page shows four options and disabled Proceed', (tester) async {
@@ -121,9 +122,11 @@ void main() {
     await tester.pump(const Duration(milliseconds: 400));
 
     expect(find.textContaining('RentAgreement_2024'), findsOneWidget);
-    expect(find.text('RISK SCORE'), findsOneWidget);
+    expect(find.text('Risk score'), findsOneWidget);
     expect(find.text('Chat'), findsOneWidget);
     expect(find.text('Export'), findsOneWidget);
+    expect(find.text('Overview'), findsOneWidget);
+    expect(find.text('Clauses'), findsWidgets);
   });
 
   testWidgets('Plain language page shows toggle and glossary', (tester) async {
@@ -146,8 +149,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('My Documents'), findsOneWidget);
+    expect(find.text('All Documents'), findsOneWidget);
     expect(find.textContaining('Vendor NDA'), findsOneWidget);
-    expect(find.text('View'), findsWidgets);
+    expect(find.text('Search your documents...'), findsOneWidget);
   });
 }

@@ -21,11 +21,11 @@ class StatCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
       decoration: BoxDecoration(
-        color: AppColors.cloud,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppRadii.md),
-        border: Border.all(color: AppColors.rule),
+        boxShadow: AppShadows.soft,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -35,15 +35,13 @@ class StatCard extends StatelessWidget {
             width: 36,
             height: 36,
             decoration: BoxDecoration(
-              color: accent
-                  ? AppColors.accentGold.withValues(alpha: 0.15)
-                  : AppColors.paper2,
-              borderRadius: BorderRadius.circular(10),
+              color: accent ? AppColors.ink : AppColors.chip,
+              borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(
               icon,
               size: 18,
-              color: accent ? AppColors.accentGold : AppColors.ink,
+              color: accent ? AppColors.surface : AppColors.ink,
             ),
           ),
           Column(
@@ -54,13 +52,11 @@ class StatCard extends StatelessWidget {
                 value,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.spectral(
+                style: GoogleFonts.plusJakartaSans(
                   fontSize: 22,
                   fontWeight: FontWeight.w700,
                   height: 1.1,
                   color: AppColors.ink,
-                  letterSpacing: -0.4,
-                  fontStyle: FontStyle.normal,
                 ),
               ),
               const SizedBox(height: 2),
@@ -68,11 +64,10 @@ class StatCard extends StatelessWidget {
                 label,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.epilogue(
+                style: GoogleFonts.plusJakartaSans(
                   fontSize: 11,
                   fontWeight: FontWeight.w500,
-                  height: 1.2,
-                  color: AppColors.inkSoft,
+                  color: AppColors.mute,
                 ),
               ),
             ],

@@ -22,7 +22,7 @@ class UploadOptionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: AppColors.cloud,
+      color: AppColors.surface,
       borderRadius: BorderRadius.circular(AppRadii.md),
       child: InkWell(
         borderRadius: BorderRadius.circular(AppRadii.md),
@@ -32,30 +32,31 @@ class UploadOptionTile extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(AppRadii.md),
             border: Border.all(
-              color: selected ? AppColors.ink : AppColors.rule,
-              width: selected ? 1.6 : 1,
+              color: selected ? AppColors.ink : Colors.transparent,
+              width: 1.6,
             ),
+            boxShadow: AppShadows.soft,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                width: 42,
-                height: 42,
+                width: 44,
+                height: 44,
                 decoration: BoxDecoration(
-                  color: selected ? AppColors.ink : AppColors.paper2,
-                  borderRadius: BorderRadius.circular(12),
+                  color: selected ? AppColors.ink : AppColors.chip,
+                  borderRadius: BorderRadius.circular(14),
                 ),
                 child: Icon(
                   icon,
                   size: 22,
-                  color: selected ? AppColors.cloud : AppColors.ink,
+                  color: selected ? AppColors.surface : AppColors.ink,
                 ),
               ),
               const SizedBox(height: 14),
               Text(
                 title,
-                style: GoogleFonts.epilogue(
+                style: GoogleFonts.plusJakartaSans(
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
                   color: AppColors.ink,
@@ -64,10 +65,10 @@ class UploadOptionTile extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 subtitle,
-                style: GoogleFonts.epilogue(
+                style: GoogleFonts.plusJakartaSans(
                   fontSize: 12,
                   height: 1.35,
-                  color: AppColors.inkSoft,
+                  color: AppColors.mute,
                 ),
               ),
             ],

@@ -3,7 +3,6 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../theme/app_theme.dart';
 
-/// Shared paper chrome for tab pages.
 class StubScaffold extends StatelessWidget {
   const StubScaffold({
     super.key,
@@ -19,31 +18,29 @@ class StubScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ColoredBox(
-      color: AppColors.paper,
+      color: AppColors.bg,
       child: SafeArea(
         bottom: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
+          padding: const EdgeInsets.fromLTRB(24, 20, 24, 110),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
                 title,
-                style: GoogleFonts.spectral(
+                style: GoogleFonts.plusJakartaSans(
                   fontSize: 28,
                   fontWeight: FontWeight.w700,
-                  letterSpacing: -0.4,
                   color: AppColors.ink,
-                  fontStyle: FontStyle.normal,
                 ),
               ),
               const SizedBox(height: 8),
               Text(
                 subtitle,
-                style: GoogleFonts.epilogue(
+                style: GoogleFonts.plusJakartaSans(
                   fontSize: 14,
                   height: 1.45,
-                  color: AppColors.inkSoft,
+                  color: AppColors.mute,
                 ),
               ),
               if (child != null) ...[
