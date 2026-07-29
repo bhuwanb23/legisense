@@ -401,10 +401,10 @@ class _TabBarDelegate extends SliverPersistentHeaderDelegate {
   final TabBar tabBar;
 
   @override
-  double get minExtent => tabBar.preferredSize.height + 8;
+  double get minExtent => 52;
 
   @override
-  double get maxExtent => tabBar.preferredSize.height + 8;
+  double get maxExtent => 52;
 
   @override
   Widget build(
@@ -412,15 +412,21 @@ class _TabBarDelegate extends SliverPersistentHeaderDelegate {
     double shrinkOffset,
     bool overlapsContent,
   ) {
-    return Container(
-      color: AppColors.paper,
-      padding: const EdgeInsets.only(left: 12, right: 12, bottom: 4),
-      child: tabBar,
+    return SizedBox(
+      height: maxExtent,
+      child: ColoredBox(
+        color: AppColors.paper,
+        child: Align(
+          alignment: Alignment.centerLeft,
+          child: tabBar,
+        ),
+      ),
     );
   }
 
   @override
-  bool shouldRebuild(covariant _TabBarDelegate oldDelegate) => false;
+  bool shouldRebuild(covariant _TabBarDelegate oldDelegate) =>
+      tabBar != oldDelegate.tabBar;
 }
 
 class _SummaryTab extends StatelessWidget {
