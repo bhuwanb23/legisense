@@ -203,6 +203,10 @@ async function start() {
   try { db.run(sql`ALTER TABLE ${clauses} ADD COLUMN reading_level TEXT`); } catch {}
   try { db.run(sql`ALTER TABLE ${clauses} ADD COLUMN key_legal_terms TEXT`); } catch {}
 
+  try { db.run(sql`ALTER TABLE ${documents} ADD COLUMN detected_type TEXT`); } catch {}
+  try { db.run(sql`ALTER TABLE ${documents} ADD COLUMN detected_type_confidence REAL`); } catch {}
+  try { db.run(sql`ALTER TABLE ${documents} ADD COLUMN needs_type_confirmation INTEGER NOT NULL DEFAULT 0`); } catch {}
+
   try { db.run(sql`ALTER TABLE usage_logs ADD COLUMN provider TEXT`); } catch {}
   try { db.run(sql`ALTER TABLE usage_logs ADD COLUMN model TEXT`); } catch {}
   try { db.run(sql`ALTER TABLE usage_logs ADD COLUMN cost REAL`); } catch {}

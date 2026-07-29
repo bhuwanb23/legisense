@@ -21,7 +21,7 @@ export interface AiResponse {
   provider: ProviderName;
 }
 
-export type AiTask = 'analysis' | 'rewrite' | 'chat';
+export type AiTask = 'analysis' | 'rewrite' | 'chat' | 'classification';
 
 export interface AiContext {
   pageCount?: number;
