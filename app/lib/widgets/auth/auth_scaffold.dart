@@ -3,7 +3,6 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../theme/app_theme.dart';
 
-/// Auth scaffold — Ink & Trust paper field, Spectral titles.
 class AuthScaffold extends StatelessWidget {
   const AuthScaffold({
     super.key,
@@ -27,7 +26,7 @@ class AuthScaffold extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.paper,
+      backgroundColor: AppColors.bg,
       body: SafeArea(
         child: Column(
           children: [
@@ -52,11 +51,12 @@ class AuthScaffold extends StatelessWidget {
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 8),
                     if (hero != null) ...[
-                      hero!,
-                      const SizedBox(height: 24),
+                      Center(child: hero!),
+                      const SizedBox(height: 28),
                     ],
                     if (title != null || subtitle != null)
                       _Header(title: title, subtitle: subtitle),
@@ -65,7 +65,7 @@ class AuthScaffold extends StatelessWidget {
                       const SizedBox(height: 24),
                       footer!,
                     ],
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 28),
                   ],
                 ),
               ),
@@ -93,24 +93,22 @@ class _Header extends StatelessWidget {
           if (title != null)
             Text(
               title!,
-              style: GoogleFonts.spectral(
+              style: GoogleFonts.plusJakartaSans(
                 fontSize: 30,
                 fontWeight: FontWeight.w700,
                 height: 1.15,
-                letterSpacing: -0.4,
                 color: AppColors.ink,
-                fontStyle: FontStyle.normal,
               ),
             ),
           if (subtitle != null) ...[
             const SizedBox(height: 8),
             Text(
               subtitle!,
-              style: GoogleFonts.epilogue(
+              style: GoogleFonts.plusJakartaSans(
                 fontSize: 14,
                 fontWeight: FontWeight.w400,
-                height: 1.5,
-                color: AppColors.inkSoft,
+                height: 1.45,
+                color: AppColors.mute,
               ),
             ),
           ],
