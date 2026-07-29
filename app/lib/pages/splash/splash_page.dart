@@ -10,7 +10,6 @@ import '../auth/login_page.dart';
 import '../onboarding/onboarding_page.dart';
 import '../shell/main_shell.dart';
 
-/// Splash — typographic brand on paper; quieter Lottie.
 class SplashPage extends StatefulWidget {
   const SplashPage({super.key});
 
@@ -18,38 +17,26 @@ class SplashPage extends StatefulWidget {
   State<SplashPage> createState() => _SplashPageState();
 }
 
-class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateMixin {
-  static const _redirectDelay = Duration(milliseconds: 2600);
+class _SplashPageState extends State<SplashPage>
+    with SingleTickerProviderStateMixin {
+  static const _redirectDelay = Duration(milliseconds: 2400);
 
   late final AnimationController _contentController;
   late final Animation<double> _fadeIn;
-  late final Animation<Offset> _slideUp;
-
   Timer? _redirectTimer;
   bool _navigated = false;
 
   @override
   void initState() {
     super.initState();
-
     _contentController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 900),
+      duration: const Duration(milliseconds: 800),
     );
     _fadeIn = CurvedAnimation(
       parent: _contentController,
-      curve: const Interval(0.25, 1, curve: Curves.easeOutCubic),
+      curve: Curves.easeOutCubic,
     );
-    _slideUp = Tween<Offset>(
-      begin: const Offset(0, 0.08),
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(
-        parent: _contentController,
-        curve: const Interval(0.25, 1, curve: Curves.easeOutCubic),
-      ),
-    );
-
     _contentController.forward();
     _scheduleRedirect();
   }
@@ -57,7 +44,6 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
   Future<void> _scheduleRedirect() async {
     final destination = await SessionPrefs.resolveSplashDestination();
     if (!mounted) return;
-
     _redirectTimer = Timer(_redirectDelay, () {
       if (!mounted || _navigated) return;
       _navigated = true;
@@ -68,24 +54,10 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
       };
       Navigator.of(context).pushReplacement(
         PageRouteBuilder<void>(
-          transitionDuration: const Duration(milliseconds: 520),
+          transitionDuration: const Duration(milliseconds: 450),
           pageBuilder: (_, animation, __) => next,
-          transitionsBuilder: (_, animation, __, child) {
-            final curved = CurvedAnimation(
-              parent: animation,
-              curve: Curves.easeOutCubic,
-            );
-            return FadeTransition(
-              opacity: curved,
-              child: SlideTransition(
-                position: Tween<Offset>(
-                  begin: const Offset(0, 0.04),
-                  end: Offset.zero,
-                ).animate(curved),
-                child: child,
-              ),
-            );
-          },
+          transitionsBuilder: (_, animation, __, child) =>
+              FadeTransition(opacity: animation, child: child),
         ),
       );
     });
@@ -103,91 +75,63 @@ class _SplashPageState extends State<SplashPage> with SingleTickerProviderStateM
     final size = MediaQuery.sizeOf(context);
 
     return Scaffold(
-      backgroundColor: AppColors.paper,
+      backgroundColor: AppColors.bg,
       body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              flex: 55,
-              child: Center(
-                child: SizedBox(
-                  width: size.width * 0.55,
-                  height: size.width * 0.55,
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      Opacity(
-                        opacity: 0.35,
-                        child: Lottie.asset(
-                          'assets/lottie/logo_splash.json',
-                          fit: BoxFit.contain,
-                          repeat: true,
-                        ),
+        child: FadeTransition(
+          opacity: _fadeIn,
+          child: Column(
+            children: [
+              const Spacer(flex: 2),
+              SizedBox(
+                width: size.width * 0.42,
+                height: size.width * 0.42,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Opacity(
+                      opacity: 0.25,
+                      child: Lottie.asset(
+                        'assets/lottie/logo_splash.json',
+                        fit: BoxFit.contain,
                       ),
-                      FadeTransition(
-                        opacity: _fadeIn,
-                        child: Image.asset(
-                          'assets/images/legisense_mark.png',
-                          width: size.width * 0.28,
-                          height: size.width * 0.28,
-                          filterQuality: FilterQuality.high,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            Expanded(
-              flex: 45,
-              child: FadeTransition(
-                opacity: _fadeIn,
-                child: SlideTransition(
-                  position: _slideUp,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 32),
-                    child: Column(
-                      children: [
-                        Text(
-                          'Legisense',
-                          textAlign: TextAlign.center,
-                          style: GoogleFonts.spectral(
-                            fontSize: 40,
-                            fontWeight: FontWeight.w700,
-                            height: 1.1,
-                            letterSpacing: -0.6,
-                            color: AppColors.ink,
-                            fontStyle: FontStyle.normal,
-                          ),
-                        ),
-                        const SizedBox(height: AppSpacing.sm),
-                        Text(
-                          'Your AI Legal Advisor',
-                          textAlign: TextAlign.center,
-                          style: GoogleFonts.epilogue(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w500,
-                            height: 1.45,
-                            color: AppColors.inkSoft,
-                          ),
-                        ),
-                        const Spacer(),
-                        Container(
-                          width: 40,
-                          height: 3,
-                          decoration: BoxDecoration(
-                            color: AppColors.accentGold,
-                            borderRadius: BorderRadius.circular(2),
-                          ),
-                        ),
-                        const SizedBox(height: AppSpacing.xxl),
-                      ],
                     ),
-                  ),
+                    Image.asset(
+                      'assets/images/legisense_mark.png',
+                      width: size.width * 0.22,
+                      height: size.width * 0.22,
+                    ),
+                  ],
                 ),
               ),
-            ),
-          ],
+              const SizedBox(height: 28),
+              Text(
+                'Legisense',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 34,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.ink,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Your AI Legal Advisor',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 15,
+                  color: AppColors.mute,
+                ),
+              ),
+              const Spacer(flex: 3),
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.ink,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 48),
+            ],
+          ),
         ),
       ),
     );
