@@ -24,7 +24,7 @@ class RiskDashboardPage extends StatelessWidget {
           color: AppColors.riskHigh,
           title: '${result.highRiskCount}',
           radius: 48,
-          titleStyle: GoogleFonts.epilogue(
+          titleStyle: GoogleFonts.plusJakartaSans(
             fontWeight: FontWeight.w700,
             color: AppColors.cloud,
             fontSize: 12,
@@ -36,7 +36,7 @@ class RiskDashboardPage extends StatelessWidget {
           color: AppColors.riskMedium,
           title: '${result.mediumRiskCount}',
           radius: 48,
-          titleStyle: GoogleFonts.epilogue(
+          titleStyle: GoogleFonts.plusJakartaSans(
             fontWeight: FontWeight.w700,
             color: AppColors.cloud,
             fontSize: 12,
@@ -48,7 +48,7 @@ class RiskDashboardPage extends StatelessWidget {
           color: AppColors.riskLow,
           title: '${result.lowRiskCount}',
           radius: 48,
-          titleStyle: GoogleFonts.epilogue(
+          titleStyle: GoogleFonts.plusJakartaSans(
             fontWeight: FontWeight.w700,
             color: AppColors.cloud,
             fontSize: 12,
@@ -60,7 +60,7 @@ class RiskDashboardPage extends StatelessWidget {
           color: AppColors.riskMissing,
           title: '${result.missingCount}',
           radius: 48,
-          titleStyle: GoogleFonts.epilogue(
+          titleStyle: GoogleFonts.plusJakartaSans(
             fontWeight: FontWeight.w700,
             color: AppColors.cloud,
             fontSize: 12,
@@ -76,7 +76,7 @@ class RiskDashboardPage extends StatelessWidget {
         foregroundColor: AppColors.primaryNavy,
         title: Text(
           'Risk dashboard',
-          style: GoogleFonts.epilogue(fontWeight: FontWeight.w700),
+          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
         ),
       ),
       body: ListView(
@@ -91,7 +91,7 @@ class RiskDashboardPage extends StatelessWidget {
                 Text(
                   result.biasSummary,
                   textAlign: TextAlign.center,
-                  style: GoogleFonts.epilogue(
+                  style: GoogleFonts.plusJakartaSans(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                     color: AppColors.primaryNavy,
@@ -103,7 +103,7 @@ class RiskDashboardPage extends StatelessWidget {
           const SizedBox(height: 20),
           Text(
             'Risk breakdown',
-            style: GoogleFonts.epilogue(
+            style: GoogleFonts.plusJakartaSans(
               fontSize: 18,
               fontWeight: FontWeight.w700,
               color: AppColors.primaryNavy,
@@ -155,7 +155,7 @@ class RiskDashboardPage extends StatelessWidget {
           const SizedBox(height: 24),
           Text(
             'Risk by category',
-            style: GoogleFonts.epilogue(
+            style: GoogleFonts.plusJakartaSans(
               fontSize: 18,
               fontWeight: FontWeight.w700,
               color: AppColors.primaryNavy,
@@ -221,7 +221,7 @@ class _LegendRow extends StatelessWidget {
             Expanded(
               child: Text(
                 label,
-                style: GoogleFonts.epilogue(
+                style: GoogleFonts.plusJakartaSans(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
                   color: AppColors.primaryNavy,
@@ -230,7 +230,7 @@ class _LegendRow extends StatelessWidget {
             ),
             Text(
               '$count',
-              style: GoogleFonts.epilogue(
+              style: GoogleFonts.plusJakartaSans(
                 fontWeight: FontWeight.w700,
                 color: AppColors.inkSoft,
               ),
@@ -273,7 +273,7 @@ class _CategoryCardState extends State<_CategoryCard> {
               Expanded(
                 child: Text(
                   cat.title,
-                  style: GoogleFonts.epilogue(
+                  style: GoogleFonts.plusJakartaSans(
                     fontWeight: FontWeight.w700,
                     color: AppColors.primaryNavy,
                   ),
@@ -290,7 +290,7 @@ class _CategoryCardState extends State<_CategoryCard> {
           const SizedBox(height: 8),
           Text(
             cat.summary,
-            style: GoogleFonts.epilogue(
+            style: GoogleFonts.plusJakartaSans(
               fontSize: 13,
               height: 1.4,
               color: AppColors.inkSoft,
@@ -303,7 +303,7 @@ class _CategoryCardState extends State<_CategoryCard> {
                 padding: const EdgeInsets.only(bottom: 6),
                 child: Text(
                   '• Clause ${c.number} — ${c.title}',
-                  style: GoogleFonts.epilogue(
+                  style: GoogleFonts.plusJakartaSans(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                     color: AppColors.primaryNavy,
@@ -317,7 +317,7 @@ class _CategoryCardState extends State<_CategoryCard> {
                 onPressed: widget.onOpenClauses,
                 child: Text(
                   'View in clause breakdown',
-                  style: GoogleFonts.epilogue(fontWeight: FontWeight.w700),
+                  style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
                 ),
               ),
             ),
