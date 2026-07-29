@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../theme/app_theme.dart';
 
-/// Full-width bright blue pill CTA — matches the Dribbble inspiration.
+/// Ink pill CTA — Spectral label.
 class AuthPrimaryButton extends StatelessWidget {
   const AuthPrimaryButton({
     super.key,
@@ -26,15 +26,15 @@ class AuthPrimaryButton extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadii.pill),
         onTap: enabled ? onPressed : null,
         child: Ink(
-          height: 56,
+          height: AppSizes.buttonHeight,
           decoration: BoxDecoration(
-            color: enabled ? AppColors.brightBlue : AppColors.accentSoft,
+            color: enabled ? AppColors.ink : AppColors.paper2,
             borderRadius: BorderRadius.circular(AppRadii.pill),
             boxShadow: enabled
                 ? [
                     BoxShadow(
-                      color: AppColors.brightBlue.withValues(alpha: 0.3),
-                      blurRadius: 20,
+                      color: AppColors.ink.withValues(alpha: 0.18),
+                      blurRadius: 18,
                       offset: const Offset(0, 8),
                     ),
                   ]
@@ -52,11 +52,11 @@ class AuthPrimaryButton extends StatelessWidget {
                   )
                 : Text(
                     label,
-                    style: GoogleFonts.epilogue(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.cloud,
-                      letterSpacing: -0.2,
+                    style: GoogleFonts.spectral(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w600,
+                      color: enabled ? AppColors.cloud : AppColors.inkSoft,
+                      fontStyle: FontStyle.normal,
                     ),
                   ),
           ),
