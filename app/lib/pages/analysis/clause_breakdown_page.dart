@@ -84,7 +84,7 @@ class _ClauseBreakdownPageState extends State<ClauseBreakdownPage> {
         foregroundColor: AppColors.primaryNavy,
         title: Text(
           'Clauses',
-          style: GoogleFonts.epilogue(fontWeight: FontWeight.w700),
+          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
         ),
         actions: [
           TextButton(
@@ -97,7 +97,7 @@ class _ClauseBreakdownPageState extends State<ClauseBreakdownPage> {
             },
             child: Text(
               'Risks',
-              style: GoogleFonts.epilogue(
+              style: GoogleFonts.plusJakartaSans(
                 fontWeight: FontWeight.w700,
                 color: AppColors.primaryNavy,
               ),
@@ -112,10 +112,10 @@ class _ClauseBreakdownPageState extends State<ClauseBreakdownPage> {
             child: TextField(
               controller: _search,
               onChanged: (_) => setState(() {}),
-              style: GoogleFonts.epilogue(color: AppColors.primaryNavy),
+              style: GoogleFonts.plusJakartaSans(color: AppColors.primaryNavy),
               decoration: InputDecoration(
                 hintText: 'Search clauses…',
-                hintStyle: GoogleFonts.epilogue(color: AppColors.inkSoft),
+                hintStyle: GoogleFonts.plusJakartaSans(color: AppColors.inkSoft),
                 prefixIcon: const Icon(Icons.search_rounded),
                 filled: true,
                 fillColor: AppColors.cloud,
@@ -140,7 +140,7 @@ class _ClauseBreakdownPageState extends State<ClauseBreakdownPage> {
                       selected: _filter == f,
                       onSelected: (_) => setState(() => _filter = f),
                       selectedColor: AppColors.primaryNavy,
-                      labelStyle: GoogleFonts.epilogue(
+                      labelStyle: GoogleFonts.plusJakartaSans(
                         fontWeight: FontWeight.w600,
                         color: _filter == f
                             ? AppColors.cloud
@@ -159,7 +159,7 @@ class _ClauseBreakdownPageState extends State<ClauseBreakdownPage> {
                 ? Center(
                     child: Text(
                       'No clauses match.',
-                      style: GoogleFonts.epilogue(color: AppColors.inkSoft),
+                      style: GoogleFonts.plusJakartaSans(color: AppColors.inkSoft),
                     ),
                   )
                 : ListView.builder(
@@ -188,7 +188,7 @@ class _ClauseBreakdownPageState extends State<ClauseBreakdownPage> {
                                   Expanded(
                                     child: Text(
                                       'Clause ${c.number} — ${c.title}',
-                                      style: GoogleFonts.epilogue(
+                                      style: GoogleFonts.plusJakartaSans(
                                         fontWeight: FontWeight.w700,
                                         color: AppColors.primaryNavy,
                                       ),
@@ -204,7 +204,7 @@ class _ClauseBreakdownPageState extends State<ClauseBreakdownPage> {
                                 overflow: open
                                     ? TextOverflow.visible
                                     : TextOverflow.ellipsis,
-                                style: GoogleFonts.epilogue(
+                                style: GoogleFonts.plusJakartaSans(
                                   fontSize: 13,
                                   height: 1.45,
                                   color: AppColors.inkSoft,
@@ -214,7 +214,7 @@ class _ClauseBreakdownPageState extends State<ClauseBreakdownPage> {
                                 const SizedBox(height: 12),
                                 Text(
                                   'Plain English',
-                                  style: GoogleFonts.epilogue(
+                                  style: GoogleFonts.plusJakartaSans(
                                     fontSize: 12,
                                     fontWeight: FontWeight.w700,
                                     color: AppColors.primaryNavy,
@@ -223,7 +223,7 @@ class _ClauseBreakdownPageState extends State<ClauseBreakdownPage> {
                                 const SizedBox(height: 4),
                                 Text(
                                   c.plainEnglish,
-                                  style: GoogleFonts.epilogue(
+                                  style: GoogleFonts.plusJakartaSans(
                                     fontSize: 13,
                                     height: 1.45,
                                     color: AppColors.inkSoft,
@@ -247,7 +247,7 @@ class _ClauseBreakdownPageState extends State<ClauseBreakdownPage> {
                                     },
                                     child: Text(
                                       'See Plain English',
-                                      style: GoogleFonts.epilogue(
+                                      style: GoogleFonts.plusJakartaSans(
                                         fontWeight: FontWeight.w700,
                                         fontSize: 12,
                                       ),
@@ -258,7 +258,7 @@ class _ClauseBreakdownPageState extends State<ClauseBreakdownPage> {
                                         _toast('Flagged for review (demo).'),
                                     child: Text(
                                       'Flag',
-                                      style: GoogleFonts.epilogue(
+                                      style: GoogleFonts.plusJakartaSans(
                                         fontWeight: FontWeight.w700,
                                         fontSize: 12,
                                       ),
@@ -275,7 +275,7 @@ class _ClauseBreakdownPageState extends State<ClauseBreakdownPage> {
                                     },
                                     child: Text(
                                       'Discuss',
-                                      style: GoogleFonts.epilogue(
+                                      style: GoogleFonts.plusJakartaSans(
                                         fontWeight: FontWeight.w700,
                                         fontSize: 12,
                                       ),
