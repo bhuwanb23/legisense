@@ -37,6 +37,23 @@ export function selectProvider(context?: AiContext): AiProvider | null {
   return null;
 }
 
+export function selectProviderForTokens(estimatedTokens: number): AiProvider | null {
+  if (estimatedTokens <= 100_000) {
+    if (openRouterProvider.isAvailable()) return openRouterProvider;
+    if (geminiProvider.isAvailable()) return geminiProvider;
+    if (openAIProvider.isAvailable()) return openAIProvider;
+    return null;
+  }
+
+  if (estimatedTokens <= 500_000) {
+    if (geminiProvider.isAvailable()) return geminiProvider;
+    if (openAIProvider.isAvailable()) return openAIProvider;
+    return null;
+  }
+
+  return null;
+}
+
 export function getProvider(name: ProviderName): AiProvider | undefined {
   return ALL_PROVIDERS.find((p) => p.provider.name === name)?.provider;
 }
