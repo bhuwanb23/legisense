@@ -240,7 +240,7 @@ async function analyzeInChunks(
   };
 }
 
-export function calculateOverallRiskScore(clauses: AnalysisOutput['clauses']): { overallScore: number; riskLevel: string } {
+export function calculateOverallRiskScore(clauses: AnalysisOutput['clauses']): { overallScore: number; riskLevel: 'low' | 'medium' | 'high' } {
   if (clauses.length === 0) return { overallScore: 0, riskLevel: 'low' };
 
   let weightedSum = 0;
