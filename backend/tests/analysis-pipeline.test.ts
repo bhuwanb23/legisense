@@ -747,20 +747,26 @@ async function run() {
 
   {
     const db = getDb();
-    const testDocId = db.insert(documents).values({
+    db.insert(documents).values({
       userId, originalName: 'risk-cat-test.pdf', storagePath: 'test.txt',
       fileFormat: 'txt', fileSize: 100, sourceType: 'file', uploadStatus: 'uploaded',
       processingStatus: 'analyzed', rawText: 'Test.',
-    }).lastInsertRowid as number;
+    }).run();
+    const testDocId = db.select({ id: documents.id }).from(documents).where(
+      sql`${documents.originalName} = 'risk-cat-test.pdf'`
+    ).all()[0].id;
 
-    const analysisId = db.insert(analysisResults).values({
+    db.insert(analysisResults).values({
       documentId: testDocId, userId,
       documentType: 'NDA', overallRiskScore: 50, riskLevel: 'medium',
       fairnessScore: 50, favorsParty: 'Balanced', summary: 'Test.',
       keyParties: '[]', criticalDates: '[]', keyObligations: '[]',
       missingClauses: '[]', jurisdictionFlags: '[]', breachScenarios: '[]',
       processingTime: 1, aiModelUsed: 'test',
-    }).lastInsertRowid as number;
+    }).run();
+    const analysisId = db.select({ id: analysisResults.id }).from(analysisResults).where(
+      sql`${analysisResults.documentId} = ${testDocId}`
+    ).all()[0].id;
 
     db.insert(clauses).values({
       documentId: testDocId, analysisId,
