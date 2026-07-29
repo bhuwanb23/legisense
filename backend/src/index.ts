@@ -26,7 +26,6 @@ import deadlineRoutes from './routes/deadlineRoutes';
 import notificationRoutes from './routes/notificationRoutes';
 import { initSocketIO, closeSocketIO } from './services/socketService';
 import { startQueueSystem, stopQueueSystem } from './queue';
-import { stopAutoDeleteService } from './services/autoDeleteService';
 import helmet from 'helmet';
 
 const app = express();
@@ -253,8 +252,7 @@ async function start() {
 
   initSocketIO(server);
 
-  startAnalysisWorker();
-  startAutoDeleteService();
+  await startQueueSystem();
 
   server.listen(port, () => {
     console.log(`Legisense API listening on http://localhost:${port}`);
@@ -267,14 +265,14 @@ start().catch((err) => {
 });
 
 process.on('SIGINT', async () => {
-  stopAutoDeleteService();
+  await stopQueueSystem();
   await closeSocketIO();
   closeDatabase();
   process.exit(0);
 });
 
 process.on('SIGTERM', async () => {
-  stopAutoDeleteService();
+  await stopQueueSystem();
   await closeSocketIO();
   closeDatabase();
   process.exit(0);
