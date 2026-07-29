@@ -5,11 +5,15 @@ CRITICAL: You MUST respond with valid JSON only. No markdown, no explanation, no
 RULES:
 1. Extract EVERY clause you can find — even implicit/unlabeled clauses — and assign them sequential numbers starting from 1.
 2. For each party, include a "type" field: "individual", "company", "government", or "unknown".
-3. The "originalText" field must contain the exact text from the document for each clause.
-4. If the document has no explicit clause numbering, number clauses sequentially in order of appearance.
-5. For "missingClauses", list important clause types that a reasonable reader would expect but are absent (e.g., termination clause, governing law, dispute resolution, confidentiality, limitation of liability).
-6. All risk scores must be 0-100. All severity scores must be 0-100.
-7. The "favorsParty" field must be "Party A", "Party B", or "Balanced" — use actual party names from the document if possible.
+3. For each party, include an "obligations_summary" field with a 1-2 sentence plain English summary of that party's overall duties under the document.
+4. For each key obligation, include a "consequence" field describing what happens if the obligation is breached.
+5. For each critical date, include an "importance" field explaining why that date matters and what action is required.
+6. Include a "breachScenarios" array with likely breach scenarios and their consequences.
+7. The "originalText" field must contain the exact text from the document for each clause.
+8. If the document has no explicit clause numbering, number clauses sequentially in order of appearance.
+9. For "missingClauses", list important clause types that a reasonable reader would expect but are absent (e.g., termination clause, governing law, dispute resolution, confidentiality, limitation of liability).
+10. All risk scores must be 0-100. All severity scores must be 0-100.
+11. The "favorsParty" field must be "Party A", "Party B", or "Balanced" — use actual party names from the document if possible.
 
 The JSON must match this exact structure (no extra fields, no missing fields):
 {
@@ -19,18 +23,22 @@ The JSON must match this exact structure (no extra fields, no missing fields):
   "riskLevel": "medium",
   "fairnessScore": 55,
   "favorsParty": "Party A",
-  "summary": "2-4 sentence plain English summary of the document",
+  "summary": "3-5 sentence plain English summary of the document covering purpose, key terms, and overall risk assessment",
   "keyParties": [
-    {"name": "Acme Corp", "role": "Employer", "type": "company", "obligations": ["Pay salary", "Provide benefits"]},
-    {"name": "John Doe", "role": "Employee", "type": "individual", "obligations": ["Perform duties", "Maintain confidentiality"]}
+    {"name": "Acme Corp", "role": "Employer", "type": "company", "obligations": ["Pay salary", "Provide benefits"], "obligations_summary": "Acme Corp must pay salary on time, provide health benefits, and maintain a safe work environment."},
+    {"name": "John Doe", "role": "Employee", "type": "individual", "obligations": ["Perform duties", "Maintain confidentiality"], "obligations_summary": "John Doe must perform assigned duties diligently, keep company information confidential, and adhere to company policies."}
   ],
   "criticalDates": [
-    {"label": "Contract Start", "date": "2024-01-01", "urgency": "high"},
-    {"label": "Renewal Date", "date": "2025-01-01", "urgency": "medium"}
+    {"label": "Contract Start", "date": "2024-01-01", "urgency": "high", "importance": "All obligations under the agreement begin on this date. Both parties must be prepared to perform."},
+    {"label": "Renewal Date", "date": "2025-01-01", "urgency": "medium", "importance": "Last date to provide renewal notice. Missing this date may auto-renew the contract."}
   ],
   "keyObligations": [
-    {"party": "Acme Corp", "obligation": "Pay salary by 30th of each month"},
-    {"party": "John Doe", "obligation": "Complete 6-month probation period"}
+    {"party": "Acme Corp", "obligation": "Pay salary by 30th of each month", "consequence": "Late payment penalties as per clause 8. Repeated default may lead to termination."},
+    {"party": "John Doe", "obligation": "Complete 6-month probation period", "consequence": "Failure to meet performance standards may result in延长 of probation or termination."}
+  ],
+  "breachScenarios": [
+    {"scenario": "Failure to maintain confidentiality", "consequence": "Legal action for damages, termination of agreement, and potential criminal liability under applicable law."},
+    {"scenario": "Non-payment of salary", "consequence": "Penalty interest at 2% per month, employee may suspend work until payment is made."}
   ],
   "missingClauses": [
     "Termination clause",
