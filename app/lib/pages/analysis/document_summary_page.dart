@@ -34,7 +34,7 @@ class DocumentSummaryPage extends StatelessWidget {
         foregroundColor: AppColors.primaryNavy,
         title: Text(
           'Document summary',
-          style: GoogleFonts.epilogue(fontWeight: FontWeight.w700),
+          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
         ),
       ),
       body: ListView(
@@ -42,7 +42,7 @@ class DocumentSummaryPage extends StatelessWidget {
         children: [
           Text(
             'Overview',
-            style: GoogleFonts.epilogue(
+            style: GoogleFonts.plusJakartaSans(
               fontSize: 18,
               fontWeight: FontWeight.w700,
               color: AppColors.primaryNavy,
@@ -52,7 +52,7 @@ class DocumentSummaryPage extends StatelessWidget {
           SoftCard(
             child: Text(
               result.overview,
-              style: GoogleFonts.epilogue(
+              style: GoogleFonts.plusJakartaSans(
                 fontSize: 14,
                 height: 1.55,
                 color: AppColors.inkSoft,
@@ -62,7 +62,7 @@ class DocumentSummaryPage extends StatelessWidget {
           const SizedBox(height: 24),
           Text(
             'Key parties',
-            style: GoogleFonts.epilogue(
+            style: GoogleFonts.plusJakartaSans(
               fontSize: 18,
               fontWeight: FontWeight.w700,
               color: AppColors.primaryNavy,
@@ -78,7 +78,7 @@ class DocumentSummaryPage extends StatelessWidget {
                   children: [
                     Text(
                       p.name,
-                      style: GoogleFonts.epilogue(
+                      style: GoogleFonts.plusJakartaSans(
                         fontSize: 16,
                         fontWeight: FontWeight.w700,
                         color: AppColors.primaryNavy,
@@ -86,7 +86,7 @@ class DocumentSummaryPage extends StatelessWidget {
                     ),
                     Text(
                       p.role,
-                      style: GoogleFonts.epilogue(
+                      style: GoogleFonts.plusJakartaSans(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
                         color: AppColors.accentSky,
@@ -104,7 +104,7 @@ class DocumentSummaryPage extends StatelessWidget {
                             Expanded(
                               child: Text(
                                 o,
-                                style: GoogleFonts.epilogue(
+                                style: GoogleFonts.plusJakartaSans(
                                   fontSize: 13,
                                   height: 1.4,
                                   color: AppColors.inkSoft,
@@ -123,7 +123,7 @@ class DocumentSummaryPage extends StatelessWidget {
           const SizedBox(height: 14),
           Text(
             'Critical dates',
-            style: GoogleFonts.epilogue(
+            style: GoogleFonts.plusJakartaSans(
               fontSize: 18,
               fontWeight: FontWeight.w700,
               color: AppColors.primaryNavy,
@@ -145,7 +145,7 @@ class DocumentSummaryPage extends StatelessWidget {
                         Expanded(
                           child: Text(
                             result.criticalDates[i].label,
-                            style: GoogleFonts.epilogue(
+                            style: GoogleFonts.plusJakartaSans(
                               fontWeight: FontWeight.w600,
                               color: AppColors.inkSoft,
                             ),
@@ -153,7 +153,7 @@ class DocumentSummaryPage extends StatelessWidget {
                         ),
                         Text(
                           result.criticalDates[i].value,
-                          style: GoogleFonts.epilogue(
+                          style: GoogleFonts.plusJakartaSans(
                             fontWeight: FontWeight.w700,
                             color: AppColors.primaryNavy,
                           ),
@@ -170,7 +170,7 @@ class DocumentSummaryPage extends StatelessWidget {
           const SizedBox(height: 24),
           Text(
             'What happens if…',
-            style: GoogleFonts.epilogue(
+            style: GoogleFonts.plusJakartaSans(
               fontSize: 18,
               fontWeight: FontWeight.w700,
               color: AppColors.primaryNavy,
@@ -196,7 +196,7 @@ class DocumentSummaryPage extends StatelessWidget {
                           Expanded(
                             child: Text(
                               s,
-                              style: GoogleFonts.epilogue(
+                              style: GoogleFonts.plusJakartaSans(
                                 fontSize: 13,
                                 height: 1.45,
                                 color: AppColors.inkSoft,
