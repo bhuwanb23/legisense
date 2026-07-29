@@ -14,6 +14,7 @@ RULES:
 9. For "missingClauses", list important clause types that a reasonable reader would expect but are absent (e.g., termination clause, governing law, dispute resolution, confidentiality, limitation of liability).
 10. All risk scores must be 0-100. All severity scores must be 0-100.
 11. The "favorsParty" field must be "Party A", "Party B", or "Balanced" — use actual party names from the document if possible.
+12. For each clause, set "riskCategory" to one of: financial, legal, privacy, termination, obligation, liability, compliance, intellectual_property, operational. Choose the single most relevant category.
 
 The JSON must match this exact structure (no extra fields, no missing fields):
 {
