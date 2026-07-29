@@ -57,7 +57,7 @@ class _ScanPreviewPageState extends State<ScanPreviewPage> {
         foregroundColor: AppColors.cloud,
         title: Text(
           'Scan document',
-          style: GoogleFonts.epilogue(fontWeight: FontWeight.w700),
+          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
         ),
       ),
       body: SafeArea(
@@ -115,7 +115,7 @@ class _ScanPreviewPageState extends State<ScanPreviewPage> {
                             const SizedBox(width: 14),
                             Text(
                               'Running OCR…',
-                              style: GoogleFonts.epilogue(
+                              style: GoogleFonts.plusJakartaSans(
                                 fontWeight: FontWeight.w700,
                                 color: AppColors.primaryNavy,
                               ),
@@ -129,7 +129,7 @@ class _ScanPreviewPageState extends State<ScanPreviewPage> {
               const SizedBox(height: 12),
               Text(
                 'Edges detected — adjust framing if needed',
-                style: GoogleFonts.epilogue(
+                style: GoogleFonts.plusJakartaSans(
                   fontSize: 13,
                   color: AppColors.cloud.withValues(alpha: 0.8),
                 ),
@@ -150,7 +150,7 @@ class _ScanPreviewPageState extends State<ScanPreviewPage> {
                       ),
                       child: Text(
                         'Retake',
-                        style: GoogleFonts.epilogue(fontWeight: FontWeight.w700),
+                        style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
                       ),
                     ),
                   ),
