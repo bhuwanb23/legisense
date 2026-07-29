@@ -92,7 +92,7 @@ class _ChatPageState extends State<ChatPage> {
           children: [
             Text(
               'Chat',
-              style: GoogleFonts.spectral(
+              style: GoogleFonts.plusJakartaSans(
                 fontSize: 20,
                 fontWeight: FontWeight.w700,
                 color: AppColors.ink,
@@ -103,7 +103,7 @@ class _ChatPageState extends State<ChatPage> {
               r.documentTitle,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.epilogue(
+              style: GoogleFonts.plusJakartaSans(
                 fontSize: 12,
                 color: AppColors.inkSoft,
               ),
@@ -127,7 +127,7 @@ class _ChatPageState extends State<ChatPage> {
                     ActionChip(
                       label: Text(
                         p,
-                        style: GoogleFonts.epilogue(
+                        style: GoogleFonts.plusJakartaSans(
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                           color: AppColors.ink,
@@ -169,13 +169,13 @@ class _ChatPageState extends State<ChatPage> {
                       controller: _controller,
                       textInputAction: TextInputAction.send,
                       onSubmitted: (_) => _send(),
-                      style: GoogleFonts.epilogue(
+                      style: GoogleFonts.plusJakartaSans(
                         fontSize: 14,
                         color: AppColors.ink,
                       ),
                       decoration: InputDecoration(
                         hintText: 'Ask about this document…',
-                        hintStyle: GoogleFonts.epilogue(
+                        hintStyle: GoogleFonts.plusJakartaSans(
                           color: AppColors.inkSoft.withValues(alpha: 0.5),
                         ),
                         filled: true,
@@ -263,7 +263,7 @@ class _Bubble extends StatelessWidget {
         ),
         child: Text(
           message.text,
-          style: GoogleFonts.epilogue(
+          style: GoogleFonts.plusJakartaSans(
             fontSize: 14,
             height: 1.45,
             color: user ? AppColors.cloud : AppColors.ink,
