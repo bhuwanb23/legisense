@@ -21,16 +21,9 @@ class SoftCard extends StatelessWidget {
       width: double.infinity,
       padding: padding,
       decoration: BoxDecoration(
-        color: AppColors.cloud,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppRadii.md),
-        border: Border.all(color: AppColors.rule),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.ink.withValues(alpha: 0.05),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        boxShadow: AppShadows.soft,
       ),
       child: child,
     );
@@ -69,20 +62,19 @@ class MiniStatCard extends StatelessWidget {
         children: [
           Text(
             title,
-            style: GoogleFonts.epilogue(
+            style: GoogleFonts.plusJakartaSans(
               fontSize: 12,
               fontWeight: FontWeight.w500,
-              color: AppColors.inkSoft,
+              color: AppColors.mute,
             ),
           ),
           const SizedBox(height: 8),
           Text(
             value,
-            style: GoogleFonts.spectral(
+            style: GoogleFonts.plusJakartaSans(
               fontSize: 18,
               fontWeight: FontWeight.w700,
               color: AppColors.ink,
-              fontStyle: FontStyle.normal,
             ),
           ),
         ],
