@@ -126,7 +126,7 @@ class _OtpPageState extends State<OtpPage> {
             const SizedBox(height: 24),
             Text(
               'Enter code',
-              style: GoogleFonts.epilogue(
+              style: GoogleFonts.plusJakartaSans(
                 fontSize: 26,
                 fontWeight: FontWeight.w700,
                 color: AppColors.primaryNavy,
@@ -135,7 +135,7 @@ class _OtpPageState extends State<OtpPage> {
             const SizedBox(height: 8),
             Text(
               'Sent to $masked',
-              style: GoogleFonts.epilogue(
+              style: GoogleFonts.plusJakartaSans(
                 fontSize: 13,
                 color: AppColors.inkSoft,
               ),
@@ -153,7 +153,7 @@ class _OtpPageState extends State<OtpPage> {
                     textAlign: TextAlign.center,
                     keyboardType: TextInputType.number,
                     maxLength: 1,
-                    style: GoogleFonts.epilogue(
+                    style: GoogleFonts.plusJakartaSans(
                       fontSize: 22,
                       fontWeight: FontWeight.w700,
                       color: AppColors.primaryNavy,
@@ -193,7 +193,7 @@ class _OtpPageState extends State<OtpPage> {
               const SizedBox(height: 12),
               Text(
                 _error!,
-                style: GoogleFonts.epilogue(
+                style: GoogleFonts.plusJakartaSans(
                   fontSize: 13,
                   color: AppColors.error,
                   fontWeight: FontWeight.w500,
@@ -211,7 +211,7 @@ class _OtpPageState extends State<OtpPage> {
               child: _secondsLeft > 0
                   ? Text(
                       'Resend in ${_secondsLeft}s',
-                      style: GoogleFonts.epilogue(
+                      style: GoogleFonts.plusJakartaSans(
                         fontSize: 14,
                         color: AppColors.inkSoft,
                       ),
@@ -238,7 +238,7 @@ class _OtpPageState extends State<OtpPage> {
                       },
                       child: Text(
                         'Resend OTP',
-                        style: GoogleFonts.epilogue(
+                        style: GoogleFonts.plusJakartaSans(
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
                           color: AppColors.ink,
@@ -250,7 +250,7 @@ class _OtpPageState extends State<OtpPage> {
             Text(
               'Demo: ${AuthMock.demoOtp}',
               textAlign: TextAlign.center,
-              style: GoogleFonts.epilogue(
+              style: GoogleFonts.plusJakartaSans(
                 fontSize: 12,
                 color: AppColors.inkSoft.withValues(alpha: 0.75),
               ),
