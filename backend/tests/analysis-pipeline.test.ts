@@ -88,6 +88,19 @@ async function run() {
   db.run(sql`DELETE FROM ${analysisResults}`);
   db.run(sql`DELETE FROM ${documents}`);
   db.run(sql`DELETE FROM ${users}`);
+  db.run(sql`DELETE FROM ${glossary}`);
+
+  try { db.run(sql`ALTER TABLE ${clauses} ADD COLUMN reading_level TEXT`); } catch {}
+  try { db.run(sql`ALTER TABLE ${clauses} ADD COLUMN key_legal_terms TEXT`); } catch {}
+
+  db.run(sql`CREATE TABLE IF NOT EXISTS ${glossary} (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    term TEXT NOT NULL UNIQUE,
+    definition TEXT NOT NULL,
+    category TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  )`);
+
   persistNow();
 
   db.insert(users).values({
@@ -231,6 +244,8 @@ async function run() {
       clauseTitle: 'Parties',
       originalText: 'This Agreement is between...',
       plainEnglishText: 'Identifies who is signing.',
+      readingLevel: 'grade_5',
+      keyLegalTerms: [],
       riskLevel: 'none',
       riskScore: 0,
       riskReason: 'Standard.',
@@ -249,6 +264,8 @@ async function run() {
         clauseTitle: 'Parties',
         originalText: '',
         plainEnglishText: 'Identifies who is signing.',
+        readingLevel: 'grade_8',
+        keyLegalTerms: [],
         riskLevel: 'none',
         riskScore: 0,
         riskReason: 'Standard.',
@@ -269,6 +286,8 @@ async function run() {
         clauseTitle: 'Parties',
         originalText: 'Text',
         plainEnglishText: 'Explanation',
+        readingLevel: 'standard',
+        keyLegalTerms: [],
         riskLevel: 'none',
         riskScore: 0,
         riskReason: 'Standard.',
@@ -515,8 +534,8 @@ async function run() {
   }
 
   {
-    const a = buildValidAnalysisOutput({ documentType: 'NDA', overallRiskScore: 10, riskLevel: 'low', clauses: [{ clauseNumber: 1, clauseTitle: 'A', originalText: 'A', plainEnglishText: 'A', riskLevel: 'low', riskScore: 10, riskReason: '', riskCategory: 'legal', counterSuggestion: '' }] });
-    const b = buildValidAnalysisOutput({ documentType: 'Rental', overallRiskScore: 80, riskLevel: 'high', clauses: [{ clauseNumber: 2, clauseTitle: 'B', originalText: 'B', plainEnglishText: 'B', riskLevel: 'high', riskScore: 80, riskReason: '', riskCategory: 'financial', counterSuggestion: '' }] });
+    const a = buildValidAnalysisOutput({ documentType: 'NDA', overallRiskScore: 10, riskLevel: 'low', clauses: [{ clauseNumber: 1, clauseTitle: 'A', originalText: 'A', plainEnglishText: 'A', readingLevel: 'grade_5', keyLegalTerms: [], riskLevel: 'low', riskScore: 10, riskReason: '', riskCategory: 'legal', counterSuggestion: '' }] });
+    const b = buildValidAnalysisOutput({ documentType: 'Rental', overallRiskScore: 80, riskLevel: 'high', clauses: [{ clauseNumber: 2, clauseTitle: 'B', originalText: 'B', plainEnglishText: 'B', readingLevel: 'standard', keyLegalTerms: [], riskLevel: 'high', riskScore: 80, riskReason: '', riskCategory: 'financial', counterSuggestion: '' }] });
     const merged = mergeAnalysisResults([a, b]);
     assert(merged.documentType === 'Rental', 'mergeAnalysisResults picks highest risk document type');
     assert(merged.riskLevel === 'high', 'mergeAnalysisResults picks highest risk level');
@@ -730,12 +749,14 @@ async function run() {
     const { ClauseSchema, RiskItemSchema } = await import('../src/schemas/analysisSchemas');
     const clause = ClauseSchema.parse({
       clauseNumber: 1, clauseTitle: 'IP Clause', originalText: 'IP text.', plainEnglishText: 'IP.',
+      readingLevel: 'standard', keyLegalTerms: [],
       riskLevel: 'low', riskScore: 10, riskReason: '', riskCategory: 'intellectual_property', counterSuggestion: '',
     });
     assert(clause.riskCategory === 'intellectual_property', 'ClauseSchema accepts intellectual_property');
 
     const operational = ClauseSchema.parse({
       clauseNumber: 2, clauseTitle: 'Ops Clause', originalText: 'Ops text.', plainEnglishText: 'Ops.',
+      readingLevel: 'grade_8', keyLegalTerms: [],
       riskLevel: 'low', riskScore: 10, riskReason: '', riskCategory: 'operational', counterSuggestion: '',
     });
     assert(operational.riskCategory === 'operational', 'ClauseSchema accepts operational');
