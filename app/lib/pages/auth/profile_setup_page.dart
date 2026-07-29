@@ -162,7 +162,7 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
                     Container(
                       padding: const EdgeInsets.all(5),
                       decoration: const BoxDecoration(
-                        color: AppColors.brightBlue,
+                        color: AppColors.ink,
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
@@ -187,7 +187,7 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
                   label: Text(p),
                   selected: selected,
                   onSelected: (_) => setState(() => _profession = p),
-                  selectedColor: AppColors.brightBlue,
+                  selectedColor: AppColors.ink,
                   labelStyle: GoogleFonts.epilogue(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
@@ -196,7 +196,7 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
                   backgroundColor: AppColors.cloud,
                   side: BorderSide(
                     color: selected
-                        ? AppColors.brightBlue
+                        ? AppColors.ink
                         : AppColors.borderMuted,
                   ),
                 );
@@ -214,7 +214,7 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
                   label: Text(lang.label),
                   selected: selected,
                   onSelected: (_) => setState(() => _language = lang.code),
-                  selectedColor: AppColors.brightBlue,
+                  selectedColor: AppColors.ink,
                   labelStyle: GoogleFonts.epilogue(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
@@ -223,7 +223,7 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
                   backgroundColor: AppColors.cloud,
                   side: BorderSide(
                     color: selected
-                        ? AppColors.brightBlue
+                        ? AppColors.ink
                         : AppColors.borderMuted,
                   ),
                 );
@@ -268,7 +268,7 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
                   ),
                 ),
                 value: checked,
-                activeColor: AppColors.brightBlue,
+                activeColor: AppColors.ink,
                 onChanged: (v) {
                   setState(() {
                     if (v == true) {
