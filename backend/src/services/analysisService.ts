@@ -1,13 +1,17 @@
-import { getDb } from '../config/database';
+import { getDb, persistNow } from '../config/database';
 import { documents, analysisResults, clauses, riskItems, deadlines, usageLogs } from '../models';
 import { sql } from 'drizzle-orm';
-import { readFile } from '../storage/fileStorage';
-import { extractText } from './textExtractor';
-import { analyzeDocument, type AiAnalysisResult } from './aiService';
-import { persistNow } from '../config/database';
+import { callWithFallback, selectProviderForTokens } from './ai';
+import { estimateTokens } from './ai/tokenManager';
+import { ANALYSIS_SYSTEM_PROMPT, buildAnalysisUserPrompt, parseAiResponse } from '../prompts/analysisPrompt';
+import { AnalysisOutputSchema, type AnalysisOutput } from '../schemas/analysisSchemas';
+import { chunkText, estimateTotalRequestTokens, mergeAnalysisResults } from './chunkingService';
 import { emitToUser } from './socketService';
 import { createNotification } from './notificationService';
-import { encryptText, decryptText, isEncryptionConfigured } from './encryptionService';
+import { decryptText, isEncryptionConfigured } from './encryptionService';
+
+const MAX_RETRIES = 3;
+const CHUNK_TOKEN_LIMIT = 500_000;
 
 export async function analyzeDocumentPipeline(documentId: number, userId: number): Promise<void> {
   const db = getDb();
@@ -21,29 +25,45 @@ export async function analyzeDocumentPipeline(documentId: number, userId: number
   }
 
   updateDocumentStatus(documentId, 'processing');
-
   emitToUser(doc.userId, 'analysis:started', { documentId });
 
   try {
-    emitToUser(doc.userId, 'analysis:progress', { documentId, progress: 5, stage: 'Reading file...' });
+    emitToUser(doc.userId, 'analysis:progress', { documentId, progress: 5, stage: 'Reading document text...' });
 
-    const buffer = await readFile(doc.storagePath);
-    emitToUser(doc.userId, 'analysis:progress', { documentId, progress: 10, stage: 'Extracting text...' });
+    const rawText = decryptDocumentText(doc);
+    if (!rawText || rawText.trim().length === 0) {
+      throw new Error('Document has no extractable text. Try re-uploading or pasting the content manually.');
+    }
 
-    const { text: rawText } = await extractText(buffer, doc.fileFormat);
+    emitToUser(doc.userId, 'analysis:progress', { documentId, progress: 15, stage: 'Estimating document size...' });
 
-    updateDocumentRawText(documentId, rawText);
+    const totalTokens = estimateTotalRequestTokens(ANALYSIS_SYSTEM_PROMPT, rawText);
 
-    const aiContext = {
-      pageCount: doc.pageCount || undefined,
-      language: doc.detectedLanguage || undefined,
-    };
+    let analysisResult: AnalysisOutput;
+    let providerUsed = 'unknown';
+    let modelUsed = 'unknown';
+    let totalInputTokens = 0;
+    let totalOutputTokens = 0;
 
-    const { result: aiResult, usage, processingTime } = await analyzeDocument(rawText, aiContext, (percent, stage) => {
-      emitToUser(doc.userId, 'analysis:progress', { documentId, progress: percent, stage });
-    });
+    if (totalTokens > CHUNK_TOKEN_LIMIT) {
+      emitToUser(doc.userId, 'analysis:progress', { documentId, progress: 20, stage: `Large document (${totalTokens.toLocaleString()} tokens). Splitting into chunks...` });
+      const chunkResult = await analyzeInChunks(rawText, documentId, doc.userId);
+      analysisResult = chunkResult.result;
+      providerUsed = chunkResult.provider;
+      modelUsed = chunkResult.model;
+      totalInputTokens = chunkResult.inputTokens;
+      totalOutputTokens = chunkResult.outputTokens;
+    } else {
+      emitToUser(doc.userId, 'analysis:progress', { documentId, progress: 25, stage: 'Analyzing document...' });
+      const singleResult = await analyzeSingle(rawText);
+      analysisResult = singleResult.result;
+      providerUsed = singleResult.provider;
+      modelUsed = singleResult.model;
+      totalInputTokens = singleResult.inputTokens;
+      totalOutputTokens = singleResult.outputTokens;
+    }
 
-    emitToUser(doc.userId, 'analysis:progress', { documentId, progress: 100, stage: 'Saving results...' });
+    emitToUser(doc.userId, 'analysis:progress', { documentId, progress: 95, stage: 'Saving results...' });
 
     const totalTime = (Date.now() - startTime) / 1000;
 
@@ -51,17 +71,17 @@ export async function analyzeDocumentPipeline(documentId: number, userId: number
       userId: doc.userId,
       action: 'analysis:completed',
       documentId,
-      tokensConsumed: usage.totalTokens || undefined,
+      tokensConsumed: totalInputTokens + totalOutputTokens,
       processingTime: totalTime,
-      provider: usage.provider || undefined,
-      model: usage.model || undefined,
-      inputTokens: usage.inputTokens || undefined,
-      outputTokens: usage.outputTokens || undefined,
+      provider: providerUsed,
+      model: modelUsed,
+      inputTokens: totalInputTokens,
+      outputTokens: totalOutputTokens,
     }).run();
 
-    saveAnalysisResults(documentId, doc.userId, aiResult, processingTime, usage.model || 'unknown');
+    saveAnalysisResults(documentId, doc.userId, analysisResult, totalTime, modelUsed);
 
-    updateDocumentStatus(documentId, 'completed');
+    updateDocumentStatus(documentId, 'analyzed');
 
     createNotification(doc.userId, 'analysis_complete', 'Analysis Complete', `Analysis of "${doc.originalName}" is complete.`, documentId);
 
@@ -96,35 +116,103 @@ function updateDocumentStatus(documentId: number, status: string): void {
   db.run(sql`UPDATE ${documents} SET processing_status = ${status}, updated_at = datetime('now') WHERE id = ${documentId}`);
 }
 
-function updateDocumentRawText(documentId: number, rawText: string): void {
-  const db = getDb();
-
-  let storedText = rawText;
-  let storedIv: string | null = null;
-
-  if (isEncryptionConfigured()) {
-    const { ciphertext, iv } = encryptText(rawText);
-    storedText = ciphertext;
-    storedIv = iv;
-  }
-
-  if (storedIv) {
-    db.run(sql`UPDATE ${documents} SET raw_text = ${storedText}, encryption_iv = ${storedIv}, updated_at = datetime('now') WHERE id = ${documentId}`);
-  } else {
-    db.run(sql`UPDATE ${documents} SET raw_text = ${storedText}, updated_at = datetime('now') WHERE id = ${documentId}`);
-  }
+function decryptDocumentText(doc: { rawText: string | null; encryptionIv: string | null }): string | null {
+  if (!doc.rawText) return null;
+  if (!doc.encryptionIv || !isEncryptionConfigured()) return doc.rawText;
+  return decryptText(doc.rawText, doc.encryptionIv);
 }
 
-export function decryptDocumentText(document: { rawText: string | null; encryptionIv: string | null }): string | null {
-  if (!document.rawText) return null;
-  if (!document.encryptionIv || !isEncryptionConfigured()) return document.rawText;
-  return decryptText(document.rawText, document.encryptionIv);
+async function analyzeSingle(
+  text: string,
+): Promise<{ result: AnalysisOutput; provider: string; model: string; inputTokens: number; outputTokens: number }> {
+  const estimatedTokens = estimateTotalRequestTokens(ANALYSIS_SYSTEM_PROMPT, text);
+  const provider = selectProviderForTokens(estimatedTokens);
+
+  let lastError: string | null = null;
+
+  for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+    try {
+      const systemPrompt = attempt > 0
+        ? ANALYSIS_SYSTEM_PROMPT + `\n\nNOTE: Your previous response failed validation (${lastError}). Ensure the JSON is valid and matches the required structure exactly. No extra fields. All fields must be present.`
+        : ANALYSIS_SYSTEM_PROMPT;
+
+      const userPrompt = buildAnalysisUserPrompt(text);
+
+      const { response, providerUsed } = await callWithFallback(
+        { systemPrompt, userPrompt, temperature: 0.3 },
+        { task: 'analysis' },
+      );
+
+      const parsed = typeof response.text === 'string' ? parseAiResponse(response.text) : response.text;
+
+      const validated = AnalysisOutputSchema.parse(parsed);
+
+      return {
+        result: validated,
+        provider: providerUsed,
+        model: response.model,
+        inputTokens: response.usage.inputTokens,
+        outputTokens: response.usage.outputTokens,
+      };
+    } catch (err) {
+      lastError = err instanceof Error ? err.message : String(err);
+      if (attempt === MAX_RETRIES - 1) {
+        throw new Error(`AI analysis failed after ${MAX_RETRIES} attempts: ${lastError}`);
+      }
+    }
+  }
+
+  throw new Error('AI analysis failed: unexpected error');
+}
+
+async function analyzeInChunks(
+  fullText: string,
+  documentId: number,
+  userId: number,
+): Promise<{ result: AnalysisOutput; provider: string; model: string; inputTokens: number; outputTokens: number }> {
+  const chunks = chunkText(fullText);
+  const chunkResults: AnalysisOutput[] = [];
+  let lastProvider = '';
+  let lastModel = '';
+  let totalInputTokens = 0;
+  let totalOutputTokens = 0;
+
+  const chunkRange = 70 / chunks.length;
+  let currentProgress = 25;
+
+  for (let i = 0; i < chunks.length; i++) {
+    const chunk = chunks[i];
+    const progress = currentProgress + Math.round(chunkRange * (i + 1));
+
+    emitToUser(userId, 'analysis:progress', {
+      documentId,
+      progress: Math.min(progress, 90),
+      stage: `Analyzing part ${i + 1} of ${chunks.length}...`,
+    });
+
+    const text = `[This is part ${i + 1} of ${chunks.length} of a legal document. Analyze this portion and return the full JSON structure with all findings from this section.]\n\n${chunk.text}`;
+
+    const singleResult = await analyzeSingle(text);
+    chunkResults.push(singleResult.result);
+    totalInputTokens += singleResult.inputTokens;
+    totalOutputTokens += singleResult.outputTokens;
+    lastProvider = singleResult.provider || lastProvider;
+    lastModel = singleResult.model || lastModel;
+  }
+
+  return {
+    result: mergeAnalysisResults(chunkResults),
+    provider: lastProvider,
+    model: lastModel,
+    inputTokens: totalInputTokens,
+    outputTokens: totalOutputTokens,
+  };
 }
 
 function saveAnalysisResults(
   documentId: number,
   userId: number,
-  ai: AiAnalysisResult,
+  ai: AnalysisOutput,
   processingTime: number,
   modelUsed?: string,
 ): void {
