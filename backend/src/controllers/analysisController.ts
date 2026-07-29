@@ -242,6 +242,95 @@ export async function getSummary(
   }
 }
 
+export async function getRiskDashboard(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    if (!req.user) {
+      res.status(401).json({ success: false, error: { message: 'Unauthorized', code: 'AUTH_REQUIRED', statusCode: 401 } });
+      return;
+    }
+
+    const documentId = Number(req.params.documentId);
+    const db = getDb();
+
+    const docRows = db.select().from(documents).where(
+      sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = 0`
+    ).all();
+
+    if (!docRows[0]) throw new NotFoundError('Document');
+
+    const analysisRows = db.select().from(analysisResults).where(
+      sql`${analysisResults.documentId} = ${documentId}`
+    ).all();
+
+    const analysis = analysisRows[0];
+    if (!analysis) {
+      res.json({ success: true, data: { overallScore: null, riskLevel: null, clauseCountByRisk: null, highestRiskClause: null, riskTrend: [] } });
+      return;
+    }
+
+    const clauseRows = db.select().from(clauses).where(
+      sql`${clauses.analysisId} = ${analysis.id}`
+    ).all();
+
+    const clauseCountByRisk = { high: 0, medium: 0, low: 0 };
+    let highestRiskClause: Record<string, unknown> | null = null;
+    let maxScore = -1;
+
+    for (const c of clauseRows) {
+      const level = c.riskLevel || 'low';
+      if (level === 'high') clauseCountByRisk.high++;
+      else if (level === 'medium') clauseCountByRisk.medium++;
+      else clauseCountByRisk.low++;
+
+      if ((c.riskScore ?? 0) > maxScore) {
+        maxScore = c.riskScore ?? 0;
+        highestRiskClause = {
+          clauseNumber: c.clauseNumber,
+          clauseTitle: c.clauseTitle,
+          riskScore: c.riskScore,
+          riskLevel: c.riskLevel,
+        };
+      }
+    }
+
+    const pastAnalyses = db.select({
+      documentId: analysisResults.documentId,
+      overallRiskScore: analysisResults.overallRiskScore,
+      riskLevel: analysisResults.riskLevel,
+      createdAt: analysisResults.createdAt,
+    }).from(analysisResults)
+      .where(
+        sql`${analysisResults.userId} = ${req.user.id} AND ${analysisResults.documentId} != ${documentId}`
+      )
+      .orderBy(sql`${analysisResults.createdAt} ASC`)
+      .all();
+
+    const riskTrend = pastAnalyses.map((r) => ({
+      documentId: r.documentId,
+      overallRiskScore: r.overallRiskScore,
+      riskLevel: r.riskLevel,
+      analyzedAt: r.createdAt,
+    }));
+
+    res.json({
+      success: true,
+      data: {
+        overallScore: analysis.overallRiskScore,
+        riskLevel: analysis.riskLevel,
+        clauseCountByRisk,
+        highestRiskClause,
+        riskTrend,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
 function safeJsonParse(value: string | null): unknown {
   if (!value) return [];
   try { return JSON.parse(value); } catch { return []; }
