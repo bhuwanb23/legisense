@@ -87,7 +87,7 @@ class _LoginPageState extends State<LoginPage> {
           style: GoogleFonts.epilogue(
             fontSize: 13,
             fontWeight: FontWeight.w600,
-            color: AppColors.brightBlue,
+            color: AppColors.ink,
           ),
         ),
       ),
@@ -160,7 +160,7 @@ class _LoginPageState extends State<LoginPage> {
                     style: GoogleFonts.epilogue(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.brightBlue,
+                      color: AppColors.ink,
                     ),
                   ),
                 ),
@@ -203,7 +203,7 @@ class _LoginPageState extends State<LoginPage> {
                           style: GoogleFonts.epilogue(
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
-                            color: AppColors.brightBlue,
+                            color: AppColors.ink,
                           ),
                         ),
                       ),
