@@ -390,3 +390,47 @@ function autoCreateDeadlines(documentId: number, userId: number, criticalDates: 
     }
   }
 }
+
+function severityFromScore(score: number): string {
+  if (score >= 90) return 'critical';
+  if (score >= 67) return 'high';
+  if (score >= 34) return 'medium';
+  return 'low';
+}
+
+function generateRiskItemsFromClauses(analysisId: number): void {
+  const db = getDb();
+
+  const clauseRows = db.select().from(clauses).where(
+    sql`${clauses.analysisId} = ${analysisId}`
+  ).all();
+
+  const grouped: Record<string, typeof clauseRows> = {};
+  for (const c of clauseRows) {
+    const cat = c.riskCategory || 'other';
+    if (!grouped[cat]) grouped[cat] = [];
+    grouped[cat].push(c);
+  }
+
+  for (const [category, catClauses] of Object.entries(grouped)) {
+    const maxRiskClause = catClauses.reduce((best, c) =>
+      (c.riskScore ?? 0) > (best.riskScore ?? 0) ? c : best
+    , catClauses[0]);
+
+    const score = maxRiskClause.riskScore ?? 0;
+    const severity = severityFromScore(score);
+    const label = category.charAt(0).toUpperCase() + category.slice(1).replace(/_/g, ' ');
+
+    db.insert(riskItems).values({
+      analysisId,
+      clauseId: maxRiskClause.id,
+      riskType: category,
+      title: `${label} Risk — ${catClauses.length} clause${catClauses.length > 1 ? 's' : ''} found`,
+      description: maxRiskClause.riskReason || maxRiskClause.plainEnglishText || `Clauses categorized as ${label}.`,
+      severity,
+      severityScore: score,
+      recommendation: maxRiskClause.counterSuggestion || 'Review this clause for potential risk mitigation.',
+      legalReference: '',
+    }).run();
+  }
+}
