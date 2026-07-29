@@ -7,6 +7,7 @@ abstract final class NotificationsMock {
       title: 'Rent due in 3 days',
       body: 'Apartment Lease — Andheri: payment window closes on the 5th.',
       timeLabel: '2h ago',
+      group: NotificationGroup.today,
       docId: '2',
       unread: true,
     ),
@@ -16,6 +17,7 @@ abstract final class NotificationsMock {
       title: 'Analysis ready',
       body: 'Vendor NDA — Acme Labs scored 28 (low risk).',
       timeLabel: '5h ago',
+      group: NotificationGroup.today,
       docId: '1',
       unread: true,
     ),
@@ -25,6 +27,7 @@ abstract final class NotificationsMock {
       title: 'Tip: lock-in clauses',
       body: 'Early-exit penalties above 1 month rent deserve a second look.',
       timeLabel: 'Yesterday',
+      group: NotificationGroup.yesterday,
       unread: false,
     ),
     AppNotification(
@@ -33,8 +36,9 @@ abstract final class NotificationsMock {
       title: 'Renewal window opens',
       body: 'Offer Letter — Product Co: notice period starts in 10 days.',
       timeLabel: 'Yesterday',
+      group: NotificationGroup.yesterday,
       docId: '3',
-      unread: false,
+      unread: true,
     ),
     AppNotification(
       id: 'n5',
@@ -42,6 +46,7 @@ abstract final class NotificationsMock {
       title: 'High-risk flags found',
       body: 'RentAgreement_2024.pdf — 4 high-risk clauses need review.',
       timeLabel: '2 days ago',
+      group: NotificationGroup.earlier,
       docId: '6',
       unread: false,
     ),
@@ -51,6 +56,7 @@ abstract final class NotificationsMock {
       title: 'Tip: indemnity language',
       body: 'Broad “all claims” indemnity often shifts too much liability to you.',
       timeLabel: '3 days ago',
+      group: NotificationGroup.earlier,
       unread: false,
     ),
     AppNotification(
@@ -59,6 +65,7 @@ abstract final class NotificationsMock {
       title: 'Insurance policy reviewed',
       body: 'Health Insurance Policy scored 22 — coverage gaps noted.',
       timeLabel: '1 week ago',
+      group: NotificationGroup.earlier,
       docId: '5',
       unread: false,
     ),
@@ -68,6 +75,7 @@ abstract final class NotificationsMock {
       title: 'Loan EMI reminder',
       body: 'Personal Loan Agreement: next installment due Friday.',
       timeLabel: '1 week ago',
+      group: NotificationGroup.earlier,
       docId: '4',
       unread: false,
     ),
@@ -76,6 +84,8 @@ abstract final class NotificationsMock {
 
 enum NotificationType { deadline, analysisReady, tip }
 
+enum NotificationGroup { today, yesterday, earlier }
+
 class AppNotification {
   const AppNotification({
     required this.id,
@@ -83,6 +93,7 @@ class AppNotification {
     required this.title,
     required this.body,
     required this.timeLabel,
+    required this.group,
     this.docId,
     this.unread = false,
   });
@@ -92,6 +103,7 @@ class AppNotification {
   final String title;
   final String body;
   final String timeLabel;
+  final NotificationGroup group;
   final String? docId;
   final bool unread;
 }

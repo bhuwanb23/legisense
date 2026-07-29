@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../data/analysis_mock.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/analysis/risk_style.dart';
+import '../../widgets/home/app_page_header.dart';
 import '../chat/chat_page.dart';
 import 'clause_breakdown_page.dart';
 import 'document_summary_page.dart';
@@ -27,10 +28,10 @@ class _AnalysisResultsPageState extends State<AnalysisResultsPage> {
 
   AnalysisResult get r => widget.result;
 
-  static const _orange = Color(0xFFFF7A1A);
-  static const _orangeDeep = Color(0xFFFF4D00);
+  static const _accent = AppColors.ink;
+  static const _accentDeep = Color(0xFF2C2C2C);
   static const _green = Color(0xFF22C55E);
-  static const _canvas = Color(0xFFF4F4F5);
+  static const _canvas = AppColors.bg;
 
   void _toast(String msg) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -71,40 +72,12 @@ class _AnalysisResultsPageState extends State<AnalysisResultsPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(8, 4, 20, 0),
-              child: Row(
-                children: [
-                  IconButton(
-                    onPressed: () => Navigator.of(context).maybePop(),
-                    icon: const Icon(Icons.arrow_back_rounded),
-                    color: AppColors.ink,
-                  ),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Analysis',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.ink,
-                          ),
-                        ),
-                        Text(
-                          r.documentTitle,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 12,
-                            color: AppColors.mute,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+            AppPageHeader(
+              title: 'Analysis',
+              subtitle: r.documentTitle,
+              leading: AppHeaderIconButton(
+                icon: Icons.arrow_back_rounded,
+                onTap: () => Navigator.of(context).maybePop(),
               ),
             ),
             Padding(
@@ -112,8 +85,8 @@ class _AnalysisResultsPageState extends State<AnalysisResultsPage> {
               child: _ModeToggle(
                 mode: _mode,
                 onChanged: (v) => setState(() => _mode = v),
-                orange: _orange,
-                orangeDeep: _orangeDeep,
+                accent: _accent,
+                accentDeep: _accentDeep,
               ),
             ),
             Expanded(
@@ -121,8 +94,8 @@ class _AnalysisResultsPageState extends State<AnalysisResultsPage> {
                   ? _OverviewBody(
                       result: r,
                       reviewPct: _reviewPct,
-                      orange: _orange,
-                      orangeDeep: _orangeDeep,
+                      accent: _accent,
+                      accentDeep: _accentDeep,
                       green: _green,
                       onOpenSummary: () {
                         Navigator.of(context).push(
@@ -150,8 +123,8 @@ class _AnalysisResultsPageState extends State<AnalysisResultsPage> {
                       result: r,
                       filter: _clauseFilter,
                       clauses: _filteredClauses,
-                      orange: _orange,
-                      orangeDeep: _orangeDeep,
+                      accent: _accent,
+                      accentDeep: _accentDeep,
                       onFilter: (id) => setState(() => _clauseFilter = id),
                       onOpenAll: () {
                         Navigator.of(context).push(
@@ -182,8 +155,8 @@ class _AnalysisResultsPageState extends State<AnalysisResultsPage> {
               },
               onExport: () => _toast('Export report comes with backend.'),
               onCompare: () => _toast('Version compare comes later.'),
-              orange: _orange,
-              orangeDeep: _orangeDeep,
+              accent: _accent,
+              accentDeep: _accentDeep,
             ),
           ],
         ),
@@ -196,14 +169,14 @@ class _ModeToggle extends StatelessWidget {
   const _ModeToggle({
     required this.mode,
     required this.onChanged,
-    required this.orange,
-    required this.orangeDeep,
+    required this.accent,
+    required this.accentDeep,
   });
 
   final int mode;
   final ValueChanged<int> onChanged;
-  final Color orange;
-  final Color orangeDeep;
+  final Color accent;
+  final Color accentDeep;
 
   @override
   Widget build(BuildContext context) {
@@ -222,8 +195,8 @@ class _ModeToggle extends StatelessWidget {
               label: 'Overview',
               selected: mode == 0,
               onTap: () => onChanged(0),
-              orange: orange,
-              orangeDeep: orangeDeep,
+              accent: accent,
+              accentDeep: accentDeep,
             ),
           ),
           Expanded(
@@ -231,8 +204,8 @@ class _ModeToggle extends StatelessWidget {
               label: 'Clauses',
               selected: mode == 1,
               onTap: () => onChanged(1),
-              orange: orange,
-              orangeDeep: orangeDeep,
+              accent: accent,
+              accentDeep: accentDeep,
             ),
           ),
         ],
@@ -246,15 +219,15 @@ class _ToggleHalf extends StatelessWidget {
     required this.label,
     required this.selected,
     required this.onTap,
-    required this.orange,
-    required this.orangeDeep,
+    required this.accent,
+    required this.accentDeep,
   });
 
   final String label;
   final bool selected;
   final VoidCallback onTap;
-  final Color orange;
-  final Color orangeDeep;
+  final Color accent;
+  final Color accentDeep;
 
   @override
   Widget build(BuildContext context) {
@@ -265,7 +238,7 @@ class _ToggleHalf extends StatelessWidget {
         alignment: Alignment.center,
         decoration: BoxDecoration(
           gradient: selected
-              ? LinearGradient(colors: [orange, orangeDeep])
+              ? LinearGradient(colors: [accent, accentDeep])
               : null,
           borderRadius: BorderRadius.circular(AppRadii.pill),
         ),
@@ -286,8 +259,8 @@ class _OverviewBody extends StatelessWidget {
   const _OverviewBody({
     required this.result,
     required this.reviewPct,
-    required this.orange,
-    required this.orangeDeep,
+    required this.accent,
+    required this.accentDeep,
     required this.green,
     required this.onOpenSummary,
     required this.onOpenRisk,
@@ -296,8 +269,8 @@ class _OverviewBody extends StatelessWidget {
 
   final AnalysisResult result;
   final int reviewPct;
-  final Color orange;
-  final Color orangeDeep;
+  final Color accent;
+  final Color accentDeep;
   final Color green;
   final VoidCallback onOpenSummary;
   final VoidCallback onOpenRisk;
@@ -316,12 +289,12 @@ class _OverviewBody extends StatelessWidget {
             gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [orange, orangeDeep],
+              colors: [accent, accentDeep],
             ),
             borderRadius: BorderRadius.circular(24),
             boxShadow: [
               BoxShadow(
-                color: orange.withValues(alpha: 0.35),
+                color: accent.withValues(alpha: 0.35),
                 blurRadius: 24,
                 offset: const Offset(0, 10),
               ),
@@ -445,8 +418,8 @@ class _OverviewBody extends StatelessWidget {
           children: [
             _StatTile(
               icon: Icons.warning_amber_rounded,
-              iconBg: const Color(0xFFFFE8E0),
-              iconColor: orangeDeep,
+              iconBg: AppColors.chip,
+              iconColor: accentDeep,
               label: 'High risk',
               value: '${r.highRiskCount}',
               delta: '+${r.highRiskCount}',
@@ -455,8 +428,8 @@ class _OverviewBody extends StatelessWidget {
             ),
             _StatTile(
               icon: Icons.article_outlined,
-              iconBg: const Color(0xFFFFF0E0),
-              iconColor: orange,
+              iconBg: AppColors.chip,
+              iconColor: accent,
               label: 'Clauses',
               value: '${r.clauses.length}',
               delta: '+${r.clauses.length}',
@@ -601,7 +574,7 @@ class _OverviewBody extends StatelessWidget {
                           FlSpot(5, 6.4),
                         ],
                         isCurved: true,
-                        gradient: LinearGradient(colors: [orange, orangeDeep]),
+                        gradient: LinearGradient(colors: [accent, accentDeep]),
                         barWidth: 3,
                         dotData: FlDotData(
                           show: true,
@@ -609,7 +582,7 @@ class _OverviewBody extends StatelessWidget {
                             radius: 3.5,
                             color: Colors.white,
                             strokeWidth: 2,
-                            strokeColor: orangeDeep,
+                            strokeColor: accentDeep,
                           ),
                         ),
                         belowBarData: BarAreaData(
@@ -618,8 +591,8 @@ class _OverviewBody extends StatelessWidget {
                             begin: Alignment.topCenter,
                             end: Alignment.bottomCenter,
                             colors: [
-                              orange.withValues(alpha: 0.28),
-                              orange.withValues(alpha: 0.02),
+                              accent.withValues(alpha: 0.28),
+                              accent.withValues(alpha: 0.02),
                             ],
                           ),
                         ),
@@ -662,7 +635,7 @@ class _OverviewBody extends StatelessWidget {
                     style: GoogleFonts.plusJakartaSans(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
-                      color: orangeDeep,
+                      color: accentDeep,
                     ),
                   ),
                   const Spacer(),
@@ -689,7 +662,7 @@ class _OverviewBody extends StatelessWidget {
                         child: Container(
                           decoration: BoxDecoration(
                             gradient: LinearGradient(
-                              colors: [orange, orangeDeep],
+                              colors: [accent, accentDeep],
                             ),
                           ),
                         ),
@@ -708,7 +681,7 @@ class _OverviewBody extends StatelessWidget {
             'Open full summary',
             style: GoogleFonts.plusJakartaSans(
               fontWeight: FontWeight.w700,
-              color: orangeDeep,
+              color: accentDeep,
             ),
           ),
         ),
@@ -808,8 +781,8 @@ class _ClausesBody extends StatelessWidget {
     required this.result,
     required this.filter,
     required this.clauses,
-    required this.orange,
-    required this.orangeDeep,
+    required this.accent,
+    required this.accentDeep,
     required this.onFilter,
     required this.onOpenAll,
     required this.onOpenPlain,
@@ -818,8 +791,8 @@ class _ClausesBody extends StatelessWidget {
   final AnalysisResult result;
   final String filter;
   final List<AnalysisClause> clauses;
-  final Color orange;
-  final Color orangeDeep;
+  final Color accent;
+  final Color accentDeep;
   final ValueChanged<String> onFilter;
   final VoidCallback onOpenAll;
   final ValueChanged<String> onOpenPlain;
@@ -951,7 +924,7 @@ class _ClausesBody extends StatelessWidget {
                       'See all',
                       style: GoogleFonts.plusJakartaSans(
                         fontWeight: FontWeight.w700,
-                        color: orangeDeep,
+                        color: accentDeep,
                       ),
                     ),
                   ),
@@ -980,7 +953,7 @@ class _ClausesBody extends StatelessWidget {
                               border: Border(
                                 bottom: BorderSide(
                                   color: filter == chip.$1
-                                      ? orangeDeep
+                                      ? accentDeep
                                       : Colors.transparent,
                                   width: 2.5,
                                 ),
@@ -1152,15 +1125,15 @@ class _BottomActions extends StatelessWidget {
     required this.onChat,
     required this.onExport,
     required this.onCompare,
-    required this.orange,
-    required this.orangeDeep,
+    required this.accent,
+    required this.accentDeep,
   });
 
   final VoidCallback onChat;
   final VoidCallback onExport;
   final VoidCallback onCompare;
-  final Color orange;
-  final Color orangeDeep;
+  final Color accent;
+  final Color accentDeep;
 
   @override
   Widget build(BuildContext context) {
@@ -1169,7 +1142,7 @@ class _BottomActions extends StatelessWidget {
         16,
         10,
         16,
-        10 + MediaQuery.paddingOf(context).bottom,
+        88 + MediaQuery.paddingOf(context).bottom,
       ),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -1193,7 +1166,7 @@ class _BottomActions extends StatelessWidget {
                 child: Ink(
                   height: 48,
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(colors: [orange, orangeDeep]),
+                    color: AppColors.ink,
                     borderRadius: BorderRadius.circular(AppRadii.pill),
                   ),
                   child: Row(

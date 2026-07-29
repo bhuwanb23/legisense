@@ -3,10 +3,11 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../services/session_prefs.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/home/app_page_header.dart';
 import '../auth/login_page.dart';
 import 'edit_profile_page.dart';
 
-/// Profile — dark header + menu list (studied DNA).
+/// Profile — TripGlide Operate (Home theme).
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
 
@@ -17,9 +18,6 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   String _name = 'Member';
   String _email = '—';
-
-  static const _header = Color(0xFF1C1C1E);
-  static const _cardDark = Color(0xFF2C2C2E);
 
   @override
   void initState() {
@@ -95,7 +93,7 @@ class _ProfilePageState extends State<ProfilePage> {
     if (ok != true) return;
     await SessionPrefs.setLoggedIn(false);
     if (!mounted) return;
-    Navigator.of(context).pushAndRemoveUntil(
+    Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
       MaterialPageRoute<void>(builder: (_) => const LoginPage()),
       (_) => false,
     );
@@ -106,146 +104,116 @@ class _ProfilePageState extends State<ProfilePage> {
     final initial = _name.isNotEmpty ? _name[0].toUpperCase() : 'L';
 
     return ColoredBox(
-      color: Colors.white,
+      color: AppColors.bg,
       child: SafeArea(
         bottom: false,
         child: Column(
           children: [
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
-              decoration: const BoxDecoration(
-                color: _header,
-                borderRadius: BorderRadius.vertical(
-                  bottom: Radius.circular(32),
-                ),
-              ),
-              child: Column(
-                children: [
-                  Row(
-                    children: [
-                      _CircleIcon(
-                        icon: Icons.arrow_back_ios_new_rounded,
-                        onTap: () => _toast('You’re on Profile.'),
-                      ),
-                      Expanded(
-                        child: Text(
-                          'Profile',
-                          textAlign: TextAlign.center,
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                      _CircleIcon(
-                        icon: Icons.notifications_none_rounded,
-                        onTap: () =>
-                            _toast('Open Alerts from the bottom dock.'),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  Container(
-                    width: 96,
-                    height: 96,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 3),
-                      color: _cardDark,
-                    ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      initial,
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 36,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  Text(
-                    _name,
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    _email,
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 13,
-                      color: Colors.white.withValues(alpha: 0.65),
-                    ),
-                  ),
-                  const SizedBox(height: 22),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _QuickCard(
-                          icon: Icons.notifications_outlined,
-                          label: 'Alerts',
-                          onTap: () =>
-                              _toast('Open Alerts from the bottom dock.'),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: _QuickCard(
-                          icon: Icons.bookmark_border_rounded,
-                          label: 'Saved',
-                          onTap: () =>
-                              _toast('Saved clauses come with the backend.'),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: _QuickCard(
-                          icon: Icons.history_rounded,
-                          label: 'History',
-                          onTap: () =>
-                              _toast('Open Documents from the bottom dock.'),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+            AppPageHeader(
+              title: 'Profile',
+              subtitle: 'Account & preferences',
+              trailing: AppHeaderIconButton(
+                icon: Icons.edit_outlined,
+                onTap: _openEdit,
               ),
             ),
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.fromLTRB(8, 12, 8, 110),
+                padding: const EdgeInsets.fromLTRB(24, 16, 24, 110),
                 children: [
-                  _MenuTile(
-                    icon: Icons.person_outline_rounded,
-                    label: 'Edit Profile',
-                    onTap: _openEdit,
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: AppColors.ink,
+                      borderRadius: BorderRadius.circular(AppRadii.md),
+                      boxShadow: AppShadows.card,
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 64,
+                          height: 64,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.12),
+                            shape: BoxShape.circle,
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            initial,
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 26,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                _name,
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                _email,
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 13,
+                                  color: Colors.white.withValues(alpha: 0.65),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  _MenuTile(
-                    icon: Icons.location_on_outlined,
-                    label: 'Region & language',
-                    onTap: _openEdit,
+                  const SizedBox(height: 20),
+                  _MenuCard(
+                    children: [
+                      _MenuTile(
+                        icon: Icons.person_outline_rounded,
+                        label: 'Edit Profile',
+                        onTap: _openEdit,
+                      ),
+                      _MenuTile(
+                        icon: Icons.language_rounded,
+                        label: 'Region & language',
+                        onTap: _openEdit,
+                      ),
+                      _MenuTile(
+                        icon: Icons.headset_mic_outlined,
+                        label: 'Help & Support',
+                        onTap: () =>
+                            _toast('Support chat comes with the backend.'),
+                      ),
+                      _MenuTile(
+                        icon: Icons.settings_outlined,
+                        label: 'Settings',
+                        onTap: () =>
+                            _toast('Settings come with the backend.'),
+                        showDivider: false,
+                      ),
+                    ],
                   ),
-                  _MenuTile(
-                    icon: Icons.headset_mic_outlined,
-                    label: 'Help & Support',
-                    onTap: () => _toast('Support chat comes with the backend.'),
-                  ),
-                  _MenuTile(
-                    icon: Icons.settings_outlined,
-                    label: 'Settings',
-                    onTap: () => _toast('Settings come with the backend.'),
-                  ),
-                  _MenuTile(
-                    icon: Icons.logout_rounded,
-                    label: 'Log out',
-                    danger: true,
-                    showChevron: false,
-                    onTap: _logout,
+                  const SizedBox(height: 12),
+                  _MenuCard(
+                    children: [
+                      _MenuTile(
+                        icon: Icons.logout_rounded,
+                        label: 'Log out',
+                        danger: true,
+                        showChevron: false,
+                        showDivider: false,
+                        onTap: _logout,
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -257,71 +225,20 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 }
 
-class _CircleIcon extends StatelessWidget {
-  const _CircleIcon({required this.icon, required this.onTap});
+class _MenuCard extends StatelessWidget {
+  const _MenuCard({required this.children});
 
-  final IconData icon;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.white.withValues(alpha: 0.12),
-      shape: const CircleBorder(),
-      child: InkWell(
-        customBorder: const CircleBorder(),
-        onTap: onTap,
-        child: SizedBox(
-          width: 40,
-          height: 40,
-          child: Icon(icon, size: 18, color: Colors.white),
-        ),
-      ),
-    );
-  }
-}
-
-class _QuickCard extends StatelessWidget {
-  const _QuickCard({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
+  final List<Widget> children;
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: const Color(0xFF2C2C2E),
-      borderRadius: BorderRadius.circular(16),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-          ),
-          child: Column(
-            children: [
-              Icon(icon, color: Colors.white, size: 22),
-              const SizedBox(height: 8),
-              Text(
-                label,
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white.withValues(alpha: 0.9),
-                ),
-              ),
-            ],
-          ),
-        ),
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadii.md),
+        boxShadow: AppShadows.soft,
       ),
+      child: Column(children: children),
     );
   }
 }
@@ -333,6 +250,7 @@ class _MenuTile extends StatelessWidget {
     required this.onTap,
     this.danger = false,
     this.showChevron = true,
+    this.showDivider = true,
   });
 
   final IconData icon;
@@ -340,29 +258,37 @@ class _MenuTile extends StatelessWidget {
   final VoidCallback onTap;
   final bool danger;
   final bool showChevron;
+  final bool showDivider;
 
   @override
   Widget build(BuildContext context) {
     final color = danger ? AppColors.error : AppColors.ink;
 
-    return ListTile(
-      onTap: onTap,
-      leading: Icon(icon, color: color, size: 24),
-      title: Text(
-        label,
-        style: GoogleFonts.plusJakartaSans(
-          fontSize: 15,
-          fontWeight: FontWeight.w600,
-          color: color,
+    return Column(
+      children: [
+        ListTile(
+          onTap: onTap,
+          leading: Icon(icon, color: color, size: 22),
+          title: Text(
+            label,
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: color,
+            ),
+          ),
+          trailing: showChevron
+              ? Icon(
+                  Icons.chevron_right_rounded,
+                  color: AppColors.mute.withValues(alpha: 0.7),
+                )
+              : null,
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 18, vertical: 4),
         ),
-      ),
-      trailing: showChevron
-          ? Icon(
-              Icons.chevron_right_rounded,
-              color: AppColors.mute.withValues(alpha: 0.7),
-            )
-          : null,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+        if (showDivider)
+          const Divider(height: 1, indent: 56, color: AppColors.rule),
+      ],
     );
   }
 }

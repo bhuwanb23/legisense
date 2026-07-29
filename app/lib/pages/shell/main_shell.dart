@@ -8,7 +8,8 @@ import '../notifications/notifications_page.dart';
 import '../profile/profile_page.dart';
 import '../upload/upload_page.dart';
 
-/// Post-auth root — floating TripGlide dock.
+/// Post-auth root — floating dock + per-tab nested navigators
+/// so Analysis / Edit Profile / Processing keep the navbar.
 class MainShell extends StatefulWidget {
   const MainShell({super.key, this.initialIndex = 0});
 
@@ -21,33 +22,91 @@ class MainShell extends StatefulWidget {
 class _MainShellState extends State<MainShell> {
   late int _index = widget.initialIndex;
 
+  final _navKeys = List<GlobalKey<NavigatorState>>.generate(
+    5,
+    (_) => GlobalKey<NavigatorState>(),
+  );
+
   void goToTab(int index) {
     if (index < 0 || index > 4) return;
+    if (index == _index) {
+      _navKeys[index].currentState?.popUntil((route) => route.isFirst);
+      return;
+    }
     setState(() => _index = index);
+  }
+
+  Future<bool> _onWillPop() async {
+    final nav = _navKeys[_index].currentState;
+    if (nav != null && nav.canPop()) {
+      nav.pop();
+      return false;
+    }
+    return true;
+  }
+
+  Widget _tabNavigator({
+    required int tabIndex,
+    required Widget root,
+  }) {
+    return Navigator(
+      key: _navKeys[tabIndex],
+      onGenerateRoute: (settings) {
+        return MaterialPageRoute<void>(
+          settings: settings,
+          builder: (_) => root,
+        );
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.bg,
-      extendBody: true,
-      body: IndexedStack(
-        index: _index,
-        children: [
-          HomePage(
-            onOpenUpload: () => goToTab(2),
-            onOpenDocuments: () => goToTab(1),
-            onOpenNotifications: () => goToTab(3),
-          ),
-          DocumentsPage(onOpenUpload: () => goToTab(2)),
-          const UploadPage(),
-          const NotificationsPage(),
-          const ProfilePage(),
-        ],
-      ),
-      bottomNavigationBar: AppBottomNav(
-        currentIndex: _index,
-        onChanged: goToTab,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) async {
+        if (didPop) return;
+        final shouldLeave = await _onWillPop();
+        if (shouldLeave && context.mounted) {
+          Navigator.of(context).maybePop();
+        }
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.bg,
+        extendBody: true,
+        body: IndexedStack(
+          index: _index,
+          children: [
+            _tabNavigator(
+              tabIndex: 0,
+              root: HomePage(
+                onOpenUpload: () => goToTab(2),
+                onOpenDocuments: () => goToTab(1),
+                onOpenNotifications: () => goToTab(3),
+              ),
+            ),
+            _tabNavigator(
+              tabIndex: 1,
+              root: DocumentsPage(onOpenUpload: () => goToTab(2)),
+            ),
+            _tabNavigator(
+              tabIndex: 2,
+              root: const UploadPage(),
+            ),
+            _tabNavigator(
+              tabIndex: 3,
+              root: const NotificationsPage(),
+            ),
+            _tabNavigator(
+              tabIndex: 4,
+              root: const ProfilePage(),
+            ),
+          ],
+        ),
+        bottomNavigationBar: AppBottomNav(
+          currentIndex: _index,
+          onChanged: goToTab,
+        ),
       ),
     );
   }

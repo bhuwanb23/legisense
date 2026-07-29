@@ -157,7 +157,12 @@ class _ChatPageState extends State<ChatPage> {
           SafeArea(
             top: false,
             child: Container(
-              padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
+              padding: EdgeInsets.fromLTRB(
+                16,
+                10,
+                16,
+                88 + MediaQuery.paddingOf(context).bottom,
+              ),
               decoration: const BoxDecoration(
                 color: AppColors.cloud,
                 border: Border(top: BorderSide(color: AppColors.rule)),

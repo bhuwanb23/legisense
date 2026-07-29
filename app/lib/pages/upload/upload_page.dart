@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../models/pending_upload.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/auth/auth_primary_button.dart';
+import '../../widgets/home/app_page_header.dart';
 import '../../widgets/upload/upload_option_tile.dart';
 import '../processing/processing_page.dart';
 import 'scan_preview_page.dart';
@@ -249,26 +250,13 @@ class _UploadPageState extends State<UploadPage> {
         child: CustomScrollView(
           slivers: [
             SliverPadding(
-              padding: const EdgeInsets.fromLTRB(24, 20, 24, 110),
+              padding: const EdgeInsets.fromLTRB(24, 8, 24, 110),
               sliver: SliverList(
                 delegate: SliverChildListDelegate([
-                  Text(
-                    'Upload document',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 28,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: -0.6,
-                      color: AppColors.primaryNavy,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Choose how you want to add a contract for review.',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 14,
-                      height: 1.45,
-                      color: AppColors.inkSoft,
-                    ),
+                  AppPageHeader(
+                    title: 'Upload',
+                    subtitle: 'Add a contract for review',
+                    padding: EdgeInsets.zero,
                   ),
                   const SizedBox(height: 24),
                   Row(

@@ -5,6 +5,7 @@ import '../../data/analysis_mock.dart';
 import '../../data/dashboard_mock.dart';
 import '../../services/session_prefs.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/home/app_page_header.dart';
 import '../analysis/analysis_results_page.dart';
 
 /// Documents library — PDF-reader style workbench (studied DNA).
@@ -182,59 +183,25 @@ class _DocumentsPageState extends State<DocumentsPage> {
   Widget build(BuildContext context) {
     final docs = _visible;
 
-    return DecoratedBox(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            Color(0xFFDFF3F8),
-            Color(0xFFF7FBFC),
-            Color(0xFFFFFFFF),
-          ],
-          stops: [0.0, 0.28, 0.55],
-        ),
-      ),
+    return ColoredBox(
+      color: AppColors.bg,
       child: SafeArea(
         bottom: false,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 12, 20, 0),
-              child: Row(
+            AppPageHeader(
+              title: 'Documents',
+              subtitle: '$_greeting, $_name',
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _greeting,
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 26,
-                            fontWeight: FontWeight.w700,
-                            height: 1.15,
-                            color: AppColors.ink,
-                          ),
-                        ),
-                        Text(
-                          '$_name 👋',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 26,
-                            fontWeight: FontWeight.w700,
-                            height: 1.15,
-                            color: AppColors.ink,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  _RoundIconBtn(
+                  AppHeaderIconButton(
                     icon: Icons.note_add_outlined,
                     onTap: () => widget.onOpenUpload?.call(),
                   ),
                   const SizedBox(width: 10),
-                  _RoundIconBtn(
+                  AppHeaderIconButton(
                     icon: Icons.settings_outlined,
                     onTap: () => _toast('Settings come with the backend.'),
                   ),
@@ -329,7 +296,7 @@ class _DocumentsPageState extends State<DocumentsPage> {
             Padding(
               padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
               child: Material(
-                color: const Color(0xFF0F3D3E),
+                color: AppColors.ink,
                 borderRadius: BorderRadius.circular(22),
                 child: InkWell(
                   borderRadius: BorderRadius.circular(22),
@@ -506,35 +473,6 @@ class _DocumentsPageState extends State<DocumentsPage> {
               ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class _RoundIconBtn extends StatelessWidget {
-  const _RoundIconBtn({required this.icon, required this.onTap});
-
-  final IconData icon;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: AppColors.surface,
-      shape: const CircleBorder(),
-      elevation: 0,
-      child: InkWell(
-        customBorder: const CircleBorder(),
-        onTap: onTap,
-        child: Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            boxShadow: AppShadows.soft,
-          ),
-          child: Icon(icon, size: 20, color: AppColors.ink),
         ),
       ),
     );

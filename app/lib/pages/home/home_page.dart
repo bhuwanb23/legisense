@@ -4,9 +4,9 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../data/dashboard_mock.dart';
 import '../../services/session_prefs.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/home/app_page_header.dart';
 import '../../widgets/home/doc_type_filters.dart';
 import '../../widgets/home/featured_doc_card.dart';
-import '../../widgets/home/home_header.dart';
 import '../../widgets/home/home_search_bar.dart';
 import '../../widgets/home/recent_doc_tile.dart';
 import '../../widgets/home/section_header.dart';
@@ -93,11 +93,23 @@ class _HomePageState extends State<HomePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              HomeHeader(
-                greeting: '',
+              AppPageHeader.greeting(
                 name: _name,
-                onNotifications: widget.onOpenNotifications,
-                onSearch: () => _toast('Search comes with the backend.'),
+                padding: EdgeInsets.zero,
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    AppHeaderIconButton(
+                      icon: Icons.search_rounded,
+                      onTap: () => _toast('Search comes with the backend.'),
+                    ),
+                    const SizedBox(width: 8),
+                    AppHeaderIconButton(
+                      icon: Icons.notifications_none_rounded,
+                      onTap: widget.onOpenNotifications,
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 20),
               HomeSearchBar(

@@ -80,7 +80,7 @@ class RiskDashboardPage extends StatelessWidget {
         ),
       ),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 110),
         children: [
           SoftCard(
             padding: const EdgeInsets.fromLTRB(16, 24, 16, 24),

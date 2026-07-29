@@ -350,7 +350,7 @@ class _PlainLanguagePageState extends State<PlainLanguagePage> {
           ),
           Expanded(
             child: ListView.builder(
-              padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
+              padding: const EdgeInsets.fromLTRB(20, 4, 20, 110),
               itemCount: clauses.length,
               itemBuilder: (context, index) {
                 final c = clauses[index];
@@ -420,7 +420,12 @@ class _PlainLanguagePageState extends State<PlainLanguagePage> {
           SafeArea(
             top: false,
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+              padding: EdgeInsets.fromLTRB(
+                16,
+                0,
+                16,
+                88 + MediaQuery.paddingOf(context).bottom,
+              ),
               child: Row(
                 children: [
                   Expanded(

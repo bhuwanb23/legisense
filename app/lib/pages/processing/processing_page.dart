@@ -119,7 +119,7 @@ class _ProcessingPageState extends State<ProcessingPage> {
           child: LayoutBuilder(
             builder: (context, constraints) {
               return SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(28, 16, 28, 24),
+                padding: const EdgeInsets.fromLTRB(28, 16, 28, 110),
                 child: ConstrainedBox(
                   constraints: BoxConstraints(minHeight: constraints.maxHeight),
                   child: IntrinsicHeight(
