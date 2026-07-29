@@ -84,7 +84,7 @@ class _RiskGaugeState extends State<RiskGauge>
                 children: [
                   Text(
                     'RISK SCORE',
-                    style: GoogleFonts.epilogue(
+                    style: GoogleFonts.plusJakartaSans(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
                       letterSpacing: 0.6,
@@ -94,7 +94,7 @@ class _RiskGaugeState extends State<RiskGauge>
                   const SizedBox(height: 4),
                   Text(
                     '${(widget.score * _anim.value).round()}',
-                    style: GoogleFonts.epilogue(
+                    style: GoogleFonts.plusJakartaSans(
                       fontSize: widget.size * 0.22,
                       fontWeight: FontWeight.w700,
                       height: 1,
@@ -103,7 +103,7 @@ class _RiskGaugeState extends State<RiskGauge>
                   ),
                   Text(
                     '/ 100',
-                    style: GoogleFonts.epilogue(
+                    style: GoogleFonts.plusJakartaSans(
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
                       color: AppColors.inkSoft,
