@@ -7,6 +7,8 @@ import {
   getSummary,
   getRiskDashboard,
   getRisksByCategory,
+  getPlainEnglish,
+  lookupGlossary,
 } from '../controllers/analysisController';
 import { authenticate } from '../middleware/auth';
 import { aiRateLimiter } from '../middleware/rateLimiter';
@@ -20,5 +22,7 @@ router.get('/:documentId/risks', authenticate, getRisks);
 router.get('/:documentId/risks/:category', authenticate, getRisksByCategory);
 router.get('/:documentId/summary', authenticate, getSummary);
 router.get('/:documentId/risk-dashboard', authenticate, getRiskDashboard);
+router.get('/:documentId/plain-english', authenticate, getPlainEnglish);
+router.post('/glossary', authenticate, lookupGlossary);
 
 export default router;

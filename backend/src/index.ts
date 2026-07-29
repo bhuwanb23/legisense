@@ -6,7 +6,9 @@ import {
   users, documents, analysisResults,
   clauses, riskItems, deadlines, chatMessages,
   notifications, sessions, usageLogs, queueJobs,
+  glossary,
 } from './models';
+import { legalGlossary } from './data/legalGlossary';
 import { initSocketIO, closeSocketIO } from './services/socketService';
 import { startQueueSystem, stopQueueSystem } from './queue';
 
@@ -190,6 +192,17 @@ async function start() {
     completed_at TEXT
   )`);
 
+  await db.run(sql`CREATE TABLE IF NOT EXISTS ${glossary} (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    term TEXT NOT NULL UNIQUE,
+    definition TEXT NOT NULL,
+    category TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  )`);
+
+  try { db.run(sql`ALTER TABLE ${clauses} ADD COLUMN reading_level TEXT`); } catch {}
+  try { db.run(sql`ALTER TABLE ${clauses} ADD COLUMN key_legal_terms TEXT`); } catch {}
+
   try { db.run(sql`ALTER TABLE usage_logs ADD COLUMN provider TEXT`); } catch {}
   try { db.run(sql`ALTER TABLE usage_logs ADD COLUMN model TEXT`); } catch {}
   try { db.run(sql`ALTER TABLE usage_logs ADD COLUMN cost REAL`); } catch {}
@@ -198,7 +211,15 @@ async function start() {
   try { db.run(sql`ALTER TABLE documents ADD COLUMN encryption_iv TEXT`); } catch {}
   try { db.run(sql`ALTER TABLE analysis_results ADD COLUMN breach_scenarios TEXT`); } catch {}
 
-  console.log('All 11 tables created/verified.');
+  const existingTerms = db.select({ count: sql<number>`count(*)` }).from(glossary).all();
+  if (existingTerms[0]?.count === 0) {
+    for (const entry of legalGlossary) {
+      db.insert(glossary).values({ term: entry.term, definition: entry.definition, category: entry.category }).run();
+    }
+    console.log(`Seeded ${legalGlossary.length} legal glossary terms.`);
+  }
+
+  console.log('All 12 tables created/verified.');
   persistNow();
 
   initSocketIO(server);

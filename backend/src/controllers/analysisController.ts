@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { getDb } from '../config/database';
-import { documents, analysisResults, clauses, riskItems, deadlines } from '../models';
+import { documents, analysisResults, clauses, riskItems, deadlines, glossary } from '../models';
 import { sql } from 'drizzle-orm';
 import { analysisQueue } from '../queue';
 import { NotFoundError, BadRequestError } from '../utils/errors';
@@ -379,6 +379,124 @@ export async function getRiskDashboard(
         clauseCountByRisk,
         highestRiskClause,
         riskTrend,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function getPlainEnglish(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    if (!req.user) {
+      res.status(401).json({ success: false, error: { message: 'Unauthorized', code: 'AUTH_REQUIRED', statusCode: 401 } });
+      return;
+    }
+
+    const documentId = Number(req.params.documentId);
+    const db = getDb();
+
+    const docRows = db.select().from(documents).where(
+      sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = 0`
+    ).all();
+
+    if (!docRows[0]) throw new NotFoundError('Document');
+
+    const analysisRows = db.select().from(analysisResults).where(
+      sql`${analysisResults.documentId} = ${documentId}`
+    ).all();
+
+    if (!analysisRows[0]) {
+      res.json({ success: true, data: { clauses: [] } });
+      return;
+    }
+
+    const clauseRows = db.select({
+      id: clauses.id,
+      clauseNumber: clauses.clauseNumber,
+      clauseTitle: clauses.clauseTitle,
+      originalText: clauses.originalText,
+      plainEnglishText: clauses.plainEnglishText,
+      readingLevel: clauses.readingLevel,
+      keyLegalTerms: clauses.keyLegalTerms,
+      riskLevel: clauses.riskLevel,
+      riskScore: clauses.riskScore,
+    }).from(clauses).where(
+      sql`${clauses.analysisId} = ${analysisRows[0].id}`
+    ).all();
+
+    const clausesWithTerms = clauseRows.map((c) => ({
+      ...c,
+      keyLegalTerms: safeJsonParse(c.keyLegalTerms),
+    }));
+
+    res.json({ success: true, data: { clauses: clausesWithTerms } });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function lookupGlossary(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const { term } = req.body;
+    if (!term || typeof term !== 'string' || term.trim().length === 0) {
+      res.status(400).json({ success: false, error: { message: 'Term is required', code: 'VALIDATION_ERROR', statusCode: 400 } });
+      return;
+    }
+
+    const db = getDb();
+    const trimmed = term.trim();
+
+    const rows = db.select().from(glossary).where(
+      sql`LOWER(${glossary.term}) = LOWER(${trimmed})`
+    ).all();
+
+    if (rows.length > 0) {
+      res.json({
+        success: true,
+        data: {
+          term: rows[0].term,
+          definition: rows[0].definition,
+          category: rows[0].category,
+          source: 'cache',
+        },
+      });
+      return;
+    }
+
+    const fuzzyRows = db.select().from(glossary).where(
+      sql`LOWER(${glossary.term}) LIKE LOWER(${'%' + trimmed + '%'})`
+    ).all();
+
+    if (fuzzyRows.length > 0) {
+      res.json({
+        success: true,
+        data: {
+          term: fuzzyRows[0].term,
+          definition: fuzzyRows[0].definition,
+          category: fuzzyRows[0].category,
+          source: 'cache',
+        },
+      });
+      return;
+    }
+
+    const generatedDefinition = `"${trimmed}" is a legal term or concept. For an authoritative definition, please consult a legal professional or reference a standard legal dictionary.`;
+    res.json({
+      success: true,
+      data: {
+        term: trimmed,
+        definition: generatedDefinition,
+        category: 'unknown',
+        source: 'ai',
       },
     });
   } catch (err) {

@@ -1,6 +1,6 @@
 import { initDatabase, getDb, closeDatabase, persistNow } from '../src/config/database';
 import { sql } from 'drizzle-orm';
-import { users, documents, analysisResults, clauses, riskItems } from '../src/models';
+import { users, documents, analysisResults, clauses, riskItems, glossary } from '../src/models';
 import { AnalysisOutputSchema, PartySchema, ClauseSchema } from '../src/schemas/analysisSchemas';
 import { buildAnalysisUserPrompt, parseAiResponse } from '../src/prompts/analysisPrompt';
 import { chunkText, mergeAnalysisResults, estimateTotalRequestTokens } from '../src/services/chunkingService';
@@ -47,6 +47,8 @@ function buildValidAnalysisOutput(overrides: Record<string, unknown> = {}) {
         clauseTitle: 'Definition of Confidential Information',
         originalText: 'Confidential Information means any information disclosed by one party to the other.',
         plainEnglishText: 'This clause defines what counts as secret information.',
+        readingLevel: 'grade_5',
+        keyLegalTerms: [{ term: 'Confidential Information', definition: 'Secret information.' }],
         riskLevel: 'low',
         riskScore: 10,
         riskReason: 'Standard definition clause.',
@@ -86,6 +88,19 @@ async function run() {
   db.run(sql`DELETE FROM ${analysisResults}`);
   db.run(sql`DELETE FROM ${documents}`);
   db.run(sql`DELETE FROM ${users}`);
+  db.run(sql`DELETE FROM ${glossary}`);
+
+  try { db.run(sql`ALTER TABLE ${clauses} ADD COLUMN reading_level TEXT`); } catch {}
+  try { db.run(sql`ALTER TABLE ${clauses} ADD COLUMN key_legal_terms TEXT`); } catch {}
+
+  db.run(sql`CREATE TABLE IF NOT EXISTS ${glossary} (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    term TEXT NOT NULL UNIQUE,
+    definition TEXT NOT NULL,
+    category TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  )`);
+
   persistNow();
 
   db.insert(users).values({
@@ -229,6 +244,8 @@ async function run() {
       clauseTitle: 'Parties',
       originalText: 'This Agreement is between...',
       plainEnglishText: 'Identifies who is signing.',
+      readingLevel: 'grade_5',
+      keyLegalTerms: [],
       riskLevel: 'none',
       riskScore: 0,
       riskReason: 'Standard.',
@@ -247,6 +264,8 @@ async function run() {
         clauseTitle: 'Parties',
         originalText: '',
         plainEnglishText: 'Identifies who is signing.',
+        readingLevel: 'grade_8',
+        keyLegalTerms: [],
         riskLevel: 'none',
         riskScore: 0,
         riskReason: 'Standard.',
@@ -267,6 +286,8 @@ async function run() {
         clauseTitle: 'Parties',
         originalText: 'Text',
         plainEnglishText: 'Explanation',
+        readingLevel: 'standard',
+        keyLegalTerms: [],
         riskLevel: 'none',
         riskScore: 0,
         riskReason: 'Standard.',
@@ -513,8 +534,8 @@ async function run() {
   }
 
   {
-    const a = buildValidAnalysisOutput({ documentType: 'NDA', overallRiskScore: 10, riskLevel: 'low', clauses: [{ clauseNumber: 1, clauseTitle: 'A', originalText: 'A', plainEnglishText: 'A', riskLevel: 'low', riskScore: 10, riskReason: '', riskCategory: 'legal', counterSuggestion: '' }] });
-    const b = buildValidAnalysisOutput({ documentType: 'Rental', overallRiskScore: 80, riskLevel: 'high', clauses: [{ clauseNumber: 2, clauseTitle: 'B', originalText: 'B', plainEnglishText: 'B', riskLevel: 'high', riskScore: 80, riskReason: '', riskCategory: 'financial', counterSuggestion: '' }] });
+    const a = buildValidAnalysisOutput({ documentType: 'NDA', overallRiskScore: 10, riskLevel: 'low', clauses: [{ clauseNumber: 1, clauseTitle: 'A', originalText: 'A', plainEnglishText: 'A', readingLevel: 'grade_5', keyLegalTerms: [], riskLevel: 'low', riskScore: 10, riskReason: '', riskCategory: 'legal', counterSuggestion: '' }] });
+    const b = buildValidAnalysisOutput({ documentType: 'Rental', overallRiskScore: 80, riskLevel: 'high', clauses: [{ clauseNumber: 2, clauseTitle: 'B', originalText: 'B', plainEnglishText: 'B', readingLevel: 'standard', keyLegalTerms: [], riskLevel: 'high', riskScore: 80, riskReason: '', riskCategory: 'financial', counterSuggestion: '' }] });
     const merged = mergeAnalysisResults([a, b]);
     assert(merged.documentType === 'Rental', 'mergeAnalysisResults picks highest risk document type');
     assert(merged.riskLevel === 'high', 'mergeAnalysisResults picks highest risk level');
@@ -728,12 +749,14 @@ async function run() {
     const { ClauseSchema, RiskItemSchema } = await import('../src/schemas/analysisSchemas');
     const clause = ClauseSchema.parse({
       clauseNumber: 1, clauseTitle: 'IP Clause', originalText: 'IP text.', plainEnglishText: 'IP.',
+      readingLevel: 'standard', keyLegalTerms: [],
       riskLevel: 'low', riskScore: 10, riskReason: '', riskCategory: 'intellectual_property', counterSuggestion: '',
     });
     assert(clause.riskCategory === 'intellectual_property', 'ClauseSchema accepts intellectual_property');
 
     const operational = ClauseSchema.parse({
       clauseNumber: 2, clauseTitle: 'Ops Clause', originalText: 'Ops text.', plainEnglishText: 'Ops.',
+      readingLevel: 'grade_8', keyLegalTerms: [],
       riskLevel: 'low', riskScore: 10, riskReason: '', riskCategory: 'operational', counterSuggestion: '',
     });
     assert(operational.riskCategory === 'operational', 'ClauseSchema accepts operational');
@@ -857,6 +880,180 @@ async function run() {
 
     const privacyClauses = clauseRows.filter((c) => c.riskCategory === 'privacy');
     assert(privacyClauses.length === 1, 'Filtered clauses by privacy category returns 1 clause');
+  }
+
+  // ═══════════════════════════════════════════════════
+  //  15. Plain Language Translation
+  // ═══════════════════════════════════════════════════
+  console.log('\n── 15. Plain Language Translation ──');
+
+  {
+    const clause = ClauseSchema.parse({
+      clauseNumber: 1,
+      clauseTitle: 'Confidentiality',
+      originalText: 'The Receiving Party shall not disclose Confidential Information.',
+      plainEnglishText: 'The person getting the secret info must keep it secret.',
+      readingLevel: 'grade_5',
+      keyLegalTerms: [
+        { term: 'Confidential Information', definition: 'Secret information that must be protected.' },
+      ],
+      riskLevel: 'low',
+      riskScore: 10,
+      riskReason: 'Standard NDA clause.',
+      riskCategory: 'legal',
+      counterSuggestion: '',
+    });
+    assert(clause.readingLevel === 'grade_5', 'ClauseSchema accepts readingLevel=grade_5');
+    assert(clause.keyLegalTerms.length === 1, 'ClauseSchema parses keyLegalTerms array');
+    assert(clause.keyLegalTerms[0].term === 'Confidential Information', 'keyLegalTerms has correct term');
+  }
+
+  {
+    const clause = ClauseSchema.parse({
+      clauseNumber: 2,
+      clauseTitle: 'Indemnification',
+      originalText: 'Party A agrees to indemnify Party B.',
+      plainEnglishText: 'Party A will cover any losses Party B suffers.',
+      readingLevel: 'grade_8',
+      keyLegalTerms: [
+        { term: 'Indemnify', definition: 'To compensate for loss or damage.' },
+        { term: 'Party', definition: 'A person or company in the agreement.' },
+      ],
+      riskLevel: 'medium',
+      riskScore: 50,
+      riskReason: 'Broad indemnification.',
+      riskCategory: 'liability',
+      counterSuggestion: 'Cap indemnification at contract value.',
+    });
+    assert(clause.readingLevel === 'grade_8', 'ClauseSchema accepts readingLevel=grade_8');
+    assert(clause.keyLegalTerms.length === 2, 'ClauseSchema accepts multiple keyLegalTerms');
+  }
+
+  {
+    const clause = ClauseSchema.parse({
+      clauseNumber: 3,
+      clauseTitle: 'Governing Law',
+      originalText: 'This agreement is governed by the laws of India.',
+      plainEnglishText: 'This agreement uses Indian law.',
+      readingLevel: 'standard',
+      keyLegalTerms: [],
+      riskLevel: 'none',
+      riskScore: 0,
+      riskReason: 'Standard governing law.',
+      riskCategory: 'legal',
+      counterSuggestion: '',
+    });
+    assert(clause.readingLevel === 'standard', 'ClauseSchema accepts readingLevel=standard');
+    assert(clause.keyLegalTerms.length === 0, 'ClauseSchema accepts empty keyLegalTerms array');
+  }
+
+  {
+    let threw = false;
+    try {
+      ClauseSchema.parse({
+        clauseNumber: 4,
+        clauseTitle: 'Test',
+        originalText: 'Text.',
+        plainEnglishText: 'Plain.',
+        readingLevel: 'college',  // invalid
+        keyLegalTerms: [],
+        riskLevel: 'low',
+        riskScore: 5,
+        riskReason: '',
+        riskCategory: 'legal',
+        counterSuggestion: '',
+      });
+    } catch {
+      threw = true;
+    }
+    assert(threw, 'ClauseSchema rejects invalid readingLevel');
+  }
+
+  {
+    const { AnalysisOutputSchema } = await import('../src/schemas/analysisSchemas');
+    const output = AnalysisOutputSchema.parse(buildValidAnalysisOutput());
+    for (const clause of output.clauses) {
+      assert(typeof clause.plainEnglishText === 'string' && clause.plainEnglishText.length > 0, 'Each clause has plainEnglishText');
+      assert(['grade_5', 'grade_8', 'standard'].includes(clause.readingLevel), 'Each clause has valid readingLevel');
+      assert(Array.isArray(clause.keyLegalTerms), 'Each clause has keyLegalTerms array');
+    }
+  }
+
+  {
+    const prompt = (await import('../src/prompts/analysisPrompt')).ANALYSIS_SYSTEM_PROMPT;
+    assert(prompt.includes('plainEnglishText'), 'Prompt instructs on plainEnglishText');
+    assert(prompt.includes('readingLevel'), 'Prompt instructs on readingLevel');
+    assert(prompt.includes('keyLegalTerms'), 'Prompt instructs on keyLegalTerms');
+  }
+
+  {
+    const prompt = (await import('../src/prompts/analysisPrompt')).ANALYSIS_SYSTEM_PROMPT;
+    assert(prompt.includes('grade_5'), 'Prompt mentions grade_5 reading level');
+    assert(prompt.includes('grade_8'), 'Prompt mentions grade_8 reading level');
+    assert(prompt.includes('standard'), 'Prompt mentions standard reading level');
+  }
+
+  {
+    const db = getDb();
+    db.insert(documents).values({
+      userId, originalName: 'plain-english-test.pdf', storagePath: 'test.txt',
+      fileFormat: 'txt', fileSize: 100, sourceType: 'file', uploadStatus: 'uploaded',
+      processingStatus: 'analyzed', rawText: 'Test.',
+    }).run();
+    const testDocId = db.select({ id: documents.id }).from(documents).where(
+      sql`${documents.originalName} = 'plain-english-test.pdf'`
+    ).all()[0].id;
+
+    db.insert(analysisResults).values({
+      documentId: testDocId, userId,
+      documentType: 'NDA', overallRiskScore: 30, riskLevel: 'low',
+      fairnessScore: 70, favorsParty: 'Balanced', summary: 'Test plain English.',
+      keyParties: '[]', criticalDates: '[]', keyObligations: '[]',
+      missingClauses: '[]', jurisdictionFlags: '[]', breachScenarios: '[]',
+      processingTime: 1, aiModelUsed: 'test',
+    }).run();
+    const analysisId = db.select({ id: analysisResults.id }).from(analysisResults).where(
+      sql`${analysisResults.documentId} = ${testDocId}`
+    ).all()[0].id;
+
+    db.insert(clauses).values({
+      documentId: testDocId, analysisId,
+      clauseNumber: 1, clauseTitle: 'Confidentiality', originalText: 'Keep secret.',
+      plainEnglishText: 'Do not share secret info.',
+      readingLevel: 'grade_5',
+      keyLegalTerms: JSON.stringify([{ term: 'Confidential', definition: 'Secret.' }]),
+      riskLevel: 'low', riskScore: 10, riskReason: '', riskCategory: 'legal', counterSuggestion: '',
+    }).run();
+
+    const clauseRows = db.select().from(clauses).where(sql`${clauses.analysisId} = ${analysisId}`).all();
+    assert(clauseRows.length === 1, 'Clause inserted with readingLevel');
+    assert(clauseRows[0].readingLevel === 'grade_5', 'Stored readingLevel is correct');
+    assert(clauseRows[0].keyLegalTerms !== null, 'Stored keyLegalTerms is not null');
+
+    const parsedTerms = JSON.parse(clauseRows[0].keyLegalTerms as string);
+    assert(Array.isArray(parsedTerms), 'Stored keyLegalTerms is valid JSON array');
+    assert(parsedTerms[0].term === 'Confidential', 'Stored keyLegalTerms has correct term');
+  }
+
+  {
+    const db = getDb();
+    db.insert(glossary).values({ term: 'Force Majeure', definition: 'Extraordinary events beyond control.', category: 'contract' }).run();
+
+    const exactRow = db.select().from(glossary).where(sql`LOWER(${glossary.term}) = LOWER('force majeure')`).all();
+    assert(exactRow.length > 0, 'Glossary lookup finds exact match case-insensitively');
+    assert(exactRow[0].definition.length > 0, 'Glossary entry has definition');
+
+    const fuzzyRow = db.select().from(glossary).where(sql`LOWER(${glossary.term}) LIKE LOWER('%majeure%')`).all();
+    assert(fuzzyRow.length > 0, 'Glossary fuzzy lookup finds match');
+
+    const missingRow = db.select().from(glossary).where(sql`LOWER(${glossary.term}) = LOWER('nonexistenttermxyz')`).all();
+    assert(missingRow.length === 0, 'Glossary lookup returns empty for unknown term');
+  }
+
+  {
+    const db = getDb();
+    const existingTerms = db.select({ count: sql<number>`count(*)` }).from(glossary).all();
+    assert(typeof existingTerms[0]?.count === 'number' && existingTerms[0].count >= 1, 'Glossary table has seeded terms');
   }
 
   // ═══════════════════════════════════════════════════
