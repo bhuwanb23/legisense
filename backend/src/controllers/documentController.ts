@@ -286,7 +286,10 @@ export async function getDocumentStatus(req: Request, res: Response, next: NextF
     }
 
     const jobs = await analysisQueue.getJobs();
-    const latestJob = jobs.filter(j => String(j.data).includes(String(documentId))).pop();
+    const latestJob = jobs.filter(j => {
+      const d = j.data as { documentId?: number };
+      return d.documentId === documentId;
+    }).pop();
 
     res.json({
       success: true,

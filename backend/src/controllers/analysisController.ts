@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import { getDb } from '../config/database';
 import { documents, analysisResults, clauses, riskItems, deadlines } from '../models';
 import { sql } from 'drizzle-orm';
-import { queueService } from '../services/queueService';
+import { analysisQueue } from '../queue';
 import { NotFoundError, BadRequestError } from '../utils/errors';
 
 export async function startAnalysis(
