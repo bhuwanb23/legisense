@@ -19,5 +19,12 @@
     "theme": "Ink & Trust (custom)",
     "enrichment": "none",
     "brief": "Full app reskin — paper/ink/gold, Spectral+Epilogue; Chat, Notifications, Profile"
+  },
+  {
+    "date": "2026-07-29",
+    "macrostructure": "Workbench",
+    "theme": "studied-DNA",
+    "enrichment": "none",
+    "brief": "TripGlide Operate redesign — floating dock, Plus Jakarta Sans, hero card grammar"
   }
 ]
