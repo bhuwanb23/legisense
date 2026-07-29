@@ -54,7 +54,7 @@ class RiskChip extends StatelessWidget {
       ),
       child: Text(
         RiskStyle.label(level),
-        style: GoogleFonts.epilogue(
+        style: GoogleFonts.plusJakartaSans(
           fontSize: 11,
           fontWeight: FontWeight.w700,
           color: RiskStyle.color(level),
