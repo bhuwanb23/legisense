@@ -66,7 +66,7 @@ class _RegisterPageState extends State<RegisterPage> {
               const SizedBox(height: 24),
               Text(
                 'Sign Up',
-                style: GoogleFonts.epilogue(
+                style: GoogleFonts.plusJakartaSans(
                   fontSize: 26,
                   fontWeight: FontWeight.w700,
                   color: AppColors.primaryNavy,
@@ -75,7 +75,7 @@ class _RegisterPageState extends State<RegisterPage> {
               const SizedBox(height: 8),
               Text(
                 'Use proper information to continue',
-                style: GoogleFonts.epilogue(
+                style: GoogleFonts.plusJakartaSans(
                   fontSize: 13,
                   color: AppColors.inkSoft,
                 ),
@@ -131,7 +131,7 @@ class _RegisterPageState extends State<RegisterPage> {
               const SizedBox(height: 20),
               Text.rich(
                 TextSpan(
-                  style: GoogleFonts.epilogue(
+                  style: GoogleFonts.plusJakartaSans(
                     fontSize: 12,
                     color: AppColors.inkSoft,
                   ),
@@ -171,7 +171,7 @@ class _RegisterPageState extends State<RegisterPage> {
               const SizedBox(height: 24),
               Text.rich(
                 TextSpan(
-                  style: GoogleFonts.epilogue(
+                  style: GoogleFonts.plusJakartaSans(
                     fontSize: 14,
                     color: AppColors.inkSoft,
                   ),
@@ -190,7 +190,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         },
                         child: Text(
                           'Sign in',
-                          style: GoogleFonts.epilogue(
+                          style: GoogleFonts.plusJakartaSans(
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
                             color: AppColors.ink,
