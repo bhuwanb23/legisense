@@ -185,7 +185,7 @@ export async function getRisks(
     ).all();
 
     if (!analysisRows[0]) {
-      res.json({ success: true, data: { riskItems: [] } });
+      res.json({ success: true, data: { categories: {}, items: [] } });
       return;
     }
 
@@ -193,7 +193,62 @@ export async function getRisks(
       sql`${riskItems.analysisId} = ${analysisRows[0].id}`
     ).all();
 
-    res.json({ success: true, data: { riskItems: riskRows } });
+    const categories: Record<string, { count: number; severity: string }> = {};
+    for (const r of riskRows) {
+      const cat = r.riskType || 'other';
+      if (!categories[cat]) {
+        categories[cat] = { count: 0, severity: 'low' };
+      }
+      categories[cat].count++;
+      const severityOrder = ['low', 'medium', 'high', 'critical'];
+      const currentIdx = severityOrder.indexOf(categories[cat].severity);
+      const itemIdx = severityOrder.indexOf(r.severity);
+      if (itemIdx > currentIdx) {
+        categories[cat].severity = r.severity;
+      }
+    }
+
+    res.json({ success: true, data: { categories, items: riskRows } });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function getRisksByCategory(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    if (!req.user) {
+      res.status(401).json({ success: false, error: { message: 'Unauthorized', code: 'AUTH_REQUIRED', statusCode: 401 } });
+      return;
+    }
+
+    const documentId = Number(req.params.documentId);
+    const category = req.params.category;
+    const db = getDb();
+
+    const docRows = db.select().from(documents).where(
+      sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = 0`
+    ).all();
+
+    if (!docRows[0]) throw new NotFoundError('Document');
+
+    const analysisRows = db.select().from(analysisResults).where(
+      sql`${analysisResults.documentId} = ${documentId}`
+    ).all();
+
+    if (!analysisRows[0]) {
+      res.json({ success: true, data: { category, clauses: [] } });
+      return;
+    }
+
+    const clauseRows = db.select().from(clauses).where(
+      sql`${clauses.analysisId} = ${analysisRows[0].id} AND ${clauses.riskCategory} = ${category}`
+    ).all();
+
+    res.json({ success: true, data: { category, clauses: clauseRows } });
   } catch (err) {
     next(err);
   }
