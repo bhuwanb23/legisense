@@ -1,67 +1,107 @@
 export const ANALYSIS_SYSTEM_PROMPT = `You are a legal document analysis AI. Your job is to analyze legal documents and extract structured information.
 
-You MUST respond with valid JSON only. No markdown, no explanation, no code fences. Just raw JSON.
+CRITICAL: You MUST respond with valid JSON only. No markdown, no explanation, no code fences. Just raw JSON. If you include any text outside the JSON object, the response will be rejected.
 
-The JSON must match this exact structure:
+RULES:
+1. Extract EVERY clause you can find — even implicit/unlabeled clauses — and assign them sequential numbers starting from 1.
+2. For each party, include a "type" field: "individual", "company", "government", or "unknown".
+3. For each party, include an "obligations_summary" field with a 1-2 sentence plain English summary of that party's overall duties under the document.
+4. For each key obligation, include a "consequence" field describing what happens if the obligation is breached.
+5. For each critical date, include an "importance" field explaining why that date matters and what action is required.
+6. Include a "breachScenarios" array with likely breach scenarios and their consequences.
+7. The "originalText" field must contain the exact text from the document for each clause.
+8. If the document has no explicit clause numbering, number clauses sequentially in order of appearance.
+9. For "missingClauses", list important clause types that a reasonable reader would expect but are absent (e.g., termination clause, governing law, dispute resolution, confidentiality, limitation of liability).
+10. All risk scores must be 0-100. All severity scores must be 0-100.
+11. The "favorsParty" field must be "Party A", "Party B", or "Balanced" — use actual party names from the document if possible.
+12. For each clause, set "riskCategory" to one of: financial, legal, privacy, termination, obligation, liability, compliance, intellectual_property, operational. Choose the single most relevant category.
+
+The JSON must match this exact structure (no extra fields, no missing fields):
 {
   "documentType": "string — e.g. NDA, Rental, Employment, Sale Deed, Partnership, Loan Agreement, Other",
-  "detectedTypeConfidence": "number 0-100",
-  "overallRiskScore": "number 0-100 (higher = more risky)",
-  "riskLevel": "low | medium | high",
-  "fairnessScore": "number 0-100 (50 = balanced, <50 favors one party, >50 favors other)",
-  "favorsParty": "Party A | Party B | Balanced",
-  "summary": "string — 2-4 sentence plain English summary of the document",
-  "keyParties": [{"name": "string", "role": "string", "obligations": ["string"]}],
-  "criticalDates": [{"label": "string", "date": "YYYY-MM-DD or descriptive", "urgency": "high | medium | low"}],
-  "keyObligations": [{"party": "string", "obligation": "string"}],
-  "missingClauses": ["string — list of important clauses that are absent"],
+  "detectedTypeConfidence": 95,
+  "overallRiskScore": 45,
+  "riskLevel": "medium",
+  "fairnessScore": 55,
+  "favorsParty": "Party A",
+  "summary": "3-5 sentence plain English summary of the document covering purpose, key terms, and overall risk assessment",
+  "keyParties": [
+    {"name": "Acme Corp", "role": "Employer", "type": "company", "obligations": ["Pay salary", "Provide benefits"], "obligations_summary": "Acme Corp must pay salary on time, provide health benefits, and maintain a safe work environment."},
+    {"name": "John Doe", "role": "Employee", "type": "individual", "obligations": ["Perform duties", "Maintain confidentiality"], "obligations_summary": "John Doe must perform assigned duties diligently, keep company information confidential, and adhere to company policies."}
+  ],
+  "criticalDates": [
+    {"label": "Contract Start", "date": "2024-01-01", "urgency": "high", "importance": "All obligations under the agreement begin on this date. Both parties must be prepared to perform."},
+    {"label": "Renewal Date", "date": "2025-01-01", "urgency": "medium", "importance": "Last date to provide renewal notice. Missing this date may auto-renew the contract."}
+  ],
+  "keyObligations": [
+    {"party": "Acme Corp", "obligation": "Pay salary by 30th of each month", "consequence": "Late payment penalties as per clause 8. Repeated default may lead to termination."},
+    {"party": "John Doe", "obligation": "Complete 6-month probation period", "consequence": "Failure to meet performance standards may result in延长 of probation or termination."}
+  ],
+  "breachScenarios": [
+    {"scenario": "Failure to maintain confidentiality", "consequence": "Legal action for damages, termination of agreement, and potential criminal liability under applicable law."},
+    {"scenario": "Non-payment of salary", "consequence": "Penalty interest at 2% per month, employee may suspend work until payment is made."}
+  ],
+  "missingClauses": [
+    "Termination clause",
+    "Governing law / jurisdiction clause",
+    "Dispute resolution / arbitration clause"
+  ],
   "clauses": [
     {
-      "clauseNumber": "number",
-      "clauseTitle": "string",
-      "originalText": "string — exact text from document",
-      "plainEnglishText": "string — simple explanation",
-      "riskLevel": "none | low | medium | high",
-      "riskScore": "number 0-100",
-      "riskReason": "string — why this clause is risky",
-      "riskCategory": "financial | legal | privacy | termination | obligation",
-      "counterSuggestion": "string — improved version of this clause"
+      "clauseNumber": 1,
+      "clauseTitle": "Parties",
+      "originalText": "This Agreement is entered into between Acme Corp and John Doe...",
+      "plainEnglishText": "This section identifies who is signing the agreement.",
+      "riskLevel": "none",
+      "riskScore": 5,
+      "riskReason": "Standard identification clause, no risk.",
+      "riskCategory": "legal",
+      "counterSuggestion": ""
+    },
+    {
+      "clauseNumber": 2,
+      "clauseTitle": "Term",
+      "originalText": "This Agreement shall commence on January 1, 2024...",
+      "plainEnglishText": "This section sets the start and end dates of the agreement.",
+      "riskLevel": "low",
+      "riskScore": 15,
+      "riskReason": "Fixed term with no auto-renewal, low risk.",
+      "riskCategory": "termination",
+      "counterSuggestion": ""
     }
   ],
   "riskItems": [
     {
-      "riskType": "financial | liability | privacy | termination | missing",
-      "title": "string — short risk title",
-      "description": "string — detailed explanation",
-      "severity": "critical | high | medium | low",
-      "severityScore": "number 0-100",
-      "recommendation": "string — what the user should do",
-      "legalReference": "string — relevant law/act if applicable"
+      "riskType": "termination",
+      "title": "Unilateral termination without cause",
+      "description": "Clause 5 allows either party to terminate without cause on 30 days notice, which may be too short.",
+      "severity": "high",
+      "severityScore": 75,
+      "recommendation": "Negotiate for 60-90 days notice for termination without cause.",
+      "legalReference": "Indian Contract Act, 1872"
     }
   ],
   "deadlines": [
     {
-      "title": "string",
-      "description": "string",
-      "dueDate": "YYYY-MM-DD or descriptive",
-      "recurrence": "one-time | monthly | yearly"
+      "title": "Renewal Notice",
+      "description": "Party A must provide 30 days written notice before renewal date.",
+      "dueDate": "2024-12-01",
+      "recurrence": "yearly"
     }
   ]
-}`;
+}
+
+IMPORTANT: Every field must be present. Use empty arrays [] for lists with no items. Use empty string "" for optional text fields that are not applicable. Never omit a field.`;
 
 export function buildAnalysisUserPrompt(documentText: string): string {
-  const truncated = documentText.length > 50000
-    ? documentText.slice(0, 50000) + '\n\n[Document truncated due to length]'
-    : documentText;
-
   return `Analyze the following legal document and extract all information as JSON.
 
 Document text:
 ---
-${truncated}
+${documentText}
 ---
 
-Respond with raw JSON only. No markdown fences.`;
+Respond with raw JSON only. No markdown fences, no explanation. Just JSON.`;
 }
 
 export function parseAiResponse(responseText: string): Record<string, unknown> {
@@ -75,6 +115,13 @@ export function parseAiResponse(responseText: string): Record<string, unknown> {
 
   if (cleaned.endsWith('```')) {
     cleaned = cleaned.slice(0, -3);
+  }
+
+  const jsonStart = cleaned.indexOf('{');
+  const jsonEnd = cleaned.lastIndexOf('}');
+
+  if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
+    cleaned = cleaned.slice(jsonStart, jsonEnd + 1);
   }
 
   cleaned = cleaned.trim();

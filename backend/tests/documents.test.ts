@@ -8,7 +8,7 @@ import {
   listDocuments,
   getDocument,
   deleteDocument,
-  pasteText,
+  uploadDocument,
 } from '../src/controllers/documentController';
 
 const results: { test: string; pass: boolean; detail?: string }[] = [];
@@ -105,7 +105,7 @@ async function run() {
   // ═══════════════════════════════════════════════════
   console.log('── 1. Document Schemas ──');
 
-  const { listDocumentsSchema, pasteTextSchema } = await import('../src/schemas/documentSchemas');
+  const { listDocumentsSchema, unifiedUploadSchema } = await import('../src/schemas/documentSchemas');
 
   const validList = listDocumentsSchema.safeParse({ page: 1, limit: 20 });
   assert(validList.success, 'listDocumentsSchema accepts defaults');
@@ -113,23 +113,38 @@ async function run() {
   const validListCustom = listDocumentsSchema.safeParse({ page: 2, limit: 10, status: 'completed' });
   assert(validListCustom.success, 'listDocumentsSchema accepts custom params');
 
-  const validPaste = pasteTextSchema.safeParse({ text: 'Some legal text' });
-  assert(validPaste.success, 'pasteTextSchema accepts valid input');
+  const validPaste = unifiedUploadSchema.safeParse({ sourceType: 'paste', text: 'This text must be at least fifty characters long to satisfy the minimum length requirement.' });
+  assert(validPaste.success, 'unifiedUploadSchema accepts valid paste input');
 
-  const emptyPaste = pasteTextSchema.safeParse({ text: '' });
-  assert(!emptyPaste.success, 'pasteTextSchema rejects empty text');
+  const emptyPaste = unifiedUploadSchema.safeParse({ sourceType: 'paste', text: '' });
+  assert(!emptyPaste.success, 'unifiedUploadSchema rejects empty text');
 
-  const longTitle = pasteTextSchema.safeParse({ text: 'text', title: 'x'.repeat(201) });
-  assert(!longTitle.success, 'pasteTextSchema rejects title > 200 chars');
+  const shortPaste = unifiedUploadSchema.safeParse({ sourceType: 'paste', text: 'Too short' });
+  assert(!shortPaste.success, 'unifiedUploadSchema rejects text under 50 chars');
+
+  const validUrl = unifiedUploadSchema.safeParse({ sourceType: 'url', url: 'https://example.com' });
+  assert(validUrl.success, 'unifiedUploadSchema accepts valid URL');
+
+  const invalidUrl = unifiedUploadSchema.safeParse({ sourceType: 'url', url: 'ftp://bad.com' });
+  assert(!invalidUrl.success, 'unifiedUploadSchema rejects non-http URL');
+
+  const validFile = unifiedUploadSchema.safeParse({ sourceType: 'file' });
+  assert(validFile.success, 'unifiedUploadSchema accepts file source_type');
+
+  const validScan = unifiedUploadSchema.safeParse({ sourceType: 'scan', title: 'Scan of contract' });
+  assert(validScan.success, 'unifiedUploadSchema accepts scan with title');
+
+  const badSourceType = unifiedUploadSchema.safeParse({ sourceType: 'invalid' });
+  assert(!badSourceType.success, 'unifiedUploadSchema rejects unknown source_type');
 
   // ═══════════════════════════════════════════════════
-  //  2. PASTE TEXT CONTROLLER
+  //  2. PASTE TEXT VIA UNIFIED UPLOAD
   // ═══════════════════════════════════════════════════
-  console.log('\n── 2. Paste Text Controller ──');
+  console.log('\n── 2. Paste Text via Unified Upload ──');
 
   const pasteRes = mockRes();
-  await pasteText(
-    authedReq({ text: 'This is a pasted legal agreement between Party A and Party B.', title: 'Test Agreement' }),
+  await uploadDocument(
+    authedReq({ sourceType: 'paste', text: 'This is a pasted legal agreement between Party A and Party B that satisfies the minimum character requirement for paste.', title: 'Test Agreement' }),
     pasteRes,
     mockNext()
   );
@@ -148,12 +163,13 @@ async function run() {
   const pasteDocRows = db.select().from(documents).where(sql`${documents.id} = ${pasteDocId}`).all();
   assert(pasteDocRows.length === 1, 'Paste document created in DB');
   assert(pasteDocRows[0].sourceType === 'paste', 'DB has sourceType paste');
-  assert(pasteDocRows[0].rawText === 'This is a pasted legal agreement between Party A and Party B.', 'DB has rawText');
+  assert(pasteDocRows[0].rawText === 'This is a pasted legal agreement between Party A and Party B that satisfies the minimum character requirement for paste.', 'DB has rawText');
+  assert(pasteDocRows[0].storagePath === '', 'Paste does not store to disk');
 
   // Paste without title
   const pasteRes2 = mockRes();
-  await pasteText(
-    authedReq({ text: 'Another pasted document.' }),
+  await uploadDocument(
+    authedReq({ sourceType: 'paste', text: 'Another pasted document that is long enough to meet the fifty character minimum threshold for paste submissions.' }),
     pasteRes2,
     mockNext()
   );
@@ -270,7 +286,7 @@ async function run() {
     storagePath: 'other-doc.txt',
     fileFormat: 'txt',
     fileSize: 100,
-    sourceType: 'file_upload',
+    sourceType: 'file',
     uploadStatus: 'uploaded',
     processingStatus: 'completed',
   }).run();

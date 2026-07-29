@@ -2,10 +2,16 @@ import { Request, Response, NextFunction } from 'express';
 import { getDb } from '../config/database';
 import { documents, analysisResults, clauses, riskItems, deadlines } from '../models';
 import { sql } from 'drizzle-orm';
-import { saveFile } from '../storage/fileStorage';
-import { queueService } from '../services/queueService';
-import { NotFoundError } from '../utils/errors';
+import { saveFile, deleteFile } from '../storage/fileStorage';
+import { analysisQueue, ocrQueue } from '../queue';
+import { NotFoundError, BadRequestError } from '../utils/errors';
 import { persistNow } from '../config/database';
+import { encryptText, isEncryptionConfigured } from '../services/encryptionService';
+import { scrapeUrl, isValidUrl } from '../services/urlScraper';
+
+function nowPlus24Hours(): string {
+  return new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+}
 
 export async function uploadDocument(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
@@ -14,6 +20,28 @@ export async function uploadDocument(req: Request, res: Response, next: NextFunc
       return;
     }
 
+    const sourceType = req.body.sourceType || req.body.source_type || 'file';
+
+    switch (sourceType) {
+      case 'file':
+        return handleFileUpload(req, res, next);
+      case 'scan':
+        return handleScanUpload(req, res, next);
+      case 'paste':
+        return handlePasteUpload(req, res, next);
+      case 'url':
+        return handleUrlUpload(req, res, next);
+      default:
+        throw new BadRequestError(`Invalid source_type "${sourceType}". Use: file, scan, paste, or url`);
+    }
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function handleFileUpload(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    if (!req.user) return;
     if (!req.file) {
       res.status(400).json({ success: false, error: { message: 'No file uploaded', code: 'NO_FILE', statusCode: 400 } });
       return;
@@ -21,11 +49,8 @@ export async function uploadDocument(req: Request, res: Response, next: NextFunc
 
     const { originalname, buffer } = req.file;
     const format = originalname.split('.').pop()?.toLowerCase() || 'unknown';
-
     const storagePath = await saveFile(buffer, originalname, format);
-
     const db = getDb();
-    const sourceType = req.body.source_type || 'file_upload';
 
     db.insert(documents).values({
       userId: req.user.id,
@@ -33,37 +58,174 @@ export async function uploadDocument(req: Request, res: Response, next: NextFunc
       storagePath,
       fileFormat: format,
       fileSize: buffer.length,
-      sourceType,
+      sourceType: 'file',
+      uploadStatus: 'uploaded',
+      processingStatus: 'pending',
+      autoDeleteAt: nowPlus24Hours(),
+    }).run();
+
+    const doc = db.select().from(documents).where(sql`${documents.storagePath} = ${storagePath}`).all()[0];
+    if (!doc) throw new Error('Failed to create document record');
+    persistNow();
+
+    const job = await analysisQueue.add('analyze', { documentId: doc.id, userId: req.user.id });
+
+    res.status(202).json({
+      success: true,
+      data: { documentId: doc.id, originalName: doc.originalName, fileFormat: doc.fileFormat, fileSize: doc.fileSize, uploadStatus: 'uploaded', processingStatus: 'pending', jobId: job.id },
+    });
+  } catch (err) { next(err); }
+}
+
+async function handleScanUpload(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    if (!req.user) return;
+    if (!req.file) {
+      res.status(400).json({ success: false, error: { message: 'No image uploaded', code: 'NO_FILE', statusCode: 400 } });
+      return;
+    }
+
+    const IMAGE_EXTS = ['.png', '.jpg', '.jpeg', '.heic', '.heif'];
+    const ext = '.' + (req.file.originalname.split('.').pop()?.toLowerCase() || '');
+    if (!IMAGE_EXTS.includes(ext)) {
+      res.status(400).json({ success: false, error: { message: `Scan source_type requires an image file (${IMAGE_EXTS.join(', ')})`, code: 'INVALID_FILE_TYPE', statusCode: 400 } });
+      return;
+    }
+
+    const { originalname, buffer } = req.file;
+    const format = originalname.split('.').pop()?.toLowerCase() || 'unknown';
+    const storagePath = await saveFile(buffer, originalname, format);
+    const db = getDb();
+
+    db.insert(documents).values({
+      userId: req.user.id,
+      originalName: originalname,
+      storagePath,
+      fileFormat: format,
+      fileSize: buffer.length,
+      sourceType: 'scan',
+      uploadStatus: 'uploaded',
+      processingStatus: 'pending',
+      autoDeleteAt: nowPlus24Hours(),
+    }).run();
+
+    const doc = db.select().from(documents).where(sql`${documents.storagePath} = ${storagePath}`).all()[0];
+    if (!doc) throw new Error('Failed to create document record');
+    persistNow();
+
+    const ocrJob = await ocrQueue.add('ocr', { documentId: doc.id, userId: req.user.id });
+    const analysisJob = await analysisQueue.add('analyze', { documentId: doc.id, userId: req.user.id });
+
+    res.status(202).json({
+      success: true,
+      data: { documentId: doc.id, originalName: doc.originalName, fileFormat: doc.fileFormat, fileSize: doc.fileSize, uploadStatus: 'uploaded', processingStatus: 'pending', ocrJobId: ocrJob.id, jobId: analysisJob.id },
+    });
+  } catch (err) { next(err); }
+}
+
+async function handlePasteUpload(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    if (!req.user) return;
+
+    const { text, title } = req.body;
+    const docTitle = title || 'Pasted Text';
+
+    if (!text || text.trim().length < 50) {
+      res.status(400).json({ success: false, error: { message: 'Pasted text must be at least 50 characters', code: 'TEXT_TOO_SHORT', statusCode: 400 } });
+      return;
+    }
+
+    let storedText = text;
+    let storedIv: string | null = null;
+    if (isEncryptionConfigured()) {
+      const { ciphertext, iv } = encryptText(text);
+      storedText = ciphertext;
+      storedIv = iv;
+    }
+
+    const db = getDb();
+
+    db.insert(documents).values({
+      userId: req.user.id,
+      originalName: docTitle,
+      storagePath: '',
+      fileFormat: 'txt',
+      fileSize: Buffer.byteLength(text, 'utf-8'),
+      sourceType: 'paste',
+      autoDeleteAt: nowPlus24Hours(),
+      rawText: storedText,
+      encryptionIv: storedIv,
       uploadStatus: 'uploaded',
       processingStatus: 'pending',
     }).run();
 
-    const allDocs = db.select().from(documents).where(sql`${documents.storagePath} = ${storagePath}`).all();
-    const doc = allDocs[0];
-
-    if (!doc) {
-      throw new Error('Failed to create document record');
-    }
-
+    const doc = db.select().from(documents).where(sql`${documents.originalName} = ${docTitle} AND ${documents.userId} = ${req.user.id}`).all().pop();
+    if (!doc) throw new Error('Failed to create document record');
     persistNow();
 
-    const job = queueService.enqueue(doc.id, req.user.id);
+    const job = await analysisQueue.add('analyze', { documentId: doc.id, userId: req.user.id });
 
     res.status(202).json({
       success: true,
-      data: {
-        documentId: doc.id,
-        originalName: doc.originalName,
-        fileFormat: doc.fileFormat,
-        fileSize: doc.fileSize,
-        uploadStatus: doc.uploadStatus,
-        processingStatus: 'pending',
-        jobId: job.id,
-      },
+      data: { documentId: doc.id, originalName: doc.originalName, fileFormat: 'txt', fileSize: doc.fileSize, sourceType: 'paste', processingStatus: 'pending', jobId: job.id },
     });
-  } catch (err) {
-    next(err);
-  }
+  } catch (err) { next(err); }
+}
+
+async function handleUrlUpload(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    if (!req.user) return;
+
+    const { url, title } = req.body;
+
+    if (!url || !isValidUrl(url)) {
+      res.status(400).json({ success: false, error: { message: 'A valid http:// or https:// URL is required', code: 'INVALID_URL', statusCode: 400 } });
+      return;
+    }
+
+    const scraped = await scrapeUrl(url);
+    const docTitle = title || scraped.title || 'Imported URL';
+
+    let storedText = scraped.text;
+    let storedIv: string | null = null;
+    if (isEncryptionConfigured()) {
+      const { ciphertext, iv } = encryptText(scraped.text);
+      storedText = ciphertext;
+      storedIv = iv;
+    }
+
+    const db = getDb();
+
+    db.insert(documents).values({
+      userId: req.user.id,
+      originalName: docTitle,
+      storagePath: '',
+      fileFormat: 'url',
+      fileSize: Buffer.byteLength(scraped.text, 'utf-8'),
+      sourceType: 'url',
+      sourceUrl: url,
+      autoDeleteAt: nowPlus24Hours(),
+      rawText: storedText,
+      encryptionIv: storedIv,
+      uploadStatus: 'uploaded',
+      processingStatus: 'pending',
+    }).run();
+
+    const doc = db.select().from(documents).where(sql`${documents.sourceUrl} = ${url} AND ${documents.userId} = ${req.user.id}`).all().pop();
+    if (!doc) throw new Error('Failed to create document record');
+    persistNow();
+
+    const job = await analysisQueue.add('analyze', { documentId: doc.id, userId: req.user.id });
+
+    res.status(202).json({
+      success: true,
+      data: { documentId: doc.id, originalName: doc.originalName, fileFormat: 'url', fileSize: doc.fileSize, sourceType: 'url', sourceUrl: url, processingStatus: 'pending', jobId: job.id },
+    });
+  } catch (err) { next(err); }
+}
+
+export async function pasteText(req: Request, res: Response, next: NextFunction): Promise<void> {
+  return handlePasteUpload(req, res, next);
 }
 
 export async function listDocuments(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -175,12 +337,17 @@ export async function deleteDocument(req: Request, res: Response, next: NextFunc
       sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = 0`
     ).all();
 
-    if (!rows[0]) {
+    const doc = rows[0];
+    if (!doc) {
       throw new NotFoundError('Document');
     }
 
+    if (doc.storagePath) {
+      await deleteFile(doc.storagePath);
+    }
+
     db.run(
-      sql`UPDATE ${documents} SET is_deleted = 1, updated_at = datetime('now') WHERE id = ${documentId}`
+      sql`UPDATE ${documents} SET is_deleted = 1, raw_text = NULL, encryption_iv = NULL, updated_at = datetime('now') WHERE id = ${documentId}`
     );
 
     persistNow();
@@ -188,59 +355,6 @@ export async function deleteDocument(req: Request, res: Response, next: NextFunc
     res.json({
       success: true,
       data: { message: 'Document deleted successfully' },
-    });
-  } catch (err) {
-    next(err);
-  }
-}
-
-export async function pasteText(req: Request, res: Response, next: NextFunction): Promise<void> {
-  try {
-    if (!req.user) {
-      res.status(401).json({ success: false, error: { message: 'Unauthorized', code: 'AUTH_REQUIRED', statusCode: 401 } });
-      return;
-    }
-
-    const { text, title } = req.body;
-    const docTitle = title || 'Pasted Text';
-    const storagePath = await saveFile(Buffer.from(text, 'utf-8'), `${docTitle}.txt`, 'txt');
-
-    const db = getDb();
-
-    db.insert(documents).values({
-      userId: req.user.id,
-      originalName: docTitle,
-      storagePath,
-      fileFormat: 'txt',
-      fileSize: Buffer.byteLength(text, 'utf-8'),
-      sourceType: 'paste',
-      rawText: text,
-      uploadStatus: 'uploaded',
-      processingStatus: 'pending',
-    }).run();
-
-    const allDocs = db.select().from(documents).where(sql`${documents.storagePath} = ${storagePath}`).all();
-    const doc = allDocs[0];
-
-    if (!doc) {
-      throw new Error('Failed to create document record');
-    }
-
-    persistNow();
-
-    const job = queueService.enqueue(doc.id, req.user.id);
-
-    res.status(202).json({
-      success: true,
-      data: {
-        documentId: doc.id,
-        originalName: doc.originalName,
-        fileFormat: 'txt',
-        fileSize: doc.fileSize,
-        sourceType: 'paste',
-        processingStatus: 'pending',
-        jobId: job.id,
-      },
     });
   } catch (err) {
     next(err);
@@ -266,8 +380,11 @@ export async function getDocumentStatus(req: Request, res: Response, next: NextF
       throw new NotFoundError('Document');
     }
 
-    const jobs = queueService.getJobsByDocument(documentId);
-    const latestJob = jobs[jobs.length - 1];
+    const jobs = await analysisQueue.getJobs();
+    const latestJob = jobs.filter(j => {
+      const d = j.data as { documentId?: number };
+      return d.documentId === documentId;
+    }).pop();
 
     res.json({
       success: true,
@@ -331,7 +448,7 @@ export async function getDocumentAnalysis(req: Request, res: Response, next: Nex
     res.json({
       success: true,
       data: {
-        status: 'completed',
+        status: docRows[0].processingStatus,
         analysis: {
           ...analysis,
           keyParties: safeJsonParse(analysis.keyParties),

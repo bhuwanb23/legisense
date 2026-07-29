@@ -1,8 +1,5 @@
-import dotenv from 'dotenv';
-dotenv.config();
-
-import express from 'express';
 import http from 'http';
+import app from './app';
 import { initDatabase, closeDatabase, persistNow } from './config/database';
 import { sql } from 'drizzle-orm';
 import {
@@ -10,50 +7,11 @@ import {
   clauses, riskItems, deadlines, chatMessages,
   notifications, sessions, usageLogs, queueJobs,
 } from './models';
-import {
-  corsMiddleware,
-  requestLogger,
-  rateLimiter,
-  errorHandler,
-  notFoundHandler,
-} from './middleware';
-import documentRoutes from './routes/documentRoutes';
-import authRoutes from './routes/authRoutes';
-import userRoutes from './routes/userRoutes';
-import analysisRoutes from './routes/analysisRoutes';
-import chatRoutes from './routes/chatRoutes';
-import deadlineRoutes from './routes/deadlineRoutes';
-import notificationRoutes from './routes/notificationRoutes';
-import { startAnalysisWorker } from './jobs/analysisWorker';
 import { initSocketIO, closeSocketIO } from './services/socketService';
+import { startQueueSystem, stopQueueSystem } from './queue';
 
-const app = express();
 const server = http.createServer(app);
 const port = Number(process.env.PORT) || 3001;
-
-app.use(corsMiddleware);
-app.use(requestLogger);
-app.use(rateLimiter);
-app.use(express.json());
-
-app.get('/health', (_req, res) => {
-  res.json({
-    status: 'ok',
-    service: 'legisense-backend',
-    timestamp: new Date().toISOString(),
-  });
-});
-
-app.use('/api/documents', documentRoutes);
-app.use('/api/auth', authRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/analysis', analysisRoutes);
-app.use('/api/chat', chatRoutes);
-app.use('/api/deadlines', deadlineRoutes);
-app.use('/api/notifications', notificationRoutes);
-
-app.use(notFoundHandler);
-app.use(errorHandler);
 
 async function start() {
   const db = await initDatabase();
@@ -112,6 +70,7 @@ async function start() {
     key_obligations TEXT,
     missing_clauses TEXT,
     jurisdiction_flags TEXT,
+    breach_scenarios TEXT,
     processing_time REAL,
     ai_model_used TEXT,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
@@ -231,12 +190,20 @@ async function start() {
     completed_at TEXT
   )`);
 
+  try { db.run(sql`ALTER TABLE usage_logs ADD COLUMN provider TEXT`); } catch {}
+  try { db.run(sql`ALTER TABLE usage_logs ADD COLUMN model TEXT`); } catch {}
+  try { db.run(sql`ALTER TABLE usage_logs ADD COLUMN cost REAL`); } catch {}
+  try { db.run(sql`ALTER TABLE usage_logs ADD COLUMN input_tokens INTEGER`); } catch {}
+  try { db.run(sql`ALTER TABLE usage_logs ADD COLUMN output_tokens INTEGER`); } catch {}
+  try { db.run(sql`ALTER TABLE documents ADD COLUMN encryption_iv TEXT`); } catch {}
+  try { db.run(sql`ALTER TABLE analysis_results ADD COLUMN breach_scenarios TEXT`); } catch {}
+
   console.log('All 11 tables created/verified.');
   persistNow();
 
   initSocketIO(server);
 
-  startAnalysisWorker();
+  await startQueueSystem();
 
   server.listen(port, () => {
     console.log(`Legisense API listening on http://localhost:${port}`);
@@ -249,12 +216,14 @@ start().catch((err) => {
 });
 
 process.on('SIGINT', async () => {
+  await stopQueueSystem();
   await closeSocketIO();
   closeDatabase();
   process.exit(0);
 });
 
 process.on('SIGTERM', async () => {
+  await stopQueueSystem();
   await closeSocketIO();
   closeDatabase();
   process.exit(0);

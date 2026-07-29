@@ -93,14 +93,14 @@ async function run() {
   const validReg = registerSchema.safeParse({
     fullName: 'Test User',
     email: 'test@example.com',
-    password: 'password123',
+    password: 'Password1!',
   });
   assert(validReg.success, 'registerSchema accepts valid input');
 
   const badEmail = registerSchema.safeParse({
     fullName: 'Test',
     email: 'not-an-email',
-    password: 'password123',
+    password: 'Password1!',
   });
   assert(!badEmail.success, 'registerSchema rejects invalid email');
 
@@ -113,7 +113,7 @@ async function run() {
 
   const validLogin = loginSchema.safeParse({
     email: 'test@example.com',
-    password: 'password123',
+    password: 'Password1!',
   });
   assert(validLogin.success, 'loginSchema accepts valid input');
 
@@ -145,6 +145,8 @@ async function run() {
   //  3. JWT TOKENS
   // ═══════════════════════════════════════════════════
   console.log('\n── 3. JWT Tokens ──');
+
+  process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret-for-jwt';
 
   const payload = { userId: 1, email: 'test@example.com' };
   const token = generateToken(payload);
@@ -403,7 +405,7 @@ async function run() {
 
   const resetRes = mockRes();
   await resetPassword(
-    mockReq({ body: { token: resetToken, newPassword: 'newpassword123' } }),
+    mockReq({ body: { token: resetToken, newPassword: 'NewPass123!' } }),
     resetRes,
     mockNext()
   );
@@ -428,7 +430,7 @@ async function run() {
   // New password works
   const newLoginRes = mockRes();
   await login(
-    mockReq({ body: { email: 'john@test.com', password: 'newpassword123' } }),
+    mockReq({ body: { email: 'john@test.com', password: 'NewPass123!' } }),
     newLoginRes,
     mockNext()
   );
@@ -506,7 +508,7 @@ async function run() {
   let deactivatedFails = false;
   try {
     await login(
-      mockReq({ body: { email: 'john@test.com', password: 'newpassword123' } }),
+      mockReq({ body: { email: 'john@test.com', password: 'NewPass123!' } }),
       mockRes(),
       mockNext()
     );

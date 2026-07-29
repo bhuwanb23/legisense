@@ -6,9 +6,22 @@ let io: Server | null = null;
 
 export interface ServerToClientEvents {
   'job:update': (data: { jobId: string; documentId: number; status: string }) => void;
-  'analysis:complete': (data: { documentId: number; analysisId: number }) => void;
+  'analysis:started': (data: { documentId: number }) => void;
+  'analysis:progress': (data: { documentId: number; progress: number; stage: string }) => void;
+  'analysis:completed': (data: { documentId: number }) => void;
   'analysis:failed': (data: { documentId: number; error: string }) => void;
-  'notification:new': (data: { id: number; type: string; title: string; body: string | null }) => void;
+  'notification:new': (data: { id: number; type: string; title: string; body: string | null; documentId?: number }) => void;
+  'ocr:started': (data: { documentId: number }) => void;
+  'ocr:progress': (data: { documentId: number; progress: number; stage: string }) => void;
+  'ocr:completed': (data: {
+    documentId: number;
+    textLength: number;
+    confidence: number;
+    method: 'tesseract' | 'mistral';
+    warnings?: Array<{ type: string; message: string }>;
+    rotation?: number;
+  }) => void;
+  'ocr:failed': (data: { documentId: number; error: string }) => void;
   'error': (data: { message: string }) => void;
 }
 

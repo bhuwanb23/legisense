@@ -6,7 +6,18 @@ import { getDb } from '../config/database';
 import { users } from '../models';
 import { sql } from 'drizzle-orm';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-me';
+function getJwtConfig() {
+  const secret = process.env.JWT_SECRET || '';
+  if (!secret) throw new Error('JWT_SECRET is not set. Add a strong random key to your .env file.');
+  if (secret === 'dev-secret-change-me' || secret === 'change-this-to-a-random-64-char-string') {
+    console.warn('WARNING: Using insecure JWT_SECRET. Generate a strong random key for production.');
+  }
+  const access = Number(process.env.JWT_ACCESS_EXPIRES_IN) || 900;
+  const refresh = Number(process.env.JWT_REFRESH_EXPIRES_IN) || 2592000;
+  if (access <= 0) throw new Error('JWT_ACCESS_EXPIRES_IN must be a positive number');
+  if (refresh <= 0) throw new Error('JWT_REFRESH_EXPIRES_IN must be a positive number');
+  return { secret, access, refresh };
+}
 
 interface JwtPayload {
   userId: number;
@@ -23,7 +34,8 @@ export function authenticate(req: Request, _res: Response, next: NextFunction): 
   const token = authHeader.split(' ')[1];
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
+    const { secret } = getJwtConfig();
+    const decoded = jwt.verify(token, secret) as JwtPayload;
 
     const db = getDb();
     const rows = db
@@ -78,7 +90,8 @@ export function optionalAuth(req: Request, _res: Response, next: NextFunction): 
   const token = authHeader.split(' ')[1];
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
+    const { secret } = getJwtConfig();
+    const decoded = jwt.verify(token, secret) as JwtPayload;
 
     const db = getDb();
     const rows = db
@@ -112,17 +125,20 @@ export function optionalAuth(req: Request, _res: Response, next: NextFunction): 
 }
 
 export function generateToken(payload: JwtPayload): string {
-  return jwt.sign({ ...payload, jti: crypto.randomUUID() }, JWT_SECRET, {
-    expiresIn: 7 * 24 * 60 * 60, // 7 days in seconds
-  } as jwt.SignOptions);
+  const { secret, access } = getJwtConfig();
+  return jwt.sign({ ...payload, jti: crypto.randomUUID() }, secret, {
+    expiresIn: access,
+  });
 }
 
 export function generateRefreshToken(payload: JwtPayload): string {
-  return jwt.sign({ ...payload, jti: crypto.randomUUID() }, JWT_SECRET, {
-    expiresIn: 30 * 24 * 60 * 60, // 30 days in seconds
-  } as jwt.SignOptions);
+  const { secret, refresh } = getJwtConfig();
+  return jwt.sign({ ...payload, jti: crypto.randomUUID() }, secret, {
+    expiresIn: refresh,
+  });
 }
 
 export function verifyToken(token: string): JwtPayload {
-  return jwt.verify(token, JWT_SECRET) as JwtPayload;
+  const { secret } = getJwtConfig();
+  return jwt.verify(token, secret) as JwtPayload;
 }

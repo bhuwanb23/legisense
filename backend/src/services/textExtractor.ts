@@ -1,15 +1,16 @@
 import { PDFParse } from 'pdf-parse';
 import mammoth from 'mammoth';
 import { ocrImage, ocrPdf, isImage } from './ocrService';
+import { convertToJpeg } from './imageProcessor';
 
-export type SupportedFormat = 'pdf' | 'docx' | 'txt' | 'png' | 'jpg' | 'jpeg' | 'gif' | 'bmp';
+export type SupportedFormat = 'pdf' | 'docx' | 'txt' | 'png' | 'jpg' | 'jpeg' | 'gif' | 'bmp' | 'webp' | 'heic' | 'heif';
 
 export interface ExtractionResult {
   text: string;
   method: 'pdf' | 'docx' | 'txt' | 'ocr' | 'ocr_pdf_fallback';
 }
 
-const SUPPORTED_FORMATS: SupportedFormat[] = ['pdf', 'docx', 'txt', 'png', 'jpg', 'jpeg', 'gif', 'bmp'];
+const SUPPORTED_FORMATS: SupportedFormat[] = ['pdf', 'docx', 'txt', 'png', 'jpg', 'jpeg', 'gif', 'bmp', 'webp', 'heic', 'heif'];
 
 export function isSupportedFormat(format: string): format is SupportedFormat {
   return SUPPORTED_FORMATS.includes(format as SupportedFormat);
@@ -46,7 +47,15 @@ async function extractRaw(buffer: Buffer, format: SupportedFormat): Promise<{ te
     case 'jpeg':
     case 'gif':
     case 'bmp':
-      return { text: await ocrImage(buffer), method: 'ocr' };
+    case 'webp':
+    case 'heic':
+    case 'heif': {
+      let imgBuffer = buffer;
+      if (format === 'heic' || format === 'heif' || format === 'webp') {
+        imgBuffer = await convertToJpeg(buffer);
+      }
+      return { text: (await ocrImage(imgBuffer)).text, method: 'ocr' };
+    }
     default:
       throw new Error(`Unknown format: ${format}`);
   }

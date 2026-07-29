@@ -11,6 +11,8 @@ export const clauses = sqliteTable('clauses', {
   clauseTitle: text('clause_title'),
   originalText: text('original_text').notNull(),
   plainEnglishText: text('plain_english_text'),
+  readingLevel: text('reading_level'),
+  keyLegalTerms: text('key_legal_terms'),
   riskLevel: text('risk_level'),
   riskScore: real('risk_score'),
   riskReason: text('risk_reason'),

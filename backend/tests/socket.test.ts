@@ -12,6 +12,8 @@ let httpServer: http.Server;
 let io: SocketServer;
 let port: number;
 
+process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-secret-for-jwt';
+
 const userId = 999;
 const token = generateToken({ userId, email: 'socket-test@test.com' });
 
