@@ -9,3 +9,4 @@ export { notifications, type Notification, type NewNotification } from './notifi
 export { sessions, type Session, type NewSession } from './session';
 export { usageLogs, type UsageLog, type NewUsageLog } from './usageLog';
 export { queueJobs, type QueueJob } from './queueJob';
+export { glossary, type Glossary, type NewGlossary } from './glossary';
