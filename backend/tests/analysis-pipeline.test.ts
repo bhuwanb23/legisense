@@ -47,6 +47,8 @@ function buildValidAnalysisOutput(overrides: Record<string, unknown> = {}) {
         clauseTitle: 'Definition of Confidential Information',
         originalText: 'Confidential Information means any information disclosed by one party to the other.',
         plainEnglishText: 'This clause defines what counts as secret information.',
+        readingLevel: 'grade_5',
+        keyLegalTerms: [{ term: 'Confidential Information', definition: 'Secret information.' }],
         riskLevel: 'low',
         riskScore: 10,
         riskReason: 'Standard definition clause.',
