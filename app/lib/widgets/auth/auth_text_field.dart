@@ -3,7 +3,6 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../theme/app_theme.dart';
 
-/// Paper-2 field with ink focus — Ink & Trust.
 class AuthTextField extends StatefulWidget {
   const AuthTextField({
     super.key,
@@ -40,7 +39,6 @@ class AuthTextField extends StatefulWidget {
 
 class _AuthTextFieldState extends State<AuthTextField> {
   late bool _obscured = widget.obscureText;
-  bool _focused = false;
 
   @override
   Widget build(BuildContext context) {
@@ -49,15 +47,19 @@ class _AuthTextFieldState extends State<AuthTextField> {
       children: [
         Text(
           widget.label,
-          style: GoogleFonts.epilogue(
-            fontSize: 12,
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 13,
             fontWeight: FontWeight.w600,
-            color: AppColors.inkSoft,
+            color: AppColors.ink,
           ),
         ),
         const SizedBox(height: 8),
-        Focus(
-          onFocusChange: (v) => setState(() => _focused = v),
+        Container(
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(AppRadii.field),
+            boxShadow: AppShadows.soft,
+          ),
           child: TextFormField(
             controller: widget.controller,
             enabled: widget.enabled,
@@ -67,29 +69,24 @@ class _AuthTextFieldState extends State<AuthTextField> {
             autofillHints: widget.autofillHints,
             validator: widget.validator,
             onChanged: widget.onChanged,
-            style: GoogleFonts.epilogue(
+            style: GoogleFonts.plusJakartaSans(
               fontSize: 15,
               fontWeight: FontWeight.w500,
               color: AppColors.ink,
-              height: 1.2,
             ),
             decoration: InputDecoration(
-              hintText: widget.hint,
-              hintStyle: GoogleFonts.epilogue(
+              hintText: widget.hint ?? widget.label,
+              hintStyle: GoogleFonts.plusJakartaSans(
                 fontSize: 14,
-                color: AppColors.inkSoft.withValues(alpha: 0.45),
+                color: AppColors.mute.withValues(alpha: 0.7),
               ),
               filled: true,
-              fillColor: AppColors.paper2,
+              fillColor: Colors.transparent,
               contentPadding: const EdgeInsets.symmetric(
-                horizontal: 14,
+                horizontal: 16,
                 vertical: 16,
               ),
-              prefixIcon: Icon(
-                widget.icon,
-                size: 20,
-                color: _focused ? AppColors.ink : AppColors.inkSoft,
-              ),
+              prefixIcon: Icon(widget.icon, size: 20, color: AppColors.mute),
               suffixIcon: widget.trailing ??
                   (widget.obscureText
                       ? IconButton(
@@ -99,18 +96,18 @@ class _AuthTextFieldState extends State<AuthTextField> {
                             _obscured
                                 ? Icons.visibility_off_outlined
                                 : Icons.visibility_outlined,
-                            color: AppColors.inkSoft,
+                            color: AppColors.mute,
                             size: 20,
                           ),
                         )
                       : null),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(AppRadii.field),
-                borderSide: const BorderSide(color: AppColors.rule),
+                borderSide: BorderSide.none,
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(AppRadii.field),
-                borderSide: const BorderSide(color: AppColors.rule),
+                borderSide: BorderSide.none,
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(AppRadii.field),
