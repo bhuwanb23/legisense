@@ -12,10 +12,12 @@ const ALLOWED_MIME_TYPES = [
   'image/jpeg',
   'image/jpg',
   'image/webp',
+  'image/heic',
+  'image/heif',
   'text/plain',
 ];
 
-const ALLOWED_EXTENSIONS = ['.pdf', '.docx', '.doc', '.png', '.jpg', '.jpeg', '.webp', '.txt'];
+const ALLOWED_EXTENSIONS = ['.pdf', '.docx', '.doc', '.png', '.jpg', '.jpeg', '.webp', '.heic', '.heif', '.txt'];
 
 function getFileExtension(filename: string): string {
   const lastDot = filename.lastIndexOf('.');
