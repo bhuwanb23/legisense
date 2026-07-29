@@ -3,7 +3,7 @@ import { getDb } from '../config/database';
 import { documents, analysisResults, clauses, riskItems, deadlines } from '../models';
 import { sql } from 'drizzle-orm';
 import { saveFile, deleteFile } from '../storage/fileStorage';
-import { queueService } from '../services/queueService';
+import { analysisQueue } from '../queue';
 import { NotFoundError } from '../utils/errors';
 import { persistNow } from '../config/database';
 import { encryptText, isEncryptionConfigured } from '../services/encryptionService';
@@ -53,7 +53,7 @@ export async function uploadDocument(req: Request, res: Response, next: NextFunc
 
     persistNow();
 
-    const job = queueService.enqueue(doc.id, req.user.id);
+    const job = await analysisQueue.add('analyze', { documentId: doc.id, userId: req.user.id });
 
     res.status(202).json({
       success: true,
@@ -247,7 +247,7 @@ export async function pasteText(req: Request, res: Response, next: NextFunction)
 
     persistNow();
 
-    const job = queueService.enqueue(doc.id, req.user.id);
+    const job = await analysisQueue.add('analyze', { documentId: doc.id, userId: req.user.id });
 
     res.status(202).json({
       success: true,
@@ -285,8 +285,8 @@ export async function getDocumentStatus(req: Request, res: Response, next: NextF
       throw new NotFoundError('Document');
     }
 
-    const jobs = queueService.getJobsByDocument(documentId);
-    const latestJob = jobs[jobs.length - 1];
+    const jobs = await analysisQueue.getJobs();
+    const latestJob = jobs.filter(j => String(j.data).includes(String(documentId))).pop();
 
     res.json({
       success: true,
