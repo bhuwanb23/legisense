@@ -100,7 +100,7 @@ class NotificationsPage extends StatelessWidget {
                               Expanded(
                                 child: Text(
                                   n.title,
-                                  style: GoogleFonts.epilogue(
+                                  style: GoogleFonts.plusJakartaSans(
                                     fontSize: 14,
                                     fontWeight: FontWeight.w700,
                                     color: AppColors.ink,
@@ -121,7 +121,7 @@ class NotificationsPage extends StatelessWidget {
                           const SizedBox(height: 4),
                           Text(
                             n.body,
-                            style: GoogleFonts.epilogue(
+                            style: GoogleFonts.plusJakartaSans(
                               fontSize: 13,
                               height: 1.4,
                               color: AppColors.inkSoft,
@@ -130,7 +130,7 @@ class NotificationsPage extends StatelessWidget {
                           const SizedBox(height: 6),
                           Text(
                             n.timeLabel,
-                            style: GoogleFonts.epilogue(
+                            style: GoogleFonts.plusJakartaSans(
                               fontSize: 11,
                               fontWeight: FontWeight.w500,
                               color: AppColors.inkSoft.withValues(alpha: 0.7),
