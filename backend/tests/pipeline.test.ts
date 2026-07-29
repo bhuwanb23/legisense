@@ -135,8 +135,8 @@ async function run() {
 
   const longDoc = 'A'.repeat(60000);
   const longPrompt = buildAnalysisUserPrompt(longDoc);
-  assert(longPrompt.length < 60000, 'buildAnalysisUserPrompt truncates long documents');
-  assert(longPrompt.includes('[Document truncated due to length]'), 'Truncation notice present');
+  assert(longPrompt.length >= 60000, 'buildAnalysisUserPrompt preserves long documents (no truncation)');
+  assert(longPrompt.includes(longDoc), 'Full document text included in prompt');
 
   // ═══════════════════════════════════════════════════
   //  5. AI RESPONSE PARSER

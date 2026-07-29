@@ -406,7 +406,7 @@ describe('End-to-End Flow', () => {
     assert.equal(res.status, 200);
     assert.ok(res.body.success);
     const status = res.body.data?.processingStatus || res.body.data?.status;
-    assert.ok(['pending', 'processing', 'completed', 'failed'].includes(status),
+    assert.ok(['pending', 'processing', 'completed', 'analyzed', 'failed'].includes(status),
       `Status is valid, got: ${status}`);
   });
 
@@ -430,7 +430,7 @@ describe('End-to-End Flow', () => {
       const data = res.body.data;
       const st = data?.status || 'pending';
 
-      if (st === 'completed') { finalStatus = 'completed'; analysisBody = data; break; }
+      if (st === 'completed' || st === 'analyzed') { finalStatus = st; analysisBody = data; break; }
       if (st === 'failed') { finalStatus = 'failed'; analysisBody = data; break; }
 
       if (i === maxAttempts - 1) { finalStatus = 'timeout'; analysisBody = data; }

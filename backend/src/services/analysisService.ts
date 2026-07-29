@@ -1,6 +1,8 @@
 import { getDb, persistNow } from '../config/database';
 import { documents, analysisResults, clauses, riskItems, deadlines, usageLogs } from '../models';
 import { sql } from 'drizzle-orm';
+import { readFile } from '../storage/fileStorage';
+import { extractText } from './textExtractor';
 import { callWithFallback, selectProviderForTokens } from './ai';
 import { estimateTokens } from './ai/tokenManager';
 import { ANALYSIS_SYSTEM_PROMPT, buildAnalysisUserPrompt, parseAiResponse } from '../prompts/analysisPrompt';
@@ -8,7 +10,7 @@ import { AnalysisOutputSchema, type AnalysisOutput } from '../schemas/analysisSc
 import { chunkText, estimateTotalRequestTokens, mergeAnalysisResults } from './chunkingService';
 import { emitToUser } from './socketService';
 import { createNotification } from './notificationService';
-import { decryptText, isEncryptionConfigured } from './encryptionService';
+import { encryptText, decryptText, isEncryptionConfigured } from './encryptionService';
 
 const MAX_RETRIES = 3;
 const CHUNK_TOKEN_LIMIT = 500_000;
@@ -30,10 +32,7 @@ export async function analyzeDocumentPipeline(documentId: number, userId: number
   try {
     emitToUser(doc.userId, 'analysis:progress', { documentId, progress: 5, stage: 'Reading document text...' });
 
-    const rawText = decryptDocumentText(doc);
-    if (!rawText || rawText.trim().length === 0) {
-      throw new Error('Document has no extractable text. Try re-uploading or pasting the content manually.');
-    }
+    const rawText = await resolveDocumentText(doc, documentId);
 
     emitToUser(doc.userId, 'analysis:progress', { documentId, progress: 15, stage: 'Estimating document size...' });
 
@@ -120,6 +119,36 @@ function decryptDocumentText(doc: { rawText: string | null; encryptionIv: string
   if (!doc.rawText) return null;
   if (!doc.encryptionIv || !isEncryptionConfigured()) return doc.rawText;
   return decryptText(doc.rawText, doc.encryptionIv);
+}
+
+async function resolveDocumentText(doc: Record<string, unknown>, documentId: number): Promise<string> {
+  const rawText = decryptDocumentText(doc as { rawText: string | null; encryptionIv: string | null });
+  if (rawText && rawText.trim().length > 0) {
+    return rawText;
+  }
+
+  const db = getDb();
+  emitToUser((doc as { userId: number }).userId, 'analysis:progress', { documentId, progress: 8, stage: 'Extracting text from file...' });
+
+  const buffer = await readFile((doc as { storagePath: string }).storagePath);
+  const { text } = await extractText(buffer, (doc as { fileFormat: string }).fileFormat);
+
+  let storedText = text;
+  let storedIv: string | null = null;
+
+  if (isEncryptionConfigured()) {
+    const { ciphertext, iv } = encryptText(text);
+    storedText = ciphertext;
+    storedIv = iv;
+  }
+
+  if (storedIv) {
+    db.run(sql`UPDATE ${documents} SET raw_text = ${storedText}, encryption_iv = ${storedIv}, updated_at = datetime('now') WHERE id = ${documentId}`);
+  } else {
+    db.run(sql`UPDATE ${documents} SET raw_text = ${storedText}, updated_at = datetime('now') WHERE id = ${documentId}`);
+  }
+
+  return text;
 }
 
 async function analyzeSingle(
