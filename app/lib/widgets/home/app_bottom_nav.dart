@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 import '../../theme/app_theme.dart';
 
-/// 5-tab bar — ink active + gold underline; elevated ink Upload.
+/// Floating black pill dock — TripGlide DNA.
 class AppBottomNav extends StatelessWidget {
   const AppBottomNav({
     super.key,
@@ -16,76 +15,43 @@ class AppBottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        color: AppColors.cloud,
-        border: Border(top: BorderSide(color: AppColors.rule)),
-      ),
-      child: SafeArea(
-        top: false,
-        child: SizedBox(
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(28, 0, 28, 16),
+        child: Container(
           height: 68,
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          decoration: BoxDecoration(
+            color: AppColors.ink,
+            borderRadius: BorderRadius.circular(AppRadii.pill),
+            boxShadow: AppShadows.card,
+          ),
           child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              _NavItem(
-                icon: Icons.home_outlined,
-                activeIcon: Icons.home_rounded,
-                label: 'Home',
+              _DockItem(
+                icon: Icons.home_rounded,
                 selected: currentIndex == 0,
                 onTap: () => onChanged(0),
               ),
-              _NavItem(
-                icon: Icons.folder_outlined,
-                activeIcon: Icons.folder_rounded,
-                label: 'Docs',
+              _DockItem(
+                icon: Icons.folder_rounded,
                 selected: currentIndex == 1,
                 onTap: () => onChanged(1),
               ),
-              Expanded(
-                child: Center(
-                  child: Transform.translate(
-                    offset: const Offset(0, -12),
-                    child: Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        customBorder: const CircleBorder(),
-                        onTap: () => onChanged(2),
-                        child: Ink(
-                          width: 56,
-                          height: 56,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: AppColors.ink,
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppColors.ink.withValues(alpha: 0.22),
-                                blurRadius: 16,
-                                offset: const Offset(0, 8),
-                              ),
-                            ],
-                          ),
-                          child: const Icon(
-                            Icons.add_rounded,
-                            color: AppColors.cloud,
-                            size: 28,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
+              _DockItem(
+                icon: Icons.add_rounded,
+                selected: currentIndex == 2,
+                onTap: () => onChanged(2),
               ),
-              _NavItem(
-                icon: Icons.notifications_outlined,
-                activeIcon: Icons.notifications_rounded,
-                label: 'Alerts',
+              _DockItem(
+                icon: Icons.notifications_rounded,
                 selected: currentIndex == 3,
                 onTap: () => onChanged(3),
               ),
-              _NavItem(
-                icon: Icons.person_outline_rounded,
-                activeIcon: Icons.person_rounded,
-                label: 'Profile',
+              _DockItem(
+                icon: Icons.grid_view_rounded,
                 selected: currentIndex == 4,
                 onTap: () => onChanged(4),
               ),
@@ -97,58 +63,46 @@ class AppBottomNav extends StatelessWidget {
   }
 }
 
-class _NavItem extends StatelessWidget {
-  const _NavItem({
+class _DockItem extends StatelessWidget {
+  const _DockItem({
     required this.icon,
-    required this.activeIcon,
-    required this.label,
     required this.selected,
     required this.onTap,
   });
 
   final IconData icon;
-  final IconData activeIcon;
-  final String label;
   final bool selected;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final color = selected ? AppColors.ink : AppColors.inkSoft;
-
-    return Expanded(
-      child: InkWell(
-        onTap: onTap,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(selected ? activeIcon : icon, size: 22, color: color),
-            const SizedBox(height: 2),
-            Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.epilogue(
-                fontSize: 11,
-                height: 1.1,
-                fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                color: color,
-              ),
-            ),
-            const SizedBox(height: 3),
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 180),
-              height: 3,
-              width: selected ? 16 : 0,
-              decoration: BoxDecoration(
-                color: AppColors.accentGold,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ],
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        width: 46,
+        height: 46,
+        decoration: BoxDecoration(
+          color: selected ? AppColors.surface : Colors.transparent,
+          shape: BoxShape.circle,
+        ),
+        child: Icon(
+          icon,
+          size: 22,
+          color: selected ? AppColors.ink : AppColors.surface.withValues(alpha: 0.75),
         ),
       ),
     );
   }
 }
+
+/// Legacy label finder helpers for tests — dock is icon-only.
+String dockSemanticsLabel(int index) => switch (index) {
+      0 => 'Home',
+      1 => 'Documents',
+      2 => 'Upload',
+      3 => 'Notify',
+      4 => 'Profile',
+      _ => 'Tab',
+    };
