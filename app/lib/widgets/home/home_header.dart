@@ -23,84 +23,50 @@ class HomeHeader extends StatelessWidget {
 
     return Row(
       children: [
-        CircleAvatar(
-          radius: 24,
-          backgroundColor: AppColors.accentSoft,
-          child: Text(
-            initial,
-            style: GoogleFonts.epilogue(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: AppColors.primaryNavy,
-            ),
-          ),
-        ),
-        const SizedBox(width: 12),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Hi, $name',
-                style: GoogleFonts.spectral(
-                  fontSize: 18,
+                'Hello, $name',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 26,
                   fontWeight: FontWeight.w700,
                   color: AppColors.ink,
-                  letterSpacing: -0.3,
-                  fontStyle: FontStyle.normal,
+                  height: 1.15,
                 ),
               ),
+              const SizedBox(height: 4),
               Text(
-                greeting,
-                style: GoogleFonts.epilogue(
-                  fontSize: 13,
+                'Welcome to Legisense',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 14,
                   fontWeight: FontWeight.w400,
-                  color: AppColors.inkSoft,
+                  color: AppColors.mute,
                 ),
               ),
             ],
           ),
         ),
-        _IconBtn(
-          icon: Icons.search_rounded,
-          onTap: onSearch,
-        ),
-        const SizedBox(width: 8),
-        _IconBtn(
-          icon: Icons.notifications_outlined,
-          onTap: onNotifications,
-        ),
-      ],
-    );
-  }
-}
-
-class _IconBtn extends StatelessWidget {
-  const _IconBtn({required this.icon, required this.onTap});
-
-  final IconData icon;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: AppColors.cloud,
-      shape: const CircleBorder(),
-      child: InkWell(
-        customBorder: const CircleBorder(),
-        onTap: onTap,
-        child: Container(
-          width: 42,
-          height: 42,
+        Container(
+          width: 48,
+          height: 48,
           decoration: BoxDecoration(
+            color: AppColors.chip,
             shape: BoxShape.circle,
-            border: Border.all(
-              color: AppColors.borderMuted.withValues(alpha: 0.6),
+            boxShadow: AppShadows.soft,
+          ),
+          alignment: Alignment.center,
+          child: Text(
+            initial,
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              color: AppColors.ink,
             ),
           ),
-          child: Icon(icon, size: 20, color: AppColors.primaryNavy),
         ),
-      ),
+      ],
     );
   }
 }
