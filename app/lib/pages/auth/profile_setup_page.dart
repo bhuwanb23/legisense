@@ -123,7 +123,7 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
             const SizedBox(height: 20),
             Text(
               'Your Profile',
-              style: GoogleFonts.epilogue(
+              style: GoogleFonts.plusJakartaSans(
                 fontSize: 26,
                 fontWeight: FontWeight.w700,
                 color: AppColors.primaryNavy,
@@ -133,7 +133,7 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
             Text(
               'A few details so explanations fit your context.',
               textAlign: TextAlign.center,
-              style: GoogleFonts.epilogue(
+              style: GoogleFonts.plusJakartaSans(
                 fontSize: 13,
                 color: AppColors.inkSoft,
               ),
@@ -188,7 +188,7 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
                   selected: selected,
                   onSelected: (_) => setState(() => _profession = p),
                   selectedColor: AppColors.ink,
-                  labelStyle: GoogleFonts.epilogue(
+                  labelStyle: GoogleFonts.plusJakartaSans(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                     color: selected ? AppColors.cloud : AppColors.primaryNavy,
@@ -215,7 +215,7 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
                   selected: selected,
                   onSelected: (_) => setState(() => _language = lang.code),
                   selectedColor: AppColors.ink,
-                  labelStyle: GoogleFonts.epilogue(
+                  labelStyle: GoogleFonts.plusJakartaSans(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                     color: selected ? AppColors.cloud : AppColors.primaryNavy,
@@ -236,7 +236,7 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
               initialValue: _state,
               decoration: InputDecoration(
                 hintText: 'Select jurisdiction default',
-                hintStyle: GoogleFonts.epilogue(
+                hintStyle: GoogleFonts.plusJakartaSans(
                   fontSize: 14,
                   color: AppColors.inkSoft.withValues(alpha: 0.5),
                 ),
@@ -261,7 +261,7 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
                 dense: true,
                 title: Text(
                   type,
-                  style: GoogleFonts.epilogue(
+                  style: GoogleFonts.plusJakartaSans(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
                     color: AppColors.primaryNavy,
@@ -297,7 +297,7 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
       alignment: Alignment.centerLeft,
       child: Text(
         text,
-        style: GoogleFonts.epilogue(
+        style: GoogleFonts.plusJakartaSans(
           fontSize: 13,
           fontWeight: FontWeight.w700,
           color: AppColors.primaryNavy,
