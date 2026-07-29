@@ -8,7 +8,7 @@ import '../notifications/notifications_page.dart';
 import '../profile/profile_page.dart';
 import '../upload/upload_page.dart';
 
-/// Post-auth root — 5 tabs with elevated Upload.
+/// Post-auth root — floating TripGlide dock.
 class MainShell extends StatefulWidget {
   const MainShell({super.key, this.initialIndex = 0});
 
@@ -29,7 +29,8 @@ class _MainShellState extends State<MainShell> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.paper,
+      backgroundColor: AppColors.bg,
+      extendBody: true,
       body: IndexedStack(
         index: _index,
         children: [
