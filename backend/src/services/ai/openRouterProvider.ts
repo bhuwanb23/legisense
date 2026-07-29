@@ -2,19 +2,26 @@ import OpenAI from 'openai';
 import type { AiProvider, AiRequest, AiResponse, ProviderName } from './types';
 import { estimateTokens } from './tokenManager';
 
-const API_KEY = process.env.OPENROUTER_API_KEY || '';
 const BASE_URL = 'https://openrouter.ai/api/v1';
-const DEFAULT_MODEL = process.env.OPENROUTER_MODEL || 'openrouter/free';
 const SITE_URL = process.env.OPENROUTER_SITE_URL || '';
 const SITE_NAME = process.env.OPENROUTER_SITE_NAME || 'LegiSense';
 
 let client: OpenAI | null = null;
 
+function getApiKey(): string {
+  return process.env.OPENROUTER_API_KEY || '';
+}
+
+function getDefaultModel(): string {
+  return process.env.OPENROUTER_MODEL || 'openrouter/free';
+}
+
 function getClient(): OpenAI {
   if (!client) {
-    if (!API_KEY) throw new Error('OPENROUTER_API_KEY is not set');
+    const key = getApiKey();
+    if (!key) throw new Error('OPENROUTER_API_KEY is not set');
     client = new OpenAI({
-      apiKey: API_KEY,
+      apiKey: key,
       baseURL: BASE_URL,
     });
   }
@@ -25,12 +32,12 @@ export const openRouterProvider: AiProvider = {
   name: 'openrouter' as ProviderName,
 
   isAvailable(): boolean {
-    return Boolean(process.env.OPENROUTER_API_KEY);
+    return Boolean(getApiKey());
   },
 
   async generate(request: AiRequest): Promise<AiResponse> {
     const c = getClient();
-    const model = request.model || DEFAULT_MODEL;
+    const model = request.model || getDefaultModel();
     const estimatedInput = estimateTokens(request.systemPrompt + request.userPrompt);
 
     const response = await c.chat.completions.create({

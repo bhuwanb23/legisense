@@ -2,15 +2,19 @@ import OpenAI from 'openai';
 import type { AiProvider, AiRequest, AiResponse, ProviderName } from './types';
 import { estimateTokens } from './tokenManager';
 
-const API_KEY = process.env.OPENAI_API_KEY || '';
 const DEFAULT_MODEL = 'gpt-4o-mini';
 
 let client: OpenAI | null = null;
 
+function getApiKey(): string {
+  return process.env.OPENAI_API_KEY || '';
+}
+
 function getClient(): OpenAI {
   if (!client) {
-    if (!API_KEY) throw new Error('OPENAI_API_KEY is not set');
-    client = new OpenAI({ apiKey: API_KEY });
+    const key = getApiKey();
+    if (!key) throw new Error('OPENAI_API_KEY is not set');
+    client = new OpenAI({ apiKey: key });
   }
   return client;
 }
@@ -19,7 +23,7 @@ export const openAIProvider: AiProvider = {
   name: 'openai' as ProviderName,
 
   isAvailable(): boolean {
-    return Boolean(process.env.OPENAI_API_KEY);
+    return Boolean(getApiKey());
   },
 
   async generate(request: AiRequest): Promise<AiResponse> {

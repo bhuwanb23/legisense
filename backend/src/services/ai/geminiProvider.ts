@@ -3,17 +3,21 @@ import type { AiProvider, AiRequest, AiResponse, ProviderName } from './types';
 import { estimateTokens } from './tokenManager';
 import { parseAiResponse } from '../../prompts/analysisPrompt';
 
-const API_KEY = process.env.GEMINI_API_KEY || '';
 const DEFAULT_MODEL = 'gemini-1.5-flash';
 const DEFAULT_MAX_RETRIES = 3;
 const DEFAULT_TIMEOUT_MS = 60_000;
 
 let genAI: GoogleGenerativeAI | null = null;
 
+function getApiKey(): string {
+  return process.env.GEMINI_API_KEY || '';
+}
+
 function getClient(): GoogleGenerativeAI {
   if (!genAI) {
-    if (!API_KEY) throw new Error('GEMINI_API_KEY is not set');
-    genAI = new GoogleGenerativeAI(API_KEY);
+    const key = getApiKey();
+    if (!key) throw new Error('GEMINI_API_KEY is not set');
+    genAI = new GoogleGenerativeAI(key);
   }
   return genAI;
 }
