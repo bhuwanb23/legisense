@@ -13,6 +13,11 @@ export const ClauseSchema = z.object({
   clauseTitle: z.string().min(1),
   originalText: z.string().min(1),
   plainEnglishText: z.string().min(1),
+  readingLevel: z.enum(['grade_5', 'grade_8', 'standard']),
+  keyLegalTerms: z.array(z.object({
+    term: z.string().min(1),
+    definition: z.string().min(1),
+  })).default([]),
   riskLevel: z.enum(['none', 'low', 'medium', 'high']),
   riskScore: z.number().min(0).max(100),
   riskReason: z.string(),

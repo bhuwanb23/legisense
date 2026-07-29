@@ -15,6 +15,9 @@ RULES:
 10. All risk scores must be 0-100. All severity scores must be 0-100.
 11. The "favorsParty" field must be "Party A", "Party B", or "Balanced" — use actual party names from the document if possible.
 12. For each clause, set "riskCategory" to one of: financial, legal, privacy, termination, obligation, liability, compliance, intellectual_property, operational. Choose the single most relevant category.
+13. For each clause, include a "plainEnglishText" field that explains the clause in simple, everyday language suitable for a non-lawyer. Avoid legal jargon. Use short sentences and common words.
+14. For each clause, include a "readingLevel" field set to "grade_5" (very simple, common words), "grade_8" (moderately simple, some complex ideas), or "standard" (regular legal language, but still explained clearly).
+15. For each clause, include a "keyLegalTerms" array listing 1-3 legal terms used in that clause with plain English definitions. Each entry must have "term" and "definition" fields.
 
 The JSON must match this exact structure (no extra fields, no missing fields):
 {
@@ -51,7 +54,12 @@ The JSON must match this exact structure (no extra fields, no missing fields):
       "clauseNumber": 1,
       "clauseTitle": "Parties",
       "originalText": "This Agreement is entered into between Acme Corp and John Doe...",
-      "plainEnglishText": "This section identifies who is signing the agreement.",
+      "plainEnglishText": "This section identifies who is signing the agreement — the company (Acme Corp) and the person (John Doe).",
+      "readingLevel": "grade_5",
+      "keyLegalTerms": [
+        {"term": "Agreement", "definition": "A legally binding contract between two or more parties."},
+        {"term": "Party", "definition": "A person or company that signs a contract."}
+      ],
       "riskLevel": "none",
       "riskScore": 5,
       "riskReason": "Standard identification clause, no risk.",
@@ -63,6 +71,10 @@ The JSON must match this exact structure (no extra fields, no missing fields):
       "clauseTitle": "Term",
       "originalText": "This Agreement shall commence on January 1, 2024...",
       "plainEnglishText": "This section sets the start and end dates of the agreement.",
+      "readingLevel": "grade_5",
+      "keyLegalTerms": [
+        {"term": "Commence", "definition": "To begin or start."}
+      ],
       "riskLevel": "low",
       "riskScore": 15,
       "riskReason": "Fixed term with no auto-renewal, low risk.",
