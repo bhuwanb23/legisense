@@ -85,7 +85,7 @@ class _UploadPageState extends State<UploadPage> {
             children: [
               Text(
                 'Paste text',
-                style: GoogleFonts.epilogue(
+                style: GoogleFonts.plusJakartaSans(
                   fontSize: 20,
                   fontWeight: FontWeight.w700,
                   color: AppColors.primaryNavy,
@@ -96,13 +96,13 @@ class _UploadPageState extends State<UploadPage> {
                 controller: controller,
                 maxLines: 8,
                 autofocus: true,
-                style: GoogleFonts.epilogue(
+                style: GoogleFonts.plusJakartaSans(
                   fontSize: 14,
                   color: AppColors.primaryNavy,
                 ),
                 decoration: InputDecoration(
                   hintText: 'Paste contract text here…',
-                  hintStyle: GoogleFonts.epilogue(color: AppColors.inkSoft),
+                  hintStyle: GoogleFonts.plusJakartaSans(color: AppColors.inkSoft),
                   filled: true,
                   fillColor: const Color(0xFFF3F7FC),
                   border: OutlineInputBorder(
@@ -156,7 +156,7 @@ class _UploadPageState extends State<UploadPage> {
             children: [
               Text(
                 'Import URL',
-                style: GoogleFonts.epilogue(
+                style: GoogleFonts.plusJakartaSans(
                   fontSize: 20,
                   fontWeight: FontWeight.w700,
                   color: AppColors.primaryNavy,
@@ -167,13 +167,13 @@ class _UploadPageState extends State<UploadPage> {
                 controller: controller,
                 keyboardType: TextInputType.url,
                 autofocus: true,
-                style: GoogleFonts.epilogue(
+                style: GoogleFonts.plusJakartaSans(
                   fontSize: 14,
                   color: AppColors.primaryNavy,
                 ),
                 decoration: InputDecoration(
                   hintText: 'https://…',
-                  hintStyle: GoogleFonts.epilogue(color: AppColors.inkSoft),
+                  hintStyle: GoogleFonts.plusJakartaSans(color: AppColors.inkSoft),
                   filled: true,
                   fillColor: const Color(0xFFF3F7FC),
                   border: OutlineInputBorder(
@@ -249,12 +249,12 @@ class _UploadPageState extends State<UploadPage> {
         child: CustomScrollView(
           slivers: [
             SliverPadding(
-              padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
+              padding: const EdgeInsets.fromLTRB(24, 20, 24, 110),
               sliver: SliverList(
                 delegate: SliverChildListDelegate([
                   Text(
                     'Upload document',
-                    style: GoogleFonts.epilogue(
+                    style: GoogleFonts.plusJakartaSans(
                       fontSize: 28,
                       fontWeight: FontWeight.w700,
                       letterSpacing: -0.6,
@@ -264,7 +264,7 @@ class _UploadPageState extends State<UploadPage> {
                   const SizedBox(height: 8),
                   Text(
                     'Choose how you want to add a contract for review.',
-                    style: GoogleFonts.epilogue(
+                    style: GoogleFonts.plusJakartaSans(
                       fontSize: 14,
                       height: 1.45,
                       color: AppColors.inkSoft,
@@ -342,7 +342,7 @@ class _UploadPageState extends State<UploadPage> {
                                   pending.title,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
-                                  style: GoogleFonts.epilogue(
+                                  style: GoogleFonts.plusJakartaSans(
                                     fontWeight: FontWeight.w700,
                                     color: AppColors.primaryNavy,
                                   ),
@@ -352,7 +352,7 @@ class _UploadPageState extends State<UploadPage> {
                                     pending.detail!,
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
-                                    style: GoogleFonts.epilogue(
+                                    style: GoogleFonts.plusJakartaSans(
                                       fontSize: 12,
                                       color: AppColors.inkSoft,
                                     ),
@@ -416,7 +416,7 @@ class _InfoLine extends StatelessWidget {
         Expanded(
           child: Text(
             text,
-            style: GoogleFonts.epilogue(
+            style: GoogleFonts.plusJakartaSans(
               fontSize: 13,
               height: 1.4,
               color: AppColors.inkSoft,
