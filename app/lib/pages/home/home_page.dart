@@ -81,7 +81,7 @@ class _HomePageState extends State<HomePage> {
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [AppColors.skyMist, AppColors.cloud],
+          colors: [AppColors.paper, AppColors.cloud],
         ),
       ),
       child: SafeArea(
