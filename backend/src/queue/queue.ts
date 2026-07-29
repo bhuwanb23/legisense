@@ -86,7 +86,7 @@ export class Queue {
 
     const delay = mergedOpts.delay || 0;
     const delayUntil = delay > 0
-      ? new Date(Date.now() + delay).toISOString()
+      ? new Date(Date.now() + delay).toISOString().slice(0, 19).replace('T', ' ')
       : null;
 
     db.run(sql`
@@ -124,19 +124,15 @@ export class Queue {
 
   async getJobs(statuses?: string[]): Promise<JobData[]> {
     const db = getDb();
-    if (statuses && statuses.length > 0) {
-      const placeholders = statuses.map(() => '?').join(',');
-      const rows = db.all(sql`
-        SELECT * FROM jobs WHERE queue_name = ${this.name} AND status IN (${sql.raw(placeholders)})
-        ORDER BY priority ASC, created_at ASC
-      `) as Record<string, unknown>[];
-      return rows.map(r => this.mapRow(r));
-    }
     const rows = db.all(sql`
       SELECT * FROM jobs WHERE queue_name = ${this.name}
       ORDER BY priority ASC, created_at ASC
     `) as Record<string, unknown>[];
-    return rows.map(r => this.mapRow(r));
+    let result = rows.map(r => this.mapRow(r));
+    if (statuses && statuses.length > 0) {
+      result = result.filter(j => statuses.includes(j.status));
+    }
+    return result;
   }
 
   async getActiveCount(): Promise<number> {

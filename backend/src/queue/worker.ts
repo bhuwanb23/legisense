@@ -112,7 +112,7 @@ export class Worker {
         const backoff = this.calculateBackoff(opts?.backoff, newRetryCount);
 
         if (backoff > 0) {
-          const delayUntil = new Date(Date.now() + backoff).toISOString();
+          const delayUntil = new Date(Date.now() + backoff).toISOString().slice(0, 19).replace('T', ' ');
           db.run(sql`
             UPDATE jobs SET status = 'pending', delay_until = ${delayUntil}, retry_count = ${newRetryCount}, error = ${errorMessage}
             WHERE id = ${job.id}
