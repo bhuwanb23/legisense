@@ -62,6 +62,7 @@ export function mergeAnalysisResults(results: AnalysisOutput[]): AnalysisOutput 
   const allDates = results.flatMap((r) => r.criticalDates);
   const allObligations = results.flatMap((r) => r.keyObligations);
   const allMissing = [...new Set(results.flatMap((r) => r.missingClauses))];
+  const allBreaches = results.flatMap((r) => r.breachScenarios);
 
   const sorted = [...results].sort((a, b) => b.overallRiskScore - a.overallRiskScore);
   const worst = sorted[0];
@@ -86,5 +87,16 @@ export function mergeAnalysisResults(results: AnalysisOutput[]): AnalysisOutput 
     clauses: allClauses,
     riskItems: allRisks,
     deadlines: allDeadlines,
+    breachScenarios: deduplicateBreaches(allBreaches),
   };
+}
+
+function deduplicateBreaches(breaches: AnalysisOutput['breachScenarios']): AnalysisOutput['breachScenarios'] {
+  const seen = new Set<string>();
+  return breaches.filter((b) => {
+    const key = b.scenario.toLowerCase().trim();
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }

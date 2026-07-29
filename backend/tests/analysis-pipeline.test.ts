@@ -26,16 +26,19 @@ function buildValidAnalysisOutput(overrides: Record<string, unknown> = {}) {
     riskLevel: 'medium',
     fairnessScore: 55,
     favorsParty: 'Party A',
-    summary: 'This is a non-disclosure agreement between two parties.',
+    summary: 'This is a non-disclosure agreement between two parties governing confidentiality of shared information.',
     keyParties: [
-      { name: 'Acme Corp', role: 'Disclosing Party', type: 'company', obligations: ['Share confidential information'] },
-      { name: 'John Doe', role: 'Receiving Party', type: 'individual', obligations: ['Maintain confidentiality'] },
+      { name: 'Acme Corp', role: 'Disclosing Party', type: 'company', obligations: ['Share confidential information'], obligations_summary: 'Acme Corp must share its confidential information with John Doe for evaluation purposes.' },
+      { name: 'John Doe', role: 'Receiving Party', type: 'individual', obligations: ['Maintain confidentiality'], obligations_summary: 'John Doe must keep all shared information confidential and return or destroy it upon request.' },
     ],
     criticalDates: [
-      { label: 'Effective Date', date: '2024-01-01', urgency: 'high' },
+      { label: 'Effective Date', date: '2024-01-01', urgency: 'high', importance: 'All obligations under the agreement begin on this date.' },
     ],
     keyObligations: [
-      { party: 'John Doe', obligation: 'Keep confidential information secret for 5 years' },
+      { party: 'John Doe', obligation: 'Keep confidential information secret for 5 years', consequence: 'Legal action for breach of confidentiality, damages, and potential termination.' },
+    ],
+    breachScenarios: [
+      { scenario: 'Unauthorized disclosure of confidential information', consequence: 'Legal action for damages, termination of agreement, and potential criminal liability.' },
     ],
     missingClauses: ['Termination clause', 'Governing law'],
     clauses: [
@@ -163,6 +166,7 @@ async function run() {
       keyParties: [],
       criticalDates: [],
       keyObligations: [],
+      breachScenarios: [],
       missingClauses: [],
       clauses: [],
       riskItems: [],
@@ -171,6 +175,7 @@ async function run() {
     const parsed = AnalysisOutputSchema.parse(minimal);
     assert(parsed.documentType === 'Rental Agreement', 'AnalysisOutputSchema accepts minimal valid output');
     assert(parsed.clauses.length === 0, 'AnalysisOutputSchema accepts empty clauses');
+    assert(parsed.breachScenarios.length === 0, 'AnalysisOutputSchema accepts empty breachScenarios');
   }
 
   {
@@ -189,24 +194,24 @@ async function run() {
   console.log('\n── 2. Party Schema (with type field) ──');
 
   {
-    const company = PartySchema.parse({ name: 'Acme Corp', role: 'Employer', type: 'company', obligations: [] });
+    const company = PartySchema.parse({ name: 'Acme Corp', role: 'Employer', type: 'company', obligations: [], obligations_summary: 'Acme Corp must pay salary and provide benefits.' });
     assert(company.type === 'company', 'PartySchema accepts company type');
   }
 
   {
-    const individual = PartySchema.parse({ name: 'John Doe', role: 'Employee', type: 'individual', obligations: [] });
+    const individual = PartySchema.parse({ name: 'John Doe', role: 'Employee', type: 'individual', obligations: [], obligations_summary: 'John Doe must perform duties and keep information confidential.' });
     assert(individual.type === 'individual', 'PartySchema accepts individual type');
   }
 
   {
-    const defaulted = PartySchema.parse({ name: 'Unknown', role: 'Party', obligations: [] });
+    const defaulted = PartySchema.parse({ name: 'Unknown', role: 'Party', obligations: [], obligations_summary: 'No specific obligations identified.' });
     assert(defaulted.type === 'unknown', 'PartySchema defaults type to unknown');
   }
 
   {
     let threw = false;
     try {
-      PartySchema.parse({ name: '', role: 'Party', obligations: [] });
+      PartySchema.parse({ name: '', role: 'Party', obligations: [], obligations_summary: 'Test.' });
     } catch {
       threw = true;
     }
@@ -275,9 +280,126 @@ async function run() {
   }
 
   // ═══════════════════════════════════════════════════
-  //  4. Prompt Builder
+  //  4. Breach Scenarios Schema
   // ═══════════════════════════════════════════════════
-  console.log('\n── 4. Prompt Builder ──');
+  console.log('\n── 4. Breach Scenarios ──');
+
+  {
+    const { BreachScenarioSchema } = await import('../src/schemas/analysisSchemas');
+    const valid = BreachScenarioSchema.parse({ scenario: 'Failure to pay', consequence: 'Penalty interest applies.' });
+    assert(valid.scenario === 'Failure to pay', 'BreachScenarioSchema parses valid breach');
+    assert(valid.consequence === 'Penalty interest applies.', 'BreachScenarioSchema parses consequence');
+  }
+
+  {
+    const { BreachScenarioSchema } = await import('../src/schemas/analysisSchemas');
+    let threw = false;
+    try { BreachScenarioSchema.parse({ scenario: '', consequence: 'Test' }); } catch { threw = true; }
+    assert(threw, 'BreachScenarioSchema rejects empty scenario');
+  }
+
+  {
+    const { AnalysisOutputSchema } = await import('../src/schemas/analysisSchemas');
+    const valid = AnalysisOutputSchema.parse(buildValidAnalysisOutput());
+    assert(valid.breachScenarios.length === 1, 'AnalysisOutputSchema parses breachScenarios array');
+    assert(valid.breachScenarios[0].scenario.includes('Unauthorized'), 'breachScenarios has correct scenario');
+  }
+
+  // ═══════════════════════════════════════════════════
+  //  5. Key Obligations with consequence
+  // ═══════════════════════════════════════════════════
+  console.log('\n── 5. Key Obligations with consequence ──');
+
+  {
+    const { KeyObligationSchema, AnalysisOutputSchema } = await import('../src/schemas/analysisSchemas');
+    const valid = KeyObligationSchema.parse({ party: 'Acme Corp', obligation: 'Pay salary', consequence: 'Late fees apply.' });
+    assert(valid.consequence === 'Late fees apply.', 'KeyObligationSchema parses consequence');
+
+    const output = AnalysisOutputSchema.parse(buildValidAnalysisOutput());
+    assert(output.keyObligations[0].consequence.length > 0, 'AnalysisOutput includes obligation consequence');
+  }
+
+  // ═══════════════════════════════════════════════════
+  //  6. Critical Dates with importance
+  // ═══════════════════════════════════════════════════
+  console.log('\n── 6. Critical Dates with importance ──');
+
+  {
+    const { CriticalDateSchema, AnalysisOutputSchema } = await import('../src/schemas/analysisSchemas');
+    const valid = CriticalDateSchema.parse({ label: 'Renewal', date: '2025-01-01', urgency: 'high', importance: 'Must act by this date.' });
+    assert(valid.importance === 'Must act by this date.', 'CriticalDateSchema parses importance');
+
+    const output = AnalysisOutputSchema.parse(buildValidAnalysisOutput());
+    assert(output.criticalDates[0].importance.length > 0, 'AnalysisOutput includes date importance');
+  }
+
+  // ═══════════════════════════════════════════════════
+  //  7. Deadline Urgency Calculation
+  // ═══════════════════════════════════════════════════
+  console.log('\n── 7. Deadline Urgency Calculation ──');
+
+  function calcUrgency(dateStr: string): string {
+    if (!dateStr || dateStr.length < 10) return 'medium';
+    const parsed = new Date(dateStr);
+    if (isNaN(parsed.getTime())) return 'medium';
+    const now = new Date();
+    const diffMs = parsed.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+    if (diffDays < 0) return 'overdue';
+    if (diffDays <= 7) return 'critical';
+    if (diffDays <= 30) return 'high';
+    if (diffDays <= 90) return 'medium';
+    return 'low';
+  }
+
+  {
+    const past = calcUrgency('2020-01-01');
+    assert(past === 'overdue', 'calcUrgency returns overdue for past date');
+  }
+
+  {
+    const tomorrow = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
+    const soon = calcUrgency(tomorrow);
+    assert(soon === 'critical', 'calcUrgency returns critical for date within 7 days');
+  }
+
+  {
+    const twoWeeks = new Date(Date.now() + 14 * 86400000).toISOString().slice(0, 10);
+    const med = calcUrgency(twoWeeks);
+    assert(med === 'high', 'calcUrgency returns high for date within 30 days');
+  }
+
+  {
+    const twoMonths = new Date(Date.now() + 60 * 86400000).toISOString().slice(0, 10);
+    const norm = calcUrgency(twoMonths);
+    assert(norm === 'medium', 'calcUrgency returns medium for date within 90 days');
+  }
+
+  {
+    const far = new Date(Date.now() + 180 * 86400000).toISOString().slice(0, 10);
+    const low = calcUrgency(far);
+    assert(low === 'low', 'calcUrgency returns low for date beyond 90 days');
+  }
+
+  {
+    const unparseable = calcUrgency('Upon termination');
+    assert(unparseable === 'medium', 'calcUrgency returns medium for unparseable date');
+  }
+
+  {
+    const empty = calcUrgency('');
+    assert(empty === 'medium', 'calcUrgency returns medium for empty string');
+  }
+
+  {
+    const short = calcUrgency('2024');
+    assert(short === 'medium', 'calcUrgency returns medium for too-short date string');
+  }
+
+  // ═══════════════════════════════════════════════════
+  //  8. Prompt Builder
+  // ═══════════════════════════════════════════════════
+  console.log('\n── 8. Prompt Builder ──');
 
   {
     const prompt = buildAnalysisUserPrompt('Short document text.');
@@ -292,9 +414,9 @@ async function run() {
   }
 
   // ═══════════════════════════════════════════════════
-  //  5. AI Response Parser (enhanced)
+  //  9. AI Response Parser (enhanced)
   // ═══════════════════════════════════════════════════
-  console.log('\n── 5. AI Response Parser ──');
+  console.log('\n── 9. AI Response Parser ──');
 
   {
     const validJson = '{"documentType":"NDA","overallRiskScore":42}';
@@ -346,9 +468,9 @@ async function run() {
   }
 
   // ═══════════════════════════════════════════════════
-  //  6. Token Estimation
+  //  10. Token Estimation
   // ═══════════════════════════════════════════════════
-  console.log('\n── 6. Token Estimation ──');
+  console.log('\n── 10. Token Estimation ──');
 
   {
     const tokens = estimateTotalRequestTokens('System prompt.', 'User text.');
@@ -367,9 +489,9 @@ async function run() {
   }
 
   // ═══════════════════════════════════════════════════
-  //  7. Chunking Service
+  //  11. Chunking Service
   // ═══════════════════════════════════════════════════
-  console.log('\n── 7. Chunking Service ──');
+  console.log('\n── 11. Chunking Service ──');
 
   {
     const chunks = chunkText('Short text.');
@@ -406,9 +528,9 @@ async function run() {
   }
 
   // ═══════════════════════════════════════════════════
-  //  8. DB integration — status 'analyzed'
+  //  12. DB integration — status 'analyzed'
   // ═══════════════════════════════════════════════════
-  console.log('\n── 8. DB Status Integration ──');
+  console.log('\n── 12. DB Status Integration ──');
 
   {
     db.insert(documents).values({
@@ -442,6 +564,7 @@ async function run() {
       keyObligations: JSON.stringify([]),
       missingClauses: JSON.stringify([]),
       jurisdictionFlags: JSON.stringify([]),
+      breachScenarios: JSON.stringify([]),
       processingTime: 1.5,
       aiModelUsed: 'test-model',
     }).run();

@@ -194,6 +194,7 @@ describe('End-to-End Flow', () => {
         summary TEXT, key_parties TEXT,
         critical_dates TEXT, key_obligations TEXT,
         missing_clauses TEXT, jurisdiction_flags TEXT,
+        breach_scenarios TEXT,
         processing_time REAL, ai_model_used TEXT,
         created_at TEXT NOT NULL DEFAULT (datetime('now'))
       )
@@ -317,6 +318,7 @@ describe('End-to-End Flow', () => {
     try { db.run(sql`ALTER TABLE usage_logs ADD COLUMN input_tokens INTEGER`); } catch {}
     try { db.run(sql`ALTER TABLE usage_logs ADD COLUMN output_tokens INTEGER`); } catch {}
     try { db.run(sql`ALTER TABLE documents ADD COLUMN encryption_iv TEXT`); } catch {}
+    try { db.run(sql`ALTER TABLE analysis_results ADD COLUMN breach_scenarios TEXT`); } catch {}
     persistNow();
 
     server = http.createServer(app);

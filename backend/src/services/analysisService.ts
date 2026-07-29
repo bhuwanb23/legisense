@@ -80,6 +80,8 @@ export async function analyzeDocumentPipeline(documentId: number, userId: number
 
     saveAnalysisResults(documentId, doc.userId, analysisResult, totalTime, modelUsed);
 
+    autoCreateDeadlines(documentId, doc.userId, analysisResult.criticalDates);
+
     updateDocumentStatus(documentId, 'analyzed');
 
     createNotification(doc.userId, 'analysis_complete', 'Analysis Complete', `Analysis of "${doc.originalName}" is complete.`, documentId);
@@ -262,6 +264,7 @@ function saveAnalysisResults(
     keyObligations: JSON.stringify(ai.keyObligations),
     missingClauses: JSON.stringify(ai.missingClauses),
     jurisdictionFlags: JSON.stringify([]),
+    breachScenarios: JSON.stringify(ai.breachScenarios),
     processingTime,
     aiModelUsed: modelUsed || 'unknown',
   }).run();
@@ -307,6 +310,53 @@ function saveAnalysisResults(
         description: deadline.description,
         dueDate: deadline.dueDate,
         recurrence: deadline.recurrence,
+      }).run();
+    }
+  }
+}
+
+function calculateUrgencyLevel(dateStr: string): string {
+  if (!dateStr || dateStr.length < 10) return 'medium';
+
+  const parsed = new Date(dateStr);
+  if (isNaN(parsed.getTime())) return 'medium';
+
+  const now = new Date();
+  const diffMs = parsed.getTime() - now.getTime();
+  const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffDays < 0) return 'overdue';
+  if (diffDays <= 7) return 'critical';
+  if (diffDays <= 30) return 'high';
+  if (diffDays <= 90) return 'medium';
+  return 'low';
+}
+
+function autoCreateDeadlines(documentId: number, userId: number, criticalDates: AnalysisOutput['criticalDates']): void {
+  const db = getDb();
+
+  for (const cd of criticalDates) {
+    const existing = db.select().from(deadlines).where(
+      sql`${deadlines.documentId} = ${documentId} AND ${deadlines.title} = ${cd.label}`
+    ).all();
+
+    const urgencyLevel = calculateUrgencyLevel(cd.date);
+
+    if (existing.length > 0) {
+      db.run(sql`UPDATE ${deadlines} SET
+        description = ${cd.importance || cd.label},
+        due_date = ${cd.date},
+        urgency_level = ${urgencyLevel}
+        WHERE id = ${existing[0].id}`);
+    } else {
+      db.insert(deadlines).values({
+        documentId,
+        userId,
+        title: cd.label,
+        description: cd.importance || cd.label,
+        dueDate: cd.date,
+        urgencyLevel,
+        recurrence: 'one-time',
       }).run();
     }
   }
