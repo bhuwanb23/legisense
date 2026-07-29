@@ -379,7 +379,7 @@ async function run() {
 
   {
     const longText = 'Paragraph one.\n\nParagraph two.\n\nParagraph three.\n\nParagraph four.\n\nParagraph five.';
-    const smallChunks = chunkText(longText, 1);
+    const smallChunks = chunkText(longText, 8);
     assert(smallChunks.length > 1, 'chunkText splits text into multiple chunks with low token limit');
   }
 

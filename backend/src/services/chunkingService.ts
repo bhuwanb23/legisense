@@ -13,8 +13,9 @@ export interface ChunkInfo {
 export function chunkText(text: string, targetTokens?: number): ChunkInfo[] {
   const maxTokens = targetTokens ?? TARGET_TOKENS_PER_CHUNK;
   const maxChars = maxTokens * 4;
+  const overlap = Math.min(OVERLAP_CHARS, Math.floor(maxChars * 0.4));
 
-  const chunks = chunkDocument(text, { maxChunkSize: maxChars, overlap: OVERLAP_CHARS });
+  const chunks = chunkDocument(text, { maxChunkSize: maxChars, overlap });
 
   return chunks.map((c) => ({
     index: c.index,
