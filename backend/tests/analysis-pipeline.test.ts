@@ -84,15 +84,6 @@ async function run() {
   await initDatabase();
   const db = getDb();
 
-  db.run(sql`DELETE FROM ${clauses}`);
-  db.run(sql`DELETE FROM ${analysisResults}`);
-  db.run(sql`DELETE FROM ${documents}`);
-  db.run(sql`DELETE FROM ${users}`);
-  db.run(sql`DELETE FROM ${glossary}`);
-
-  try { db.run(sql`ALTER TABLE ${clauses} ADD COLUMN reading_level TEXT`); } catch {}
-  try { db.run(sql`ALTER TABLE ${clauses} ADD COLUMN key_legal_terms TEXT`); } catch {}
-
   db.run(sql`CREATE TABLE IF NOT EXISTS ${glossary} (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     term TEXT NOT NULL UNIQUE,
@@ -100,6 +91,16 @@ async function run() {
     category TEXT,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
   )`);
+
+  try { db.run(sql`ALTER TABLE ${clauses} ADD COLUMN reading_level TEXT`); } catch {}
+  try { db.run(sql`ALTER TABLE ${clauses} ADD COLUMN key_legal_terms TEXT`); } catch {}
+
+  db.run(sql`DELETE FROM ${clauses}`);
+  db.run(sql`DELETE FROM ${riskItems}`);
+  db.run(sql`DELETE FROM ${analysisResults}`);
+  db.run(sql`DELETE FROM ${documents}`);
+  db.run(sql`DELETE FROM ${users}`);
+  db.run(sql`DELETE FROM ${glossary}`);
 
   persistNow();
 
