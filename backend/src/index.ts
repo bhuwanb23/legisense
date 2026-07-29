@@ -24,9 +24,9 @@ import analysisRoutes from './routes/analysisRoutes';
 import chatRoutes from './routes/chatRoutes';
 import deadlineRoutes from './routes/deadlineRoutes';
 import notificationRoutes from './routes/notificationRoutes';
-import { startAnalysisWorker } from './jobs/analysisWorker';
 import { initSocketIO, closeSocketIO } from './services/socketService';
-import { startAutoDeleteService, stopAutoDeleteService } from './services/autoDeleteService';
+import { startQueueSystem, stopQueueSystem } from './queue';
+import { stopAutoDeleteService } from './services/autoDeleteService';
 import helmet from 'helmet';
 
 const app = express();

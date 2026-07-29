@@ -50,7 +50,7 @@ export async function startAnalysis(
       sql`UPDATE ${documents} SET processing_status = 'pending', updated_at = datetime('now') WHERE id = ${documentId}`
     );
 
-    const job = queueService.enqueue(documentId, req.user.id);
+    const job = await analysisQueue.add('analyze', { documentId, userId: req.user.id });
 
     res.status(202).json({
       success: true,
