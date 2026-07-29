@@ -64,28 +64,8 @@ export async function startQueueSystem(): Promise<void> {
 
   scheduler = new Scheduler();
 
-  // Auto-delete: every hour
-  scheduler.register(
-    autoDeleteQueue, analysisWorker,
-    'auto-delete', {},
-    '0 * * * *', 60 * 60 * 1000,
-  );
-
-  // Reminder check: every 6 hours
-  scheduler.register(
-    reminderQueue, analysisWorker,
-    'check-reminders', {},
-    '0 */6 * * *', 6 * 60 * 60 * 1000,
-  );
-
-  // Override scheduler's run handlers for the scheduled jobs
-  scheduler.runScheduledJob = async (queue, jobName, data) => {
-    if (jobName === 'auto-delete') {
-      await deleteExpiredDocuments();
-    } else if (jobName === 'check-reminders') {
-      await checkDeadlineReminders();
-    }
-  };
+  scheduler.register('auto-delete', deleteExpiredDocuments, 60 * 60 * 1000);
+  scheduler.register('check-reminders', checkDeadlineReminders, 6 * 60 * 60 * 1000);
 
   await analysisWorker.start();
   await notificationWorker.start();
