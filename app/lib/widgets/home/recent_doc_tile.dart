@@ -42,7 +42,7 @@ class RecentDocTile extends StatelessWidget {
                 width: 46,
                 height: 46,
                 decoration: BoxDecoration(
-                  color: AppColors.skyWash,
+                  color: AppColors.paper2,
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: const Icon(

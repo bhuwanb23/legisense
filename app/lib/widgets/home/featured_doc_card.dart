@@ -44,7 +44,7 @@ class FeaturedDocCard extends StatelessWidget {
                 height: 140,
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  color: AppColors.skyWash,
+                  color: AppColors.paper2,
                   borderRadius: const BorderRadius.vertical(
                     top: Radius.circular(20),
                   ),
@@ -122,7 +122,7 @@ class FeaturedDocCard extends StatelessWidget {
                             vertical: 3,
                           ),
                           decoration: BoxDecoration(
-                            color: AppColors.skyWash,
+                            color: AppColors.paper2,
                             borderRadius: BorderRadius.circular(AppRadii.pill),
                           ),
                           child: Text(

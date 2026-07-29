@@ -247,7 +247,7 @@ class _UploadPageState extends State<UploadPage> {
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [AppColors.skyMist, AppColors.skyWash],
+          colors: [AppColors.paper, AppColors.paper2],
         ),
       ),
       child: SafeArea(
