@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../data/analysis_mock.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/analysis/soft_card.dart';
+import '../chat/chat_page.dart';
 import 'clause_breakdown_page.dart';
 
 /// Page 14 — Full document summary.
@@ -26,9 +27,9 @@ class DocumentSummaryPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.skyMist,
+      backgroundColor: AppColors.paper,
       appBar: AppBar(
-        backgroundColor: AppColors.skyMist,
+        backgroundColor: AppColors.paper,
         elevation: 0,
         foregroundColor: AppColors.primaryNavy,
         title: Text(
@@ -226,7 +227,13 @@ class DocumentSummaryPage extends StatelessWidget {
               ),
               ActionChip(
                 label: const Text('Chat'),
-                onPressed: () => _toast(context, 'Chat comes next.'),
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute<void>(
+                      builder: (_) => ChatPage(result: result),
+                    ),
+                  );
+                },
               ),
               ActionChip(
                 label: const Text('Export'),
