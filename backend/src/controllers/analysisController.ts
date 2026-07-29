@@ -4,6 +4,8 @@ import { documents, analysisResults, clauses, riskItems, deadlines, glossary } f
 import { sql } from 'drizzle-orm';
 import { analysisQueue } from '../queue';
 import { NotFoundError, BadRequestError } from '../utils/errors';
+import { classifyDocument } from '../services/analysisService';
+import { getTypeEntry, getValidTypes } from '../data/documentTypes';
 
 export async function startAnalysis(
   req: Request,
@@ -497,6 +499,106 @@ export async function lookupGlossary(
         definition: generatedDefinition,
         category: 'unknown',
         source: 'ai',
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function classifyEndpoint(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    if (!req.user) {
+      res.status(401).json({ success: false, error: { message: 'Unauthorized', code: 'AUTH_REQUIRED', statusCode: 401 } });
+      return;
+    }
+
+    const documentId = Number(req.params.documentId);
+    const db = getDb();
+
+    const docRows = db.select().from(documents).where(
+      sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = 0`
+    ).all();
+
+    if (!docRows[0]) throw new NotFoundError('Document');
+
+    const rawText = docRows[0].rawText;
+    if (!rawText || rawText.trim().length === 0) {
+      res.status(400).json({ success: false, error: { message: 'Document text not available. Upload and extract text first.', code: 'NO_TEXT', statusCode: 400 } });
+      return;
+    }
+
+    const classification = await classifyDocument(rawText);
+    const typeEntry = getTypeEntry(classification.type);
+    const needsConfirmation = classification.confidence < 60;
+
+    res.json({
+      success: true,
+      data: {
+        type: classification.type,
+        typeLabel: typeEntry.typeLabel,
+        confidence: classification.confidence,
+        subType: classification.sub_type,
+        icon: typeEntry.icon,
+        needsConfirmation,
+        supportedTypes: getValidTypes(),
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function confirmDocumentType(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    if (!req.user) {
+      res.status(401).json({ success: false, error: { message: 'Unauthorized', code: 'AUTH_REQUIRED', statusCode: 401 } });
+      return;
+    }
+
+    const documentId = Number(req.params.documentId);
+    const { type } = req.body;
+
+    if (!type || typeof type !== 'string') {
+      res.status(400).json({ success: false, error: { message: 'Type is required', code: 'VALIDATION_ERROR', statusCode: 400 } });
+      return;
+    }
+
+    const typeEntry = getTypeEntry(type);
+    if (typeEntry.type === 'unknown' && type !== 'unknown') {
+      res.status(400).json({ success: false, error: { message: `Unsupported type "${type}". Use one of: ${getValidTypes().join(', ')}`, code: 'INVALID_TYPE', statusCode: 400 } });
+      return;
+    }
+
+    const db = getDb();
+    const docRows = db.select().from(documents).where(
+      sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = 0`
+    ).all();
+
+    if (!docRows[0]) throw new NotFoundError('Document');
+
+    db.run(sql`UPDATE ${documents} SET
+      detected_type = ${type},
+      detected_type_confidence = 100,
+      needs_type_confirmation = 0,
+      updated_at = datetime('now')
+      WHERE id = ${documentId}`);
+
+    res.json({
+      success: true,
+      data: {
+        documentId,
+        type,
+        typeLabel: typeEntry.typeLabel,
+        confirmed: true,
       },
     });
   } catch (err) {
