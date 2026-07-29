@@ -8,6 +8,8 @@ import type { AiAnalysisResult } from './aiServiceTypes';
 
 const CHUNK_THRESHOLD = 8_000;
 
+export type ProgressCallback = (percent: number, stage: string) => void;
+
 export { isGeminiConfigured } from './ai/geminiProvider';
 export type { AiAnalysisResult } from './aiServiceTypes';
 
@@ -26,16 +28,21 @@ export interface AnalysisOutput {
 export async function analyzeDocument(
   text: string,
   context?: { pageCount?: number; language?: string },
+  onProgress?: ProgressCallback,
 ): Promise<AnalysisOutput> {
   const startTime = Date.now();
 
   if (text.length <= CHUNK_THRESHOLD) {
+    onProgress?.(50, 'Analyzing document...');
     const out = await analyzeSingle(text, context);
+    onProgress?.(100, 'Analysis complete');
     const processingTime = (Date.now() - startTime) / 1000;
     return { result: out.result, usage: out.usage, processingTime };
   }
 
-  const out = await analyzeInChunks(text, context);
+  onProgress?.(10, 'Splitting document into chunks...');
+  const out = await analyzeInChunks(text, context, onProgress);
+  onProgress?.(95, 'Merging results...');
   const processingTime = (Date.now() - startTime) / 1000;
   return { result: out.result, usage: out.usage, processingTime };
 }
@@ -70,6 +77,7 @@ async function analyzeSingle(
 async function analyzeInChunks(
   fullText: string,
   context?: { pageCount?: number; language?: string },
+  onProgress?: ProgressCallback,
 ): Promise<{ result: AiAnalysisResult; usage: { provider: string; model: string; inputTokens: number; outputTokens: number; totalTokens: number } }> {
   const chunks = chunkDocument(fullText);
   const chunkResults: AiAnalysisResult[] = [];
@@ -78,10 +86,16 @@ async function analyzeInChunks(
   let lastProvider = '';
   let lastModel = '';
 
-  for (const chunk of chunks) {
+  const chunkRange = 80 / chunks.length;
+  let currentProgress = 15;
+
+  for (let i = 0; i < chunks.length; i++) {
+    const chunk = chunks[i];
+    onProgress?.(currentProgress, `Analyzing chunk ${i + 1} of ${chunks.length}...`);
     const prefix = `[This is chunk ${chunk.index + 1} of a legal document. Extract all findings from this portion. Return the same JSON structure. Portion to analyze:\n\n`;
     const text = prefix + chunk.text;
     const partial = await analyzeSingle(text, context);
+    currentProgress += chunkRange;
     chunkResults.push(partial.result);
     totalInput += partial.usage.inputTokens;
     totalOutput += partial.usage.outputTokens;

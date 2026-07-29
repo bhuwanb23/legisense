@@ -1,12 +1,12 @@
 import { getDb } from '../config/database';
-import { documents, analysisResults, clauses, riskItems, deadlines, notifications, usageLogs } from '../models';
+import { documents, analysisResults, clauses, riskItems, deadlines, usageLogs } from '../models';
 import { sql } from 'drizzle-orm';
 import { readFile } from '../storage/fileStorage';
 import { extractText } from './textExtractor';
 import { analyzeDocument, type AiAnalysisResult } from './aiService';
 import { persistNow } from '../config/database';
 import { emitToUser } from './socketService';
-import { logAiUsage } from './ai';
+import { createNotification } from './notificationService';
 import { encryptText, decryptText, isEncryptionConfigured } from './encryptionService';
 
 export async function analyzeDocumentPipeline(documentId: number, userId: number): Promise<void> {
@@ -22,8 +22,14 @@ export async function analyzeDocumentPipeline(documentId: number, userId: number
 
   updateDocumentStatus(documentId, 'processing');
 
+  emitToUser(doc.userId, 'analysis:started', { documentId });
+
   try {
+    emitToUser(doc.userId, 'analysis:progress', { documentId, progress: 5, stage: 'Reading file...' });
+
     const buffer = await readFile(doc.storagePath);
+    emitToUser(doc.userId, 'analysis:progress', { documentId, progress: 10, stage: 'Extracting text...' });
+
     const { text: rawText } = await extractText(buffer, doc.fileFormat);
 
     updateDocumentRawText(documentId, rawText);
@@ -33,13 +39,17 @@ export async function analyzeDocumentPipeline(documentId: number, userId: number
       language: doc.detectedLanguage || undefined,
     };
 
-    const { result: aiResult, usage, processingTime } = await analyzeDocument(rawText, aiContext);
+    const { result: aiResult, usage, processingTime } = await analyzeDocument(rawText, aiContext, (percent, stage) => {
+      emitToUser(doc.userId, 'analysis:progress', { documentId, progress: percent, stage });
+    });
+
+    emitToUser(doc.userId, 'analysis:progress', { documentId, progress: 100, stage: 'Saving results...' });
 
     const totalTime = (Date.now() - startTime) / 1000;
 
     db.insert(usageLogs).values({
       userId: doc.userId,
-      action: 'analysis:complete',
+      action: 'analysis:completed',
       documentId,
       tokensConsumed: usage.totalTokens || undefined,
       processingTime: totalTime,
@@ -53,9 +63,9 @@ export async function analyzeDocumentPipeline(documentId: number, userId: number
 
     updateDocumentStatus(documentId, 'completed');
 
-    createNotification(documentId, doc.userId, 'analysis_complete', 'Analysis Complete', `Analysis of "${doc.originalName}" is complete.`);
+    createNotification(doc.userId, 'analysis_complete', 'Analysis Complete', `Analysis of "${doc.originalName}" is complete.`, documentId);
 
-    emitToUser(doc.userId, 'analysis:complete', { documentId });
+    emitToUser(doc.userId, 'analysis:completed', { documentId });
 
     persistNow();
   } catch (err) {
@@ -70,7 +80,7 @@ export async function analyzeDocumentPipeline(documentId: number, userId: number
 
     updateDocumentStatus(documentId, 'failed');
 
-    createNotification(documentId, doc.userId, 'analysis_failed', 'Analysis Failed', `Analysis of "${doc.originalName}" failed: ${message}`);
+    createNotification(doc.userId, 'analysis_failed', 'Analysis Failed', `Analysis of "${doc.originalName}" failed: ${message}`, documentId);
 
     emitToUser(doc.userId, 'analysis:failed', { documentId, error: message });
 
@@ -109,18 +119,6 @@ export function decryptDocumentText(document: { rawText: string | null; encrypti
   if (!document.rawText) return null;
   if (!document.encryptionIv || !isEncryptionConfigured()) return document.rawText;
   return decryptText(document.rawText, document.encryptionIv);
-}
-
-function createNotification(documentId: number, userId: number, type: string, title: string, body: string): void {
-  const db = getDb();
-  db.insert(notifications).values({
-    userId,
-    type,
-    title,
-    body,
-    documentId,
-    isRead: false,
-  }).run();
 }
 
 function saveAnalysisResults(
