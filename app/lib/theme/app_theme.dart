@@ -1,20 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// Design tokens from [DESIGN.md].
+/// Ink & Trust tokens from [DESIGN.md].
 abstract final class AppColors {
-  static const skyWash = Color(0xFFEAF3FB);
-  static const skyMist = Color(0xFFF7FBFE);
+  static const paper = Color(0xFFF7F4EE);
+  static const paper2 = Color(0xFFEFE9DF);
   static const cloud = Color(0xFFFFFFFF);
-  static const primaryNavy = Color(0xFF0B2C5E);
-  static const inkSoft = Color(0xFF3A5A80);
-  static const accentSky = Color(0xFF7EB6E8);
-  static const accentSoft = Color(0xFFB7D6F2);
-  static const progressIdle = Color(0xFFC9DDF0);
-  static const shadow = Color(0x140B2C5E);
-  static const brightBlue = Color(0xFF2B7FFF);
+  static const ink = Color(0xFF0A1F3D);
+  static const inkSoft = Color(0xFF3D4F66);
+  static const accentGold = Color(0xFFB8954A);
+  static const rule = Color(0xFFD9D2C5);
+  static const shadow = Color(0x140A1F3D);
   static const error = Color(0xFFB42318);
-  static const borderMuted = Color(0xFFD7E6F5);
+
+  // Compatibility aliases (legacy names used across widgets/pages).
+  static const skyWash = paper;
+  static const skyMist = paper2;
+  static const primaryNavy = ink;
+  static const accentSky = accentGold;
+  static const accentSoft = paper2;
+  static const progressIdle = Color(0xFFD4CDC0);
+  static const brightBlue = accentGold;
+  static const borderMuted = rule;
+
   static const riskLow = Color(0xFF1B6B3A);
   static const riskLowBg = Color(0xFFE8F5EE);
   static const riskMedium = Color(0xFF9A5B00);
@@ -26,11 +34,11 @@ abstract final class AppColors {
 }
 
 abstract final class AppRadii {
-  static const sm = 12.0;
-  static const md = 24.0;
-  static const lg = 32.0;
+  static const sm = 8.0;
+  static const md = 16.0;
+  static const lg = 20.0;
   static const pill = 999.0;
-  static const field = 18.0;
+  static const field = 12.0;
 }
 
 abstract final class AppSpacing {
@@ -40,42 +48,54 @@ abstract final class AppSpacing {
   static const lg = 24.0;
   static const xl = 40.0;
   static const xxl = 56.0;
-  static const screenH = 28.0;
+  static const screenH = 24.0;
 }
 
 abstract final class AppSizes {
   static const buttonHeight = 56.0;
   static const socialButtonHeight = 52.0;
-  static const otpBox = 50.0;
+  static const otpBox = 48.0;
 }
 
 ThemeData buildLegisenseTheme() {
   final epilogue = GoogleFonts.epilogueTextTheme();
-  final spectral = GoogleFonts.spectral();
 
   return ThemeData(
     useMaterial3: true,
-    scaffoldBackgroundColor: AppColors.skyWash,
+    scaffoldBackgroundColor: AppColors.paper,
     colorScheme: ColorScheme.fromSeed(
-      seedColor: AppColors.primaryNavy,
-      primary: AppColors.primaryNavy,
-      surface: AppColors.skyMist,
+      seedColor: AppColors.ink,
+      primary: AppColors.ink,
+      surface: AppColors.paper,
       error: AppColors.error,
       brightness: Brightness.light,
     ),
+    appBarTheme: AppBarTheme(
+      backgroundColor: AppColors.paper,
+      foregroundColor: AppColors.ink,
+      elevation: 0,
+      titleTextStyle: GoogleFonts.spectral(
+        fontSize: 20,
+        fontWeight: FontWeight.w700,
+        color: AppColors.ink,
+        fontStyle: FontStyle.normal,
+      ),
+    ),
     textTheme: epilogue.copyWith(
-      displayLarge: GoogleFonts.epilogue(
+      displayLarge: GoogleFonts.spectral(
         fontSize: 34,
         fontWeight: FontWeight.w700,
         height: 1.15,
-        letterSpacing: -0.5,
-        color: AppColors.primaryNavy,
+        letterSpacing: -0.4,
+        color: AppColors.ink,
+        fontStyle: FontStyle.normal,
       ),
-      headlineMedium: GoogleFonts.epilogue(
+      headlineMedium: GoogleFonts.spectral(
         fontSize: 28,
         fontWeight: FontWeight.w700,
         height: 1.2,
-        color: AppColors.primaryNavy,
+        color: AppColors.ink,
+        fontStyle: FontStyle.normal,
       ),
       titleMedium: GoogleFonts.epilogue(
         fontSize: 16,
@@ -89,29 +109,29 @@ ThemeData buildLegisenseTheme() {
         height: 1.5,
         color: AppColors.inkSoft,
       ),
-      labelLarge: spectral.copyWith(
-        fontSize: 18,
+      labelLarge: GoogleFonts.spectral(
+        fontSize: 17,
         fontWeight: FontWeight.w600,
         height: 1.2,
-        letterSpacing: 0.2,
-        color: AppColors.primaryNavy,
+        color: AppColors.cloud,
+        fontStyle: FontStyle.normal,
       ),
     ),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      fillColor: AppColors.cloud,
+      fillColor: AppColors.paper2,
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppRadii.field),
-        borderSide: const BorderSide(color: AppColors.accentSoft),
+        borderSide: const BorderSide(color: AppColors.rule),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppRadii.field),
-        borderSide: const BorderSide(color: AppColors.accentSoft),
+        borderSide: const BorderSide(color: AppColors.rule),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppRadii.field),
-        borderSide: const BorderSide(color: AppColors.primaryNavy, width: 1.5),
+        borderSide: const BorderSide(color: AppColors.ink, width: 1.4),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppRadii.field),
@@ -119,18 +139,22 @@ ThemeData buildLegisenseTheme() {
       ),
       focusedErrorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppRadii.field),
-        borderSide: const BorderSide(color: AppColors.error, width: 1.5),
+        borderSide: const BorderSide(color: AppColors.error, width: 1.4),
       ),
     ),
     switchTheme: SwitchThemeData(
-      thumbColor: WidgetStateProperty.resolveWith((states) {
-        if (states.contains(WidgetState.selected)) return AppColors.cloud;
-        return AppColors.cloud;
-      }),
+      thumbColor: WidgetStateProperty.all(AppColors.cloud),
       trackColor: WidgetStateProperty.resolveWith((states) {
-        if (states.contains(WidgetState.selected)) return AppColors.accentSky;
+        if (states.contains(WidgetState.selected)) return AppColors.accentGold;
         return AppColors.progressIdle;
       }),
+    ),
+    dividerColor: AppColors.rule,
+    chipTheme: ChipThemeData(
+      backgroundColor: AppColors.cloud,
+      selectedColor: AppColors.ink,
+      side: const BorderSide(color: AppColors.rule),
+      labelStyle: GoogleFonts.epilogue(fontWeight: FontWeight.w600),
     ),
   );
 }
