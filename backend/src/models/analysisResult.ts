@@ -19,6 +19,7 @@ export const analysisResults = sqliteTable('analysis_results', {
   keyObligations: text('key_obligations'),
   missingClauses: text('missing_clauses'),
   jurisdictionFlags: text('jurisdiction_flags'),
+  breachScenarios: text('breach_scenarios'),
   processingTime: real('processing_time'),
   aiModelUsed: text('ai_model_used'),
   createdAt: text('created_at').notNull().default(sql`(datetime('now'))`),
