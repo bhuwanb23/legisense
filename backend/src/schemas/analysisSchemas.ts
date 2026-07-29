@@ -5,6 +5,7 @@ export const PartySchema = z.object({
   role: z.string().min(1),
   type: z.enum(['individual', 'company', 'government', 'unknown']).default('unknown'),
   obligations: z.array(z.string()).default([]),
+  obligations_summary: z.string().min(1),
 });
 
 export const ClauseSchema = z.object({
@@ -23,11 +24,18 @@ export const CriticalDateSchema = z.object({
   label: z.string().min(1),
   date: z.string().min(1),
   urgency: z.enum(['high', 'medium', 'low']),
+  importance: z.string().min(1),
 });
 
 export const KeyObligationSchema = z.object({
   party: z.string().min(1),
   obligation: z.string().min(1),
+  consequence: z.string().min(1),
+});
+
+export const BreachScenarioSchema = z.object({
+  scenario: z.string().min(1),
+  consequence: z.string().min(1),
 });
 
 export const RiskItemSchema = z.object({
@@ -62,6 +70,7 @@ export const AnalysisOutputSchema = z.object({
   clauses: z.array(ClauseSchema).default([]),
   riskItems: z.array(RiskItemSchema).default([]),
   deadlines: z.array(DeadlineSchema).default([]),
+  breachScenarios: z.array(BreachScenarioSchema).default([]),
 });
 
 export type Party = z.infer<typeof PartySchema>;
@@ -70,4 +79,5 @@ export type CriticalDate = z.infer<typeof CriticalDateSchema>;
 export type KeyObligation = z.infer<typeof KeyObligationSchema>;
 export type RiskItem = z.infer<typeof RiskItemSchema>;
 export type Deadline = z.infer<typeof DeadlineSchema>;
+export type BreachScenario = z.infer<typeof BreachScenarioSchema>;
 export type AnalysisOutput = z.infer<typeof AnalysisOutputSchema>;
