@@ -121,20 +121,22 @@ class _NavItem extends StatelessWidget {
         onTap: onTap,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Icon(selected ? activeIcon : icon, size: 22, color: color),
-            const SizedBox(height: 4),
+            const SizedBox(height: 2),
             Text(
               label,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: GoogleFonts.epilogue(
                 fontSize: 11,
+                height: 1.1,
                 fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                 color: color,
               ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 3),
             AnimatedContainer(
               duration: const Duration(milliseconds: 180),
               height: 3,
