@@ -240,6 +240,29 @@ async function analyzeInChunks(
   };
 }
 
+function calculateOverallRiskScore(clauses: AnalysisOutput['clauses']): { overallScore: number; riskLevel: string } {
+  if (clauses.length === 0) return { overallScore: 0, riskLevel: 'low' };
+
+  let weightedSum = 0;
+  let totalWeight = 0;
+  let hasCritical = false;
+
+  for (const c of clauses) {
+    const score = c.riskScore;
+    if (score >= 90) hasCritical = true;
+
+    const weight = score >= 67 ? 2.0 : score >= 34 ? 1.0 : 0.5;
+    weightedSum += score * weight;
+    totalWeight += weight;
+  }
+
+  let overall = Math.round(weightedSum / totalWeight);
+  if (hasCritical) overall = Math.max(overall, 60);
+
+  const riskLevel = overall <= 33 ? 'low' : overall <= 66 ? 'medium' : 'high';
+  return { overallScore: overall, riskLevel };
+}
+
 function saveAnalysisResults(
   documentId: number,
   userId: number,
@@ -248,6 +271,10 @@ function saveAnalysisResults(
   modelUsed?: string,
 ): void {
   const db = getDb();
+
+  const computed = calculateOverallRiskScore(ai.clauses);
+  ai.overallRiskScore = computed.overallScore;
+  ai.riskLevel = computed.riskLevel;
 
   db.insert(analysisResults).values({
     documentId,
