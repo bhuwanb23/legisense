@@ -254,7 +254,6 @@ class _PlainLanguagePageState extends State<PlainLanguagePage> {
         ),
         actions: [
           IconButton(
-            tooltip: 'Glossary',
             onPressed: _openGlossaryList,
             icon: const Icon(Icons.menu_book_outlined),
           ),

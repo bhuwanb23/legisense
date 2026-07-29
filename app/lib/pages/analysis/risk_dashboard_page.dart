@@ -119,6 +119,7 @@ class RiskDashboardPage extends StatelessWidget {
                     PieChartData(
                       sectionsSpace: 3,
                       centerSpaceRadius: 36,
+                      pieTouchData: PieTouchData(enabled: false),
                       sections: sections,
                     ),
                   ),

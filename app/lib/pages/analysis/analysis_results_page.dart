@@ -536,6 +536,7 @@ class _OverviewBody extends StatelessWidget {
                   LineChartData(
                     minY: 0,
                     maxY: 8,
+                    lineTouchData: const LineTouchData(enabled: false),
                     gridData: FlGridData(
                       show: true,
                       drawVerticalLine: false,
@@ -862,6 +863,7 @@ class _ClausesBody extends StatelessWidget {
                             .toDouble()
                             .clamp(4, 20) +
                         2,
+                    barTouchData: const BarTouchData(enabled: false),
                     gridData: FlGridData(
                       show: true,
                       drawVerticalLine: false,

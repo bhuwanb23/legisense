@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -25,6 +26,16 @@ class LegisenseApp extends StatelessWidget {
       title: 'Legisense',
       debugShowCheckedModeBanner: false,
       theme: buildLegisenseTheme(),
+      // Flutter web: Material tooltips use SingleTickerProvider but create
+      // multiple tickers on hover → mouse_tracker assertion storms.
+      builder: (context, child) {
+        final content = child ?? const SizedBox.shrink();
+        if (!kIsWeb) return content;
+        return TooltipVisibility(
+          visible: false,
+          child: content,
+        );
+      },
       home: const SplashPage(),
     );
   }

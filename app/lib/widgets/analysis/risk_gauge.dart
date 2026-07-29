@@ -22,7 +22,7 @@ class RiskGauge extends StatefulWidget {
 }
 
 class _RiskGaugeState extends State<RiskGauge>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late final AnimationController _controller;
   late final Animation<double> _anim;
 
@@ -63,6 +63,7 @@ class _RiskGaugeState extends State<RiskGauge>
                   startDegreeOffset: -90,
                   sectionsSpace: 0,
                   centerSpaceRadius: widget.size * 0.32,
+                  pieTouchData: PieTouchData(enabled: false),
                   sections: [
                     PieChartSectionData(
                       value: (value * 100).clamp(0.001, 100),

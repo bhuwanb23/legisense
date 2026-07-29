@@ -18,7 +18,7 @@ class SplashPage extends StatefulWidget {
 }
 
 class _SplashPageState extends State<SplashPage>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   static const _redirectDelay = Duration(milliseconds: 2400);
 
   late final AnimationController _contentController;
