@@ -22,7 +22,7 @@ class AuthToggleRow extends StatelessWidget {
         Expanded(
           child: Text(
             label,
-            style: GoogleFonts.epilogue(
+            style: GoogleFonts.plusJakartaSans(
               fontSize: 14,
               fontWeight: FontWeight.w500,
               color: AppColors.primaryNavy,
