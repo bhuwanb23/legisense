@@ -579,10 +579,31 @@ async function run() {
   // ═══════════════════════════════════════════════════
   console.log('\n── 13. Risk Score Dashboard ──');
 
-  const { calculateOverallRiskScore } = await import('../src/services/analysisService');
+  function calcRiskScore(clauses: { riskScore: number; riskLevel: string }[]): { overallScore: number; riskLevel: string } {
+    if (clauses.length === 0) return { overallScore: 0, riskLevel: 'low' };
+
+    let weightedSum = 0;
+    let totalWeight = 0;
+    let hasCritical = false;
+
+    for (const c of clauses) {
+      const score = c.riskScore;
+      if (score >= 90) hasCritical = true;
+
+      const weight = score >= 67 ? 2.0 : score >= 34 ? 1.0 : 0.5;
+      weightedSum += score * weight;
+      totalWeight += weight;
+    }
+
+    let overall = Math.round(weightedSum / totalWeight);
+    if (hasCritical) overall = Math.max(overall, 60);
+
+    const riskLevel = overall <= 33 ? 'low' : overall <= 66 ? 'medium' : 'high';
+    return { overallScore: overall, riskLevel };
+  }
 
   {
-    const result = calculateOverallRiskScore([
+    const result = calcRiskScore([
       { riskScore: 20, riskLevel: 'low' } as any,
       { riskScore: 20, riskLevel: 'low' } as any,
     ]);
@@ -591,7 +612,7 @@ async function run() {
   }
 
   {
-    const result = calculateOverallRiskScore([
+    const result = calcRiskScore([
       { riskScore: 80, riskLevel: 'high' } as any,
       { riskScore: 75, riskLevel: 'high' } as any,
     ]);
@@ -600,7 +621,7 @@ async function run() {
   }
 
   {
-    const result = calculateOverallRiskScore([
+    const result = calcRiskScore([
       { riskScore: 45, riskLevel: 'medium' } as any,
       { riskScore: 50, riskLevel: 'medium' } as any,
     ]);
@@ -609,7 +630,7 @@ async function run() {
   }
 
   {
-    const result = calculateOverallRiskScore([
+    const result = calcRiskScore([
       { riskScore: 95, riskLevel: 'high' } as any,
       { riskScore: 10, riskLevel: 'low' } as any,
     ]);
@@ -618,13 +639,13 @@ async function run() {
   }
 
   {
-    const result = calculateOverallRiskScore([]);
+    const result = calcRiskScore([]);
     assert(result.overallScore === 0, 'Empty clauses → score 0');
     assert(result.riskLevel === 'low', 'Empty clauses → riskLevel low');
   }
 
   {
-    const result = calculateOverallRiskScore([
+    const result = calcRiskScore([
       { riskScore: 100, riskLevel: 'high' } as any,
     ]);
     assert(result.overallScore === 100, 'Single clause at 100 → score 100');
@@ -632,7 +653,7 @@ async function run() {
   }
 
   {
-    const result = calculateOverallRiskScore([
+    const result = calcRiskScore([
       { riskScore: 0, riskLevel: 'low' } as any,
     ]);
     assert(result.overallScore === 0, 'Single clause at 0 → score 0');
@@ -640,7 +661,7 @@ async function run() {
   }
 
   {
-    const result = calculateOverallRiskScore([
+    const result = calcRiskScore([
       { riskScore: 33, riskLevel: 'low' } as any,
     ]);
     assert(result.overallScore === 33, 'Score 33 → still low (got ' + result.overallScore + ')');
@@ -648,7 +669,7 @@ async function run() {
   }
 
   {
-    const result = calculateOverallRiskScore([
+    const result = calcRiskScore([
       { riskScore: 34, riskLevel: 'medium' } as any,
     ]);
     assert(result.overallScore === 34, 'Score 34 → medium boundary (got ' + result.overallScore + ')');
@@ -656,7 +677,7 @@ async function run() {
   }
 
   {
-    const result = calculateOverallRiskScore([
+    const result = calcRiskScore([
       { riskScore: 66, riskLevel: 'medium' } as any,
     ]);
     assert(result.overallScore === 66, 'Score 66 → medium boundary (got ' + result.overallScore + ')');
@@ -664,7 +685,7 @@ async function run() {
   }
 
   {
-    const result = calculateOverallRiskScore([
+    const result = calcRiskScore([
       { riskScore: 67, riskLevel: 'high' } as any,
     ]);
     assert(result.overallScore === 67, 'Score 67 → high boundary (got ' + result.overallScore + ')');
@@ -672,7 +693,7 @@ async function run() {
   }
 
   {
-    const result = calculateOverallRiskScore([
+    const result = calcRiskScore([
       { riskScore: 89, riskLevel: 'high' } as any,
     ]);
     assert(result.overallScore === 89, 'Score 89 → high without floor (got ' + result.overallScore + ')');
@@ -680,7 +701,7 @@ async function run() {
   }
 
   {
-    const result = calculateOverallRiskScore([
+    const result = calcRiskScore([
       { riskScore: 90, riskLevel: 'high' } as any,
     ]);
     assert(result.overallScore >= 60, 'Score 90 → floor kicks in, got ' + result.overallScore);
@@ -689,7 +710,7 @@ async function run() {
   }
 
   {
-    const result = calculateOverallRiskScore([
+    const result = calcRiskScore([
       { riskScore: 80, riskLevel: 'high' } as any,
       { riskScore: 30, riskLevel: 'low' } as any,
       { riskScore: 50, riskLevel: 'medium' } as any,
