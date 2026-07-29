@@ -24,12 +24,10 @@ class SectionHeader extends StatelessWidget {
         Expanded(
           child: Text(
             title,
-            style: GoogleFonts.spectral(
+            style: GoogleFonts.plusJakartaSans(
               fontSize: 20,
               fontWeight: FontWeight.w700,
               color: AppColors.ink,
-              letterSpacing: -0.2,
-              fontStyle: FontStyle.normal,
             ),
           ),
         ),
@@ -43,11 +41,7 @@ class SectionHeader extends StatelessWidget {
               child: const SizedBox(
                 width: 36,
                 height: 36,
-                child: Icon(
-                  Icons.add_rounded,
-                  color: AppColors.cloud,
-                  size: 22,
-                ),
+                child: Icon(Icons.add_rounded, color: AppColors.surface, size: 22),
               ),
             ),
           )
@@ -56,10 +50,10 @@ class SectionHeader extends StatelessWidget {
             onPressed: onAction,
             child: Text(
               actionLabel!,
-              style: GoogleFonts.epilogue(
+              style: GoogleFonts.plusJakartaSans(
                 fontSize: 13,
                 fontWeight: FontWeight.w700,
-                color: AppColors.accentGold,
+                color: AppColors.ink,
               ),
             ),
           ),
