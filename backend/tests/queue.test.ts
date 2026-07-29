@@ -76,7 +76,7 @@ describe('Queue', () => {
     await queue.add('a', {});
 
     const pending = await queue.getJobs(['pending']);
-    assert.equal(pending.length, 1);
+    assert.equal(pending.length, 1, `expected 1 pending, got ${pending.length}: ${JSON.stringify(pending)}`);
     assert.equal(pending[0].status, 'pending');
 
     const completed = await queue.getJobs(['completed']);
