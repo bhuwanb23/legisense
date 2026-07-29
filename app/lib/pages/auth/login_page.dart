@@ -84,7 +84,7 @@ class _LoginPageState extends State<LoginPage> {
         },
         child: Text(
           'Forgot?',
-          style: GoogleFonts.epilogue(
+          style: GoogleFonts.plusJakartaSans(
             fontSize: 13,
             fontWeight: FontWeight.w600,
             color: AppColors.ink,
@@ -100,7 +100,7 @@ class _LoginPageState extends State<LoginPage> {
               const SizedBox(height: 24),
               Text(
                 'Sign In',
-                style: GoogleFonts.epilogue(
+                style: GoogleFonts.plusJakartaSans(
                   fontSize: 26,
                   fontWeight: FontWeight.w700,
                   color: AppColors.primaryNavy,
@@ -109,7 +109,7 @@ class _LoginPageState extends State<LoginPage> {
               const SizedBox(height: 8),
               Text(
                 'Enter valid user name & password to continue',
-                style: GoogleFonts.epilogue(
+                style: GoogleFonts.plusJakartaSans(
                   fontSize: 13,
                   color: AppColors.inkSoft,
                 ),
@@ -157,7 +157,7 @@ class _LoginPageState extends State<LoginPage> {
                   },
                   child: Text(
                     'Forget password',
-                    style: GoogleFonts.epilogue(
+                    style: GoogleFonts.plusJakartaSans(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
                       color: AppColors.ink,
@@ -168,6 +168,7 @@ class _LoginPageState extends State<LoginPage> {
               const SizedBox(height: 16),
               AuthPrimaryButton(
                 label: 'Login',
+                showArrow: true,
                 loading: _loading,
                 onPressed: _submit,
               ),
@@ -181,7 +182,7 @@ class _LoginPageState extends State<LoginPage> {
               const SizedBox(height: 24),
               Text.rich(
                 TextSpan(
-                  style: GoogleFonts.epilogue(
+                  style: GoogleFonts.plusJakartaSans(
                     fontSize: 14,
                     color: AppColors.inkSoft,
                   ),
@@ -200,7 +201,7 @@ class _LoginPageState extends State<LoginPage> {
                         },
                         child: Text(
                           'Sign up',
-                          style: GoogleFonts.epilogue(
+                          style: GoogleFonts.plusJakartaSans(
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
                             color: AppColors.ink,
