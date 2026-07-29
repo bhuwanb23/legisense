@@ -6,6 +6,7 @@ import '../../theme/app_theme.dart';
 import '../../widgets/analysis/risk_gauge.dart';
 import '../../widgets/analysis/risk_style.dart';
 import '../../widgets/analysis/soft_card.dart';
+import '../chat/chat_page.dart';
 import 'clause_breakdown_page.dart';
 import 'document_summary_page.dart';
 import 'plain_language_page.dart';
@@ -53,14 +54,17 @@ class _AnalysisResultsPageState extends State<AnalysisResultsPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.skyMist,
+      backgroundColor: AppColors.paper,
       appBar: AppBar(
-        backgroundColor: AppColors.skyMist,
+        backgroundColor: AppColors.paper,
         elevation: 0,
-        foregroundColor: AppColors.primaryNavy,
+        foregroundColor: AppColors.ink,
         title: Text(
           'Analysis',
-          style: GoogleFonts.epilogue(fontWeight: FontWeight.w700),
+          style: GoogleFonts.spectral(
+            fontWeight: FontWeight.w700,
+            fontStyle: FontStyle.normal,
+          ),
         ),
       ),
       body: Column(
@@ -315,7 +319,13 @@ class _AnalysisResultsPageState extends State<AnalysisResultsPage>
                   child: _ActionChipButton(
                     icon: Icons.chat_bubble_outline_rounded,
                     label: 'Chat',
-                    onTap: () => _toast('Chat with Document comes next.'),
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute<void>(
+                          builder: (_) => ChatPage(result: r),
+                        ),
+                      );
+                    },
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -357,7 +367,7 @@ class _ActionChipButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: AppColors.skyWash,
+      color: AppColors.paper2,
       borderRadius: BorderRadius.circular(AppRadii.pill),
       child: InkWell(
         borderRadius: BorderRadius.circular(AppRadii.pill),
@@ -403,7 +413,7 @@ class _TabBarDelegate extends SliverPersistentHeaderDelegate {
     bool overlapsContent,
   ) {
     return Container(
-      color: AppColors.skyMist,
+      color: AppColors.paper,
       padding: const EdgeInsets.only(left: 12, right: 12, bottom: 4),
       child: tabBar,
     );

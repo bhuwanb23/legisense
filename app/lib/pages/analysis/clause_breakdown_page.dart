@@ -5,6 +5,7 @@ import '../../data/analysis_mock.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/analysis/risk_style.dart';
 import '../../widgets/analysis/soft_card.dart';
+import '../chat/chat_page.dart';
 import 'risk_dashboard_page.dart';
 import 'plain_language_page.dart';
 
@@ -76,9 +77,9 @@ class _ClauseBreakdownPageState extends State<ClauseBreakdownPage> {
     final clauses = _filtered;
 
     return Scaffold(
-      backgroundColor: AppColors.skyMist,
+      backgroundColor: AppColors.paper,
       appBar: AppBar(
-        backgroundColor: AppColors.skyMist,
+        backgroundColor: AppColors.paper,
         elevation: 0,
         foregroundColor: AppColors.primaryNavy,
         title: Text(
@@ -264,8 +265,14 @@ class _ClauseBreakdownPageState extends State<ClauseBreakdownPage> {
                                     ),
                                   ),
                                   TextButton(
-                                    onPressed: () =>
-                                        _toast('Discuss opens in Chat later.'),
+                                    onPressed: () {
+                                      Navigator.of(context).push(
+                                        MaterialPageRoute<void>(
+                                          builder: (_) =>
+                                              ChatPage(result: widget.result),
+                                        ),
+                                      );
+                                    },
                                     child: Text(
                                       'Discuss',
                                       style: GoogleFonts.epilogue(
