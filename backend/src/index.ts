@@ -26,11 +26,21 @@ import deadlineRoutes from './routes/deadlineRoutes';
 import notificationRoutes from './routes/notificationRoutes';
 import { startAnalysisWorker } from './jobs/analysisWorker';
 import { initSocketIO, closeSocketIO } from './services/socketService';
+import { startAutoDeleteService, stopAutoDeleteService } from './services/autoDeleteService';
+import helmet from 'helmet';
 
 const app = express();
 const server = http.createServer(app);
 const port = Number(process.env.PORT) || 3001;
 
+if (!process.env.JWT_SECRET) {
+  console.warn('WARNING: JWT_SECRET is not set. Using insecure default. Set JWT_SECRET in .env');
+}
+
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+  contentSecurityPolicy: false,
+}));
 app.use(corsMiddleware);
 app.use(requestLogger);
 app.use(rateLimiter);
@@ -236,6 +246,7 @@ async function start() {
   try { db.run(sql`ALTER TABLE usage_logs ADD COLUMN cost REAL`); } catch {}
   try { db.run(sql`ALTER TABLE usage_logs ADD COLUMN input_tokens INTEGER`); } catch {}
   try { db.run(sql`ALTER TABLE usage_logs ADD COLUMN output_tokens INTEGER`); } catch {}
+  try { db.run(sql`ALTER TABLE documents ADD COLUMN encryption_iv TEXT`); } catch {}
 
   console.log('All 11 tables created/verified.');
   persistNow();
@@ -243,6 +254,7 @@ async function start() {
   initSocketIO(server);
 
   startAnalysisWorker();
+  startAutoDeleteService();
 
   server.listen(port, () => {
     console.log(`Legisense API listening on http://localhost:${port}`);
@@ -255,12 +267,14 @@ start().catch((err) => {
 });
 
 process.on('SIGINT', async () => {
+  stopAutoDeleteService();
   await closeSocketIO();
   closeDatabase();
   process.exit(0);
 });
 
 process.on('SIGTERM', async () => {
+  stopAutoDeleteService();
   await closeSocketIO();
   closeDatabase();
   process.exit(0);

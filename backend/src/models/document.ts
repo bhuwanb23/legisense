@@ -18,6 +18,7 @@ export const documents = sqliteTable('documents', {
   processingStatus: text('processing_status').notNull().default('pending'),
   isDeleted: integer('is_deleted', { mode: 'boolean' }).notNull().default(false),
   autoDeleteAt: text('auto_delete_at'),
+  encryptionIv: text('encryption_iv'),
   createdAt: text('created_at').notNull().default(sql`(datetime('now'))`),
   updatedAt: text('updated_at').notNull().default(sql`(datetime('now'))`),
 });

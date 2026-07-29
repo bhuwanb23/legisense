@@ -1,9 +1,9 @@
 import fs from 'fs';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
+import { encryptBuffer, decryptBuffer, isEncryptionConfigured } from '../services/encryptionService';
 
 const UPLOAD_DIR = path.resolve(process.env.UPLOAD_DIR || path.join(__dirname, '../../uploads'));
-const USE_SUPABASE = process.env.STORAGE_BACKEND === 'supabase';
 
 function ensureUploadDir(): void {
   if (!fs.existsSync(UPLOAD_DIR)) {
@@ -12,43 +12,47 @@ function ensureUploadDir(): void {
 }
 
 function generateFilename(originalName: string, format: string): string {
-  const ext = format === 'docx' ? '.docx' : format === 'pdf' ? '.pdf' : format === 'txt' ? '.txt' : path.extname(originalName).toLowerCase();
+  const ext = path.extname(originalName).toLowerCase() || `.${format}`;
   return `${uuidv4()}${ext}`;
+}
+
+function shouldEncrypt(): boolean {
+  return isEncryptionConfigured();
 }
 
 export async function saveFile(buffer: Buffer, originalName: string, format: string): Promise<string> {
   const filename = generateFilename(originalName, format);
 
-  if (USE_SUPABASE) {
-    const { saveFileSupabase } = await import('./supabaseStorage');
-    await saveFileSupabase(buffer, filename);
-  } else {
-    ensureUploadDir();
-    fs.writeFileSync(path.join(UPLOAD_DIR, filename), buffer);
+  let data = buffer;
+  if (shouldEncrypt()) {
+    const { encrypted, iv } = encryptBuffer(buffer);
+    data = Buffer.concat([iv, encrypted]);
   }
+
+  ensureUploadDir();
+  fs.writeFileSync(path.join(UPLOAD_DIR, filename), data);
 
   return filename;
 }
 
 export async function readFile(storagePath: string): Promise<Buffer> {
-  if (USE_SUPABASE) {
-    const { readFileSupabase } = await import('./supabaseStorage');
-    return readFileSupabase(storagePath);
-  }
-
   const fullPath = path.join(UPLOAD_DIR, storagePath);
   if (!fs.existsSync(fullPath)) {
     throw new Error(`File not found: ${storagePath}`);
   }
-  return fs.readFileSync(fullPath);
+
+  const data = fs.readFileSync(fullPath);
+
+  if (shouldEncrypt()) {
+    const iv = data.subarray(0, 12);
+    const encrypted = data.subarray(12);
+    return decryptBuffer(encrypted, iv);
+  }
+
+  return data;
 }
 
 export async function deleteFile(storagePath: string): Promise<void> {
-  if (USE_SUPABASE) {
-    const { deleteFileSupabase } = await import('./supabaseStorage');
-    return deleteFileSupabase(storagePath);
-  }
-
   const fullPath = path.join(UPLOAD_DIR, storagePath);
   if (fs.existsSync(fullPath)) {
     fs.unlinkSync(fullPath);

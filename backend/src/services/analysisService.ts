@@ -7,6 +7,7 @@ import { analyzeDocument, type AiAnalysisResult } from './aiService';
 import { persistNow } from '../config/database';
 import { emitToUser } from './socketService';
 import { logAiUsage } from './ai';
+import { encryptText, decryptText, isEncryptionConfigured } from './encryptionService';
 
 export async function analyzeDocumentPipeline(documentId: number, userId: number): Promise<void> {
   const db = getDb();
@@ -87,7 +88,27 @@ function updateDocumentStatus(documentId: number, status: string): void {
 
 function updateDocumentRawText(documentId: number, rawText: string): void {
   const db = getDb();
-  db.run(sql`UPDATE ${documents} SET raw_text = ${rawText}, updated_at = datetime('now') WHERE id = ${documentId}`);
+
+  let storedText = rawText;
+  let storedIv: string | null = null;
+
+  if (isEncryptionConfigured()) {
+    const { ciphertext, iv } = encryptText(rawText);
+    storedText = ciphertext;
+    storedIv = iv;
+  }
+
+  if (storedIv) {
+    db.run(sql`UPDATE ${documents} SET raw_text = ${storedText}, encryption_iv = ${storedIv}, updated_at = datetime('now') WHERE id = ${documentId}`);
+  } else {
+    db.run(sql`UPDATE ${documents} SET raw_text = ${storedText}, updated_at = datetime('now') WHERE id = ${documentId}`);
+  }
+}
+
+export function decryptDocumentText(document: { rawText: string | null; encryptionIv: string | null }): string | null {
+  if (!document.rawText) return null;
+  if (!document.encryptionIv || !isEncryptionConfigured()) return document.rawText;
+  return decryptText(document.rawText, document.encryptionIv);
 }
 
 function createNotification(documentId: number, userId: number, type: string, title: string, body: string): void {

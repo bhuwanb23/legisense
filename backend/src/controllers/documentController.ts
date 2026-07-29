@@ -2,10 +2,15 @@ import { Request, Response, NextFunction } from 'express';
 import { getDb } from '../config/database';
 import { documents, analysisResults, clauses, riskItems, deadlines } from '../models';
 import { sql } from 'drizzle-orm';
-import { saveFile } from '../storage/fileStorage';
+import { saveFile, deleteFile } from '../storage/fileStorage';
 import { queueService } from '../services/queueService';
 import { NotFoundError } from '../utils/errors';
 import { persistNow } from '../config/database';
+import { encryptText, isEncryptionConfigured } from '../services/encryptionService';
+
+function nowPlus24Hours(): string {
+  return new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+}
 
 export async function uploadDocument(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
@@ -36,6 +41,7 @@ export async function uploadDocument(req: Request, res: Response, next: NextFunc
       sourceType,
       uploadStatus: 'uploaded',
       processingStatus: 'pending',
+      autoDeleteAt: nowPlus24Hours(),
     }).run();
 
     const allDocs = db.select().from(documents).where(sql`${documents.storagePath} = ${storagePath}`).all();
@@ -175,12 +181,15 @@ export async function deleteDocument(req: Request, res: Response, next: NextFunc
       sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = 0`
     ).all();
 
-    if (!rows[0]) {
+    const doc = rows[0];
+    if (!doc) {
       throw new NotFoundError('Document');
     }
 
+    await deleteFile(doc.storagePath);
+
     db.run(
-      sql`UPDATE ${documents} SET is_deleted = 1, updated_at = datetime('now') WHERE id = ${documentId}`
+      sql`UPDATE ${documents} SET is_deleted = 1, raw_text = NULL, encryption_iv = NULL, updated_at = datetime('now') WHERE id = ${documentId}`
     );
 
     persistNow();
@@ -205,6 +214,14 @@ export async function pasteText(req: Request, res: Response, next: NextFunction)
     const docTitle = title || 'Pasted Text';
     const storagePath = await saveFile(Buffer.from(text, 'utf-8'), `${docTitle}.txt`, 'txt');
 
+    let storedText = text;
+    let storedIv: string | null = null;
+    if (isEncryptionConfigured()) {
+      const { ciphertext, iv } = encryptText(text);
+      storedText = ciphertext;
+      storedIv = iv;
+    }
+
     const db = getDb();
 
     db.insert(documents).values({
@@ -214,7 +231,9 @@ export async function pasteText(req: Request, res: Response, next: NextFunction)
       fileFormat: 'txt',
       fileSize: Buffer.byteLength(text, 'utf-8'),
       sourceType: 'paste',
-      rawText: text,
+      autoDeleteAt: nowPlus24Hours(),
+      rawText: storedText,
+      encryptionIv: storedIv,
       uploadStatus: 'uploaded',
       processingStatus: 'pending',
     }).run();

@@ -58,6 +58,7 @@ async function setup() {
     processing_status TEXT NOT NULL DEFAULT 'pending',
     is_deleted INTEGER NOT NULL DEFAULT 0,
     auto_delete_at TEXT,
+    encryption_iv TEXT,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
   )`);
