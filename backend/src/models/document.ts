@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
+import { sqliteTable, text, integer, real } from 'drizzle-orm/sqlite-core';
 import { sql } from 'drizzle-orm';
 import { users } from './user';
 
@@ -14,6 +14,9 @@ export const documents = sqliteTable('documents', {
   sourceUrl: text('source_url'),
   rawText: text('raw_text'),
   detectedLanguage: text('detected_language'),
+  detectedType: text('detected_type'),
+  detectedTypeConfidence: real('detected_type_confidence'),
+  needsTypeConfirmation: integer('needs_type_confirmation', { mode: 'boolean' }).notNull().default(false),
   uploadStatus: text('upload_status').notNull().default('uploading'),
   processingStatus: text('processing_status').notNull().default('pending'),
   isDeleted: integer('is_deleted', { mode: 'boolean' }).notNull().default(false),

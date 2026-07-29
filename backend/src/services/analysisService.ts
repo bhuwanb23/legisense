@@ -6,6 +6,9 @@ import { extractText } from './textExtractor';
 import { callWithFallback, selectProviderForTokens } from './ai';
 import { estimateTokens } from './ai/tokenManager';
 import { ANALYSIS_SYSTEM_PROMPT, buildAnalysisUserPrompt, parseAiResponse } from '../prompts/analysisPrompt';
+import { CLASSIFY_SYSTEM_PROMPT, ClassifyOutputSchema, buildClassifyUserPrompt, parseClassifyResponse, type ClassifyOutput } from '../prompts/classificationPrompt';
+import { getPromptForType } from '../prompts/promptTemplates';
+import { getTypeEntry } from '../data/documentTypes';
 import { AnalysisOutputSchema, type AnalysisOutput } from '../schemas/analysisSchemas';
 import { chunkText, estimateTotalRequestTokens, mergeAnalysisResults } from './chunkingService';
 import { emitToUser } from './socketService';
@@ -153,24 +156,39 @@ async function resolveDocumentText(doc: Record<string, unknown>, documentId: num
   return text;
 }
 
+export async function classifyDocument(text: string): Promise<ClassifyOutput> {
+  const { response } = await callWithFallback(
+    {
+      systemPrompt: CLASSIFY_SYSTEM_PROMPT,
+      userPrompt: buildClassifyUserPrompt(text),
+      temperature: 0.2,
+    },
+    { task: 'classification' },
+  );
+
+  const parsed = typeof response.text === 'string' ? parseClassifyResponse(response.text) : response.text;
+  return ClassifyOutputSchema.parse(parsed);
+}
+
 async function analyzeSingle(
   text: string,
+  systemPrompt: string,
 ): Promise<{ result: AnalysisOutput; provider: string; model: string; inputTokens: number; outputTokens: number }> {
-  const estimatedTokens = estimateTotalRequestTokens(ANALYSIS_SYSTEM_PROMPT, text);
+  const estimatedTokens = estimateTotalRequestTokens(systemPrompt, text);
   const provider = selectProviderForTokens(estimatedTokens);
 
   let lastError: string | null = null;
 
   for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
     try {
-      const systemPrompt = attempt > 0
-        ? ANALYSIS_SYSTEM_PROMPT + `\n\nNOTE: Your previous response failed validation (${lastError}). Ensure the JSON is valid and matches the required structure exactly. No extra fields. All fields must be present.`
-        : ANALYSIS_SYSTEM_PROMPT;
+      const prompt = attempt > 0
+        ? systemPrompt + `\n\nNOTE: Your previous response failed validation (${lastError}). Ensure the JSON is valid and matches the required structure exactly. No extra fields. All fields must be present.`
+        : systemPrompt;
 
       const userPrompt = buildAnalysisUserPrompt(text);
 
       const { response, providerUsed } = await callWithFallback(
-        { systemPrompt, userPrompt, temperature: 0.3 },
+        { systemPrompt: prompt, userPrompt, temperature: 0.3 },
         { task: 'analysis' },
       );
 
@@ -198,6 +216,7 @@ async function analyzeSingle(
 
 async function analyzeInChunks(
   fullText: string,
+  systemPrompt: string,
   documentId: number,
   userId: number,
 ): Promise<{ result: AnalysisOutput; provider: string; model: string; inputTokens: number; outputTokens: number }> {
@@ -223,7 +242,7 @@ async function analyzeInChunks(
 
     const text = `[This is part ${i + 1} of ${chunks.length} of a legal document. Analyze this portion and return the full JSON structure with all findings from this section.]\n\n${chunk.text}`;
 
-    const singleResult = await analyzeSingle(text);
+    const singleResult = await analyzeSingle(text, systemPrompt);
     chunkResults.push(singleResult.result);
     totalInputTokens += singleResult.inputTokens;
     totalOutputTokens += singleResult.outputTokens;
