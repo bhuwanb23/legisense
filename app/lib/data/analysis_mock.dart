@@ -79,8 +79,12 @@ class AnalysisResult {
     required this.mediumRiskCount,
     required this.lowRiskCount,
     required this.missingCount,
+    this.documentId,
+    this.fairnessScore,
+    this.riskLevelLabel,
   });
 
+  final int? documentId;
   final String documentTitle;
   final String documentType;
   final String typeEmoji;
@@ -88,6 +92,8 @@ class AnalysisResult {
   final int partyCount;
   final String analyzedLabel;
   final int riskScore;
+  final int? fairnessScore;
+  final String? riskLevelLabel;
   final String biasSummary;
   final String overview;
   final List<AnalysisParty> parties;
