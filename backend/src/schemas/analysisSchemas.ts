@@ -53,11 +53,24 @@ export const RiskItemSchema = z.object({
   legalReference: z.string(),
 });
 
+const RecurrenceSchema = z.preprocess((val) => {
+  if (val == null || val === '') return 'one-time';
+  const s = String(val).toLowerCase().trim();
+  if (['one-time', 'onetime', 'once', 'single', 'none', 'n/a', 'na'].includes(s)) return 'one-time';
+  if (['monthly', 'month', 'per month'].includes(s)) return 'monthly';
+  if (['yearly', 'annual', 'annually', 'year', 'per year'].includes(s)) return 'yearly';
+  if (['quarterly', 'quarter', 'per quarter'].includes(s)) return 'quarterly';
+  if (['weekly', 'daily', 'biweekly', 'biannual', 'semi-annual', 'semiannual'].includes(s)) {
+    return s === 'biannual' || s === 'semi-annual' || s === 'semiannual' ? 'yearly' : 'one-time';
+  }
+  return 'one-time';
+}, z.enum(['one-time', 'monthly', 'yearly', 'quarterly']));
+
 export const DeadlineSchema = z.object({
   title: z.string().min(1),
   description: z.string().min(1),
   dueDate: z.string().min(1),
-  recurrence: z.enum(['one-time', 'monthly', 'yearly', 'quarterly']).default('one-time'),
+  recurrence: RecurrenceSchema.default('one-time'),
   deadlineType: z.enum(['payment', 'renewal', 'notice', 'termination', 'review', 'milestone', 'compliance', 'other']).default('other'),
   partyResponsible: z.string().optional().default(''),
   consequenceIfMissed: z.string().optional().default(''),

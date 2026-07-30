@@ -60,11 +60,20 @@ export async function startAnalysis(
     if (!rows[0]) throw new NotFoundError('Document');
 
     if (rows[0].processingStatus === 'processing') {
-      res.status(409).json({
-        success: false,
-        error: { message: 'Analysis already in progress', code: 'ALREADY_PROCESSING', statusCode: 409 },
-      });
-      return;
+      // Allow retry when the queued job already failed (stuck "processing" status).
+      const job = (req as { query?: { force?: string } }).query?.force === '1'
+        || (req.body && (req.body as { force?: boolean }).force === true);
+      if (!job) {
+        res.status(409).json({
+          success: false,
+          error: { message: 'Analysis already in progress', code: 'ALREADY_PROCESSING', statusCode: 409 },
+        });
+        return;
+      }
+      db.run(sql`UPDATE ${documents} SET
+        processing_status = 'pending',
+        updated_at = datetime('now')
+        WHERE id = ${documentId}`);
     }
 
     if (rows[0].processingStatus === 'failed') {
