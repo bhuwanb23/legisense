@@ -1,0 +1,53 @@
+import { getDb, persistNow } from '../config/database';
+import { riskPatterns, requiredClausesTemplates } from '../models';
+import { sql } from 'drizzle-orm';
+import { riskPatternSeeds } from './riskPatterns';
+import { requiredClauseSeeds } from './requiredClauses';
+
+export function seedRiskAndRequiredLibraries(): void {
+  const db = getDb();
+
+  const existingPatterns = db.select({ count: sql<number>`count(*)` }).from(riskPatterns).all();
+  if (Number(existingPatterns[0]?.count ?? 0) === 0) {
+    let seeded = 0;
+    for (const p of riskPatternSeeds) {
+      try {
+        db.insert(riskPatterns).values({
+          patternName: p.patternName,
+          patternCategory: p.patternCategory,
+          severity: p.severity,
+          triggerKeywords: JSON.stringify(p.triggerKeywords),
+          explanation: p.explanation,
+          recommendation: p.recommendation,
+        }).run();
+        seeded++;
+      } catch {
+        // skip
+      }
+    }
+    console.log(`Seeded ${seeded} risk patterns.`);
+  }
+
+  const existingTemplates = db.select({ count: sql<number>`count(*)` }).from(requiredClausesTemplates).all();
+  if (Number(existingTemplates[0]?.count ?? 0) === 0) {
+    let seeded = 0;
+    for (const t of requiredClauseSeeds) {
+      try {
+        db.insert(requiredClausesTemplates).values({
+          documentType: t.documentType,
+          clauseName: t.clauseName,
+          importance: t.importance,
+          whyNeeded: t.whyNeeded,
+          exampleText: t.exampleText,
+          detectionKeywords: JSON.stringify(t.detectionKeywords),
+        }).run();
+        seeded++;
+      } catch {
+        // skip
+      }
+    }
+    console.log(`Seeded ${seeded} required clause templates.`);
+  }
+
+  persistNow();
+}
