@@ -347,7 +347,6 @@ export async function getDocument(req: Request, res: Response, next: NextFunctio
         uploadStatus: doc.uploadStatus,
         processingStatus: doc.processingStatus,
         pageCount: doc.pageCount,
-        detectedLanguage: doc.detectedLanguage,
         createdAt: doc.createdAt,
         updatedAt: doc.updatedAt,
       },

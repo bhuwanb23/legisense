@@ -54,8 +54,9 @@ export async function runConflictDetection(
     if (!flag.conflictingJurisdictions || flag.conflictingJurisdictions.length === 0) continue;
 
     const filtered = flag.conflictingJurisdictions.filter((c) => {
+      const docCountry = (doc.countryCode || '').toUpperCase();
       const cc = (c.countryCode || doc.countryCode || '').toUpperCase();
-      if (cc && cc !== doc.countryCode.toUpperCase()) return false;
+      if (cc && docCountry && cc !== docCountry) return false;
       return allowed.size === 0 || allowed.has(c.stateCode);
     });
 
