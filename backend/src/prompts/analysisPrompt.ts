@@ -98,10 +98,16 @@ The JSON must match this exact structure (no extra fields, no missing fields):
       "title": "Renewal Notice",
       "description": "Party A must provide 30 days written notice before renewal date.",
       "dueDate": "2024-12-01",
-      "recurrence": "yearly"
+      "recurrence": "yearly",
+      "deadlineType": "renewal",
+      "partyResponsible": "Party A",
+      "consequenceIfMissed": "Contract may auto-renew",
+      "isRecurring": true
     }
   ]
 }
+
+Extract ALL dates and obligations into deadlines with type one of: payment, renewal, notice, termination, review, milestone, compliance, other.
 
 IMPORTANT: Every field must be present. Use empty arrays [] for lists with no items. Use empty string "" for optional text fields that are not applicable. Never omit a field.`;
 
