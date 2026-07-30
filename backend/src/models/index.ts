@@ -14,3 +14,7 @@ export { jurisdictions, type Jurisdiction, type NewJurisdiction } from './jurisd
 export { legalRules, type LegalRule, type NewLegalRule } from './legalRule';
 export { jurisdictionFlags, type JurisdictionFlag, type NewJurisdictionFlag } from './jurisdictionFlag';
 export { jurisdictionConflicts, type JurisdictionConflict, type NewJurisdictionConflict } from './jurisdictionConflict';
+export { riskPatterns, type RiskPattern, type NewRiskPattern } from './riskPattern';
+export { clauseRiskFlags, type ClauseRiskFlag, type NewClauseRiskFlag } from './clauseRiskFlag';
+export { communityRiskFeedback, type CommunityRiskFeedback, type NewCommunityRiskFeedback } from './communityRiskFeedback';
+export { requiredClausesTemplates, type RequiredClausesTemplate, type NewRequiredClausesTemplate } from './requiredClausesTemplate';
