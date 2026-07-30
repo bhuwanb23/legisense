@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../repositories/auth_repository.dart';
+import '../../services/api_exception.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/auth/auth_card.dart';
 import '../../widgets/auth/auth_illustration.dart';
@@ -10,9 +12,14 @@ import '../../widgets/auth/auth_text_field.dart';
 import 'login_page.dart';
 
 class ResetPasswordPage extends StatefulWidget {
-  const ResetPasswordPage({super.key, required this.email});
+  const ResetPasswordPage({
+    super.key,
+    required this.email,
+    this.resetToken,
+  });
 
   final String email;
+  final String? resetToken;
 
   @override
   State<ResetPasswordPage> createState() => _ResetPasswordPageState();
@@ -22,35 +29,59 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
   final _formKey = GlobalKey<FormState>();
   final _password = TextEditingController();
   final _confirm = TextEditingController();
+  final _token = TextEditingController();
   bool _loading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.resetToken != null) {
+      _token.text = widget.resetToken!;
+    }
+  }
 
   @override
   void dispose() {
     _password.dispose();
     _confirm.dispose();
+    _token.dispose();
     super.dispose();
   }
 
   Future<void> _submit() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     setState(() => _loading = true);
-    await Future<void>.delayed(const Duration(milliseconds: 350));
-    if (!mounted) return;
-    setState(() => _loading = false);
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Password updated. Please log in.'),
-        backgroundColor: AppColors.primaryNavy,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      ),
-    );
-
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute<void>(builder: (_) => const LoginPage()),
-      (_) => false,
-    );
+    try {
+      await AuthRepository().resetPassword(
+        token: _token.text.trim(),
+        newPassword: _password.text,
+      );
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Password updated. Please log in.'),
+          backgroundColor: AppColors.primaryNavy,
+          behavior: SnackBarBehavior.floating,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        ),
+      );
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute<void>(builder: (_) => const LoginPage()),
+        (_) => false,
+      );
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.message),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
   }
 
   @override
@@ -80,6 +111,18 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                 ),
               ),
               const SizedBox(height: 28),
+              AuthTextField(
+                label: 'Reset token',
+                icon: Icons.vpn_key_outlined,
+                controller: _token,
+                hint: 'Paste reset token',
+                textInputAction: TextInputAction.next,
+                validator: (v) {
+                  if (v == null || v.trim().isEmpty) return 'Enter reset token';
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
               AuthTextField(
                 label: 'New Password',
                 icon: Icons.lock_outline_rounded,

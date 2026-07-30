@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../repositories/auth_repository.dart';
+import '../../services/api_exception.dart';
 import '../../services/session_prefs.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/auth/auth_card.dart';
@@ -11,7 +13,7 @@ import '../../widgets/auth/auth_scaffold.dart';
 import '../../widgets/auth/auth_social_button.dart';
 import '../../widgets/auth/auth_text_field.dart';
 import 'login_page.dart';
-import 'otp_page.dart';
+import 'profile_setup_page.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -39,19 +41,31 @@ class _RegisterPageState extends State<RegisterPage> {
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
     setState(() => _loading = true);
-    await SessionPrefs.setOnboardingSeen();
-    await SessionPrefs.setUserEmail(_email.text.trim());
-    if (!mounted) return;
-    setState(() => _loading = false);
-
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => OtpPage(
-          contact: _email.text.trim(),
-          isNewUser: true,
+    try {
+      await AuthRepository().register(
+        fullName: _fullName.text.trim(),
+        email: _email.text.trim(),
+        password: _password.text,
+      );
+      await SessionPrefs.setOnboardingSeen();
+      await SessionPrefs.setDisplayName(_fullName.text.trim());
+      if (!mounted) return;
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute<void>(builder: (_) => const ProfileSetupPage()),
+        (_) => false,
+      );
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.message),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
         ),
-      ),
-    );
+      );
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
   }
 
   @override

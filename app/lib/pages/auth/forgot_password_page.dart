@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../repositories/auth_repository.dart';
+import '../../services/api_exception.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/auth/auth_card.dart';
 import '../../widgets/auth/auth_illustration.dart';
@@ -31,15 +33,30 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   Future<void> _submit() async {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     setState(() => _loading = true);
-    await Future<void>.delayed(const Duration(milliseconds: 350));
-    if (!mounted) return;
-    setState(() => _loading = false);
-
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => ResetPasswordPage(email: _email.text.trim()),
-      ),
-    );
+    try {
+      final data = await AuthRepository().forgotPassword(_email.text.trim());
+      if (!mounted) return;
+      final token = data['resetToken'] as String?;
+      Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => ResetPasswordPage(
+            email: _email.text.trim(),
+            resetToken: token,
+          ),
+        ),
+      );
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.message),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
   }
 
   @override
@@ -79,50 +96,31 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                 textInputAction: TextInputAction.done,
                 autofillHints: const [AutofillHints.email],
                 validator: (v) {
-                  final value = v?.trim() ?? '';
-                  if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
-                    return 'Enter a valid email';
-                  }
+                  if (v == null || v.trim().isEmpty) return 'Enter email';
+                  if (!v.contains('@')) return 'Enter a valid email';
                   return null;
                 },
               ),
               const SizedBox(height: 28),
               AuthPrimaryButton(
-                label: 'Send OTP',
+                label: 'Submit',
+                showArrow: true,
                 loading: _loading,
                 onPressed: _submit,
               ),
-              const SizedBox(height: 24),
-              Text.rich(
-                TextSpan(
+              const SizedBox(height: 20),
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pushReplacement(
+                    MaterialPageRoute<void>(builder: (_) => const LoginPage()),
+                  );
+                },
+                child: Text(
+                  'Back to Sign In',
                   style: GoogleFonts.plusJakartaSans(
-                    fontSize: 14,
-                    color: AppColors.inkSoft,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.ink,
                   ),
-                  children: [
-                    const TextSpan(text: 'You remember you password? '),
-                    WidgetSpan(
-                      alignment: PlaceholderAlignment.baseline,
-                      baseline: TextBaseline.alphabetic,
-                      child: GestureDetector(
-                        onTap: () {
-                          Navigator.of(context).pushReplacement(
-                            MaterialPageRoute<void>(
-                              builder: (_) => const LoginPage(),
-                            ),
-                          );
-                        },
-                        child: Text(
-                          'Sign in',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.ink,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
                 ),
               ),
             ],

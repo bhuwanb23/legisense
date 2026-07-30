@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../repositories/auth_repository.dart';
+import '../../services/api_exception.dart';
 import '../../services/session_prefs.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/auth/auth_card.dart';
@@ -26,6 +28,7 @@ class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   final _contact = TextEditingController();
   final _password = TextEditingController();
+  final _auth = AuthRepository();
   bool _loading = false;
 
   @override
@@ -54,20 +57,44 @@ class _LoginPageState extends State<LoginPage> {
     if (!(_formKey.currentState?.validate() ?? false)) return;
     setState(() => _loading = true);
 
-    await SessionPrefs.setOnboardingSeen();
-    await SessionPrefs.setRememberMe(true);
-    await SessionPrefs.setUserEmail(_contact.text.trim());
-    await SessionPrefs.setLoggedIn(true);
+    try {
+      await _auth.login(
+        email: _contact.text.trim(),
+        password: _password.text,
+      );
+      await SessionPrefs.setOnboardingSeen();
+      await SessionPrefs.setRememberMe(true);
 
-    final profileDone = await SessionPrefs.isProfileComplete();
-    if (!mounted) return;
-    setState(() => _loading = false);
+      try {
+        final profile = await _auth.getProfile();
+        if (profile.fullName != null && profile.fullName!.isNotEmpty) {
+          await SessionPrefs.setDisplayName(profile.fullName);
+        }
+        if (profile.profession != null) {
+          await SessionPrefs.setProfession(profile.profession);
+          await SessionPrefs.setProfileComplete(true);
+        }
+      } catch (_) {}
 
-    final next = profileDone ? const MainShell() : const ProfileSetupPage();
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute<void>(builder: (_) => next),
-      (_) => false,
-    );
+      final profileDone = await SessionPrefs.isProfileComplete();
+      if (!mounted) return;
+      final next = profileDone ? const MainShell() : const ProfileSetupPage();
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute<void>(builder: (_) => next),
+        (_) => false,
+      );
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.message),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
   }
 
   @override
@@ -108,7 +135,7 @@ class _LoginPageState extends State<LoginPage> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Enter valid user name & password to continue',
+                'Enter your email & password to continue',
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 13,
                   color: AppColors.inkSoft,
@@ -116,17 +143,16 @@ class _LoginPageState extends State<LoginPage> {
               ),
               const SizedBox(height: 28),
               AuthTextField(
-                label: 'User name',
-                icon: Icons.person_outline_rounded,
+                label: 'Email',
+                icon: Icons.mail_outline_rounded,
                 controller: _contact,
-                hint: 'User name',
+                hint: 'Email',
                 keyboardType: TextInputType.emailAddress,
                 textInputAction: TextInputAction.next,
-                autofillHints: const [AutofillHints.username],
+                autofillHints: const [AutofillHints.email],
                 validator: (v) {
-                  if (v == null || v.trim().isEmpty) {
-                    return 'Enter email or phone';
-                  }
+                  if (v == null || v.trim().isEmpty) return 'Enter email';
+                  if (!v.contains('@')) return 'Enter a valid email';
                   return null;
                 },
               ),

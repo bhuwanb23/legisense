@@ -5,6 +5,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../data/auth_constants.dart';
+import '../../repositories/auth_repository.dart';
+import '../../services/api_exception.dart';
 import '../../services/session_prefs.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/auth/auth_card.dart';
@@ -76,29 +78,42 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
     }
 
     setState(() => _loading = true);
-    await SessionPrefs.setLoggedIn(true);
-    await SessionPrefs.setProfileComplete(true);
-    await SessionPrefs.setProfession(_profession);
-    await SessionPrefs.setLanguage(_language);
-    await SessionPrefs.setStateRegion(_state);
-    final email = await SessionPrefs.userEmail();
-    final existingName = await SessionPrefs.displayName();
-    if (existingName == null || existingName.isEmpty) {
-      if (email != null && email.contains('@')) {
-        final local = email.split('@').first.trim();
-        if (local.isNotEmpty) {
-          final pretty = local[0].toUpperCase() + local.substring(1);
-          await SessionPrefs.setDisplayName(pretty);
+    try {
+      final auth = AuthRepository();
+      await auth.updateProfile(profession: _profession);
+      final country = await SessionPrefs.countryCode() ?? 'IN';
+      await auth.updatePreferences(
+        preferredLanguage: _language,
+        defaultJurisdiction: '$_state,$country',
+      );
+      await SessionPrefs.setCountryCode(country);
+      await SessionPrefs.setLoggedIn(true);
+      await SessionPrefs.setProfileComplete(true);
+      await SessionPrefs.setProfession(_profession);
+      await SessionPrefs.setLanguage(_language);
+      await SessionPrefs.setStateRegion(_state);
+      final email = await SessionPrefs.userEmail();
+      final existingName = await SessionPrefs.displayName();
+      if (existingName == null || existingName.isEmpty) {
+        if (email != null && email.contains('@')) {
+          final local = email.split('@').first.trim();
+          if (local.isNotEmpty) {
+            final pretty = local[0].toUpperCase() + local.substring(1);
+            await SessionPrefs.setDisplayName(pretty);
+          }
         }
       }
+      if (!mounted) return;
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute<void>(builder: (_) => const MainShell()),
+        (_) => false,
+      );
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      _toast(e.message);
+    } finally {
+      if (mounted) setState(() => _loading = false);
     }
-    if (!mounted) return;
-    setState(() => _loading = false);
-
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute<void>(builder: (_) => const MainShell()),
-      (_) => false,
-    );
   }
 
   void _toast(String msg) {

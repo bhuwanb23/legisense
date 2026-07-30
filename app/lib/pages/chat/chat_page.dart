@@ -2,10 +2,25 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../data/analysis_mock.dart';
-import '../../data/chat_mock.dart';
+import '../../repositories/chat_repository.dart';
+import '../../services/api_exception.dart';
 import '../../theme/app_theme.dart';
 
-/// Chat with Document — mock Q&A thread on an [AnalysisResult].
+class _ChatBubbleMsg {
+  const _ChatBubbleMsg({
+    required this.id,
+    required this.text,
+    required this.isUser,
+    this.citedClauses = const [],
+  });
+
+  final String id;
+  final String text;
+  final bool isUser;
+  final List<String> citedClauses;
+}
+
+/// Chat with Document — live ChatRepository session.
 class ChatPage extends StatefulWidget {
   const ChatPage({super.key, required this.result});
 
@@ -16,17 +31,61 @@ class ChatPage extends StatefulWidget {
 }
 
 class _ChatPageState extends State<ChatPage> {
-  late final List<ChatMessage> _messages;
+  final _repo = ChatRepository();
   final _controller = TextEditingController();
   final _scroll = ScrollController();
+  final List<_ChatBubbleMsg> _messages = [];
+  String? _sessionId;
   bool _sending = false;
+  bool _ready = false;
+  String? _initError;
+
+  static const _prompts = <String>[
+    'What are the biggest risks?',
+    'Explain the lock-in period',
+    'Who does this contract favor?',
+    'What happens if I leave early?',
+  ];
 
   AnalysisResult get r => widget.result;
 
   @override
   void initState() {
     super.initState();
-    _messages = List.of(ChatMock.seed(r));
+    _bootstrap();
+  }
+
+  Future<void> _bootstrap() async {
+    final docId = r.documentId;
+    if (docId == null) {
+      setState(() {
+        _initError = 'This analysis is missing a document id. Re-open from Documents.';
+        _ready = false;
+      });
+      return;
+    }
+    try {
+      final sid = await _repo.createSession(docId);
+      if (!mounted) return;
+      setState(() {
+        _sessionId = sid;
+        _ready = true;
+        _messages.add(
+          _ChatBubbleMsg(
+            id: 's1',
+            text:
+                'I’ve reviewed “${r.documentTitle}”. Ask about risks, parties, dates, or any clause.',
+            isUser: false,
+          ),
+        );
+      });
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() => _initError = e.message);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _initError = e.toString());
+    }
   }
 
   @override
@@ -36,14 +95,31 @@ class _ChatPageState extends State<ChatPage> {
     super.dispose();
   }
 
+  List<String> _parseCitations(dynamic raw) {
+    if (raw is! List) return [];
+    return raw.map((e) {
+      if (e is Map) {
+        final m = Map<String, dynamic>.from(e);
+        final title = m['clauseTitle'] ?? m['title'] ?? m['clauseNumber'];
+        final snippet = m['snippet'] ?? m['text'] ?? m['originalText'];
+        if (title != null && snippet != null) {
+          return '$title: $snippet';
+        }
+        return (title ?? snippet ?? e).toString();
+      }
+      return e.toString();
+    }).toList();
+  }
+
   Future<void> _send([String? preset]) async {
     final text = (preset ?? _controller.text).trim();
-    if (text.isEmpty || _sending) return;
+    final docId = r.documentId;
+    if (text.isEmpty || _sending || docId == null || !_ready) return;
 
     setState(() {
       _sending = true;
       _messages.add(
-        ChatMessage(
+        _ChatBubbleMsg(
           id: 'u${_messages.length}',
           text: text,
           isUser: true,
@@ -53,19 +129,64 @@ class _ChatPageState extends State<ChatPage> {
     });
     _scrollToEnd();
 
-    await Future<void>.delayed(const Duration(milliseconds: 480));
-    if (!mounted) return;
-
-    setState(() {
-      _messages.add(
-        ChatMessage(
-          id: 'a${_messages.length}',
-          text: ChatMock.replyFor(text, r),
-          isUser: false,
-        ),
+    try {
+      final res = await _repo.sendMessage(
+        documentId: docId,
+        message: text,
+        sessionId: _sessionId,
       );
-      _sending = false;
-    });
+      if (!mounted) return;
+      final msg = res['message'];
+      String reply;
+      List<String> cites = [];
+      if (msg is Map) {
+        final m = Map<String, dynamic>.from(msg);
+        reply = (m['content'] ?? m['message'] ?? m['text'] ?? '').toString();
+        cites = _parseCitations(m['citedClauses']);
+        final sid = res['sessionId']?.toString();
+        if (sid != null && sid.isNotEmpty) _sessionId = sid;
+      } else {
+        reply = (res['reply'] ?? res['content'] ?? res['message'] ?? '')
+            .toString();
+        cites = _parseCitations(res['citedClauses']);
+      }
+      if (reply.isEmpty) reply = 'No response from assistant.';
+      setState(() {
+        _messages.add(
+          _ChatBubbleMsg(
+            id: 'a${_messages.length}',
+            text: reply,
+            isUser: false,
+            citedClauses: cites,
+          ),
+        );
+        _sending = false;
+      });
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _messages.add(
+          _ChatBubbleMsg(
+            id: 'e${_messages.length}',
+            text: e.message,
+            isUser: false,
+          ),
+        );
+        _sending = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _messages.add(
+          _ChatBubbleMsg(
+            id: 'e${_messages.length}',
+            text: e.toString(),
+            isUser: false,
+          ),
+        );
+        _sending = false;
+      });
+    }
     _scrollToEnd();
   }
 
@@ -83,10 +204,11 @@ class _ChatPageState extends State<ChatPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.paper,
+      backgroundColor: AppColors.bg,
       appBar: AppBar(
-        backgroundColor: AppColors.paper,
+        backgroundColor: AppColors.bg,
         elevation: 0,
+        foregroundColor: AppColors.ink,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -96,7 +218,6 @@ class _ChatPageState extends State<ChatPage> {
                 fontSize: 20,
                 fontWeight: FontWeight.w700,
                 color: AppColors.ink,
-                fontStyle: FontStyle.normal,
               ),
             ),
             Text(
@@ -105,137 +226,153 @@ class _ChatPageState extends State<ChatPage> {
               overflow: TextOverflow.ellipsis,
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 12,
-                color: AppColors.inkSoft,
+                color: AppColors.mute,
               ),
             ),
           ],
         ),
       ),
-      body: Column(
-        children: [
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
-            decoration: const BoxDecoration(
-              border: Border(bottom: BorderSide(color: AppColors.rule)),
-            ),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  for (final p in ChatMock.suggestedPrompts) ...[
-                    ActionChip(
-                      label: Text(
-                        p,
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.ink,
+      body: _initError != null
+          ? Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Text(
+                  _initError!,
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.plusJakartaSans(color: AppColors.mute),
+                ),
+              ),
+            )
+          : !_ready
+              ? const Center(child: CircularProgressIndicator())
+              : Column(
+                  children: [
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+                      decoration: const BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(color: AppColors.rule),
                         ),
                       ),
-                      backgroundColor: AppColors.cloud,
-                      side: const BorderSide(color: AppColors.rule),
-                      onPressed: _sending ? null : () => _send(p),
-                    ),
-                    const SizedBox(width: 8),
-                  ],
-                ],
-              ),
-            ),
-          ),
-          Expanded(
-            child: ListView.builder(
-              controller: _scroll,
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
-              itemCount: _messages.length,
-              itemBuilder: (context, i) {
-                final m = _messages[i];
-                return _Bubble(message: m);
-              },
-            ),
-          ),
-          SafeArea(
-            top: false,
-            child: Container(
-              padding: EdgeInsets.fromLTRB(
-                16,
-                10,
-                16,
-                88 + MediaQuery.paddingOf(context).bottom,
-              ),
-              decoration: const BoxDecoration(
-                color: AppColors.cloud,
-                border: Border(top: BorderSide(color: AppColors.rule)),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _controller,
-                      textInputAction: TextInputAction.send,
-                      onSubmitted: (_) => _send(),
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 14,
-                        color: AppColors.ink,
-                      ),
-                      decoration: InputDecoration(
-                        hintText: 'Ask about this document…',
-                        hintStyle: GoogleFonts.plusJakartaSans(
-                          color: AppColors.inkSoft.withValues(alpha: 0.5),
-                        ),
-                        filled: true,
-                        fillColor: AppColors.paper2,
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppRadii.pill),
-                          borderSide: BorderSide.none,
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppRadii.pill),
-                          borderSide: BorderSide.none,
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppRadii.pill),
-                          borderSide: const BorderSide(color: AppColors.ink),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Material(
-                    color: AppColors.ink,
-                    shape: const CircleBorder(),
-                    child: InkWell(
-                      customBorder: const CircleBorder(),
-                      onTap: _sending ? null : () => _send(),
-                      child: SizedBox(
-                        width: 48,
-                        height: 48,
-                        child: _sending
-                            ? const Padding(
-                                padding: EdgeInsets.all(12),
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: AppColors.cloud,
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: [
+                            for (final p in _prompts) ...[
+                              ActionChip(
+                                label: Text(
+                                  p,
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.ink,
+                                  ),
                                 ),
-                              )
-                            : const Icon(
-                                Icons.send_rounded,
-                                color: AppColors.cloud,
-                                size: 22,
+                                backgroundColor: AppColors.surface,
+                                side: const BorderSide(color: AppColors.rule),
+                                onPressed: _sending ? null : () => _send(p),
                               ),
+                              const SizedBox(width: 8),
+                            ],
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
+                    Expanded(
+                      child: ListView.builder(
+                        controller: _scroll,
+                        padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+                        itemCount: _messages.length,
+                        itemBuilder: (context, i) {
+                          return _Bubble(message: _messages[i]);
+                        },
+                      ),
+                    ),
+                    SafeArea(
+                      top: false,
+                      child: Container(
+                        padding: const EdgeInsets.fromLTRB(16, 10, 16, 110),
+                        decoration: const BoxDecoration(
+                          color: AppColors.surface,
+                          border: Border(
+                            top: BorderSide(color: AppColors.rule),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                controller: _controller,
+                                textInputAction: TextInputAction.send,
+                                onSubmitted: (_) => _send(),
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 14,
+                                  color: AppColors.ink,
+                                ),
+                                decoration: InputDecoration(
+                                  hintText: 'Ask about this document…',
+                                  hintStyle: GoogleFonts.plusJakartaSans(
+                                    color: AppColors.mute,
+                                  ),
+                                  filled: true,
+                                  fillColor: AppColors.chip,
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 12,
+                                  ),
+                                  border: OutlineInputBorder(
+                                    borderRadius:
+                                        BorderRadius.circular(AppRadii.pill),
+                                    borderSide: BorderSide.none,
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius:
+                                        BorderRadius.circular(AppRadii.pill),
+                                    borderSide: BorderSide.none,
+                                  ),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderRadius:
+                                        BorderRadius.circular(AppRadii.pill),
+                                    borderSide: const BorderSide(
+                                      color: AppColors.ink,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Material(
+                              color: AppColors.ink,
+                              shape: const CircleBorder(),
+                              child: InkWell(
+                                customBorder: const CircleBorder(),
+                                onTap: _sending ? null : () => _send(),
+                                child: SizedBox(
+                                  width: 48,
+                                  height: 48,
+                                  child: _sending
+                                      ? const Padding(
+                                          padding: EdgeInsets.all(12),
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            color: AppColors.surface,
+                                          ),
+                                        )
+                                      : const Icon(
+                                          Icons.send_rounded,
+                                          color: AppColors.surface,
+                                          size: 22,
+                                        ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
     );
   }
 }
@@ -243,7 +380,7 @@ class _ChatPageState extends State<ChatPage> {
 class _Bubble extends StatelessWidget {
   const _Bubble({required this.message});
 
-  final ChatMessage message;
+  final _ChatBubbleMsg message;
 
   @override
   Widget build(BuildContext context) {
@@ -257,7 +394,7 @@ class _Bubble extends StatelessWidget {
         ),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
-          color: user ? AppColors.ink : AppColors.cloud,
+          color: user ? AppColors.ink : AppColors.surface,
           borderRadius: BorderRadius.only(
             topLeft: const Radius.circular(16),
             topRight: const Radius.circular(16),
@@ -265,14 +402,52 @@ class _Bubble extends StatelessWidget {
             bottomRight: Radius.circular(user ? 4 : 16),
           ),
           border: user ? null : Border.all(color: AppColors.rule),
+          boxShadow: user ? null : AppShadows.soft,
         ),
-        child: Text(
-          message.text,
-          style: GoogleFonts.plusJakartaSans(
-            fontSize: 14,
-            height: 1.45,
-            color: user ? AppColors.cloud : AppColors.ink,
-          ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              message.text,
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 14,
+                height: 1.45,
+                color: user ? AppColors.surface : AppColors.ink,
+              ),
+            ),
+            if (!user && message.citedClauses.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              Text(
+                'Cited clauses',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.mute,
+                ),
+              ),
+              const SizedBox(height: 6),
+              for (final c in message.citedClauses)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.chip,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      c,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 11,
+                        height: 1.35,
+                        color: AppColors.ink,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ],
         ),
       ),
     );
