@@ -10,6 +10,17 @@ export interface ServerToClientEvents {
   'analysis:progress': (data: { documentId: number; progress: number; stage: string }) => void;
   'analysis:completed': (data: { documentId: number }) => void;
   'analysis:failed': (data: { documentId: number; error: string }) => void;
+  'analysis:needs_confirmation': (data: {
+    documentId: number;
+    detectedType?: string;
+    typeLabel?: string;
+    confidence?: number;
+  }) => void;
+  'analysis:counter_clauses_ready': (data: {
+    documentId: number;
+    status: string;
+    count?: number;
+  }) => void;
   'notification:new': (data: { id: number; type: string; title: string; body: string | null; documentId?: number }) => void;
   'ocr:started': (data: { documentId: number }) => void;
   'ocr:progress': (data: { documentId: number; progress: number; stage: string }) => void;

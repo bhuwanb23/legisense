@@ -1,6 +1,8 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// First-run + auth session preferences (mock auth until backend exists).
+import 'token_store.dart';
+
+/// First-run + auth session preferences.
 class SessionPrefs {
   SessionPrefs._();
 
@@ -13,6 +15,7 @@ class SessionPrefs {
   static const _professionKey = 'user_profession';
   static const _languageKey = 'user_language';
   static const _stateKey = 'user_state';
+  static const _countryKey = 'user_country';
 
   static Future<SharedPreferences> get _prefs async =>
       SharedPreferences.getInstance();
@@ -28,6 +31,7 @@ class SessionPrefs {
   }
 
   static Future<bool> isLoggedIn() async {
+    if (await TokenStore.hasTokens()) return true;
     final prefs = await _prefs;
     return prefs.getBool(_loggedInKey) ?? false;
   }
@@ -35,6 +39,7 @@ class SessionPrefs {
   static Future<void> setLoggedIn(bool value) async {
     final prefs = await _prefs;
     await prefs.setBool(_loggedInKey, value);
+    if (!value) await TokenStore.clear();
   }
 
   static Future<bool> isProfileComplete() async {
@@ -127,7 +132,20 @@ class SessionPrefs {
     }
   }
 
-  /// Splash destination helper.
+  static Future<String?> countryCode() async {
+    final prefs = await _prefs;
+    return prefs.getString(_countryKey);
+  }
+
+  static Future<void> setCountryCode(String? value) async {
+    final prefs = await _prefs;
+    if (value == null || value.isEmpty) {
+      await prefs.remove(_countryKey);
+    } else {
+      await prefs.setString(_countryKey, value);
+    }
+  }
+
   static Future<SplashDestination> resolveSplashDestination() async {
     final loggedIn = await isLoggedIn();
     final profileDone = await isProfileComplete();
@@ -138,7 +156,6 @@ class SessionPrefs {
     return SplashDestination.onboarding;
   }
 
-  /// Dev helper — clears first-run + auth flags.
   static Future<void> resetAll() async {
     final prefs = await _prefs;
     await prefs.remove(_onboardingKey);
@@ -150,6 +167,8 @@ class SessionPrefs {
     await prefs.remove(_professionKey);
     await prefs.remove(_languageKey);
     await prefs.remove(_stateKey);
+    await prefs.remove(_countryKey);
+    await TokenStore.clear();
   }
 }
 

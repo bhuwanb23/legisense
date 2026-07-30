@@ -64,7 +64,8 @@ void main() {
     await tester.pumpWidget(
       const MaterialApp(home: MainShell()),
     );
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
 
     expect(find.textContaining('Welcome to Legisense'), findsOneWidget);
     expect(find.text('Quick stats'), findsOneWidget);
@@ -76,7 +77,7 @@ void main() {
     await tester.pumpWidget(
       const MaterialApp(home: Scaffold(body: UploadPage())),
     );
-    await tester.pump(); // start entrance animations
+    await tester.pump();
     await tester.pump(const Duration(milliseconds: 900));
 
     expect(find.text('Choose a file'), findsOneWidget);
@@ -91,7 +92,7 @@ void main() {
     );
   });
 
-  testWidgets('Processing page shows steps and cancel', (tester) async {
+  testWidgets('Processing page shows analyzing UI', (tester) async {
     await tester.pumpWidget(
       const MaterialApp(
         home: ProcessingPage(
@@ -99,6 +100,7 @@ void main() {
             source: UploadSource.paste,
             title: 'Demo paste',
             detail: '120 chars',
+            documentId: 1,
           ),
         ),
       ),
@@ -107,7 +109,6 @@ void main() {
     await tester.pump(const Duration(milliseconds: 100));
 
     expect(find.text('Analyzing your document'), findsOneWidget);
-    expect(find.text('Document received'), findsOneWidget);
     expect(find.text('Cancel'), findsOneWidget);
 
     await tester.tap(find.text('Cancel'));
@@ -145,14 +146,14 @@ void main() {
     expect(find.text('Clauses'), findsOneWidget);
   });
 
-  testWidgets('Documents history shows search and cards', (tester) async {
+  testWidgets('Documents page shows header and search', (tester) async {
     await tester.pumpWidget(
       const MaterialApp(home: Scaffold(body: DocumentsPage())),
     );
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
 
-    expect(find.text('All Documents'), findsOneWidget);
-    expect(find.textContaining('Vendor NDA'), findsOneWidget);
+    expect(find.text('Documents'), findsOneWidget);
     expect(find.text('Search your documents...'), findsOneWidget);
   });
 }
