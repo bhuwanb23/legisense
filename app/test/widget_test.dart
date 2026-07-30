@@ -72,16 +72,18 @@ void main() {
     expect(find.byIcon(Icons.home_rounded), findsWidgets);
   });
 
-  testWidgets('Upload page shows four options and disabled Proceed', (tester) async {
+  testWidgets('Upload page shows drop hero, methods, and Proceed', (tester) async {
     await tester.pumpWidget(
       const MaterialApp(home: Scaffold(body: UploadPage())),
     );
-    await tester.pumpAndSettle();
+    await tester.pump(); // start entrance animations
+    await tester.pump(const Duration(milliseconds: 900));
 
-    expect(find.text('Upload File'), findsOneWidget);
+    expect(find.text('Choose a file'), findsOneWidget);
+    expect(find.text('Browse files'), findsOneWidget);
     expect(find.text('Scan'), findsOneWidget);
-    expect(find.text('Paste Text'), findsOneWidget);
-    expect(find.text('Import URL'), findsOneWidget);
+    expect(find.text('Paste'), findsOneWidget);
+    expect(find.text('URL'), findsOneWidget);
     expect(find.text('Proceed'), findsOneWidget);
     expect(
       find.textContaining('encrypted and auto-deleted'),
