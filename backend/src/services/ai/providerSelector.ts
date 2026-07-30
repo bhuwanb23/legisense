@@ -12,13 +12,18 @@ const ALL_PROVIDERS: ProviderEntry[] = [
 ];
 
 export function selectProvider(context?: AiContext): AiProvider | null {
-  const { pageCount, language } = context || {};
+  const { pageCount, language, task } = context || {};
 
   if (pageCount && pageCount > 100 && geminiProvider.isAvailable()) {
     return geminiProvider;
   }
 
   if (language && language !== 'en' && geminiProvider.isAvailable()) {
+    return geminiProvider;
+  }
+
+  // Prefer Gemini for core analysis — free OpenRouter models often return non-JSON.
+  if (task === 'analysis' && geminiProvider.isAvailable()) {
     return geminiProvider;
   }
 

@@ -57,6 +57,9 @@ export const openRouterProvider: AiProvider = {
     }
 
     const text = choice.message.content;
+    if (!text.includes('{') && /safety|blocked|content filter|refused/i.test(text)) {
+      throw new Error(`OpenRouter returned a non-JSON safety response: ${text.slice(0, 120)}`);
+    }
     const output = response.usage;
 
     return {

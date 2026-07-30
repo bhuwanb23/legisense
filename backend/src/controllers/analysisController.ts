@@ -67,6 +67,13 @@ export async function startAnalysis(
       return;
     }
 
+    if (rows[0].processingStatus === 'failed') {
+      db.run(sql`UPDATE ${documents} SET
+        processing_status = 'pending',
+        updated_at = datetime('now')
+        WHERE id = ${documentId}`);
+    }
+
     const existingAnalysis = db.select().from(analysisResults).where(
       sql`${analysisResults.documentId} = ${documentId}`
     ).all();

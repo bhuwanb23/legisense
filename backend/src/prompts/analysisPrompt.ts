@@ -141,6 +141,12 @@ LANGUAGE INSTRUCTIONS:
 export function parseAiResponse(responseText: string): Record<string, unknown> {
   let cleaned = responseText.trim();
 
+  // Strip common provider safety/preamble lines before JSON extraction.
+  cleaned = cleaned
+    .replace(/^User Safety:\s*\w+\s*/i, '')
+    .replace(/^Safety:\s*\w+\s*/i, '')
+    .trim();
+
   if (cleaned.startsWith('```json')) {
     cleaned = cleaned.slice(7);
   } else if (cleaned.startsWith('```')) {
@@ -154,11 +160,13 @@ export function parseAiResponse(responseText: string): Record<string, unknown> {
   const jsonStart = cleaned.indexOf('{');
   const jsonEnd = cleaned.lastIndexOf('}');
 
-  if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
-    cleaned = cleaned.slice(jsonStart, jsonEnd + 1);
+  if (jsonStart === -1 || jsonEnd === -1 || jsonEnd <= jsonStart) {
+    throw new Error(
+      `AI response contained no JSON object: ${cleaned.slice(0, 120)}`,
+    );
   }
 
-  cleaned = cleaned.trim();
+  cleaned = cleaned.slice(jsonStart, jsonEnd + 1).trim();
 
   return JSON.parse(cleaned);
 }
