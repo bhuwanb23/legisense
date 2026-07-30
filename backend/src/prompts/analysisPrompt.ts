@@ -116,6 +116,22 @@ ${documentText}
 Respond with raw JSON only. No markdown fences, no explanation. Just JSON.`;
 }
 
+export function appendLanguageInstructions(
+  systemPrompt: string,
+  documentLanguage: string,
+  responseLanguage: string,
+): string {
+  return `${systemPrompt}
+
+LANGUAGE INSTRUCTIONS:
+- Document language: ${documentLanguage}
+- Respond in: ${responseLanguage}
+- Write summary, plainEnglishText, riskReason, recommendations, and other narrative fields in ${responseLanguage}.
+- Keep JSON field names in English exactly as specified.
+- If legal terms have no direct translation, keep the original term and provide a short explanation in ${responseLanguage}.
+- originalText must remain the exact text from the document (do not translate originalText).`;
+}
+
 export function parseAiResponse(responseText: string): Record<string, unknown> {
   let cleaned = responseText.trim();
 

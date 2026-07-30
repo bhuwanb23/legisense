@@ -6,9 +6,11 @@ import {
   deleteDocument,
   getDocumentStatus,
   getDocumentAnalysis,
+  translateDocument,
 } from '../controllers/documentController';
 import { uploadFile, handleMulterError } from '../middleware/fileValidator';
 import { authenticate } from '../middleware/auth';
+import { aiRateLimiter } from '../middleware/rateLimiter';
 
 const router = Router();
 
@@ -25,6 +27,7 @@ router.post(
 router.get('/:id', authenticate, getDocument);
 router.get('/:id/status', authenticate, getDocumentStatus);
 router.get('/:id/analysis', authenticate, getDocumentAnalysis);
+router.post('/:id/translate', authenticate, aiRateLimiter, translateDocument);
 router.delete('/:id', authenticate, deleteDocument);
 
 export default router;

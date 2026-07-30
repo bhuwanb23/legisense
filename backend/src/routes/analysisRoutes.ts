@@ -11,6 +11,8 @@ import {
   lookupGlossary,
   classifyEndpoint,
   confirmDocumentType,
+  getJurisdictionFlags,
+  getStateConflicts,
 } from '../controllers/analysisController';
 import { authenticate } from '../middleware/auth';
 import { aiRateLimiter } from '../middleware/rateLimiter';
@@ -25,6 +27,8 @@ router.get('/:documentId/risks/:category', authenticate, getRisksByCategory);
 router.get('/:documentId/summary', authenticate, getSummary);
 router.get('/:documentId/risk-dashboard', authenticate, getRiskDashboard);
 router.get('/:documentId/plain-english', authenticate, getPlainEnglish);
+router.get('/:documentId/jurisdiction-flags', authenticate, getJurisdictionFlags);
+router.get('/:documentId/state-conflicts', authenticate, getStateConflicts);
 router.get('/:documentId/classify', authenticate, classifyEndpoint);
 router.post('/:documentId/confirm-type', authenticate, confirmDocumentType);
 router.post('/glossary', authenticate, lookupGlossary);
