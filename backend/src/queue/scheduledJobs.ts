@@ -68,7 +68,7 @@ export async function checkDeadlineReminders(): Promise<void> {
     ).all();
 
     for (const deadline of active) {
-      const enabled = deadline.reminderEnabled !== false && deadline.reminderEnabled !== 0;
+      const enabled = deadline.reminderEnabled !== false;
       if (!enabled) continue;
 
       let times: number[] = [7, 3, 1];
