@@ -25,6 +25,7 @@ export const analysisResults = sqliteTable('analysis_results', {
   aiModelUsed: text('ai_model_used'),
   analysisLanguage: text('analysis_language'),
   translations: text('translations').default('{}'),
+  counterClausesStatus: text('counter_clauses_status').default('skipped'),
   createdAt: text('created_at').notNull().default(sql`(datetime('now'))`),
 });
 
