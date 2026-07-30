@@ -1,23 +1,44 @@
 import { Request, Response, NextFunction } from 'express';
-import { getDb } from '../config/database';
-import { documents, chatMessages, analysisResults } from '../models';
+import { getDb, persistNow } from '../config/database';
+import { documents, chatMessages, clauses } from '../models';
 import { sql } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
 import { NotFoundError, BadRequestError } from '../utils/errors';
-import { persistNow } from '../config/database';
+import { retrieveRelevantClauses, chunkRawText } from '../services/chatRetrievalService';
+import { resolveCitations } from '../services/citationParserService';
+import { callWithFallback } from '../services/ai';
+import { CHAT_SYSTEM_PROMPT, buildChatUserPrompt } from '../prompts/chatPrompt';
+import { emitToUser } from '../services/socketService';
 
-// TODO: Replace stub with real Gemini integration
-async function generateAiResponse(
-  _documentText: string,
-  _conversationHistory: Array<{ role: string; message: string }>,
-  _userMessage: string
-): Promise<{ response: string; tokensUsed: number }> {
-  // Stub: returns a placeholder response
-  // Real implementation will call Gemini with document context + conversation history
-  return {
-    response: 'This is a placeholder response. AI chat integration requires Gemini API setup with document context.',
-    tokensUsed: 0,
-  };
+const NOT_FOUND_RESPONSE =
+  'This question cannot be answered from the document. The available clauses do not contain enough information about this topic.';
+
+export async function createChatSession(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    if (!req.user) {
+      res.status(401).json({ success: false, error: { message: 'Unauthorized', code: 'AUTH_REQUIRED', statusCode: 401 } });
+      return;
+    }
+
+    const documentId = Number(req.params.documentId);
+    const db = getDb();
+    const docRows = db.select().from(documents).where(
+      sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = 0`
+    ).all();
+    if (!docRows[0]) throw new NotFoundError('Document');
+
+    const sessionId = uuidv4();
+    res.status(201).json({
+      success: true,
+      data: { sessionId, documentId },
+    });
+  } catch (err) {
+    next(err);
+  }
 }
 
 export async function sendMessage(
@@ -47,46 +68,121 @@ export async function sendMessage(
     if (!docRows[0]) throw new NotFoundError('Document');
 
     const sessionIdFinal = sessionId || uuidv4();
+    const userMessage = message.trim();
 
-    // Save user message
     db.insert(chatMessages).values({
       documentId,
       userId: req.user.id,
       sessionId: sessionIdFinal,
       role: 'user',
-      message: message.trim(),
+      message: userMessage,
     }).run();
 
-    // Get conversation history for context
     const historyRows = db.select().from(chatMessages).where(
       sql`${chatMessages.documentId} = ${documentId} AND ${chatMessages.sessionId} = ${sessionIdFinal}`
     ).all();
 
-    const conversationHistory = historyRows.map((m) => ({
-      role: m.role,
-      message: m.message,
-    }));
+    const conversationHistory = historyRows
+      .sort((a, b) => a.createdAt.localeCompare(b.createdAt))
+      .map((m) => ({ role: m.role, message: m.message }));
 
-    // Get document text for AI context
-    const docText = docRows[0].rawText || '';
+    const clauseRows = db.select().from(clauses).where(
+      sql`${clauses.documentId} = ${documentId}`
+    ).all();
 
-    // Generate AI response
+    let retrieved = retrieveRelevantClauses(userMessage, clauseRows, 5, 0.15);
+
+    // Fallback: if no clauses, try raw text chunks as pseudo-context (no citations)
+    if (retrieved.length === 0 && clauseRows.length === 0 && docRows[0].rawText) {
+      const chunks = chunkRawText(docRows[0].rawText);
+      retrieved = chunks.map((c, i) => ({
+        id: -1 - i,
+        clauseNumber: i + 1,
+        clauseTitle: c.title,
+        originalText: c.text,
+        plainEnglishText: null,
+        pageNumber: null,
+        score: 0.2,
+      })).slice(0, 5);
+    }
+
     const startTime = Date.now();
-    const aiResult = await generateAiResponse(docText, conversationHistory, message.trim());
+    let responseText = NOT_FOUND_RESPONSE;
+    let tokensUsed = 0;
+    let citedClauses: ReturnType<typeof resolveCitations>['citedClauses'] = [];
+    let citationConfidence: 'high' | 'low' = 'low';
+    let citedClauseIds: number[] = [];
+    let citedPages: Array<number | null> = [];
+
+    if (retrieved.length === 0) {
+      // keep not-found
+    } else {
+      const contextBlocks = retrieved.map((c) =>
+        `Clause ${c.clauseNumber ?? '?'}: ${c.clauseTitle || 'Untitled'}\nPage: ${c.pageNumber ?? 'N/A'}\nText: ${c.originalText.slice(0, 700)}`
+      ).join('\n\n');
+
+      try {
+        const { response } = await callWithFallback({
+          systemPrompt: CHAT_SYSTEM_PROMPT,
+          userPrompt: buildChatUserPrompt(
+            contextBlocks,
+            userMessage,
+            conversationHistory.slice(0, -1),
+          ),
+          temperature: 0.3,
+        }, { task: 'chat' });
+
+        responseText = response.text;
+        tokensUsed = response.usage?.totalTokens || 0;
+
+        const resolved = resolveCitations(responseText, clauseRows);
+        citedClauses = resolved.citedClauses;
+        citationConfidence = resolved.citationConfidence;
+        citedClauseIds = resolved.citedClauseIds;
+        citedPages = resolved.citedPages;
+
+        // If AI answered without usable citations and retrieval existed, append citations from top hits
+        if (citationConfidence === 'low' && clauseRows.length > 0 && retrieved.some((r) => r.id > 0)) {
+          const top = retrieved.filter((r) => r.id > 0).slice(0, 2);
+          const autoCite = top.map((c) =>
+            `[Clause ${c.clauseNumber} — ${c.clauseTitle || 'Untitled'}] (Page ${c.pageNumber ?? 'N/A'})`
+          ).join('\n');
+          if (!responseText.includes('[Clause')) {
+            responseText = `${responseText.trim()}\n\n${autoCite}`;
+          }
+          const resolved2 = resolveCitations(responseText, clauseRows);
+          citedClauses = resolved2.citedClauses;
+          citationConfidence = resolved2.citationConfidence;
+          citedClauseIds = resolved2.citedClauseIds;
+          citedPages = resolved2.citedPages;
+        }
+      } catch (err) {
+        console.error('Chat AI failed:', err instanceof Error ? err.message : err);
+        responseText = 'Sorry, I could not generate an answer right now. Please try again.';
+      }
+    }
+
     const responseTime = (Date.now() - startTime) / 1000;
 
-    // Save assistant message
     db.insert(chatMessages).values({
       documentId,
       userId: req.user.id,
       sessionId: sessionIdFinal,
       role: 'assistant',
-      message: aiResult.response,
-      tokensUsed: aiResult.tokensUsed,
+      message: responseText,
+      citedClauseIds: JSON.stringify(citedClauseIds),
+      citedPages: JSON.stringify(citedPages),
+      tokensUsed,
       responseTime,
     }).run();
 
     persistNow();
+
+    emitToUser(req.user.id, 'chat:message', {
+      documentId,
+      sessionId: sessionIdFinal,
+      role: 'assistant',
+    });
 
     res.status(201).json({
       success: true,
@@ -94,15 +190,22 @@ export async function sendMessage(
         sessionId: sessionIdFinal,
         message: {
           role: 'assistant',
-          content: aiResult.response,
-          tokensUsed: aiResult.tokensUsed,
+          content: responseText,
+          tokensUsed,
           responseTime,
+          citedClauses,
+          citationConfidence,
         },
       },
     });
   } catch (err) {
     next(err);
   }
+}
+
+function parseJsonField(raw: string | null): unknown {
+  if (!raw) return [];
+  try { return JSON.parse(raw); } catch { return []; }
 }
 
 export async function getHistory(
@@ -136,17 +239,12 @@ export async function getHistory(
     }
 
     const messages = db.select().from(chatMessages).where(whereClause).all();
+    const clauseRows = db.select().from(clauses).where(sql`${clauses.documentId} = ${documentId}`).all();
+    const clauseById = new Map(clauseRows.map((c) => [c.id, c]));
 
-    // Sort by createdAt ascending and paginate
-    const sorted = messages.sort((a, b) => {
-      if (a.createdAt < b.createdAt) return -1;
-      if (a.createdAt > b.createdAt) return 1;
-      return 0;
-    });
-
+    const sorted = messages.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
     const paginated = sorted.slice(offset, offset + limit);
 
-    // Group by session
     const sessions = new Map<string, typeof paginated>();
     for (const msg of paginated) {
       const existing = sessions.get(msg.sessionId) || [];
@@ -157,15 +255,35 @@ export async function getHistory(
     res.json({
       success: true,
       data: {
-        messages: paginated.map((m) => ({
-          id: m.id,
-          role: m.role,
-          content: m.message,
-          sessionId: m.sessionId,
-          tokensUsed: m.tokensUsed,
-          responseTime: m.responseTime,
-          createdAt: m.createdAt,
-        })),
+        messages: paginated.map((m) => {
+          const ids = parseJsonField(m.citedClauseIds) as number[];
+          const citedClauses = Array.isArray(ids)
+            ? ids.map((id) => {
+                const c = clauseById.get(id);
+                if (!c) return null;
+                return {
+                  clause_id: c.id,
+                  clause_number: c.clauseNumber,
+                  title: c.clauseTitle,
+                  page: c.pageNumber,
+                  snippet: (c.originalText || '').slice(0, 160),
+                };
+              }).filter(Boolean)
+            : [];
+
+          return {
+            id: m.id,
+            role: m.role,
+            content: m.message,
+            sessionId: m.sessionId,
+            tokensUsed: m.tokensUsed,
+            responseTime: m.responseTime,
+            citedClauseIds: ids,
+            citedPages: parseJsonField(m.citedPages),
+            citedClauses,
+            createdAt: m.createdAt,
+          };
+        }),
         sessions: Array.from(sessions.keys()),
         pagination: {
           page,

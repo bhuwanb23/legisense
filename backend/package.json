@@ -16,7 +16,8 @@
     "test:documents": "tsx tests/documents.test.ts",
     "test:jurisdiction": "tsx tests/jurisdiction-language.test.ts && tsx tests/jurisdiction-check.integration.ts",
     "test:f12-f15": "tsx tests/f12-f15.test.ts && tsx tests/f12-f15.integration.ts",
-    "test:all": "tsx tests/models.test.ts && tsx tests/middleware.test.ts && tsx tests/pipeline.test.ts && tsx tests/auth.test.ts && tsx tests/documents.test.ts && tsx tests/queue-upgrade.test.ts && tsx tests/socket.test.ts && tsx tests/services.test.ts && tsx tests/chunk.test.ts && tsx tests/jurisdiction-language.test.ts && tsx tests/f12-f15.test.ts"
+    "test:f16-f19": "tsx tests/f16-f19.test.ts && tsx tests/f16-f19.integration.ts",
+    "test:all": "tsx tests/models.test.ts && tsx tests/middleware.test.ts && tsx tests/pipeline.test.ts && tsx tests/auth.test.ts && tsx tests/documents.test.ts && tsx tests/queue-upgrade.test.ts && tsx tests/socket.test.ts && tsx tests/services.test.ts && tsx tests/chunk.test.ts && tsx tests/jurisdiction-language.test.ts && tsx tests/f12-f15.test.ts && tsx tests/f16-f19.test.ts"
   },
   "engines": {
     "node": ">=20"
@@ -39,6 +40,7 @@
     "jsonwebtoken": "^9.0.3",
     "mammoth": "^1.12.0",
     "multer": "^2.2.0",
+    "nodemailer": "^9.0.3",
     "openai": "^7.1.0",
     "pdf-parse": "^2.4.5",
     "sharp": "^0.35.3",
@@ -55,6 +57,7 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/multer": "^2.2.0",
     "@types/node": "^22.10.5",
+    "@types/nodemailer": "^8.0.1",
     "@types/uuid": "^10.0.0",
     "drizzle-kit": "^0.31.10",
     "socket.io-client": "^4.8.3",

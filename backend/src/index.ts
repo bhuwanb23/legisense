@@ -127,9 +127,14 @@ async function start() {
     urgency_level TEXT,
     reminder_sent INTEGER NOT NULL DEFAULT 0,
     reminder_date TEXT,
+    reminder_enabled INTEGER NOT NULL DEFAULT 1,
+    reminder_times TEXT DEFAULT '[7,3,1]',
+    reminder_channels TEXT DEFAULT '["push"]',
+    reminder_sent_days TEXT DEFAULT '[]',
     is_completed INTEGER NOT NULL DEFAULT 0,
     is_dismissed INTEGER NOT NULL DEFAULT 0,
     calendar_exported INTEGER NOT NULL DEFAULT 0,
+    exported_at TEXT,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
   )`);
 
@@ -326,6 +331,11 @@ async function start() {
   try { db.run(sql`ALTER TABLE deadlines ADD COLUMN consequence_if_missed TEXT`); } catch {}
   try { db.run(sql`ALTER TABLE deadlines ADD COLUMN is_recurring INTEGER NOT NULL DEFAULT 0`); } catch {}
   try { db.run(sql`ALTER TABLE deadlines ADD COLUMN parent_id INTEGER`); } catch {}
+  try { db.run(sql`ALTER TABLE deadlines ADD COLUMN exported_at TEXT`); } catch {}
+  try { db.run(sql`ALTER TABLE deadlines ADD COLUMN reminder_enabled INTEGER NOT NULL DEFAULT 1`); } catch {}
+  try { db.run(sql`ALTER TABLE deadlines ADD COLUMN reminder_times TEXT DEFAULT '[7,3,1]'`); } catch {}
+  try { db.run(sql`ALTER TABLE deadlines ADD COLUMN reminder_channels TEXT DEFAULT '["push"]'`); } catch {}
+  try { db.run(sql`ALTER TABLE deadlines ADD COLUMN reminder_sent_days TEXT DEFAULT '[]'`); } catch {}
 
   const existingTerms = db.select({ count: sql<number>`count(*)` }).from(glossary).all();
   if (Number(existingTerms[0]?.count ?? 0) === 0) {

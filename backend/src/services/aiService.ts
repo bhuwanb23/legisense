@@ -135,9 +135,10 @@ export async function chatWithDocument(
   documentText: string,
   message: string,
   context?: { pageCount?: number; language?: string },
+  history: Array<{ role: string; message: string }> = [],
 ): Promise<string> {
   const systemPrompt = CHAT_SYSTEM_PROMPT;
-  const userPrompt = buildChatUserPrompt(documentText, message);
+  const userPrompt = buildChatUserPrompt(documentText, message, history);
 
   const { response } = await callWithFallback(
     { systemPrompt, userPrompt, temperature: 0.5 },

@@ -19,9 +19,14 @@ export const deadlines = sqliteTable('deadlines', {
   parentId: integer('parent_id'),
   reminderSent: integer('reminder_sent', { mode: 'boolean' }).notNull().default(false),
   reminderDate: text('reminder_date'),
+  reminderEnabled: integer('reminder_enabled', { mode: 'boolean' }).notNull().default(true),
+  reminderTimes: text('reminder_times').default('[7,3,1]'),
+  reminderChannels: text('reminder_channels').default('["push"]'),
+  reminderSentDays: text('reminder_sent_days').default('[]'),
   isCompleted: integer('is_completed', { mode: 'boolean' }).notNull().default(false),
   isDismissed: integer('is_dismissed', { mode: 'boolean' }).notNull().default(false),
   calendarExported: integer('calendar_exported', { mode: 'boolean' }).notNull().default(false),
+  exportedAt: text('exported_at'),
   createdAt: text('created_at').notNull().default(sql`(datetime('now'))`),
 });
 
