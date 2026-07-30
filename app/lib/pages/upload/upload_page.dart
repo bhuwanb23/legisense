@@ -25,26 +25,35 @@ class _UploadPageState extends State<UploadPage>
   PendingUpload? _pending;
   bool _heroPressed = false;
 
-  late final AnimationController _enter;
+  AnimationController? _enter;
 
   @override
   void initState() {
     super.initState();
-    _enter = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 820),
-    )..forward();
+    _ensureEnter();
   }
 
   @override
   void dispose() {
-    _enter.dispose();
+    _enter?.dispose();
     super.dispose();
+  }
+
+  /// Survives hot reload when `late` fields were added without re-running initState.
+  AnimationController _ensureEnter() {
+    final existing = _enter;
+    if (existing != null) return existing;
+    final created = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 820),
+    )..forward();
+    _enter = created;
+    return created;
   }
 
   Animation<double> _fade(double begin, double end) {
     return CurvedAnimation(
-      parent: _enter,
+      parent: _ensureEnter(),
       curve: Interval(begin, end, curve: Curves.easeOutCubic),
     );
   }
@@ -55,7 +64,7 @@ class _UploadPageState extends State<UploadPage>
       end: Offset.zero,
     ).animate(
       CurvedAnimation(
-        parent: _enter,
+        parent: _ensureEnter(),
         curve: Interval(begin, end, curve: Curves.easeOutCubic),
       ),
     );
@@ -329,6 +338,7 @@ class _UploadPageState extends State<UploadPage>
 
   @override
   Widget build(BuildContext context) {
+    _ensureEnter();
     final pending = _pending;
 
     return ColoredBox(
