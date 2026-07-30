@@ -3,14 +3,24 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../data/analysis_mock.dart';
+import '../../data/auth_constants.dart';
+import '../../mappers/analysis_mapper.dart';
+import '../../repositories/documents_repository.dart';
+import '../../services/api_exception.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/analysis/risk_style.dart';
 import '../../widgets/home/app_page_header.dart';
 import '../chat/chat_page.dart';
+import '../deadlines/deadlines_page.dart';
 import 'clause_breakdown_page.dart';
+import 'counter_clauses_page.dart';
 import 'document_summary_page.dart';
+import 'flagged_clauses_page.dart';
+import 'jurisdiction_flags_page.dart';
+import 'missing_clauses_page.dart';
 import 'plain_language_page.dart';
 import 'risk_dashboard_page.dart';
+import 'state_conflicts_page.dart';
 
 /// Document analysis — analytics dashboard DNA (Sale / Product grammar).
 class AnalysisResultsPage extends StatefulWidget {
@@ -25,13 +35,21 @@ class AnalysisResultsPage extends StatefulWidget {
 class _AnalysisResultsPageState extends State<AnalysisResultsPage> {
   int _mode = 0; // 0 = Overview, 1 = Clauses
   String _clauseFilter = 'all';
+  late AnalysisResult _result;
+  bool _translating = false;
 
-  AnalysisResult get r => widget.result;
+  AnalysisResult get r => _result;
 
   static const _accent = AppColors.ink;
   static const _accentDeep = Color(0xFF2C2C2C);
   static const _green = Color(0xFF22C55E);
   static const _canvas = AppColors.bg;
+
+  @override
+  void initState() {
+    super.initState();
+    _result = widget.result;
+  }
 
   void _toast(String msg) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -42,6 +60,70 @@ class _AnalysisResultsPageState extends State<AnalysisResultsPage> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       ),
     );
+  }
+
+  void _push(Widget page) {
+    Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => page));
+  }
+
+  Future<void> _translate() async {
+    final id = r.documentId;
+    if (id == null || _translating) return;
+    final picked = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: ListView(
+            shrinkWrap: true,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+                child: Text(
+                  'Translate document',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              for (final lang in ProfileOptions.languages)
+                ListTile(
+                  title: Text(lang.label),
+                  onTap: () => Navigator.pop(context, lang.code),
+                ),
+            ],
+          ),
+        );
+      },
+    );
+    if (picked == null || !mounted) return;
+    setState(() => _translating = true);
+    try {
+      await DocumentsRepository().translate(id, targetLanguage: picked);
+      final bundle = await DocumentsRepository().getAnalysis(id);
+      if (!mounted) return;
+      setState(() {
+        _result = AnalysisMapper.fromBundle(
+          bundle,
+          documentId: id,
+          documentTitle: r.documentTitle,
+        );
+        _translating = false;
+      });
+      _toast('Translation applied.');
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() => _translating = false);
+      _toast(e.message);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _translating = false);
+      _toast(e.toString());
+    }
   }
 
   List<AnalysisClause> get _filteredClauses {
@@ -97,6 +179,7 @@ class _AnalysisResultsPageState extends State<AnalysisResultsPage> {
                       accent: _accent,
                       accentDeep: _accentDeep,
                       green: _green,
+                      translating: _translating,
                       onOpenSummary: () {
                         Navigator.of(context).push(
                           MaterialPageRoute<void>(
@@ -118,6 +201,48 @@ class _AnalysisResultsPageState extends State<AnalysisResultsPage> {
                           ),
                         );
                       },
+                      onOpenJurisdiction: r.documentId == null
+                          ? null
+                          : () => _push(
+                                JurisdictionFlagsPage(
+                                  documentId: r.documentId!,
+                                ),
+                              ),
+                      onOpenStateConflicts: r.documentId == null
+                          ? null
+                          : () => _push(
+                                StateConflictsPage(
+                                  documentId: r.documentId!,
+                                ),
+                              ),
+                      onOpenFlagged: r.documentId == null
+                          ? null
+                          : () => _push(
+                                FlaggedClausesPage(
+                                  documentId: r.documentId!,
+                                ),
+                              ),
+                      onOpenMissing: r.documentId == null
+                          ? null
+                          : () => _push(
+                                MissingClausesPage(
+                                  documentId: r.documentId!,
+                                ),
+                              ),
+                      onOpenCounter: r.documentId == null
+                          ? null
+                          : () => _push(
+                                CounterClausesPage(
+                                  documentId: r.documentId!,
+                                ),
+                              ),
+                      onOpenDeadlines: r.documentId == null
+                          ? null
+                          : () => _push(
+                                DeadlinesPage(documentId: r.documentId),
+                              ),
+                      onTranslate:
+                          r.documentId == null ? null : _translate,
                     )
                   : _ClausesBody(
                       result: r,
@@ -265,6 +390,14 @@ class _OverviewBody extends StatelessWidget {
     required this.onOpenSummary,
     required this.onOpenRisk,
     required this.onOpenPlain,
+    this.translating = false,
+    this.onOpenJurisdiction,
+    this.onOpenStateConflicts,
+    this.onOpenFlagged,
+    this.onOpenMissing,
+    this.onOpenCounter,
+    this.onOpenDeadlines,
+    this.onTranslate,
   });
 
   final AnalysisResult result;
@@ -272,9 +405,17 @@ class _OverviewBody extends StatelessWidget {
   final Color accent;
   final Color accentDeep;
   final Color green;
+  final bool translating;
   final VoidCallback onOpenSummary;
   final VoidCallback onOpenRisk;
   final VoidCallback onOpenPlain;
+  final VoidCallback? onOpenJurisdiction;
+  final VoidCallback? onOpenStateConflicts;
+  final VoidCallback? onOpenFlagged;
+  final VoidCallback? onOpenMissing;
+  final VoidCallback? onOpenCounter;
+  final VoidCallback? onOpenDeadlines;
+  final VoidCallback? onTranslate;
 
   @override
   Widget build(BuildContext context) {
@@ -685,7 +826,106 @@ class _OverviewBody extends StatelessWidget {
             ),
           ),
         ),
+        if (result.documentId != null) ...[
+          const SizedBox(height: 8),
+          _WhiteCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Explore analysis',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.ink,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                if (onOpenJurisdiction != null)
+                  _NavTile(
+                    icon: Icons.gavel_rounded,
+                    label: 'Jurisdiction flags',
+                    onTap: onOpenJurisdiction!,
+                  ),
+                if (onOpenStateConflicts != null)
+                  _NavTile(
+                    icon: Icons.map_outlined,
+                    label: 'State conflicts',
+                    onTap: onOpenStateConflicts!,
+                  ),
+                if (onOpenFlagged != null)
+                  _NavTile(
+                    icon: Icons.flag_outlined,
+                    label: 'Flagged clauses',
+                    onTap: onOpenFlagged!,
+                  ),
+                if (onOpenMissing != null)
+                  _NavTile(
+                    icon: Icons.playlist_add_check_rounded,
+                    label: 'Missing clauses',
+                    onTap: onOpenMissing!,
+                  ),
+                if (onOpenCounter != null)
+                  _NavTile(
+                    icon: Icons.swap_horiz_rounded,
+                    label: 'Counter clauses',
+                    onTap: onOpenCounter!,
+                  ),
+                if (onOpenDeadlines != null)
+                  _NavTile(
+                    icon: Icons.event_outlined,
+                    label: 'Deadlines',
+                    onTap: onOpenDeadlines!,
+                  ),
+                if (onTranslate != null)
+                  _NavTile(
+                    icon: Icons.translate_rounded,
+                    label: translating ? 'Translating…' : 'Translate',
+                    onTap: translating ? () {} : onTranslate!,
+                  ),
+              ],
+            ),
+          ),
+        ],
       ],
+    );
+  }
+}
+
+class _NavTile extends StatelessWidget {
+  const _NavTile({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      leading: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          color: AppColors.chip,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Icon(icon, size: 20, color: AppColors.ink),
+      ),
+      title: Text(
+        label,
+        style: GoogleFonts.plusJakartaSans(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+          color: AppColors.ink,
+        ),
+      ),
+      trailing: const Icon(Icons.chevron_right_rounded, color: AppColors.mute),
+      onTap: onTap,
     );
   }
 }
