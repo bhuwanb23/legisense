@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:lottie/lottie.dart';
 
 import '../../services/session_prefs.dart';
+import '../../services/socket_service.dart';
 import '../../theme/app_theme.dart';
 import '../auth/login_page.dart';
 import '../onboarding/onboarding_page.dart';
@@ -43,6 +44,9 @@ class _SplashPageState extends State<SplashPage>
 
   Future<void> _scheduleRedirect() async {
     final destination = await SessionPrefs.resolveSplashDestination();
+    if (destination == SplashDestination.home) {
+      await SocketService.instance.connect();
+    }
     if (!mounted) return;
     _redirectTimer = Timer(_redirectDelay, () {
       if (!mounted || _navigated) return;

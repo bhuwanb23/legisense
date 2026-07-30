@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../data/auth_constants.dart';
+import '../../repositories/auth_repository.dart';
 import '../../services/session_prefs.dart';
 import '../../theme/app_theme.dart';
 
@@ -85,14 +86,34 @@ class _EditProfilePageState extends State<EditProfilePage> {
       return;
     }
     setState(() => _loading = true);
-    await SessionPrefs.setDisplayName(name);
-    await SessionPrefs.setUserEmail(_email.text.trim());
-    await SessionPrefs.setProfession(_profession);
-    await SessionPrefs.setLanguage(_language);
-    await SessionPrefs.setStateRegion(_state);
-    if (!mounted) return;
-    setState(() => _loading = false);
-    Navigator.of(context).pop(true);
+    try {
+      final auth = AuthRepository();
+      await auth.updateProfile(
+        fullName: name,
+        profession: _profession,
+      );
+      await auth.updatePreferences(
+        preferredLanguage: _language,
+        defaultJurisdiction: _state,
+      );
+      await SessionPrefs.setDisplayName(name);
+      await SessionPrefs.setUserEmail(_email.text.trim());
+      await SessionPrefs.setProfession(_profession);
+      await SessionPrefs.setLanguage(_language);
+      await SessionPrefs.setStateRegion(_state);
+      if (!mounted) return;
+      Navigator.of(context).pop(true);
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(e.toString()),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
   }
 
   void _discard() => Navigator.of(context).pop(false);

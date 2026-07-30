@@ -35,16 +35,25 @@ class _ScanPreviewPageState extends State<ScanPreviewPage> {
   Future<void> _usePhoto() async {
     if (_ocrRunning) return;
     setState(() => _ocrRunning = true);
-    await Future<void>.delayed(const Duration(milliseconds: 1600));
-    if (!mounted) return;
-    Navigator.of(context).pop(
-      PendingUpload(
-        source: UploadSource.scan,
-        title: 'Scanned document',
-        detail: 'OCR text extracted (demo)',
-        localPath: _path,
-      ),
-    );
+    try {
+      final bytes = await XFile(_path).readAsBytes();
+      if (!mounted) return;
+      Navigator.of(context).pop(
+        PendingUpload(
+          source: UploadSource.scan,
+          title: 'Scanned document',
+          detail: 'Ready for OCR',
+          localPath: _path,
+          bytes: bytes,
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _ocrRunning = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not read image')),
+      );
+    }
   }
 
   @override

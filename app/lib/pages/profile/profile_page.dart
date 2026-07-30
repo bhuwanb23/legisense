@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../services/session_prefs.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/home/app_page_header.dart';
+import '../../repositories/auth_repository.dart';
 import '../auth/login_page.dart';
 import 'edit_profile_page.dart';
 
@@ -91,7 +92,7 @@ class _ProfilePageState extends State<ProfilePage> {
       ),
     );
     if (ok != true) return;
-    await SessionPrefs.setLoggedIn(false);
+    await AuthRepository().logout();
     if (!mounted) return;
     Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
       MaterialPageRoute<void>(builder: (_) => const LoginPage()),

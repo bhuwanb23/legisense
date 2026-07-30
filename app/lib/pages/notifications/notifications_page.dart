@@ -1,12 +1,34 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../data/analysis_mock.dart';
-import '../../data/dashboard_mock.dart';
-import '../../data/notifications_mock.dart';
+import '../../mappers/analysis_mapper.dart';
+import '../../repositories/notifications_repository.dart';
+import '../../services/api_exception.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/home/app_page_header.dart';
-import '../analysis/analysis_results_page.dart';
+import '../analysis/analysis_loader_page.dart';
+
+class _NotifItem {
+  const _NotifItem({
+    required this.id,
+    required this.type,
+    required this.title,
+    required this.body,
+    required this.timeLabel,
+    required this.createdAt,
+    required this.unread,
+    this.documentId,
+  });
+
+  final int id;
+  final String type;
+  final String title;
+  final String body;
+  final String timeLabel;
+  final DateTime? createdAt;
+  final bool unread;
+  final int? documentId;
+}
 
 class NotificationsPage extends StatefulWidget {
   const NotificationsPage({super.key});
@@ -16,77 +38,145 @@ class NotificationsPage extends StatefulWidget {
 }
 
 class _NotificationsPageState extends State<NotificationsPage> {
+  final _repo = NotificationsRepository();
   String _filter = 'all'; // all | unread
-  late List<AppNotification> _items =
-      List<AppNotification>.from(NotificationsMock.items);
+  List<_NotifItem> _items = [];
+  bool _loading = true;
+  String? _error;
 
-  List<AppNotification> get _visible {
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  _NotifItem _map(Map<String, dynamic> raw) {
+    final id = (raw['id'] as num?)?.toInt() ?? 0;
+    final title = raw['title']?.toString() ?? 'Notification';
+    final body =
+        (raw['body'] ?? raw['message'] ?? '').toString();
+    final createdRaw = raw['createdAt']?.toString();
+    final created = DateTime.tryParse(createdRaw ?? '');
+    final isRead = raw['isRead'] == true || raw['isRead'] == 1;
+    final unread = raw['unread'] == true
+        ? true
+        : raw.containsKey('isRead')
+            ? !isRead
+            : true;
+    final docRaw = raw['documentId'] ?? raw['docId'];
+    final documentId = docRaw is num
+        ? docRaw.toInt()
+        : int.tryParse(docRaw?.toString() ?? '');
+    return _NotifItem(
+      id: id,
+      type: (raw['type'] ?? 'tip').toString(),
+      title: title,
+      body: body,
+      timeLabel: AnalysisMapper.relativeDate(createdRaw),
+      createdAt: created,
+      unread: unread,
+      documentId: documentId,
+    );
+  }
+
+  Future<void> _load() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final result = await _repo.list();
+      if (!mounted) return;
+      setState(() {
+        _items = result.items.map(_map).toList();
+        _loading = false;
+      });
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = e.message;
+        _loading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = e.toString();
+        _loading = false;
+      });
+    }
+  }
+
+  List<_NotifItem> get _visible {
     if (_filter == 'unread') {
       return _items.where((n) => n.unread).toList();
     }
     return _items;
   }
 
-  void _markAllRead() {
-    setState(() {
-      _items = _items
-          .map(
-            (n) => AppNotification(
-              id: n.id,
-              type: n.type,
-              title: n.title,
-              body: n.body,
-              timeLabel: n.timeLabel,
-              group: n.group,
-              docId: n.docId,
-              unread: false,
-            ),
-          )
-          .toList();
-    });
+  Future<void> _markAllRead() async {
+    try {
+      await _repo.markAllRead();
+      if (!mounted) return;
+      setState(() {
+        _items = _items
+            .map(
+              (n) => _NotifItem(
+                id: n.id,
+                type: n.type,
+                title: n.title,
+                body: n.body,
+                timeLabel: n.timeLabel,
+                createdAt: n.createdAt,
+                unread: false,
+                documentId: n.documentId,
+              ),
+            )
+            .toList();
+      });
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message), backgroundColor: AppColors.error),
+      );
+    }
   }
 
-  void _markRead(AppNotification n) {
-    setState(() {
-      _items = _items
-          .map(
-            (x) => x.id == n.id
-                ? AppNotification(
-                    id: x.id,
-                    type: x.type,
-                    title: x.title,
-                    body: x.body,
-                    timeLabel: x.timeLabel,
-                    group: x.group,
-                    docId: x.docId,
-                    unread: false,
-                  )
-                : x,
-          )
-          .toList();
-    });
+  Future<void> _markRead(_NotifItem n) async {
+    if (!n.unread) return;
+    try {
+      await _repo.markRead(n.id);
+      if (!mounted) return;
+      setState(() {
+        _items = _items
+            .map(
+              (x) => x.id == n.id
+                  ? _NotifItem(
+                      id: x.id,
+                      type: x.type,
+                      title: x.title,
+                      body: x.body,
+                      timeLabel: x.timeLabel,
+                      createdAt: x.createdAt,
+                      unread: false,
+                      documentId: x.documentId,
+                    )
+                  : x,
+            )
+            .toList();
+      });
+    } catch (_) {}
   }
 
-  void _open(AppNotification n) {
-    _markRead(n);
-    if (n.docId != null) {
-      MockDocument? doc;
-      for (final d in DashboardMock.recentDocuments) {
-        if (d.id == n.docId) {
-          doc = d;
-          break;
-        }
-      }
-      if (doc != null) {
-        Navigator.of(context).push(
-          MaterialPageRoute<void>(
-            builder: (_) => AnalysisResultsPage(
-              result: AnalysisResult.fromMockDocument(doc!),
-            ),
-          ),
-        );
-        return;
-      }
+  Future<void> _open(_NotifItem n) async {
+    await _markRead(n);
+    if (!mounted) return;
+    if (n.documentId != null) {
+      Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => AnalysisLoaderPage(documentId: n.documentId!),
+        ),
+      );
+      return;
     }
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -98,35 +188,48 @@ class _NotificationsPageState extends State<NotificationsPage> {
     );
   }
 
-  ({IconData icon, Color tint, Color fg}) _style(NotificationType type) {
-    return switch (type) {
-      NotificationType.deadline => (
-          icon: Icons.event_outlined,
-          tint: AppColors.riskMediumBg,
-          fg: AppColors.riskMedium,
-        ),
-      NotificationType.analysisReady => (
-          icon: Icons.fact_check_outlined,
-          tint: AppColors.chip,
-          fg: AppColors.ink,
-        ),
-      NotificationType.tip => (
-          icon: Icons.lightbulb_outline_rounded,
-          tint: const Color(0xFFE8F5E9),
-          fg: AppColors.riskLow,
-        ),
-    };
+  ({IconData icon, Color tint, Color fg}) _style(String type) {
+    final t = type.toLowerCase();
+    if (t.contains('deadline')) {
+      return (
+        icon: Icons.event_outlined,
+        tint: AppColors.riskMediumBg,
+        fg: AppColors.riskMedium,
+      );
+    }
+    if (t.contains('analysis') || t.contains('ready')) {
+      return (
+        icon: Icons.fact_check_outlined,
+        tint: AppColors.chip,
+        fg: AppColors.ink,
+      );
+    }
+    return (
+      icon: Icons.lightbulb_outline_rounded,
+      tint: const Color(0xFFE8F5E9),
+      fg: AppColors.riskLow,
+    );
+  }
+
+  String _groupKey(_NotifItem n) {
+    final dt = n.createdAt;
+    if (dt == null) return 'earlier';
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final day = DateTime(dt.year, dt.month, dt.day);
+    final diff = today.difference(day).inDays;
+    if (diff == 0) return 'today';
+    if (diff == 1) return 'yesterday';
+    return 'earlier';
   }
 
   @override
   Widget build(BuildContext context) {
     final visible = _visible;
-    final today =
-        visible.where((n) => n.group == NotificationGroup.today).toList();
+    final today = visible.where((n) => _groupKey(n) == 'today').toList();
     final yesterday =
-        visible.where((n) => n.group == NotificationGroup.yesterday).toList();
-    final earlier =
-        visible.where((n) => n.group == NotificationGroup.earlier).toList();
+        visible.where((n) => _groupKey(n) == 'yesterday').toList();
+    final earlier = visible.where((n) => _groupKey(n) == 'earlier').toList();
 
     return ColoredBox(
       color: AppColors.bg,
@@ -174,32 +277,56 @@ class _NotificationsPageState extends State<NotificationsPage> {
               ),
             ),
             Expanded(
-              child: visible.isEmpty
-                  ? Center(
-                      child: Text(
-                        'No notifications',
-                        style: GoogleFonts.plusJakartaSans(
-                          color: AppColors.mute,
-                        ),
-                      ),
-                    )
-                  : ListView(
-                      padding: const EdgeInsets.fromLTRB(24, 12, 24, 110),
-                      children: [
-                        if (today.isNotEmpty) ...[
-                          _SectionLabel('Today'),
-                          ...today.map(_card),
-                        ],
-                        if (yesterday.isNotEmpty) ...[
-                          _SectionLabel('Yesterday'),
-                          ...yesterday.map(_card),
-                        ],
-                        if (earlier.isNotEmpty) ...[
-                          _SectionLabel('Earlier'),
-                          ...earlier.map(_card),
-                        ],
-                      ],
-                    ),
+              child: _loading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _error != null
+                      ? Center(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                _error!,
+                                style: GoogleFonts.plusJakartaSans(
+                                  color: AppColors.mute,
+                                ),
+                              ),
+                              TextButton(
+                                onPressed: _load,
+                                child: const Text('Retry'),
+                              ),
+                            ],
+                          ),
+                        )
+                      : visible.isEmpty
+                          ? Center(
+                              child: Text(
+                                'No notifications',
+                                style: GoogleFonts.plusJakartaSans(
+                                  color: AppColors.mute,
+                                ),
+                              ),
+                            )
+                          : RefreshIndicator(
+                              onRefresh: _load,
+                              child: ListView(
+                                padding:
+                                    const EdgeInsets.fromLTRB(24, 12, 24, 110),
+                                children: [
+                                  if (today.isNotEmpty) ...[
+                                    _SectionLabel('Today'),
+                                    ...today.map(_card),
+                                  ],
+                                  if (yesterday.isNotEmpty) ...[
+                                    _SectionLabel('Yesterday'),
+                                    ...yesterday.map(_card),
+                                  ],
+                                  if (earlier.isNotEmpty) ...[
+                                    _SectionLabel('Earlier'),
+                                    ...earlier.map(_card),
+                                  ],
+                                ],
+                              ),
+                            ),
             ),
           ],
         ),
@@ -207,7 +334,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
     );
   }
 
-  Widget _card(AppNotification n) {
+  Widget _card(_NotifItem n) {
     final style = _style(n.type);
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),

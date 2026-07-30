@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../data/analysis_mock.dart';
 import '../../data/dashboard_mock.dart';
+import '../../mappers/analysis_mapper.dart';
+import '../../repositories/documents_repository.dart';
+import '../../services/api_exception.dart';
 import '../../services/session_prefs.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/home/app_page_header.dart';
-import '../analysis/analysis_results_page.dart';
+import '../analysis/analysis_loader_page.dart';
 
-/// Documents library — PDF-reader style workbench (studied DNA).
+/// Documents library — live DocumentsRepository feed.
 class DocumentsPage extends StatefulWidget {
   const DocumentsPage({super.key, this.onOpenUpload});
 
@@ -20,23 +22,57 @@ class DocumentsPage extends StatefulWidget {
 
 class _DocumentsPageState extends State<DocumentsPage> {
   final _search = TextEditingController();
+  final _repo = DocumentsRepository();
   String _filter = 'all';
   String _name = 'Reader';
-  late final List<MockDocument> _docs =
-      List<MockDocument>.from(DashboardMock.recentDocuments);
+  List<MockDocument> _docs = [];
+  bool _loading = true;
+  String? _error;
 
-  static const _categories = <({String id, String label, Color tint, Color fg, IconData icon})>[
-    (id: 'all', label: 'All', tint: Color(0xFFFFF3CD), fg: Color(0xFFE6A700), icon: Icons.folder_rounded),
-    (id: 'nda', label: 'NDA', tint: Color(0xFFFFE5E5), fg: Color(0xFFE53935), icon: Icons.picture_as_pdf_rounded),
-    (id: 'lease', label: 'Lease', tint: Color(0xFFE3F2FD), fg: Color(0xFF1E88E5), icon: Icons.description_rounded),
-    (id: 'employment', label: 'Job', tint: Color(0xFFE8F5E9), fg: Color(0xFF43A047), icon: Icons.work_rounded),
-    (id: 'loan', label: 'Loan', tint: Color(0xFFFFF3E0), fg: Color(0xFFFB8C00), icon: Icons.account_balance_rounded),
+  static const _categories =
+      <({String id, String label, Color tint, Color fg, IconData icon})>[
+    (
+      id: 'all',
+      label: 'All',
+      tint: Color(0xFFFFF3CD),
+      fg: Color(0xFFE6A700),
+      icon: Icons.folder_rounded,
+    ),
+    (
+      id: 'nda',
+      label: 'NDA',
+      tint: Color(0xFFFFE5E5),
+      fg: Color(0xFFE53935),
+      icon: Icons.picture_as_pdf_rounded,
+    ),
+    (
+      id: 'lease',
+      label: 'Lease',
+      tint: Color(0xFFE3F2FD),
+      fg: Color(0xFF1E88E5),
+      icon: Icons.description_rounded,
+    ),
+    (
+      id: 'employment',
+      label: 'Job',
+      tint: Color(0xFFE8F5E9),
+      fg: Color(0xFF43A047),
+      icon: Icons.work_rounded,
+    ),
+    (
+      id: 'loan',
+      label: 'Loan',
+      tint: Color(0xFFFFF3E0),
+      fg: Color(0xFFFB8C00),
+      icon: Icons.account_balance_rounded,
+    ),
   ];
 
   @override
   void initState() {
     super.initState();
     _loadName();
+    _loadDocs();
   }
 
   Future<void> _loadName() async {
@@ -55,6 +91,33 @@ class _DocumentsPageState extends State<DocumentsPage> {
     });
   }
 
+  Future<void> _loadDocs() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final apiDocs = await _repo.list();
+      if (!mounted) return;
+      setState(() {
+        _docs = apiDocs.map(AnalysisMapper.toMockDocument).toList();
+        _loading = false;
+      });
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = e.message;
+        _loading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = e.toString();
+        _loading = false;
+      });
+    }
+  }
+
   @override
   void dispose() {
     _search.dispose();
@@ -71,7 +134,13 @@ class _DocumentsPageState extends State<DocumentsPage> {
   List<MockDocument> get _visible {
     var list = _filter == 'all'
         ? List<MockDocument>.from(_docs)
-        : _docs.where((d) => d.typeId == _filter).toList();
+        : _docs
+            .where(
+              (d) =>
+                  d.typeId.contains(_filter) ||
+                  d.typeLabel.toLowerCase().contains(_filter),
+            )
+            .toList();
     final q = _search.text.trim().toLowerCase();
     if (q.isNotEmpty) {
       list = list
@@ -99,7 +168,7 @@ class _DocumentsPageState extends State<DocumentsPage> {
   }
 
   ({Color tint, Color fg, IconData icon}) _styleFor(MockDocument doc) {
-    final match = _categories.where((c) => c.id == doc.typeId);
+    final match = _categories.where((c) => c.id == doc.typeId || doc.typeId.contains(c.id));
     if (match.isNotEmpty) {
       final c = match.first;
       return (tint: c.tint, fg: c.fg, icon: c.icon);
@@ -112,10 +181,13 @@ class _DocumentsPageState extends State<DocumentsPage> {
   }
 
   void _openAnalysis(MockDocument doc) {
+    final id = int.tryParse(doc.id);
+    if (id == null) return;
     Navigator.of(context).push(
       MaterialPageRoute<void>(
-        builder: (_) => AnalysisResultsPage(
-          result: AnalysisResult.fromMockDocument(doc),
+        builder: (_) => AnalysisLoaderPage(
+          documentId: id,
+          titleHint: doc.title,
         ),
       ),
     );
@@ -130,6 +202,23 @@ class _DocumentsPageState extends State<DocumentsPage> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       ),
     );
+  }
+
+  Future<void> _delete(MockDocument doc) async {
+    final id = int.tryParse(doc.id);
+    if (id == null) return;
+    try {
+      await _repo.delete(id);
+      if (!mounted) return;
+      setState(() => _docs.removeWhere((d) => d.id == doc.id));
+      _toast('Removed from library.');
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      _toast(e.message);
+    } catch (e) {
+      if (!mounted) return;
+      _toast(e.toString());
+    }
   }
 
   Future<void> _menuFor(MockDocument doc) async {
@@ -172,10 +261,9 @@ class _DocumentsPageState extends State<DocumentsPage> {
       case 'view':
         _openAnalysis(doc);
       case 'share':
-        _toast('Share for “${doc.title}” comes with backend.');
+        _toast('Share for “${doc.title}” comes soon.');
       case 'delete':
-        setState(() => _docs.removeWhere((d) => d.id == doc.id));
-        _toast('Removed from library (demo).');
+        await _delete(doc);
     }
   }
 
@@ -197,13 +285,13 @@ class _DocumentsPageState extends State<DocumentsPage> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   AppHeaderIconButton(
-                    icon: Icons.note_add_outlined,
-                    onTap: () => widget.onOpenUpload?.call(),
+                    icon: Icons.refresh_rounded,
+                    onTap: _loadDocs,
                   ),
                   const SizedBox(width: 10),
                   AppHeaderIconButton(
-                    icon: Icons.settings_outlined,
-                    onTap: () => _toast('Settings come with the backend.'),
+                    icon: Icons.note_add_outlined,
+                    onTap: () => widget.onOpenUpload?.call(),
                   ),
                 ],
               ),
@@ -302,7 +390,7 @@ class _DocumentsPageState extends State<DocumentsPage> {
                   borderRadius: BorderRadius.circular(22),
                   onTap: () {
                     setState(() => _filter = 'all');
-                    _toast('Showing your latest files.');
+                    _loadDocs();
                   },
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(16, 16, 14, 16),
@@ -391,85 +479,139 @@ class _DocumentsPageState extends State<DocumentsPage> {
                   ),
                   boxShadow: AppShadows.soft,
                 ),
-                child: docs.isEmpty
-                    ? Center(
-                        child: Text(
-                          'No documents match.',
-                          style: GoogleFonts.plusJakartaSans(
-                            color: AppColors.mute,
-                          ),
-                        ),
-                      )
-                    : ListView.separated(
-                        padding: const EdgeInsets.fromLTRB(20, 16, 12, 110),
-                        itemCount: docs.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: 6),
-                        itemBuilder: (context, index) {
-                          final doc = docs[index];
-                          final style = _styleFor(doc);
-                          return InkWell(
-                            onTap: () => _openAnalysis(doc),
-                            borderRadius: BorderRadius.circular(16),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                vertical: 10,
-                                horizontal: 4,
-                              ),
-                              child: Row(
+                child: _loading
+                    ? const Center(child: CircularProgressIndicator())
+                    : _error != null
+                        ? Center(
+                            child: SingleChildScrollView(
+                              padding: const EdgeInsets.all(24),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Container(
-                                    width: 48,
-                                    height: 48,
-                                    decoration: BoxDecoration(
-                                      color: style.tint,
-                                      borderRadius: BorderRadius.circular(14),
-                                    ),
-                                    child: Icon(
-                                      style.icon,
-                                      color: style.fg,
-                                      size: 24,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 14),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          doc.title,
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: GoogleFonts.plusJakartaSans(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w700,
-                                            color: AppColors.ink,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          '${_dateLabel(doc)}  ·  ${_sizeLabel(doc)}',
-                                          style: GoogleFonts.plusJakartaSans(
-                                            fontSize: 12,
-                                            color: AppColors.mute,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  IconButton(
-                                    onPressed: () => _menuFor(doc),
-                                    icon: const Icon(
-                                      Icons.more_vert_rounded,
+                                  Text(
+                                    _error!,
+                                    textAlign: TextAlign.center,
+                                    style: GoogleFonts.plusJakartaSans(
                                       color: AppColors.mute,
                                     ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  TextButton(
+                                    onPressed: _loadDocs,
+                                    child: const Text('Retry'),
                                   ),
                                 ],
                               ),
                             ),
-                          );
-                        },
-                      ),
+                          )
+                        : _docs.isEmpty
+                            ? Center(
+                                child: Text(
+                                  'No documents yet.\nUpload one to get started.',
+                                  textAlign: TextAlign.center,
+                                  style: GoogleFonts.plusJakartaSans(
+                                    color: AppColors.mute,
+                                  ),
+                                ),
+                              )
+                            : docs.isEmpty
+                                ? Center(
+                                    child: Text(
+                                      'No documents match.',
+                                      style: GoogleFonts.plusJakartaSans(
+                                        color: AppColors.mute,
+                                      ),
+                                    ),
+                                  )
+                                : RefreshIndicator(
+                                    onRefresh: _loadDocs,
+                                    child: ListView.separated(
+                                      padding: const EdgeInsets.fromLTRB(
+                                        20,
+                                        16,
+                                        12,
+                                        110,
+                                      ),
+                                      itemCount: docs.length,
+                                      separatorBuilder: (_, __) =>
+                                          const SizedBox(height: 6),
+                                      itemBuilder: (context, index) {
+                                        final doc = docs[index];
+                                        final style = _styleFor(doc);
+                                        return InkWell(
+                                          onTap: () => _openAnalysis(doc),
+                                          borderRadius:
+                                              BorderRadius.circular(16),
+                                          child: Padding(
+                                            padding: const EdgeInsets.symmetric(
+                                              vertical: 10,
+                                              horizontal: 4,
+                                            ),
+                                            child: Row(
+                                              children: [
+                                                Container(
+                                                  width: 48,
+                                                  height: 48,
+                                                  decoration: BoxDecoration(
+                                                    color: style.tint,
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                      14,
+                                                    ),
+                                                  ),
+                                                  child: Icon(
+                                                    style.icon,
+                                                    color: style.fg,
+                                                    size: 24,
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 14),
+                                                Expanded(
+                                                  child: Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    children: [
+                                                      Text(
+                                                        doc.title,
+                                                        maxLines: 1,
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                        style: GoogleFonts
+                                                            .plusJakartaSans(
+                                                          fontSize: 14,
+                                                          fontWeight:
+                                                              FontWeight.w700,
+                                                          color: AppColors.ink,
+                                                        ),
+                                                      ),
+                                                      const SizedBox(height: 4),
+                                                      Text(
+                                                        '${_dateLabel(doc)}  ·  ${_sizeLabel(doc)}',
+                                                        style: GoogleFonts
+                                                            .plusJakartaSans(
+                                                          fontSize: 12,
+                                                          color: AppColors.mute,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                                IconButton(
+                                                  onPressed: () =>
+                                                      _menuFor(doc),
+                                                  icon: const Icon(
+                                                    Icons.more_vert_rounded,
+                                                    color: AppColors.mute,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ),
               ),
             ),
           ],

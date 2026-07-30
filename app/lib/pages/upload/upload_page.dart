@@ -1,9 +1,14 @@
+import 'dart:typed_data';
+
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../models/pending_upload.dart';
+import '../../repositories/documents_repository.dart';
+import '../../services/api_exception.dart';
+import '../../services/session_prefs.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/auth/auth_primary_button.dart';
 import '../../widgets/home/app_page_header.dart';
@@ -20,9 +25,10 @@ class UploadPage extends StatefulWidget {
 
 class _UploadPageState extends State<UploadPage>
     with SingleTickerProviderStateMixin {
-  static const _maxBytes = 20 * 1024 * 1024; // 20 MB
+  static const _maxBytes = 10 * 1024 * 1024; // 10 MB (backend limit)
 
   PendingUpload? _pending;
+  bool _uploading = false;
   bool _heroPressed = false;
 
   AnimationController? _enter;
@@ -74,12 +80,17 @@ class _UploadPageState extends State<UploadPage>
     final result = await FilePicker.pickFiles(
       type: FileType.custom,
       allowedExtensions: const ['pdf', 'doc', 'docx', 'txt'],
-      withData: false,
+      withData: true,
     );
     if (result == null || result.files.isEmpty || !mounted) return;
     final file = result.files.single;
     if (file.size > _maxBytes) {
-      _toast('File must be under 20 MB');
+      _toast('File must be under 10 MB');
+      return;
+    }
+    final bytes = file.bytes;
+    if (bytes == null) {
+      _toast('Could not read file bytes');
       return;
     }
     setState(() {
@@ -88,6 +99,7 @@ class _UploadPageState extends State<UploadPage>
         title: file.name,
         detail: _formatSize(file.size),
         localPath: file.path,
+        bytes: bytes,
       );
     });
   }
@@ -197,6 +209,7 @@ class _UploadPageState extends State<UploadPage>
         source: UploadSource.paste,
         title: 'Pasted document',
         detail: '${text.length} characters',
+        text: text,
       );
     });
   }
@@ -294,18 +307,63 @@ class _UploadPageState extends State<UploadPage>
         source: UploadSource.url,
         title: uri.host.isEmpty ? url : uri.host,
         detail: url,
+        url: url,
       );
     });
   }
 
-  void _proceed() {
+  Future<void> _proceed() async {
     final upload = _pending;
-    if (upload == null) return;
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => ProcessingPage(upload: upload),
-      ),
-    );
+    if (upload == null || _uploading) return;
+    setState(() => _uploading = true);
+    try {
+      final country = await SessionPrefs.countryCode();
+      final state = await SessionPrefs.stateRegion();
+      final repo = DocumentsRepository();
+      late final dynamic result;
+      switch (upload.source) {
+        case UploadSource.file:
+        case UploadSource.scan:
+          final bytes = upload.bytes;
+          if (bytes == null) {
+            _toast('Missing file data — pick again');
+            return;
+          }
+          result = await repo.uploadFile(
+            filename: upload.title,
+            bytes: Uint8List.fromList(bytes),
+            sourceType:
+                upload.source == UploadSource.scan ? 'scan' : 'file',
+            countryCode: country,
+            stateCode: state,
+          );
+        case UploadSource.paste:
+          result = await repo.uploadPaste(
+            text: upload.text ?? '',
+            title: upload.title,
+            countryCode: country,
+            stateCode: state,
+          );
+        case UploadSource.url:
+          result = await repo.uploadUrl(
+            url: upload.url ?? '',
+            title: upload.title,
+            countryCode: country,
+            stateCode: state,
+          );
+      }
+      if (!mounted) return;
+      final withId = upload.copyWith(documentId: result.documentId as int);
+      Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => ProcessingPage(upload: withId),
+        ),
+      );
+    } on ApiException catch (e) {
+      _toast(e.message);
+    } finally {
+      if (mounted) setState(() => _uploading = false);
+    }
   }
 
   void _toast(String msg) {
@@ -482,7 +540,8 @@ class _UploadPageState extends State<UploadPage>
                     child: AuthPrimaryButton(
                       label: 'Proceed',
                       showArrow: true,
-                      onPressed: pending == null ? null : _proceed,
+                      loading: _uploading,
+                      onPressed: pending == null || _uploading ? null : _proceed,
                     ),
                   ),
                 ),
@@ -589,7 +648,7 @@ class _DropHero extends StatelessWidget {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      'PDF, DOC, DOCX, TXT  ·  max 20 MB',
+                      'PDF, DOC, DOCX, TXT  ·  max 10 MB',
                       style: GoogleFonts.plusJakartaSans(
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
@@ -796,7 +855,7 @@ class _TrustStrip extends StatelessWidget {
         children: [
           _TrustRow(
             icon: Icons.sd_storage_outlined,
-            text: 'Max file size: 20 MB',
+            text: 'Max file size: 10 MB',
           ),
           const SizedBox(height: 10),
           _TrustRow(
