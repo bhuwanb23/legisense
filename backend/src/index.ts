@@ -216,11 +216,18 @@ async function start() {
   try { db.run(sql`ALTER TABLE analysis_results ADD COLUMN breach_scenarios TEXT`); } catch {}
 
   const existingTerms = db.select({ count: sql<number>`count(*)` }).from(glossary).all();
-  if (existingTerms[0]?.count === 0) {
+  if (Number(existingTerms[0]?.count ?? 0) === 0) {
+    let seeded = 0;
     for (const entry of legalGlossary) {
-      db.insert(glossary).values({ term: entry.term, definition: entry.definition, category: entry.category }).run();
+      try {
+        db.insert(glossary).values({ term: entry.term, definition: entry.definition, category: entry.category }).run();
+        seeded++;
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        if (!message.includes('UNIQUE constraint failed')) throw err;
+      }
     }
-    console.log(`Seeded ${legalGlossary.length} legal glossary terms.`);
+    console.log(`Seeded ${seeded} legal glossary terms.`);
   }
 
   console.log('All 12 tables created/verified.');
