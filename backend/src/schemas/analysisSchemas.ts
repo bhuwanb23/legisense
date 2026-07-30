@@ -57,7 +57,11 @@ export const DeadlineSchema = z.object({
   title: z.string().min(1),
   description: z.string().min(1),
   dueDate: z.string().min(1),
-  recurrence: z.enum(['one-time', 'monthly', 'yearly', 'quarterly']),
+  recurrence: z.enum(['one-time', 'monthly', 'yearly', 'quarterly']).default('one-time'),
+  deadlineType: z.enum(['payment', 'renewal', 'notice', 'termination', 'review', 'milestone', 'compliance', 'other']).default('other'),
+  partyResponsible: z.string().optional().default(''),
+  consequenceIfMissed: z.string().optional().default(''),
+  isRecurring: z.boolean().optional().default(false),
 });
 
 export const AnalysisOutputSchema = z.object({

@@ -1,5 +1,5 @@
 import { getDb, persistNow } from '../config/database';
-import { documents, analysisResults, clauses, riskItems, deadlines, usageLogs, users } from '../models';
+import { documents, analysisResults, clauses, riskItems, usageLogs, users } from '../models';
 import { sql } from 'drizzle-orm';
 import { readFile } from '../storage/fileStorage';
 import { extractText } from './textExtractor';
@@ -17,6 +17,10 @@ import { detectLanguage, toIso6391 } from './languageDetectionService';
 import { getLanguageName } from '../config/languages';
 import { runJurisdictionCheck } from './jurisdictionCheckService';
 import { runConflictDetection } from './conflictDetectionService';
+import { runRiskPatternScan } from './riskPatternService';
+import { runMissingClauseCheck } from './missingClauseService';
+import { buildDeadlineInputsFromAnalysis, saveDeadlinesForDocument } from './deadlineService';
+import { counterClausesQueue } from '../queue';
 
 const MAX_RETRIES = 3;
 const CHUNK_TOKEN_LIMIT = 500_000;
@@ -137,13 +141,28 @@ export async function analyzeDocumentPipeline(documentId: number, userId: number
 
     const analysisId = saveAnalysisResults(documentId, doc.userId, analysisResult, totalTime, modelUsed, preferredLanguage);
 
-    autoCreateDeadlines(documentId, doc.userId, analysisResult.criticalDates);
-
     if (analysisId) {
+      emitToUser(doc.userId, 'analysis:progress', { documentId, progress: 91, stage: 'Saving deadlines...' });
+      saveDeadlinesForDocument(documentId, doc.userId, buildDeadlineInputsFromAnalysis(analysisResult));
+
       emitToUser(doc.userId, 'analysis:progress', { documentId, progress: 93, stage: 'Running jurisdiction compliance check...' });
       const flags = await runJurisdictionCheck(documentId, analysisId, analysisResult.documentType || classification.type);
-      emitToUser(doc.userId, 'analysis:progress', { documentId, progress: 96, stage: 'Detecting cross-state conflicts...' });
+      emitToUser(doc.userId, 'analysis:progress', { documentId, progress: 94, stage: 'Detecting cross-state conflicts...' });
       await runConflictDetection(documentId, analysisId, flags);
+
+      emitToUser(doc.userId, 'analysis:progress', { documentId, progress: 95, stage: 'Scanning risky clause patterns...' });
+      await runRiskPatternScan(documentId, analysisId);
+
+      emitToUser(doc.userId, 'analysis:progress', { documentId, progress: 96, stage: 'Checking missing clauses...' });
+      await runMissingClauseCheck(
+        documentId,
+        analysisId,
+        analysisResult.documentType || classification.type,
+        analysisResult.missingClauses || [],
+      );
+
+      db.run(sql`UPDATE ${analysisResults} SET counter_clauses_status = 'pending' WHERE id = ${analysisId}`);
+      await counterClausesQueue.add('generate-counters', { documentId, userId: doc.userId });
     }
 
     updateDocumentStatus(documentId, 'analyzed');
@@ -385,6 +404,7 @@ function saveAnalysisResults(
     aiModelUsed: modelUsed || 'unknown',
     analysisLanguage,
     translations: '{}',
+    counterClausesStatus: 'pending',
   }).run();
 
   const analysisRows = db.select().from(analysisResults).where(sql`${analysisResults.documentId} = ${documentId}`).all();
@@ -423,67 +443,9 @@ function saveAnalysisResults(
     }
 
     generateRiskItemsFromClauses(analysisId);
-
-    for (const deadline of ai.deadlines) {
-      db.insert(deadlines).values({
-        documentId,
-        userId,
-        title: deadline.title,
-        description: deadline.description,
-        dueDate: deadline.dueDate,
-        recurrence: deadline.recurrence,
-      }).run();
-    }
   }
 
   return analysisId ?? null;
-}
-
-function calculateUrgencyLevel(dateStr: string): string {
-  if (!dateStr || dateStr.length < 10) return 'medium';
-
-  const parsed = new Date(dateStr);
-  if (isNaN(parsed.getTime())) return 'medium';
-
-  const now = new Date();
-  const diffMs = parsed.getTime() - now.getTime();
-  const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-
-  if (diffDays < 0) return 'overdue';
-  if (diffDays <= 7) return 'critical';
-  if (diffDays <= 30) return 'high';
-  if (diffDays <= 90) return 'medium';
-  return 'low';
-}
-
-function autoCreateDeadlines(documentId: number, userId: number, criticalDates: AnalysisOutput['criticalDates']): void {
-  const db = getDb();
-
-  for (const cd of criticalDates) {
-    const existing = db.select().from(deadlines).where(
-      sql`${deadlines.documentId} = ${documentId} AND ${deadlines.title} = ${cd.label}`
-    ).all();
-
-    const urgencyLevel = calculateUrgencyLevel(cd.date);
-
-    if (existing.length > 0) {
-      db.run(sql`UPDATE ${deadlines} SET
-        description = ${cd.importance || cd.label},
-        due_date = ${cd.date},
-        urgency_level = ${urgencyLevel}
-        WHERE id = ${existing[0].id}`);
-    } else {
-      db.insert(deadlines).values({
-        documentId,
-        userId,
-        title: cd.label,
-        description: cd.importance || cd.label,
-        dueDate: cd.date,
-        urgencyLevel,
-        recurrence: 'one-time',
-      }).run();
-    }
-  }
 }
 
 function severityFromScore(score: number): string {
