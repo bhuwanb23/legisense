@@ -12,6 +12,7 @@ import '../../services/socket_service.dart';
 import '../../theme/app_theme.dart';
 import '../analysis/analysis_results_page.dart';
 import '../analysis/confirm_type_page.dart';
+import '../shell/main_shell.dart';
 
 class ProcessingPage extends StatefulWidget {
   const ProcessingPage({super.key, required this.upload});
@@ -27,6 +28,7 @@ class _ProcessingPageState extends State<ProcessingPage> {
   String _stage = 'Starting…';
   int _progress = 5;
   bool _cancelled = false;
+  bool _finished = false;
   Timer? _poll;
   String? _error;
 
@@ -124,12 +126,14 @@ class _ProcessingPageState extends State<ProcessingPage> {
   }
 
   Future<void> _finish() async {
-    if (_cancelled || !mounted) return;
+    if (_cancelled || _finished || !mounted) return;
+    _finished = true;
     _poll?.cancel();
     final id = _docId!;
     try {
       final bundle = await _docs.getAnalysis(id);
       if (!bundle.hasAnalysis) {
+        _finished = false;
         setState(() => _stage = 'Waiting for analysis payload…');
         return;
       }
@@ -139,12 +143,19 @@ class _ProcessingPageState extends State<ProcessingPage> {
         documentId: id,
         documentTitle: widget.upload.title,
       );
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute<void>(
-          builder: (_) => AnalysisResultsPage(result: result),
-        ),
-      );
+      final shell = ShellScope.maybeOf(context);
+      if (shell != null) {
+        shell.openAnalysisOnDocuments(result);
+      } else {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute<void>(
+            builder: (_) => AnalysisResultsPage(result: result),
+          ),
+          (route) => route.isFirst,
+        );
+      }
     } on ApiException catch (e) {
+      _finished = false;
       if (!mounted) return;
       setState(() => _error = e.message);
     }

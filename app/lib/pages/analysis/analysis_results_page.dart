@@ -1377,27 +1377,15 @@ class _BottomActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.fromLTRB(
-        16,
-        10,
-        16,
-        88 + MediaQuery.paddingOf(context).bottom,
-      ),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.ink.withValues(alpha: 0.06),
-            blurRadius: 16,
-            offset: const Offset(0, -4),
-          ),
-        ],
-      ),
+    // Dock is ~68 + 16 bottom inset; keep actions just above it — no tall white slab.
+    const dockClearance = 88.0;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, dockClearance),
       child: Row(
         children: [
           Expanded(
-            flex: 2,
+            flex: 3,
             child: Material(
               color: Colors.transparent,
               child: InkWell(
@@ -1408,6 +1396,7 @@ class _BottomActions extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: AppColors.ink,
                     borderRadius: BorderRadius.circular(AppRadii.pill),
+                    boxShadow: AppShadows.soft,
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -1417,6 +1406,7 @@ class _BottomActions extends StatelessWidget {
                       const SizedBox(width: 8),
                       Text(
                         'Chat',
+                        maxLines: 1,
                         style: GoogleFonts.plusJakartaSans(
                           fontWeight: FontWeight.w700,
                           color: Colors.white,
@@ -1430,41 +1420,77 @@ class _BottomActions extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           Expanded(
-            child: OutlinedButton(
-              onPressed: onExport,
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.ink,
-                side: const BorderSide(color: AppColors.rule),
-                minimumSize: const Size.fromHeight(48),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppRadii.pill),
-                ),
-              ),
-              child: Text(
-                'Export',
-                style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
-              ),
+            flex: 2,
+            child: _ActionChip(
+              label: 'Export',
+              icon: Icons.ios_share_rounded,
+              onTap: onExport,
             ),
           ),
           const SizedBox(width: 8),
           Expanded(
-            child: OutlinedButton(
-              onPressed: onCompare,
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.ink,
-                side: const BorderSide(color: AppColors.rule),
-                minimumSize: const Size.fromHeight(48),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppRadii.pill),
-                ),
-              ),
-              child: Text(
-                'Compare',
-                style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
-              ),
+            flex: 2,
+            child: _ActionChip(
+              label: 'Compare',
+              icon: Icons.compare_arrows_rounded,
+              onTap: onCompare,
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _ActionChip extends StatelessWidget {
+  const _ActionChip({
+    required this.label,
+    required this.icon,
+    required this.onTap,
+  });
+
+  final String label;
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppColors.surface,
+      borderRadius: BorderRadius.circular(AppRadii.pill),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(AppRadii.pill),
+        onTap: onTap,
+        child: Container(
+          height: 48,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppRadii.pill),
+            border: Border.all(color: AppColors.rule),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 6),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 16, color: AppColors.ink),
+              const SizedBox(width: 4),
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  softWrap: false,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.ink,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

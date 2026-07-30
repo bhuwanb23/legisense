@@ -1,12 +1,40 @@
 import 'package:flutter/material.dart';
 
+import '../../data/analysis_mock.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/home/app_bottom_nav.dart';
+import '../analysis/analysis_results_page.dart';
 import '../documents/documents_page.dart';
 import '../home/home_page.dart';
 import '../notifications/notifications_page.dart';
 import '../profile/profile_page.dart';
 import '../upload/upload_page.dart';
+
+/// Access shell tab navigation from nested routes (Upload → Analysis, etc.).
+class ShellScope extends InheritedWidget {
+  const ShellScope({
+    super.key,
+    required this.goToTab,
+    required this.openAnalysisOnDocuments,
+    required super.child,
+  });
+
+  final void Function(int index) goToTab;
+  final void Function(AnalysisResult result) openAnalysisOnDocuments;
+
+  static ShellScope? maybeOf(BuildContext context) {
+    return context.dependOnInheritedWidgetOfExactType<ShellScope>();
+  }
+
+  static ShellScope of(BuildContext context) {
+    final scope = maybeOf(context);
+    assert(scope != null, 'ShellScope not found');
+    return scope!;
+  }
+
+  @override
+  bool updateShouldNotify(ShellScope oldWidget) => false;
+}
 
 /// Post-auth root — floating dock + per-tab nested navigators
 /// so Analysis / Edit Profile / Processing keep the navbar.
@@ -36,6 +64,21 @@ class _MainShellState extends State<MainShell> {
     setState(() => _index = index);
   }
 
+  /// Clear upload stack, switch to Documents, open analysis there.
+  /// Back from analysis returns to the Documents list — never the loader.
+  void openAnalysisOnDocuments(AnalysisResult result) {
+    _navKeys[2].currentState?.popUntil((route) => route.isFirst);
+    _navKeys[1].currentState?.popUntil((route) => route.isFirst);
+    setState(() => _index = 1);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _navKeys[1].currentState?.push(
+        MaterialPageRoute<void>(
+          builder: (_) => AnalysisResultsPage(result: result),
+        ),
+      );
+    });
+  }
+
   Future<bool> _onWillPop() async {
     final nav = _navKeys[_index].currentState;
     if (nav != null && nav.canPop()) {
@@ -62,50 +105,54 @@ class _MainShellState extends State<MainShell> {
 
   @override
   Widget build(BuildContext context) {
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, _) async {
-        if (didPop) return;
-        final shouldLeave = await _onWillPop();
-        if (shouldLeave && context.mounted) {
-          Navigator.of(context).maybePop();
-        }
-      },
-      child: Scaffold(
-        backgroundColor: AppColors.bg,
-        extendBody: true,
-        body: IndexedStack(
-          index: _index,
-          children: [
-            _tabNavigator(
-              tabIndex: 0,
-              root: HomePage(
-                onOpenUpload: () => goToTab(2),
-                onOpenDocuments: () => goToTab(1),
-                onOpenNotifications: () => goToTab(3),
+    return ShellScope(
+      goToTab: goToTab,
+      openAnalysisOnDocuments: openAnalysisOnDocuments,
+      child: PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, _) async {
+          if (didPop) return;
+          final shouldLeave = await _onWillPop();
+          if (shouldLeave && context.mounted) {
+            Navigator.of(context).maybePop();
+          }
+        },
+        child: Scaffold(
+          backgroundColor: AppColors.bg,
+          extendBody: true,
+          body: IndexedStack(
+            index: _index,
+            children: [
+              _tabNavigator(
+                tabIndex: 0,
+                root: HomePage(
+                  onOpenUpload: () => goToTab(2),
+                  onOpenDocuments: () => goToTab(1),
+                  onOpenNotifications: () => goToTab(3),
+                ),
               ),
-            ),
-            _tabNavigator(
-              tabIndex: 1,
-              root: DocumentsPage(onOpenUpload: () => goToTab(2)),
-            ),
-            _tabNavigator(
-              tabIndex: 2,
-              root: const UploadPage(),
-            ),
-            _tabNavigator(
-              tabIndex: 3,
-              root: const NotificationsPage(),
-            ),
-            _tabNavigator(
-              tabIndex: 4,
-              root: const ProfilePage(),
-            ),
-          ],
-        ),
-        bottomNavigationBar: AppBottomNav(
-          currentIndex: _index,
-          onChanged: goToTab,
+              _tabNavigator(
+                tabIndex: 1,
+                root: DocumentsPage(onOpenUpload: () => goToTab(2)),
+              ),
+              _tabNavigator(
+                tabIndex: 2,
+                root: const UploadPage(),
+              ),
+              _tabNavigator(
+                tabIndex: 3,
+                root: const NotificationsPage(),
+              ),
+              _tabNavigator(
+                tabIndex: 4,
+                root: const ProfilePage(),
+              ),
+            ],
+          ),
+          bottomNavigationBar: AppBottomNav(
+            currentIndex: _index,
+            onChanged: goToTab,
+          ),
         ),
       ),
     );

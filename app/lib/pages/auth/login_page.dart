@@ -14,7 +14,6 @@ import '../../widgets/auth/auth_social_button.dart';
 import '../../widgets/auth/auth_text_field.dart';
 import '../shell/main_shell.dart';
 import 'forgot_password_page.dart';
-import 'profile_setup_page.dart';
 import 'register_page.dart';
 
 class LoginPage extends StatefulWidget {
@@ -72,15 +71,13 @@ class _LoginPageState extends State<LoginPage> {
         }
         if (profile.profession != null) {
           await SessionPrefs.setProfession(profile.profession);
-          await SessionPrefs.setProfileComplete(true);
         }
       } catch (_) {}
 
-      final profileDone = await SessionPrefs.isProfileComplete();
+      await SessionPrefs.setProfileComplete(true);
       if (!mounted) return;
-      final next = profileDone ? const MainShell() : const ProfileSetupPage();
       Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute<void>(builder: (_) => next),
+        MaterialPageRoute<void>(builder: (_) => const MainShell()),
         (_) => false,
       );
     } on ApiException catch (e) {

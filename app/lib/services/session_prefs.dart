@@ -148,8 +148,7 @@ class SessionPrefs {
 
   static Future<SplashDestination> resolveSplashDestination() async {
     final loggedIn = await isLoggedIn();
-    final profileDone = await isProfileComplete();
-    if (loggedIn && profileDone) return SplashDestination.home;
+    if (loggedIn) return SplashDestination.home;
 
     final onboardingSeen = await hasSeenOnboarding();
     if (onboardingSeen) return SplashDestination.login;

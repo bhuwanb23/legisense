@@ -12,8 +12,8 @@ import '../../widgets/auth/auth_primary_button.dart';
 import '../../widgets/auth/auth_scaffold.dart';
 import '../../widgets/auth/auth_social_button.dart';
 import '../../widgets/auth/auth_text_field.dart';
+import '../shell/main_shell.dart';
 import 'login_page.dart';
-import 'profile_setup_page.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -49,9 +49,10 @@ class _RegisterPageState extends State<RegisterPage> {
       );
       await SessionPrefs.setOnboardingSeen();
       await SessionPrefs.setDisplayName(_fullName.text.trim());
+      await SessionPrefs.setProfileComplete(true);
       if (!mounted) return;
       Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute<void>(builder: (_) => const ProfileSetupPage()),
+        MaterialPageRoute<void>(builder: (_) => const MainShell()),
         (_) => false,
       );
     } on ApiException catch (e) {

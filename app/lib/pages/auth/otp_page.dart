@@ -12,7 +12,6 @@ import '../../widgets/auth/auth_illustration.dart';
 import '../../widgets/auth/auth_primary_button.dart';
 import '../../widgets/auth/auth_scaffold.dart';
 import '../shell/main_shell.dart';
-import 'profile_setup_page.dart';
 
 class OtpPage extends StatefulWidget {
   const OtpPage({
@@ -88,15 +87,12 @@ class _OtpPageState extends State<OtpPage> {
     });
 
     await SessionPrefs.setLoggedIn(true);
+    await SessionPrefs.setProfileComplete(true);
     if (!mounted) return;
     setState(() => _loading = false);
 
-    final next = widget.isNewUser
-        ? const ProfileSetupPage()
-        : const MainShell();
-
     Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute<void>(builder: (_) => next),
+      MaterialPageRoute<void>(builder: (_) => const MainShell()),
       (_) => false,
     );
   }
