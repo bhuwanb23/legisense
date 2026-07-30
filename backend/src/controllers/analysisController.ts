@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { getDb } from '../config/database';
-import { documents, analysisResults, clauses, riskItems, deadlines, glossary, jurisdictionFlags } from '../models';
+import { documents, analysisResults, clauses, riskItems, deadlines, glossary, jurisdictionFlags, clauseRiskFlags, riskPatterns, communityRiskFeedback } from '../models';
 import { sql } from 'drizzle-orm';
 import { analysisQueue } from '../queue';
 import { NotFoundError, BadRequestError } from '../utils/errors';
@@ -9,6 +9,7 @@ import { getTypeEntry, getValidTypes } from '../data/documentTypes';
 import { getFilteredStateConflicts } from '../services/conflictDetectionService';
 import { parseUserJurisdiction } from '../services/jurisdictionCheckService';
 import { users } from '../models';
+import { persistNow } from '../config/database';
 
 function applyJurisdictionToDocument(
   documentId: number,
@@ -729,6 +730,275 @@ export async function getStateConflicts(
         total: conflicts.length,
       },
     });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function getFlaggedClauses(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    if (!req.user) {
+      res.status(401).json({ success: false, error: { message: 'Unauthorized', code: 'AUTH_REQUIRED', statusCode: 401 } });
+      return;
+    }
+
+    const documentId = Number(req.params.documentId);
+    const db = getDb();
+    const docRows = db.select().from(documents).where(
+      sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = 0`
+    ).all();
+    if (!docRows[0]) throw new NotFoundError('Document');
+
+    const flags = db.select().from(clauseRiskFlags).where(
+      sql`${clauseRiskFlags.documentId} = ${documentId}`
+    ).all();
+    const patterns = db.select().from(riskPatterns).all();
+    const patternById = new Map(patterns.map((p) => [p.id, p]));
+    const clauseRows = db.select().from(clauses).where(sql`${clauses.documentId} = ${documentId}`).all();
+    const clauseById = new Map(clauseRows.map((c) => [c.id, c]));
+
+    const byClause = new Map<number, {
+      clause: typeof clauseRows[0];
+      flags: Array<Record<string, unknown>>;
+    }>();
+
+    for (const f of flags) {
+      const clause = clauseById.get(f.clauseId);
+      if (!clause) continue;
+      const pattern = patternById.get(f.patternId);
+      const entry = byClause.get(f.clauseId) || { clause, flags: [] };
+      entry.flags.push({
+        id: f.id,
+        match_type: f.matchType,
+        match_confidence: f.matchConfidence,
+        flagged_text_snippet: f.flaggedTextSnippet,
+        pattern: pattern ? {
+          id: pattern.id,
+          name: pattern.patternName,
+          category: pattern.patternCategory,
+          severity: pattern.severity,
+          explanation: pattern.explanation,
+          recommendation: pattern.recommendation,
+        } : null,
+      });
+      byClause.set(f.clauseId, entry);
+    }
+
+    const flagged = [...byClause.values()].map((v) => ({
+      id: v.clause.id,
+      clauseNumber: v.clause.clauseNumber,
+      clauseTitle: v.clause.clauseTitle,
+      originalText: v.clause.originalText,
+      plainEnglishText: v.clause.plainEnglishText,
+      riskScore: v.clause.riskScore,
+      riskLevel: v.clause.riskLevel,
+      patterns: v.flags,
+    }));
+
+    res.json({ success: true, data: { flaggedClauses: flagged, total: flagged.length } });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function submitRiskFeedback(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    if (!req.user) {
+      res.status(401).json({ success: false, error: { message: 'Unauthorized', code: 'AUTH_REQUIRED', statusCode: 401 } });
+      return;
+    }
+
+    const documentId = Number(req.params.documentId);
+    const clauseId = Number(req.params.clauseId);
+    const feedbackType = String(req.body?.feedback_type || req.body?.feedbackType || '');
+    const patternId = req.body?.pattern_id ?? req.body?.patternId ?? null;
+    const note = req.body?.note ? String(req.body.note) : null;
+
+    if (!['mark_risky', 'mark_safe', 'wrong_flag'].includes(feedbackType)) {
+      throw new BadRequestError('feedback_type must be mark_risky, mark_safe, or wrong_flag');
+    }
+
+    const db = getDb();
+    const docRows = db.select().from(documents).where(
+      sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id}`
+    ).all();
+    if (!docRows[0]) throw new NotFoundError('Document');
+
+    const clauseRows = db.select().from(clauses).where(
+      sql`${clauses.id} = ${clauseId} AND ${clauses.documentId} = ${documentId}`
+    ).all();
+    if (!clauseRows[0]) throw new NotFoundError('Clause');
+
+    db.insert(communityRiskFeedback).values({
+      userId: req.user.id,
+      documentId,
+      clauseId,
+      patternId: patternId ? Number(patternId) : null,
+      feedbackType,
+      note,
+    }).run();
+
+    if (feedbackType === 'mark_risky') {
+      db.run(sql`UPDATE ${clauses} SET is_flagged = 1 WHERE id = ${clauseId}`);
+    }
+
+    persistNow();
+    res.status(201).json({ success: true, data: { message: 'Feedback recorded' } });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function getMissingClausesEndpoint(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    if (!req.user) {
+      res.status(401).json({ success: false, error: { message: 'Unauthorized', code: 'AUTH_REQUIRED', statusCode: 401 } });
+      return;
+    }
+
+    const documentId = Number(req.params.documentId);
+    const db = getDb();
+    const docRows = db.select().from(documents).where(
+      sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = 0`
+    ).all();
+    if (!docRows[0]) throw new NotFoundError('Document');
+
+    const analysisRows = db.select().from(analysisResults).where(
+      sql`${analysisResults.documentId} = ${documentId}`
+    ).all();
+    if (!analysisRows[0]) {
+      res.json({ success: true, data: { missing: { critical: [], recommended: [], optional: [] }, incomplete: [], total: 0 } });
+      return;
+    }
+
+    const raw = safeJsonParse(analysisRows[0].missingClauses);
+    const list = Array.isArray(raw) ? raw : [];
+
+    const structured = list.map((item: unknown) => {
+      if (typeof item === 'string') {
+        return { name: item, importance: 'recommended', why_needed: '', is_confirmed_missing: true, is_incomplete: false };
+      }
+      return item as Record<string, unknown>;
+    });
+
+    const incomplete = structured.filter((i) => i.is_incomplete);
+    const missingOnly = structured.filter((i) => !i.is_incomplete);
+
+    res.json({
+      success: true,
+      data: {
+        missing: {
+          critical: missingOnly.filter((i) => i.importance === 'critical'),
+          recommended: missingOnly.filter((i) => i.importance === 'recommended'),
+          optional: missingOnly.filter((i) => i.importance === 'optional'),
+        },
+        incomplete,
+        total: structured.length,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function getCounterClauses(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    if (!req.user) {
+      res.status(401).json({ success: false, error: { message: 'Unauthorized', code: 'AUTH_REQUIRED', statusCode: 401 } });
+      return;
+    }
+
+    const documentId = Number(req.params.documentId);
+    const db = getDb();
+    const docRows = db.select().from(documents).where(
+      sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = 0`
+    ).all();
+    if (!docRows[0]) throw new NotFoundError('Document');
+
+    const analysisRows = db.select().from(analysisResults).where(
+      sql`${analysisResults.documentId} = ${documentId}`
+    ).all();
+    const status = analysisRows[0]?.counterClausesStatus || 'skipped';
+
+    const clauseRows = db.select().from(clauses).where(sql`${clauses.documentId} = ${documentId}`).all()
+      .filter((c) => {
+        const score = c.riskScore ?? 0;
+        const level = (c.riskLevel || '').toLowerCase();
+        const hasSuggestion = Boolean(c.counterSuggestion && c.counterSuggestion.trim());
+        return hasSuggestion && (score > 50 || level === 'high' || level === 'medium');
+      });
+
+    res.json({
+      success: true,
+      data: {
+        status,
+        clauses: clauseRows.map((c) => ({
+          id: c.id,
+          clauseNumber: c.clauseNumber,
+          clauseTitle: c.clauseTitle,
+          originalText: c.originalText,
+          riskScore: c.riskScore,
+          riskLevel: c.riskLevel,
+          riskReason: c.riskReason,
+          counterSuggestion: c.counterSuggestion,
+          negotiationTips: safeJsonParse(c.negotiationTips),
+          usedCounter: c.usedCounter,
+          copiedAt: c.copiedAt,
+        })),
+        total: clauseRows.length,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function markCounterUsed(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    if (!req.user) {
+      res.status(401).json({ success: false, error: { message: 'Unauthorized', code: 'AUTH_REQUIRED', statusCode: 401 } });
+      return;
+    }
+
+    const documentId = Number(req.params.documentId);
+    const clauseId = Number(req.params.clauseId);
+    const db = getDb();
+
+    const docRows = db.select().from(documents).where(
+      sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id}`
+    ).all();
+    if (!docRows[0]) throw new NotFoundError('Document');
+
+    const clauseRows = db.select().from(clauses).where(
+      sql`${clauses.id} = ${clauseId} AND ${clauses.documentId} = ${documentId}`
+    ).all();
+    if (!clauseRows[0]) throw new NotFoundError('Clause');
+
+    const now = new Date().toISOString();
+    db.run(sql`UPDATE ${clauses} SET used_counter = 1, copied_at = ${now} WHERE id = ${clauseId}`);
+    persistNow();
+
+    res.json({ success: true, data: { clauseId, usedCounter: true, copiedAt: now } });
   } catch (err) {
     next(err);
   }

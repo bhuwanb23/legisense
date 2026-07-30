@@ -7,9 +7,11 @@ import {
   clauses, riskItems, deadlines, chatMessages,
   notifications, sessions, usageLogs, queueJobs,
   glossary, jurisdictions, legalRules, jurisdictionFlags, jurisdictionConflicts,
+  riskPatterns, clauseRiskFlags, communityRiskFeedback, requiredClausesTemplates,
 } from './models';
 import { legalGlossary } from './data/legalGlossary';
 import { seedJurisdictionsAndRules } from './data/seedJurisdictions';
+import { seedRiskAndRequiredLibraries } from './data/seedRiskLibraries';
 import { initSocketIO, closeSocketIO } from './services/socketService';
 import { startQueueSystem, stopQueueSystem } from './queue';
 
@@ -250,8 +252,56 @@ async function start() {
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
   )`);
 
+  await db.run(sql`CREATE TABLE IF NOT EXISTS ${riskPatterns} (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    pattern_name TEXT NOT NULL,
+    pattern_category TEXT NOT NULL,
+    severity TEXT NOT NULL,
+    trigger_keywords TEXT NOT NULL DEFAULT '[]',
+    explanation TEXT NOT NULL,
+    recommendation TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  )`);
+
+  await db.run(sql`CREATE TABLE IF NOT EXISTS ${clauseRiskFlags} (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    clause_id INTEGER NOT NULL REFERENCES clauses(id),
+    document_id INTEGER NOT NULL REFERENCES documents(id),
+    analysis_id INTEGER NOT NULL REFERENCES analysis_results(id),
+    pattern_id INTEGER NOT NULL REFERENCES risk_patterns(id),
+    match_type TEXT NOT NULL,
+    match_confidence REAL NOT NULL DEFAULT 80,
+    flagged_text_snippet TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  )`);
+
+  await db.run(sql`CREATE TABLE IF NOT EXISTS ${communityRiskFeedback} (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    document_id INTEGER NOT NULL REFERENCES documents(id),
+    clause_id INTEGER NOT NULL REFERENCES clauses(id),
+    pattern_id INTEGER REFERENCES risk_patterns(id),
+    feedback_type TEXT NOT NULL,
+    note TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  )`);
+
+  await db.run(sql`CREATE TABLE IF NOT EXISTS ${requiredClausesTemplates} (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    document_type TEXT NOT NULL,
+    clause_name TEXT NOT NULL,
+    importance TEXT NOT NULL,
+    why_needed TEXT NOT NULL,
+    example_text TEXT,
+    detection_keywords TEXT NOT NULL DEFAULT '[]',
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  )`);
+
   try { db.run(sql`ALTER TABLE ${clauses} ADD COLUMN reading_level TEXT`); } catch {}
   try { db.run(sql`ALTER TABLE ${clauses} ADD COLUMN key_legal_terms TEXT`); } catch {}
+  try { db.run(sql`ALTER TABLE ${clauses} ADD COLUMN negotiation_tips TEXT`); } catch {}
+  try { db.run(sql`ALTER TABLE ${clauses} ADD COLUMN used_counter INTEGER NOT NULL DEFAULT 0`); } catch {}
+  try { db.run(sql`ALTER TABLE ${clauses} ADD COLUMN copied_at TEXT`); } catch {}
 
   try { db.run(sql`ALTER TABLE ${documents} ADD COLUMN detected_type TEXT`); } catch {}
   try { db.run(sql`ALTER TABLE ${documents} ADD COLUMN detected_type_confidence REAL`); } catch {}
@@ -269,6 +319,13 @@ async function start() {
   try { db.run(sql`ALTER TABLE analysis_results ADD COLUMN jurisdiction_check_status TEXT DEFAULT 'pending'`); } catch {}
   try { db.run(sql`ALTER TABLE analysis_results ADD COLUMN analysis_language TEXT`); } catch {}
   try { db.run(sql`ALTER TABLE analysis_results ADD COLUMN translations TEXT DEFAULT '{}'`); } catch {}
+  try { db.run(sql`ALTER TABLE analysis_results ADD COLUMN counter_clauses_status TEXT DEFAULT 'skipped'`); } catch {}
+
+  try { db.run(sql`ALTER TABLE deadlines ADD COLUMN deadline_type TEXT`); } catch {}
+  try { db.run(sql`ALTER TABLE deadlines ADD COLUMN party_responsible TEXT`); } catch {}
+  try { db.run(sql`ALTER TABLE deadlines ADD COLUMN consequence_if_missed TEXT`); } catch {}
+  try { db.run(sql`ALTER TABLE deadlines ADD COLUMN is_recurring INTEGER NOT NULL DEFAULT 0`); } catch {}
+  try { db.run(sql`ALTER TABLE deadlines ADD COLUMN parent_id INTEGER`); } catch {}
 
   const existingTerms = db.select({ count: sql<number>`count(*)` }).from(glossary).all();
   if (Number(existingTerms[0]?.count ?? 0) === 0) {
@@ -286,6 +343,7 @@ async function start() {
   }
 
   seedJurisdictionsAndRules();
+  seedRiskAndRequiredLibraries();
 
   console.log('All tables created/verified.');
   persistNow();
