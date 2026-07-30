@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { getDb } from '../config/database';
-import { documents, analysisResults, clauses, riskItems, deadlines } from '../models';
+import { documents, analysisResults, clauses, riskItems, deadlines, users } from '../models';
 import { sql } from 'drizzle-orm';
 import { saveFile, deleteFile } from '../storage/fileStorage';
 import { analysisQueue, ocrQueue } from '../queue';
@@ -8,9 +8,28 @@ import { NotFoundError, BadRequestError } from '../utils/errors';
 import { persistNow } from '../config/database';
 import { encryptText, isEncryptionConfigured } from '../services/encryptionService';
 import { scrapeUrl, isValidUrl } from '../services/urlScraper';
+import { parseUserJurisdiction } from '../services/jurisdictionCheckService';
 
 function nowPlus24Hours(): string {
   return new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+}
+
+function resolveJurisdictionFromRequest(req: Request): { countryCode: string | null; stateCode: string | null } {
+  let countryCode = (req.body?.country_code || req.body?.countryCode || null) as string | null;
+  let stateCode = (req.body?.state_code || req.body?.stateCode || null) as string | null;
+
+  if (!countryCode && req.user) {
+    const db = getDb();
+    const userRows = db.select().from(users).where(sql`${users.id} = ${req.user.id}`).all();
+    const parsed = parseUserJurisdiction(userRows[0]?.defaultJurisdiction);
+    countryCode = parsed.countryCode;
+    stateCode = stateCode || parsed.stateCode;
+  }
+
+  return {
+    countryCode: countryCode ? String(countryCode).toUpperCase() : null,
+    stateCode: stateCode ? String(stateCode).toUpperCase() : null,
+  };
 }
 
 export async function uploadDocument(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -51,6 +70,7 @@ async function handleFileUpload(req: Request, res: Response, next: NextFunction)
     const format = originalname.split('.').pop()?.toLowerCase() || 'unknown';
     const storagePath = await saveFile(buffer, originalname, format);
     const db = getDb();
+    const jur = resolveJurisdictionFromRequest(req);
 
     db.insert(documents).values({
       userId: req.user.id,
@@ -62,6 +82,8 @@ async function handleFileUpload(req: Request, res: Response, next: NextFunction)
       uploadStatus: 'uploaded',
       processingStatus: 'pending',
       autoDeleteAt: nowPlus24Hours(),
+      countryCode: jur.countryCode,
+      stateCode: jur.stateCode,
     }).run();
 
     const doc = db.select().from(documents).where(sql`${documents.storagePath} = ${storagePath}`).all()[0];
@@ -96,6 +118,7 @@ async function handleScanUpload(req: Request, res: Response, next: NextFunction)
     const format = originalname.split('.').pop()?.toLowerCase() || 'unknown';
     const storagePath = await saveFile(buffer, originalname, format);
     const db = getDb();
+    const jur = resolveJurisdictionFromRequest(req);
 
     db.insert(documents).values({
       userId: req.user.id,
@@ -107,6 +130,8 @@ async function handleScanUpload(req: Request, res: Response, next: NextFunction)
       uploadStatus: 'uploaded',
       processingStatus: 'pending',
       autoDeleteAt: nowPlus24Hours(),
+      countryCode: jur.countryCode,
+      stateCode: jur.stateCode,
     }).run();
 
     const doc = db.select().from(documents).where(sql`${documents.storagePath} = ${storagePath}`).all()[0];
@@ -144,6 +169,7 @@ async function handlePasteUpload(req: Request, res: Response, next: NextFunction
     }
 
     const db = getDb();
+    const jur = resolveJurisdictionFromRequest(req);
 
     db.insert(documents).values({
       userId: req.user.id,
@@ -157,6 +183,8 @@ async function handlePasteUpload(req: Request, res: Response, next: NextFunction
       encryptionIv: storedIv,
       uploadStatus: 'uploaded',
       processingStatus: 'pending',
+      countryCode: jur.countryCode,
+      stateCode: jur.stateCode,
     }).run();
 
     const doc = db.select().from(documents).where(sql`${documents.originalName} = ${docTitle} AND ${documents.userId} = ${req.user.id}`).all().pop();
@@ -195,6 +223,7 @@ async function handleUrlUpload(req: Request, res: Response, next: NextFunction):
     }
 
     const db = getDb();
+    const jur = resolveJurisdictionFromRequest(req);
 
     db.insert(documents).values({
       userId: req.user.id,
@@ -209,6 +238,8 @@ async function handleUrlUpload(req: Request, res: Response, next: NextFunction):
       encryptionIv: storedIv,
       uploadStatus: 'uploaded',
       processingStatus: 'pending',
+      countryCode: jur.countryCode,
+      stateCode: jur.stateCode,
     }).run();
 
     const doc = db.select().from(documents).where(sql`${documents.sourceUrl} = ${url} AND ${documents.userId} = ${req.user.id}`).all().pop();
@@ -310,6 +341,9 @@ export async function getDocument(req: Request, res: Response, next: NextFunctio
         fileSize: doc.fileSize,
         sourceType: doc.sourceType,
         sourceUrl: doc.sourceUrl,
+        countryCode: doc.countryCode,
+        stateCode: doc.stateCode,
+        detectedLanguage: doc.detectedLanguage,
         uploadStatus: doc.uploadStatus,
         processingStatus: doc.processingStatus,
         pageCount: doc.pageCount,
@@ -473,5 +507,30 @@ function safeJsonParse(value: string | null): unknown {
     return JSON.parse(value);
   } catch {
     return [];
+  }
+}
+
+export async function translateDocument(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    if (!req.user) {
+      res.status(401).json({ success: false, error: { message: 'Unauthorized', code: 'AUTH_REQUIRED', statusCode: 401 } });
+      return;
+    }
+
+    const documentId = Number(req.params.id);
+    const targetLanguage = String(req.body?.targetLanguage || req.body?.target_language || '').toLowerCase();
+    if (!targetLanguage) {
+      throw new BadRequestError('targetLanguage is required');
+    }
+
+    const { translateAnalysisResults } = await import('../services/translationService');
+    const snapshot = await translateAnalysisResults(documentId, req.user.id, targetLanguage);
+
+    res.json({
+      success: true,
+      data: snapshot,
+    });
+  } catch (err) {
+    next(err);
   }
 }

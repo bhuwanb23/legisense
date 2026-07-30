@@ -1,11 +1,41 @@
 import { Request, Response, NextFunction } from 'express';
 import { getDb } from '../config/database';
-import { documents, analysisResults, clauses, riskItems, deadlines, glossary } from '../models';
+import { documents, analysisResults, clauses, riskItems, deadlines, glossary, jurisdictionFlags } from '../models';
 import { sql } from 'drizzle-orm';
 import { analysisQueue } from '../queue';
 import { NotFoundError, BadRequestError } from '../utils/errors';
 import { classifyDocument } from '../services/analysisService';
 import { getTypeEntry, getValidTypes } from '../data/documentTypes';
+import { getFilteredStateConflicts } from '../services/conflictDetectionService';
+import { parseUserJurisdiction } from '../services/jurisdictionCheckService';
+import { users } from '../models';
+
+function applyJurisdictionToDocument(
+  documentId: number,
+  userId: number,
+  body: Record<string, unknown>,
+): void {
+  const db = getDb();
+  let countryCode = (body.country_code || body.countryCode || null) as string | null;
+  let stateCode = (body.state_code || body.stateCode || null) as string | null;
+
+  if (!countryCode) {
+    const userRows = db.select().from(users).where(sql`${users.id} = ${userId}`).all();
+    const parsed = parseUserJurisdiction(userRows[0]?.defaultJurisdiction);
+    countryCode = parsed.countryCode;
+    stateCode = stateCode || parsed.stateCode;
+  }
+
+  if (countryCode) {
+    countryCode = String(countryCode).toUpperCase();
+    stateCode = stateCode ? String(stateCode).toUpperCase() : null;
+    db.run(sql`UPDATE ${documents} SET
+      country_code = ${countryCode},
+      state_code = ${stateCode},
+      updated_at = datetime('now')
+      WHERE id = ${documentId}`);
+  }
+}
 
 export async function startAnalysis(
   req: Request,
@@ -47,6 +77,8 @@ export async function startAnalysis(
       });
       return;
     }
+
+    applyJurisdictionToDocument(documentId, req.user.id, req.body || {});
 
     db.run(
       sql`UPDATE ${documents} SET processing_status = 'pending', updated_at = datetime('now') WHERE id = ${documentId}`
@@ -610,3 +642,95 @@ function safeJsonParse(value: string | null): unknown {
   if (!value) return [];
   try { return JSON.parse(value); } catch { return []; }
 }
+
+export async function getJurisdictionFlags(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    if (!req.user) {
+      res.status(401).json({ success: false, error: { message: 'Unauthorized', code: 'AUTH_REQUIRED', statusCode: 401 } });
+      return;
+    }
+
+    const documentId = Number(req.params.documentId);
+    const db = getDb();
+
+    const docRows = db.select().from(documents).where(
+      sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = 0`
+    ).all();
+    if (!docRows[0]) throw new NotFoundError('Document');
+
+    const analysisRows = db.select().from(analysisResults).where(
+      sql`${analysisResults.documentId} = ${documentId}`
+    ).all();
+    const analysis = analysisRows[0];
+
+    if (!analysis) {
+      res.json({
+        success: true,
+        data: {
+          status: docRows[0].processingStatus,
+          jurisdiction_check_status: null,
+          flags: { critical: [], warning: [], info: [] },
+          total: 0,
+        },
+      });
+      return;
+    }
+
+    const flags = db.select().from(jurisdictionFlags).where(
+      sql`${jurisdictionFlags.documentId} = ${documentId}`
+    ).all();
+
+    const grouped = {
+      critical: flags.filter((f) => f.severity === 'critical'),
+      warning: flags.filter((f) => f.severity === 'warning'),
+      info: flags.filter((f) => f.severity === 'info'),
+    };
+
+    res.json({
+      success: true,
+      data: {
+        status: docRows[0].processingStatus,
+        jurisdiction_check_status: analysis.jurisdictionCheckStatus,
+        country_code: docRows[0].countryCode,
+        state_code: docRows[0].stateCode,
+        flags: grouped,
+        total: flags.length,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function getStateConflicts(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    if (!req.user) {
+      res.status(401).json({ success: false, error: { message: 'Unauthorized', code: 'AUTH_REQUIRED', statusCode: 401 } });
+      return;
+    }
+
+    const documentId = Number(req.params.documentId);
+    const conflicts = getFilteredStateConflicts(documentId, req.user.id);
+    if (conflicts === null) throw new NotFoundError('Document');
+
+    res.json({
+      success: true,
+      data: {
+        documentId,
+        conflicts,
+        total: conflicts.length,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
