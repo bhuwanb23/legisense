@@ -10,3 +10,7 @@ export { sessions, type Session, type NewSession } from './session';
 export { usageLogs, type UsageLog, type NewUsageLog } from './usageLog';
 export { queueJobs, type QueueJob } from './queueJob';
 export { glossary, type Glossary, type NewGlossary } from './glossary';
+export { jurisdictions, type Jurisdiction, type NewJurisdiction } from './jurisdiction';
+export { legalRules, type LegalRule, type NewLegalRule } from './legalRule';
+export { jurisdictionFlags, type JurisdictionFlag, type NewJurisdictionFlag } from './jurisdictionFlag';
+export { jurisdictionConflicts, type JurisdictionConflict, type NewJurisdictionConflict } from './jurisdictionConflict';

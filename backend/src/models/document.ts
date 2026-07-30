@@ -14,6 +14,8 @@ export const documents = sqliteTable('documents', {
   sourceUrl: text('source_url'),
   rawText: text('raw_text'),
   detectedLanguage: text('detected_language'),
+  countryCode: text('country_code'),
+  stateCode: text('state_code'),
   detectedType: text('detected_type'),
   detectedTypeConfidence: real('detected_type_confidence'),
   needsTypeConfirmation: integer('needs_type_confirmation', { mode: 'boolean' }).notNull().default(false),
