@@ -38,3 +38,11 @@ export const reminderQueue = new Queue('reminder', {
     priority: 2,
   },
 });
+
+export const counterClausesQueue = new Queue('counter-clauses', {
+  defaultJobOptions: {
+    attempts: 2,
+    backoff: { type: 'exponential', delay: 3000 },
+    priority: 2,
+  },
+});

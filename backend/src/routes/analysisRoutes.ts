@@ -11,6 +11,13 @@ import {
   lookupGlossary,
   classifyEndpoint,
   confirmDocumentType,
+  getJurisdictionFlags,
+  getStateConflicts,
+  getFlaggedClauses,
+  submitRiskFeedback,
+  getMissingClausesEndpoint,
+  getCounterClauses,
+  markCounterUsed,
 } from '../controllers/analysisController';
 import { authenticate } from '../middleware/auth';
 import { aiRateLimiter } from '../middleware/rateLimiter';
@@ -25,6 +32,13 @@ router.get('/:documentId/risks/:category', authenticate, getRisksByCategory);
 router.get('/:documentId/summary', authenticate, getSummary);
 router.get('/:documentId/risk-dashboard', authenticate, getRiskDashboard);
 router.get('/:documentId/plain-english', authenticate, getPlainEnglish);
+router.get('/:documentId/jurisdiction-flags', authenticate, getJurisdictionFlags);
+router.get('/:documentId/state-conflicts', authenticate, getStateConflicts);
+router.get('/:documentId/flagged-clauses', authenticate, getFlaggedClauses);
+router.post('/:documentId/clauses/:clauseId/risk-feedback', authenticate, submitRiskFeedback);
+router.get('/:documentId/missing-clauses', authenticate, getMissingClausesEndpoint);
+router.get('/:documentId/counter-clauses', authenticate, getCounterClauses);
+router.post('/:documentId/clauses/:clauseId/counter-used', authenticate, aiRateLimiter, markCounterUsed);
 router.get('/:documentId/classify', authenticate, classifyEndpoint);
 router.post('/:documentId/confirm-type', authenticate, confirmDocumentType);
 router.post('/glossary', authenticate, lookupGlossary);

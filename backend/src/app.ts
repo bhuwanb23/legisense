@@ -16,6 +16,8 @@ import analysisRoutes from './routes/analysisRoutes';
 import chatRoutes from './routes/chatRoutes';
 import deadlineRoutes from './routes/deadlineRoutes';
 import notificationRoutes from './routes/notificationRoutes';
+import jurisdictionRoutes from './routes/jurisdictionRoutes';
+import languageRoutes from './routes/languageRoutes';
 import helmet from 'helmet';
 
 const app = express();
@@ -48,6 +50,8 @@ app.use('/api/analysis', analysisRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/deadlines', deadlineRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/jurisdictions', jurisdictionRoutes);
+app.use('/api/languages', languageRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

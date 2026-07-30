@@ -3,7 +3,7 @@ import type { AiProvider, AiRequest, AiResponse, ProviderName } from './types';
 import { estimateTokens } from './tokenManager';
 import { parseAiResponse } from '../../prompts/analysisPrompt';
 
-const DEFAULT_MODEL = 'gemini-1.5-flash';
+const DEFAULT_MODEL = 'gemini-2.0-flash';
 const DEFAULT_MAX_RETRIES = 3;
 const DEFAULT_TIMEOUT_MS = 60_000;
 

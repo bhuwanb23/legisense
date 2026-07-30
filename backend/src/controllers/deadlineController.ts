@@ -1,9 +1,40 @@
 import { Request, Response, NextFunction } from 'express';
-import { getDb } from '../config/database';
-import { deadlines } from '../models';
+import { getDb, persistNow } from '../config/database';
+import { deadlines, documents, users } from '../models';
 import { sql } from 'drizzle-orm';
-import { NotFoundError } from '../utils/errors';
-import { persistNow } from '../config/database';
+import { NotFoundError, BadRequestError } from '../utils/errors';
+import { computeDeadlineHealth } from '../services/deadlineService';
+import { buildIcsCalendar } from '../services/icsExportService';
+
+function mapDeadline(d: typeof deadlines.$inferSelect) {
+  return {
+    id: d.id,
+    documentId: d.documentId,
+    title: d.title,
+    description: d.description,
+    dueDate: d.dueDate,
+    recurrence: d.recurrence,
+    urgencyLevel: d.urgencyLevel,
+    deadlineType: d.deadlineType,
+    partyResponsible: d.partyResponsible,
+    consequenceIfMissed: d.consequenceIfMissed,
+    isRecurring: d.isRecurring,
+    parentId: d.parentId,
+    isCompleted: d.isCompleted,
+    isDismissed: d.isDismissed,
+    calendarExported: d.calendarExported,
+    exportedAt: d.exportedAt,
+    reminderEnabled: d.reminderEnabled,
+    reminderTimes: safeJson(d.reminderTimes, [7, 3, 1]),
+    reminderChannels: safeJson(d.reminderChannels, ['push']),
+    createdAt: d.createdAt,
+  };
+}
+
+function safeJson<T>(raw: string | null | undefined, fallback: T): T {
+  if (!raw) return fallback;
+  try { return JSON.parse(raw) as T; } catch { return fallback; }
+}
 
 export async function listDeadlines(
   req: Request,
@@ -29,29 +60,94 @@ export async function listDeadlines(
       filtered = rows.filter((d) => !d.isCompleted);
     }
 
-    // Sort by due date ascending
-    filtered.sort((a, b) => {
-      if (a.dueDate < b.dueDate) return -1;
-      if (a.dueDate > b.dueDate) return 1;
-      return 0;
+    filtered.sort((a, b) => a.dueDate.localeCompare(b.dueDate));
+
+    res.json({
+      success: true,
+      data: {
+        deadlines: filtered.map(mapDeadline),
+        total: filtered.length,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function listUpcomingDeadlines(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    if (!req.user) {
+      res.status(401).json({ success: false, error: { message: 'Unauthorized', code: 'AUTH_REQUIRED', statusCode: 401 } });
+      return;
+    }
+
+    const db = getDb();
+    const rows = db.select().from(deadlines).where(
+      sql`${deadlines.userId} = ${req.user.id}`
+    ).all()
+      .filter((d) => !d.isCompleted && !d.isDismissed);
+
+    const urgencyRank: Record<string, number> = {
+      overdue: 0, this_week: 1, this_month: 2, upcoming: 3,
+      critical: 0, high: 1, medium: 2, low: 3,
+    };
+
+    rows.sort((a, b) => {
+      const ra = urgencyRank[a.urgencyLevel || 'upcoming'] ?? 3;
+      const rb = urgencyRank[b.urgencyLevel || 'upcoming'] ?? 3;
+      if (ra !== rb) return ra - rb;
+      return a.dueDate.localeCompare(b.dueDate);
     });
 
     res.json({
       success: true,
       data: {
-        deadlines: filtered.map((d) => ({
-          id: d.id,
-          documentId: d.documentId,
-          title: d.title,
-          description: d.description,
-          dueDate: d.dueDate,
-          recurrence: d.recurrence,
-          urgencyLevel: d.urgencyLevel,
-          isCompleted: d.isCompleted,
-          isDismissed: d.isDismissed,
-          createdAt: d.createdAt,
-        })),
-        total: filtered.length,
+        deadlines: rows.map(mapDeadline),
+        total: rows.length,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function listDocumentDeadlines(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    if (!req.user) {
+      res.status(401).json({ success: false, error: { message: 'Unauthorized', code: 'AUTH_REQUIRED', statusCode: 401 } });
+      return;
+    }
+
+    const documentId = Number(req.params.documentId);
+    const db = getDb();
+
+    const docRows = db.select().from(documents).where(
+      sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = 0`
+    ).all();
+    if (!docRows[0]) throw new NotFoundError('Document');
+
+    const rows = db.select().from(deadlines).where(
+      sql`${deadlines.documentId} = ${documentId} AND ${deadlines.userId} = ${req.user.id}`
+    ).all();
+
+    rows.sort((a, b) => a.dueDate.localeCompare(b.dueDate));
+    const health = computeDeadlineHealth(rows);
+
+    res.json({
+      success: true,
+      data: {
+        documentId,
+        deadlines: rows.map(mapDeadline),
+        health,
+        total: rows.length,
       },
     });
   } catch (err) {
@@ -79,10 +175,7 @@ export async function completeDeadline(
 
     if (!rows[0]) throw new NotFoundError('Deadline');
 
-    db.run(
-      sql`UPDATE ${deadlines} SET is_completed = 1 WHERE id = ${deadlineId}`
-    );
-
+    db.run(sql`UPDATE ${deadlines} SET is_completed = 1 WHERE id = ${deadlineId}`);
     persistNow();
 
     res.json({ success: true, data: { message: 'Deadline marked as completed', id: deadlineId } });
@@ -111,13 +204,129 @@ export async function dismissDeadline(
 
     if (!rows[0]) throw new NotFoundError('Deadline');
 
-    db.run(
-      sql`UPDATE ${deadlines} SET is_dismissed = 1 WHERE id = ${deadlineId}`
-    );
-
+    db.run(sql`UPDATE ${deadlines} SET is_dismissed = 1 WHERE id = ${deadlineId}`);
     persistNow();
 
     res.json({ success: true, data: { message: 'Deadline dismissed', id: deadlineId } });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function exportDeadlinesIcs(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    if (!req.user) {
+      res.status(401).json({ success: false, error: { message: 'Unauthorized', code: 'AUTH_REQUIRED', statusCode: 401 } });
+      return;
+    }
+
+    const deadlineIds = Array.isArray(req.body?.deadlineIds)
+      ? req.body.deadlineIds.map(Number).filter((n: number) => Number.isFinite(n))
+      : Array.isArray(req.body?.deadline_ids)
+        ? req.body.deadline_ids.map(Number).filter((n: number) => Number.isFinite(n))
+        : [];
+    const documentId = req.body?.documentId ?? req.body?.document_id;
+
+    const db = getDb();
+    let rows = db.select().from(deadlines).where(
+      sql`${deadlines.userId} = ${req.user.id}`
+    ).all();
+
+    if (deadlineIds.length > 0) {
+      rows = rows.filter((d) => deadlineIds.includes(d.id));
+    } else if (documentId) {
+      rows = rows.filter((d) => d.documentId === Number(documentId));
+    } else {
+      throw new BadRequestError('Provide deadlineIds or documentId');
+    }
+
+    if (rows.length === 0) throw new NotFoundError('Deadline');
+
+    const docs = db.select().from(documents).where(
+      sql`${documents.userId} = ${req.user.id}`
+    ).all();
+    const docName = new Map(docs.map((d) => [d.id, d.originalName]));
+
+    const alreadyExported = rows.filter((d) => d.calendarExported).length;
+    const ics = buildIcsCalendar(rows.map((d) => ({
+      id: d.id,
+      title: d.title,
+      description: d.description,
+      dueDate: d.dueDate,
+      consequenceIfMissed: d.consequenceIfMissed,
+      documentName: docName.get(d.documentId) || null,
+    })));
+
+    const now = new Date().toISOString();
+    for (const d of rows) {
+      db.run(sql`UPDATE ${deadlines} SET calendar_exported = 1, exported_at = ${now} WHERE id = ${d.id}`);
+    }
+    persistNow();
+
+    if (req.query.json === '1') {
+      res.json({
+        success: true,
+        data: {
+          ics,
+          exportedCount: rows.length,
+          alreadyExported,
+        },
+      });
+      return;
+    }
+
+    res.setHeader('Content-Type', 'text/calendar; charset=utf-8');
+    res.setHeader('Content-Disposition', 'attachment; filename="legisense-deadlines.ics"');
+    res.setHeader('X-Already-Exported', String(alreadyExported));
+    res.setHeader('X-Exported-Count', String(rows.length));
+    res.send(ics);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function updateDeadlineReminders(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    if (!req.user) {
+      res.status(401).json({ success: false, error: { message: 'Unauthorized', code: 'AUTH_REQUIRED', statusCode: 401 } });
+      return;
+    }
+
+    const deadlineId = Number(req.params.id);
+    const db = getDb();
+    const rows = db.select().from(deadlines).where(
+      sql`${deadlines.id} = ${deadlineId} AND ${deadlines.userId} = ${req.user.id}`
+    ).all();
+    if (!rows[0]) throw new NotFoundError('Deadline');
+
+    const enabled = req.body?.reminderEnabled ?? req.body?.reminder_enabled;
+    const times = req.body?.reminderTimes ?? req.body?.reminder_times;
+    const channels = req.body?.reminderChannels ?? req.body?.reminder_channels;
+
+    if (enabled !== undefined) {
+      db.run(sql`UPDATE ${deadlines} SET reminder_enabled = ${enabled ? 1 : 0} WHERE id = ${deadlineId}`);
+    }
+    if (Array.isArray(times)) {
+      const cleaned = times.map(Number).filter((n) => Number.isFinite(n) && n >= 0);
+      db.run(sql`UPDATE ${deadlines} SET reminder_times = ${JSON.stringify(cleaned)} WHERE id = ${deadlineId}`);
+    }
+    if (Array.isArray(channels)) {
+      const cleaned = channels.map(String).filter((c) => c === 'push' || c === 'email');
+      if (cleaned.length === 0) throw new BadRequestError('reminderChannels must include push and/or email');
+      db.run(sql`UPDATE ${deadlines} SET reminder_channels = ${JSON.stringify(cleaned)} WHERE id = ${deadlineId}`);
+    }
+
+    persistNow();
+    const updated = db.select().from(deadlines).where(sql`${deadlines.id} = ${deadlineId}`).all()[0];
+    res.json({ success: true, data: mapDeadline(updated) });
   } catch (err) {
     next(err);
   }

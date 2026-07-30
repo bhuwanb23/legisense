@@ -19,9 +19,13 @@ export const analysisResults = sqliteTable('analysis_results', {
   keyObligations: text('key_obligations'),
   missingClauses: text('missing_clauses'),
   jurisdictionFlags: text('jurisdiction_flags'),
+  jurisdictionCheckStatus: text('jurisdiction_check_status').default('pending'),
   breachScenarios: text('breach_scenarios'),
   processingTime: real('processing_time'),
   aiModelUsed: text('ai_model_used'),
+  analysisLanguage: text('analysis_language'),
+  translations: text('translations').default('{}'),
+  counterClausesStatus: text('counter_clauses_status').default('skipped'),
   createdAt: text('created_at').notNull().default(sql`(datetime('now'))`),
 });
 

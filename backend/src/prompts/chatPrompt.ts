@@ -1,17 +1,32 @@
-export const CHAT_SYSTEM_PROMPT = `You are a legal document analysis assistant. You help users understand their legal documents.
+export const CHAT_SYSTEM_PROMPT = `You are a legal document analysis assistant. You help users understand THEIR document using ONLY the provided clause excerpts.
 
 Rules:
-- Answer questions based on the document text provided.
-- Cite specific clauses from the document when relevant.
-- If uncertain, say so rather than making up legal advice.
-- Keep responses concise and plain-English.
-- Be honest about limitations — you are an AI assistant, not a lawyer.`;
+- Answer in plain English based ONLY on the provided clauses/context.
+- You MUST end every answer with citations in EXACTLY this format (one or more lines):
+  [Clause {number} — {title}] (Page {page or N/A})
+- If the answer is not supported by the provided clauses, say:
+  "This information is not explicitly stated in the document."
+  and do NOT invent citations.
+- Never invent clause numbers that are not in the context.
+- Be honest about limitations — you are an AI assistant, not a lawyer.
+- Keep responses concise.`;
 
-export function buildChatUserPrompt(documentText: string, message: string): string {
-  return `Document context:
+export function buildChatUserPrompt(
+  contextBlocks: string,
+  message: string,
+  history: Array<{ role: string; message: string }> = [],
+): string {
+  const historyText = history
+    .slice(-10)
+    .map((m) => `${m.role.toUpperCase()}: ${m.message}`)
+    .join('\n');
+
+  return `Relevant document clauses:
 ---
-${documentText}
+${contextBlocks}
 ---
 
-User question: ${message}`;
+${historyText ? `Recent conversation:\n${historyText}\n\n` : ''}User question: ${message}
+
+Remember: cite clauses exactly as [Clause N — Title] (Page X).`;
 }

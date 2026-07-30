@@ -8,10 +8,12 @@ import {
   notificationQueue,
   autoDeleteQueue,
   reminderQueue,
+  counterClausesQueue,
 } from './queues';
 import { createAnalysisWorker } from './workers/analysisWorker';
 import { createNotificationWorker } from './workers/notificationWorker';
 import { createOcrWorker } from './workers/ocrWorker';
+import { createCounterClausesWorker } from './workers/counterClausesWorker';
 import { deleteExpiredDocuments, checkDeadlineReminders } from './scheduledJobs';
 
 export { Queue } from './queue';
@@ -22,11 +24,13 @@ export {
   notificationQueue,
   autoDeleteQueue,
   reminderQueue,
+  counterClausesQueue,
 } from './queues';
 
 let analysisWorker: Worker;
 let notificationWorker: Worker;
 let ocrWorker: Worker;
+let counterClausesWorker: Worker;
 let scheduler: Scheduler;
 
 export function ensureJobsTable(): void {
@@ -64,6 +68,7 @@ export async function startQueueSystem(): Promise<void> {
   analysisWorker = createAnalysisWorker();
   notificationWorker = createNotificationWorker();
   ocrWorker = createOcrWorker();
+  counterClausesWorker = createCounterClausesWorker();
 
   scheduler = new Scheduler();
 
@@ -73,9 +78,10 @@ export async function startQueueSystem(): Promise<void> {
   await analysisWorker.start();
   await notificationWorker.start();
   await ocrWorker.start();
+  await counterClausesWorker.start();
   await scheduler.start();
 
-  console.log('Queue system started: ocr, analysis, notification, auto-delete, reminder');
+  console.log('Queue system started: ocr, analysis, notification, counter-clauses, auto-delete, reminder');
 }
 
 export async function stopQueueSystem(): Promise<void> {
@@ -83,5 +89,6 @@ export async function stopQueueSystem(): Promise<void> {
   await analysisWorker?.close();
   await notificationWorker?.close();
   await ocrWorker?.close();
+  await counterClausesWorker?.close();
   console.log('Queue system stopped');
 }

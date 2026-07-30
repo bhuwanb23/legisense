@@ -1,10 +1,10 @@
 import { getDb, persistNow } from '../config/database';
-import { documents, analysisResults, clauses, riskItems, deadlines, usageLogs } from '../models';
+import { documents, analysisResults, clauses, riskItems, usageLogs, users } from '../models';
 import { sql } from 'drizzle-orm';
 import { readFile } from '../storage/fileStorage';
 import { extractText } from './textExtractor';
 import { callWithFallback, selectProviderForTokens } from './ai';
-import { buildAnalysisUserPrompt, parseAiResponse } from '../prompts/analysisPrompt';
+import { buildAnalysisUserPrompt, parseAiResponse, appendLanguageInstructions } from '../prompts/analysisPrompt';
 import { CLASSIFY_SYSTEM_PROMPT, ClassifyOutputSchema, buildClassifyUserPrompt, parseClassifyResponse, type ClassifyOutput } from '../prompts/classificationPrompt';
 import { getPromptForType } from '../prompts/promptTemplates';
 import { getTypeEntry } from '../data/documentTypes';
@@ -13,6 +13,14 @@ import { chunkText, estimateTotalRequestTokens, mergeAnalysisResults } from './c
 import { emitToUser } from './socketService';
 import { createNotification } from './notificationService';
 import { encryptText, decryptText, isEncryptionConfigured } from './encryptionService';
+import { detectLanguage, toIso6391 } from './languageDetectionService';
+import { getLanguageName } from '../config/languages';
+import { runJurisdictionCheck } from './jurisdictionCheckService';
+import { runConflictDetection } from './conflictDetectionService';
+import { runRiskPatternScan } from './riskPatternService';
+import { runMissingClauseCheck } from './missingClauseService';
+import { buildDeadlineInputsFromAnalysis, saveDeadlinesForDocument } from './deadlineService';
+import { counterClausesQueue } from '../queue';
 
 const MAX_RETRIES = 3;
 const CHUNK_TOKEN_LIMIT = 500_000;
@@ -36,9 +44,25 @@ export async function analyzeDocumentPipeline(documentId: number, userId: number
 
     const rawText = await resolveDocumentText(doc, documentId);
 
+    const userRows = db.select().from(users).where(sql`${users.id} = ${doc.userId}`).all();
+    const preferredLanguage = toIso6391(userRows[0]?.preferredLanguage || 'en');
+    const detected = detectLanguage(rawText);
+    const detectedLang = detected.language;
+
+    db.run(sql`UPDATE ${documents} SET
+      detected_language = ${detectedLang},
+      updated_at = datetime('now')
+      WHERE id = ${documentId}`);
+
+    emitToUser(doc.userId, 'analysis:progress', {
+      documentId,
+      progress: 10,
+      stage: `Language detected: ${getLanguageName(detectedLang)} → respond in ${getLanguageName(preferredLanguage)}`,
+    });
+
     emitToUser(doc.userId, 'analysis:progress', { documentId, progress: 12, stage: 'Classifying document type...' });
 
-    const classification = await classifyDocument(rawText);
+    const classification = await classifyDocument(rawText, detectedLang, preferredLanguage);
 
     const typeEntry = getTypeEntry(classification.type);
     const needsConfirmation = classification.confidence < 60;
@@ -65,7 +89,11 @@ export async function analyzeDocumentPipeline(documentId: number, userId: number
       });
     }
 
-    const selectedPrompt = getPromptForType(classification.type);
+    const selectedPrompt = appendLanguageInstructions(
+      getPromptForType(classification.type),
+      detectedLang,
+      preferredLanguage,
+    );
 
     emitToUser(doc.userId, 'analysis:progress', { documentId, progress: 18, stage: 'Estimating document size...' });
 
@@ -79,7 +107,7 @@ export async function analyzeDocumentPipeline(documentId: number, userId: number
 
     if (totalTokens > CHUNK_TOKEN_LIMIT) {
       emitToUser(doc.userId, 'analysis:progress', { documentId, progress: 20, stage: `Large document (${totalTokens.toLocaleString()} tokens). Splitting into chunks...` });
-      const chunkResult = await analyzeInChunks(rawText, selectedPrompt, documentId, doc.userId);
+      const chunkResult = await analyzeInChunks(rawText, selectedPrompt, documentId, doc.userId, detectedLang);
       analysisResult = chunkResult.result;
       providerUsed = chunkResult.provider;
       modelUsed = chunkResult.model;
@@ -87,7 +115,7 @@ export async function analyzeDocumentPipeline(documentId: number, userId: number
       totalOutputTokens = chunkResult.outputTokens;
     } else {
       emitToUser(doc.userId, 'analysis:progress', { documentId, progress: 25, stage: 'Analyzing document...' });
-      const singleResult = await analyzeSingle(rawText, selectedPrompt);
+      const singleResult = await analyzeSingle(rawText, selectedPrompt, detectedLang);
       analysisResult = singleResult.result;
       providerUsed = singleResult.provider;
       modelUsed = singleResult.model;
@@ -95,7 +123,7 @@ export async function analyzeDocumentPipeline(documentId: number, userId: number
       totalOutputTokens = singleResult.outputTokens;
     }
 
-    emitToUser(doc.userId, 'analysis:progress', { documentId, progress: 95, stage: 'Saving results...' });
+    emitToUser(doc.userId, 'analysis:progress', { documentId, progress: 90, stage: 'Saving results...' });
 
     const totalTime = (Date.now() - startTime) / 1000;
 
@@ -111,9 +139,31 @@ export async function analyzeDocumentPipeline(documentId: number, userId: number
       outputTokens: totalOutputTokens,
     }).run();
 
-    saveAnalysisResults(documentId, doc.userId, analysisResult, totalTime, modelUsed);
+    const analysisId = saveAnalysisResults(documentId, doc.userId, analysisResult, totalTime, modelUsed, preferredLanguage);
 
-    autoCreateDeadlines(documentId, doc.userId, analysisResult.criticalDates);
+    if (analysisId) {
+      emitToUser(doc.userId, 'analysis:progress', { documentId, progress: 91, stage: 'Saving deadlines...' });
+      saveDeadlinesForDocument(documentId, doc.userId, buildDeadlineInputsFromAnalysis(analysisResult));
+
+      emitToUser(doc.userId, 'analysis:progress', { documentId, progress: 93, stage: 'Running jurisdiction compliance check...' });
+      const flags = await runJurisdictionCheck(documentId, analysisId, analysisResult.documentType || classification.type);
+      emitToUser(doc.userId, 'analysis:progress', { documentId, progress: 94, stage: 'Detecting cross-state conflicts...' });
+      await runConflictDetection(documentId, analysisId, flags);
+
+      emitToUser(doc.userId, 'analysis:progress', { documentId, progress: 95, stage: 'Scanning risky clause patterns...' });
+      await runRiskPatternScan(documentId, analysisId);
+
+      emitToUser(doc.userId, 'analysis:progress', { documentId, progress: 96, stage: 'Checking missing clauses...' });
+      await runMissingClauseCheck(
+        documentId,
+        analysisId,
+        analysisResult.documentType || classification.type,
+        analysisResult.missingClauses || [],
+      );
+
+      db.run(sql`UPDATE ${analysisResults} SET counter_clauses_status = 'pending' WHERE id = ${analysisId}`);
+      await counterClausesQueue.add('generate-counters', { documentId, userId: doc.userId });
+    }
 
     updateDocumentStatus(documentId, 'analyzed');
 
@@ -186,14 +236,19 @@ async function resolveDocumentText(doc: Record<string, unknown>, documentId: num
   return text;
 }
 
-export async function classifyDocument(text: string): Promise<ClassifyOutput> {
+export async function classifyDocument(
+  text: string,
+  documentLanguage = 'en',
+  responseLanguage = 'en',
+): Promise<ClassifyOutput> {
+  const systemPrompt = appendLanguageInstructions(CLASSIFY_SYSTEM_PROMPT, documentLanguage, responseLanguage);
   const { response } = await callWithFallback(
     {
-      systemPrompt: CLASSIFY_SYSTEM_PROMPT,
+      systemPrompt,
       userPrompt: buildClassifyUserPrompt(text),
       temperature: 0.2,
     },
-    { task: 'classification' },
+    { task: 'classification', language: documentLanguage },
   );
 
   const parsed = typeof response.text === 'string' ? parseClassifyResponse(response.text) : response.text;
@@ -203,9 +258,10 @@ export async function classifyDocument(text: string): Promise<ClassifyOutput> {
 async function analyzeSingle(
   text: string,
   systemPrompt: string,
+  documentLanguage = 'en',
 ): Promise<{ result: AnalysisOutput; provider: string; model: string; inputTokens: number; outputTokens: number }> {
   const estimatedTokens = estimateTotalRequestTokens(systemPrompt, text);
-  const provider = selectProviderForTokens(estimatedTokens);
+  selectProviderForTokens(estimatedTokens);
 
   let lastError: string | null = null;
 
@@ -219,7 +275,7 @@ async function analyzeSingle(
 
       const { response, providerUsed } = await callWithFallback(
         { systemPrompt: prompt, userPrompt, temperature: 0.3 },
-        { task: 'analysis' },
+        { task: 'analysis', language: documentLanguage },
       );
 
       const parsed = typeof response.text === 'string' ? parseAiResponse(response.text) : response.text;
@@ -249,6 +305,7 @@ async function analyzeInChunks(
   systemPrompt: string,
   documentId: number,
   userId: number,
+  documentLanguage = 'en',
 ): Promise<{ result: AnalysisOutput; provider: string; model: string; inputTokens: number; outputTokens: number }> {
   const chunks = chunkText(fullText);
   const chunkResults: AnalysisOutput[] = [];
@@ -272,7 +329,7 @@ async function analyzeInChunks(
 
     const text = `[This is part ${i + 1} of ${chunks.length} of a legal document. Analyze this portion and return the full JSON structure with all findings from this section.]\n\n${chunk.text}`;
 
-    const singleResult = await analyzeSingle(text, systemPrompt);
+    const singleResult = await analyzeSingle(text, systemPrompt, documentLanguage);
     chunkResults.push(singleResult.result);
     totalInputTokens += singleResult.inputTokens;
     totalOutputTokens += singleResult.outputTokens;
@@ -318,7 +375,8 @@ function saveAnalysisResults(
   ai: AnalysisOutput,
   processingTime: number,
   modelUsed?: string,
-): void {
+  analysisLanguage = 'en',
+): number | null {
   const db = getDb();
 
   const computed = calculateOverallRiskScore(ai.clauses);
@@ -340,9 +398,13 @@ function saveAnalysisResults(
     keyObligations: JSON.stringify(ai.keyObligations),
     missingClauses: JSON.stringify(ai.missingClauses),
     jurisdictionFlags: JSON.stringify([]),
+    jurisdictionCheckStatus: 'pending',
     breachScenarios: JSON.stringify(ai.breachScenarios),
     processingTime,
     aiModelUsed: modelUsed || 'unknown',
+    analysisLanguage,
+    translations: '{}',
+    counterClausesStatus: 'pending',
   }).run();
 
   const analysisRows = db.select().from(analysisResults).where(sql`${analysisResults.documentId} = ${documentId}`).all();
@@ -381,65 +443,9 @@ function saveAnalysisResults(
     }
 
     generateRiskItemsFromClauses(analysisId);
-
-    for (const deadline of ai.deadlines) {
-      db.insert(deadlines).values({
-        documentId,
-        userId,
-        title: deadline.title,
-        description: deadline.description,
-        dueDate: deadline.dueDate,
-        recurrence: deadline.recurrence,
-      }).run();
-    }
   }
-}
 
-function calculateUrgencyLevel(dateStr: string): string {
-  if (!dateStr || dateStr.length < 10) return 'medium';
-
-  const parsed = new Date(dateStr);
-  if (isNaN(parsed.getTime())) return 'medium';
-
-  const now = new Date();
-  const diffMs = parsed.getTime() - now.getTime();
-  const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-
-  if (diffDays < 0) return 'overdue';
-  if (diffDays <= 7) return 'critical';
-  if (diffDays <= 30) return 'high';
-  if (diffDays <= 90) return 'medium';
-  return 'low';
-}
-
-function autoCreateDeadlines(documentId: number, userId: number, criticalDates: AnalysisOutput['criticalDates']): void {
-  const db = getDb();
-
-  for (const cd of criticalDates) {
-    const existing = db.select().from(deadlines).where(
-      sql`${deadlines.documentId} = ${documentId} AND ${deadlines.title} = ${cd.label}`
-    ).all();
-
-    const urgencyLevel = calculateUrgencyLevel(cd.date);
-
-    if (existing.length > 0) {
-      db.run(sql`UPDATE ${deadlines} SET
-        description = ${cd.importance || cd.label},
-        due_date = ${cd.date},
-        urgency_level = ${urgencyLevel}
-        WHERE id = ${existing[0].id}`);
-    } else {
-      db.insert(deadlines).values({
-        documentId,
-        userId,
-        title: cd.label,
-        description: cd.importance || cd.label,
-        dueDate: cd.date,
-        urgencyLevel,
-        recurrence: 'one-time',
-      }).run();
-    }
-  }
+  return analysisId ?? null;
 }
 
 function severityFromScore(score: number): string {

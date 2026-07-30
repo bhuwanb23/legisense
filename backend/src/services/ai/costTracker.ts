@@ -7,6 +7,8 @@ interface RateCard {
 
 const RATES: Record<string, RateCard> = {
   'gemini-1.5-flash': { inputPer1M: 0.075, outputPer1M: 0.30 },
+  'gemini-2.0-flash': { inputPer1M: 0.10, outputPer1M: 0.40 },
+  'gemini-2.5-flash': { inputPer1M: 0.15, outputPer1M: 0.60 },
   'openrouter/free': { inputPer1M: 0, outputPer1M: 0 },
   'gpt-4o': { inputPer1M: 2.50, outputPer1M: 10.00 },
 };

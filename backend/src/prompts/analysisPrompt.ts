@@ -98,10 +98,16 @@ The JSON must match this exact structure (no extra fields, no missing fields):
       "title": "Renewal Notice",
       "description": "Party A must provide 30 days written notice before renewal date.",
       "dueDate": "2024-12-01",
-      "recurrence": "yearly"
+      "recurrence": "yearly",
+      "deadlineType": "renewal",
+      "partyResponsible": "Party A",
+      "consequenceIfMissed": "Contract may auto-renew",
+      "isRecurring": true
     }
   ]
 }
+
+Extract ALL dates and obligations into deadlines with type one of: payment, renewal, notice, termination, review, milestone, compliance, other.
 
 IMPORTANT: Every field must be present. Use empty arrays [] for lists with no items. Use empty string "" for optional text fields that are not applicable. Never omit a field.`;
 
@@ -114,6 +120,22 @@ ${documentText}
 ---
 
 Respond with raw JSON only. No markdown fences, no explanation. Just JSON.`;
+}
+
+export function appendLanguageInstructions(
+  systemPrompt: string,
+  documentLanguage: string,
+  responseLanguage: string,
+): string {
+  return `${systemPrompt}
+
+LANGUAGE INSTRUCTIONS:
+- Document language: ${documentLanguage}
+- Respond in: ${responseLanguage}
+- Write summary, plainEnglishText, riskReason, recommendations, and other narrative fields in ${responseLanguage}.
+- Keep JSON field names in English exactly as specified.
+- If legal terms have no direct translation, keep the original term and provide a short explanation in ${responseLanguage}.
+- originalText must remain the exact text from the document (do not translate originalText).`;
 }
 
 export function parseAiResponse(responseText: string): Record<string, unknown> {
