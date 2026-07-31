@@ -114,7 +114,7 @@ class _SplashPageState extends State<SplashPage>
                   'Legisense',
                   textAlign: TextAlign.center,
                   style: GoogleFonts.plusJakartaSans(
-                    fontSize: 30,
+                    fontSize: 26,
                     fontWeight: FontWeight.w700,
                     color: AppColors.ink,
                   ),

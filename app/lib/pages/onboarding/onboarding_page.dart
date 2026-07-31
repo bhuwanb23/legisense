@@ -26,7 +26,7 @@ class OnboardingPage extends StatelessWidget {
       backgroundColor: AppColors.bg,
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 24, 24, 28),
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -50,7 +50,7 @@ class OnboardingPage extends StatelessWidget {
               Text(
                 'Law made clear before you sign',
                 style: GoogleFonts.plusJakartaSans(
-                  fontSize: 34,
+                  fontSize: 26,
                   fontWeight: FontWeight.w700,
                   height: 1.15,
                   color: AppColors.ink,

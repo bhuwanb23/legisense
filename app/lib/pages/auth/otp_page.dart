@@ -123,7 +123,7 @@ class _OtpPageState extends State<OtpPage> {
             Text(
               'Enter code',
               style: GoogleFonts.plusJakartaSans(
-                fontSize: 26,
+                fontSize: 22,
                 fontWeight: FontWeight.w700,
                 color: AppColors.primaryNavy,
               ),

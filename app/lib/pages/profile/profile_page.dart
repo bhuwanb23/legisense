@@ -132,8 +132,8 @@ class _ProfilePageState extends State<ProfilePage> {
                     child: Row(
                       children: [
                         Container(
-                          width: 64,
-                          height: 64,
+                          width: 48,
+                          height: 48,
                           decoration: BoxDecoration(
                             color: Colors.white.withValues(alpha: 0.12),
                             shape: BoxShape.circle,
@@ -142,7 +142,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           child: Text(
                             initial,
                             style: GoogleFonts.plusJakartaSans(
-                              fontSize: 26,
+                              fontSize: 20,
                               fontWeight: FontWeight.w700,
                               color: Colors.white,
                             ),
