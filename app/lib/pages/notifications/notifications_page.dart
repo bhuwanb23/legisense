@@ -282,7 +282,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
               child: Row(
                 children: [
                   _FilterChip(

@@ -210,8 +210,6 @@ class _AnalysisResultsPageState extends State<AnalysisResultsPage> {
                       },
                       onExport: () =>
                           _toast('Export report comes with backend.'),
-                      onCompare: () =>
-                          _toast('Version compare comes later.'),
                       onOpenSummary: () {
                         Navigator.of(context).push(
                           MaterialPageRoute<void>(
@@ -292,8 +290,6 @@ class _AnalysisResultsPageState extends State<AnalysisResultsPage> {
                       },
                       onExport: () =>
                           _toast('Export report comes with backend.'),
-                      onCompare: () =>
-                          _toast('Version compare comes later.'),
                       onOpenAll: () {
                         Navigator.of(context).push(
                           MaterialPageRoute<void>(
@@ -422,7 +418,6 @@ class _OverviewBody extends StatelessWidget {
     required this.onOpenPlain,
     required this.onChat,
     required this.onExport,
-    required this.onCompare,
     this.translating = false,
     this.onOpenJurisdiction,
     this.onOpenStateConflicts,
@@ -444,7 +439,6 @@ class _OverviewBody extends StatelessWidget {
   final VoidCallback onOpenPlain;
   final VoidCallback onChat;
   final VoidCallback onExport;
-  final VoidCallback onCompare;
   final VoidCallback? onOpenJurisdiction;
   final VoidCallback? onOpenStateConflicts;
   final VoidCallback? onOpenFlagged;
@@ -471,7 +465,6 @@ class _OverviewBody extends StatelessWidget {
         _ActionRow(
           onChat: onChat,
           onExport: onExport,
-          onCompare: onCompare,
         ),
         const SizedBox(height: 12),
         if (langLabel != null) ...[
@@ -588,40 +581,6 @@ class _OverviewBody extends StatelessWidget {
                   color: Colors.white.withValues(alpha: 0.9),
                 ),
               ),
-              const SizedBox(height: 16),
-              SizedBox(
-                height: 56,
-                child: LineChart(
-                  LineChartData(
-                    minY: 0,
-                    maxY: 100,
-                    gridData: const FlGridData(show: false),
-                    titlesData: const FlTitlesData(show: false),
-                    borderData: FlBorderData(show: false),
-                    lineTouchData: const LineTouchData(enabled: false),
-                    lineBarsData: [
-                      LineChartBarData(
-                        spots: const [
-                          FlSpot(0, 40),
-                          FlSpot(1, 55),
-                          FlSpot(2, 48),
-                          FlSpot(3, 62),
-                          FlSpot(4, 70),
-                          FlSpot(5, 72),
-                        ],
-                        isCurved: true,
-                        color: Colors.white,
-                        barWidth: 2.5,
-                        dotData: const FlDotData(show: false),
-                        belowBarData: BarAreaData(
-                          show: true,
-                          color: Colors.white.withValues(alpha: 0.18),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
             ],
           ),
         ),
@@ -641,8 +600,6 @@ class _OverviewBody extends StatelessWidget {
               iconColor: accentDeep,
               label: 'High risk',
               value: '${r.highRiskCount}',
-              delta: '+${r.highRiskCount}',
-              green: green,
               onTap: onOpenRisk,
             ),
             _StatTile(
@@ -651,8 +608,6 @@ class _OverviewBody extends StatelessWidget {
               iconColor: accent,
               label: 'Clauses',
               value: '${r.clauses.length}',
-              delta: '+${r.clauses.length}',
-              green: green,
               onTap: onOpenSummary,
             ),
             _StatTile(
@@ -661,8 +616,6 @@ class _OverviewBody extends StatelessWidget {
               iconColor: green,
               label: 'Parties',
               value: '${r.partyCount}',
-              delta: '+${r.partyCount}',
-              green: green,
               onTap: onOpenSummary,
             ),
             _StatTile(
@@ -671,158 +624,125 @@ class _OverviewBody extends StatelessWidget {
               iconColor: const Color(0xFF1E88E5),
               label: 'Plain terms',
               value: '${r.clauses.length - r.missingCount}',
-              delta: 'Ready',
-              green: green,
               onTap: onOpenPlain,
             ),
           ],
         ),
-        const SizedBox(height: 14),
-        // Risk trend chart card
-        _WhiteCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Text(
-                    'Risk trend',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.ink,
-                    ),
+        if (r.riskCategories.isNotEmpty) ...[
+          const SizedBox(height: 14),
+          _WhiteCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Risk by category',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.ink,
                   ),
-                  const Spacer(),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: _canvasInner,
-                      borderRadius: BorderRadius.circular(AppRadii.pill),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(Icons.calendar_today_outlined,
-                            size: 14, color: AppColors.mute),
-                        const SizedBox(width: 6),
-                        Text(
-                          'Sections',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.ink,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              SizedBox(
-                height: 160,
-                child: LineChart(
-                  LineChartData(
-                    minY: 0,
-                    maxY: 8,
-                    lineTouchData: const LineTouchData(enabled: false),
-                    gridData: FlGridData(
-                      show: true,
-                      drawVerticalLine: false,
-                      getDrawingHorizontalLine: (v) => FlLine(
-                        color: AppColors.rule,
-                        strokeWidth: 1,
-                      ),
-                    ),
-                    titlesData: FlTitlesData(
-                      topTitles: const AxisTitles(
-                        sideTitles: SideTitles(showTitles: false),
-                      ),
-                      rightTitles: const AxisTitles(
-                        sideTitles: SideTitles(showTitles: false),
-                      ),
-                      leftTitles: AxisTitles(
-                        sideTitles: SideTitles(
-                          showTitles: true,
-                          reservedSize: 28,
-                          interval: 2,
-                          getTitlesWidget: (v, _) => Text(
-                            '${v.toInt()}',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 10,
-                              color: AppColors.mute,
-                            ),
-                          ),
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  height: 160,
+                  child: BarChart(
+                    BarChartData(
+                      maxY: () {
+                        final maxCount = r.riskCategories
+                            .map((c) => c.clauseIds.length)
+                            .fold<int>(0, (a, b) => a > b ? a : b);
+                        return (maxCount < 1 ? 1 : maxCount).toDouble() + 0.5;
+                      }(),
+                      barTouchData: const BarTouchData(enabled: false),
+                      gridData: FlGridData(
+                        show: true,
+                        drawVerticalLine: false,
+                        getDrawingHorizontalLine: (v) => FlLine(
+                          color: AppColors.rule,
+                          strokeWidth: 1,
                         ),
                       ),
-                      bottomTitles: AxisTitles(
-                        sideTitles: SideTitles(
-                          showTitles: true,
-                          getTitlesWidget: (v, _) {
-                            const labels = ['P1', 'P2', 'P3', 'P4', 'P5', 'P6'];
-                            final i = v.toInt();
-                            if (i < 0 || i >= labels.length) {
-                              return const SizedBox.shrink();
-                            }
-                            return Padding(
-                              padding: const EdgeInsets.only(top: 6),
-                              child: Text(
-                                labels[i],
+                      titlesData: FlTitlesData(
+                        topTitles: const AxisTitles(
+                          sideTitles: SideTitles(showTitles: false),
+                        ),
+                        rightTitles: const AxisTitles(
+                          sideTitles: SideTitles(showTitles: false),
+                        ),
+                        leftTitles: AxisTitles(
+                          sideTitles: SideTitles(
+                            showTitles: true,
+                            reservedSize: 28,
+                            getTitlesWidget: (v, _) {
+                              if (v != v.roundToDouble()) {
+                                return const SizedBox.shrink();
+                              }
+                              return Text(
+                                '${v.toInt()}',
                                 style: GoogleFonts.plusJakartaSans(
                                   fontSize: 10,
                                   color: AppColors.mute,
                                 ),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                    ),
-                    borderData: FlBorderData(show: false),
-                    lineBarsData: [
-                      LineChartBarData(
-                        spots: const [
-                          FlSpot(0, 2),
-                          FlSpot(1, 3.2),
-                          FlSpot(2, 2.6),
-                          FlSpot(3, 4.5),
-                          FlSpot(4, 5.8),
-                          FlSpot(5, 6.4),
-                        ],
-                        isCurved: true,
-                        gradient: LinearGradient(colors: [accent, accentDeep]),
-                        barWidth: 3,
-                        dotData: FlDotData(
-                          show: true,
-                          getDotPainter: (s, p, b, i) => FlDotCirclePainter(
-                            radius: 3.5,
-                            color: Colors.white,
-                            strokeWidth: 2,
-                            strokeColor: accentDeep,
+                              );
+                            },
                           ),
                         ),
-                        belowBarData: BarAreaData(
-                          show: true,
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              accent.withValues(alpha: 0.28),
-                              accent.withValues(alpha: 0.02),
+                        bottomTitles: AxisTitles(
+                          sideTitles: SideTitles(
+                            showTitles: true,
+                            getTitlesWidget: (v, _) {
+                              final i = v.toInt();
+                              if (i < 0 || i >= r.riskCategories.length) {
+                                return const SizedBox.shrink();
+                              }
+                              final title = r.riskCategories[i].title;
+                              final short = title.length > 8
+                                  ? '${title.substring(0, 7)}…'
+                                  : title;
+                              return Padding(
+                                padding: const EdgeInsets.only(top: 6),
+                                child: Text(
+                                  short,
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 10,
+                                    color: AppColors.mute,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                      borderData: FlBorderData(show: false),
+                      barGroups: [
+                        for (var i = 0; i < r.riskCategories.length; i++)
+                          BarChartGroupData(
+                            x: i,
+                            barRods: [
+                              BarChartRodData(
+                                toY: r.riskCategories[i].clauseIds.length
+                                    .toDouble(),
+                                width: 18,
+                                borderRadius: const BorderRadius.vertical(
+                                  top: Radius.circular(6),
+                                ),
+                                color: switch (r.riskCategories[i].level) {
+                                  AnalysisRiskLevel.high => accentDeep,
+                                  AnalysisRiskLevel.medium => accent,
+                                  AnalysisRiskLevel.low => green,
+                                  AnalysisRiskLevel.missing => AppColors.mute,
+                                },
+                              ),
                             ],
                           ),
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
+        ],
         const SizedBox(height: 14),
         // Review progress
         _WhiteCard(
@@ -1012,8 +932,6 @@ class _NavTile extends StatelessWidget {
   }
 }
 
-const _canvasInner = Color(0xFFF4F4F5);
-
 class _StatTile extends StatelessWidget {
   const _StatTile({
     required this.icon,
@@ -1021,8 +939,6 @@ class _StatTile extends StatelessWidget {
     required this.iconColor,
     required this.label,
     required this.value,
-    required this.delta,
-    required this.green,
     required this.onTap,
   });
 
@@ -1031,8 +947,6 @@ class _StatTile extends StatelessWidget {
   final Color iconColor;
   final String label;
   final String value;
-  final String delta;
-  final Color green;
   final VoidCallback onTap;
 
   @override
@@ -1054,27 +968,14 @@ class _StatTile extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             mainAxisSize: MainAxisSize.max,
             children: [
-              Row(
-                children: [
-                  Container(
-                    width: 28,
-                    height: 28,
-                    decoration: BoxDecoration(
-                      color: iconBg,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Icon(icon, size: 15, color: iconColor),
-                  ),
-                  const Spacer(),
-                  Text(
-                    delta,
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      color: green,
-                    ),
-                  ),
-                ],
+              Container(
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  color: iconBg,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(icon, size: 15, color: iconColor),
               ),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1121,7 +1022,6 @@ class _ClausesBody extends StatelessWidget {
     required this.onFilter,
     required this.onChat,
     required this.onExport,
-    required this.onCompare,
     required this.onOpenAll,
     required this.onOpenPlain,
   });
@@ -1134,7 +1034,6 @@ class _ClausesBody extends StatelessWidget {
   final ValueChanged<String> onFilter;
   final VoidCallback onChat;
   final VoidCallback onExport;
-  final VoidCallback onCompare;
   final VoidCallback onOpenAll;
   final ValueChanged<String> onOpenPlain;
 
@@ -1148,7 +1047,6 @@ class _ClausesBody extends StatelessWidget {
         _ActionRow(
           onChat: onChat,
           onExport: onExport,
-          onCompare: onCompare,
         ),
         const SizedBox(height: 12),
         _WhiteCard(
@@ -1472,12 +1370,10 @@ class _ActionRow extends StatelessWidget {
   const _ActionRow({
     required this.onChat,
     required this.onExport,
-    required this.onCompare,
   });
 
   final VoidCallback onChat;
   final VoidCallback onExport;
-  final VoidCallback onCompare;
 
   @override
   Widget build(BuildContext context) {
@@ -1525,15 +1421,6 @@ class _ActionRow extends StatelessWidget {
             label: 'Export',
             icon: Icons.ios_share_rounded,
             onTap: onExport,
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          flex: 2,
-          child: _ActionChip(
-            label: 'Compare',
-            icon: Icons.compare_arrows_rounded,
-            onTap: onCompare,
           ),
         ),
       ],

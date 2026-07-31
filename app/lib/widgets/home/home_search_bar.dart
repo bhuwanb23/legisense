@@ -24,8 +24,8 @@ class HomeSearchBar extends StatelessWidget {
           child: GestureDetector(
             onTap: onSearch,
             child: Container(
-              height: 52,
-              padding: const EdgeInsets.symmetric(horizontal: 18),
+              height: 44,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
               decoration: BoxDecoration(
                 color: AppColors.surface,
                 borderRadius: BorderRadius.circular(AppRadii.pill),
@@ -33,12 +33,12 @@ class HomeSearchBar extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.search_rounded, color: AppColors.mute, size: 22),
+                  const Icon(Icons.search_rounded, color: AppColors.mute, size: 20),
                   const SizedBox(width: 10),
                   Text(
                     hint,
                     style: GoogleFonts.plusJakartaSans(
-                      fontSize: 15,
+                      fontSize: 14,
                       color: AppColors.mute,
                     ),
                   ),
@@ -47,7 +47,7 @@ class HomeSearchBar extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: 10),
         Material(
           color: AppColors.ink,
           shape: const CircleBorder(),
@@ -55,9 +55,9 @@ class HomeSearchBar extends StatelessWidget {
             customBorder: const CircleBorder(),
             onTap: onFilter,
             child: const SizedBox(
-              width: 52,
-              height: 52,
-              child: Icon(Icons.tune_rounded, color: AppColors.surface, size: 22),
+              width: 44,
+              height: 44,
+              child: Icon(Icons.tune_rounded, color: AppColors.surface, size: 20),
             ),
           ),
         ),

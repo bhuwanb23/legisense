@@ -29,7 +29,7 @@ class FeaturedDocCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadii.lg),
         onTap: onTap,
         child: Ink(
-          height: 360,
+          height: 200,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(AppRadii.lg),
             gradient: const LinearGradient(
@@ -46,11 +46,11 @@ class FeaturedDocCard extends StatelessWidget {
           child: Stack(
             children: [
               Positioned(
-                top: -40,
-                right: -30,
+                top: -30,
+                right: -20,
                 child: Container(
-                  width: 180,
-                  height: 180,
+                  width: 120,
+                  height: 120,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: Colors.white.withValues(alpha: 0.06),
@@ -58,89 +58,87 @@ class FeaturedDocCard extends StatelessWidget {
                 ),
               ),
               Positioned(
-                bottom: 80,
-                left: -20,
+                top: 14,
+                right: 14,
                 child: Container(
-                  width: 120,
-                  height: 120,
+                  width: 34,
+                  height: 34,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Colors.white.withValues(alpha: 0.04),
-                  ),
-                ),
-              ),
-              Positioned(
-                top: 18,
-                right: 18,
-                child: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white.withValues(alpha: 0.55)),
+                    border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.55)),
                   ),
                   child: const Icon(
                     Icons.bookmark_border_rounded,
                     color: Colors.white,
-                    size: 20,
+                    size: 18,
                   ),
                 ),
               ),
               Positioned(
-                left: 22,
-                right: 22,
-                bottom: 22,
+                top: 36,
+                left: 20,
+                child: Icon(
+                  Icons.description_outlined,
+                  size: 48,
+                  color: Colors.white.withValues(alpha: 0.12),
+                ),
+              ),
+              Positioned(
+                left: 18,
+                right: 18,
+                bottom: 16,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
                       document.typeLabel,
                       style: GoogleFonts.plusJakartaSans(
-                        fontSize: 13,
+                        fontSize: 12,
                         fontWeight: FontWeight.w500,
                         color: Colors.white.withValues(alpha: 0.75),
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 2),
                     Text(
                       document.title,
-                      maxLines: 2,
+                      maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.plusJakartaSans(
-                        fontSize: 24,
+                        fontSize: 18,
                         fontWeight: FontWeight.w700,
                         height: 1.2,
                         color: Colors.white,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 4),
                     Row(
                       children: [
-                        Icon(Icons.shield_outlined,
-                            size: 16, color: risk.$2),
-                        const SizedBox(width: 6),
+                        Icon(Icons.shield_outlined, size: 14, color: risk.$2),
+                        const SizedBox(width: 5),
                         Text(
                           '${document.riskScore} · ${risk.$1}',
                           style: GoogleFonts.plusJakartaSans(
-                            fontSize: 13,
+                            fontSize: 12,
                             fontWeight: FontWeight.w600,
                             color: Colors.white.withValues(alpha: 0.9),
                           ),
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: 6),
                         Text(
                           '· ${document.relativeDate}',
                           style: GoogleFonts.plusJakartaSans(
-                            fontSize: 12,
+                            fontSize: 11,
                             color: Colors.white.withValues(alpha: 0.55),
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 10),
                     Container(
-                      height: 52,
-                      padding: const EdgeInsets.only(left: 20, right: 6),
+                      height: 44,
+                      padding: const EdgeInsets.only(left: 16, right: 4),
                       decoration: BoxDecoration(
                         color: Colors.black.withValues(alpha: 0.45),
                         borderRadius: BorderRadius.circular(AppRadii.pill),
@@ -151,15 +149,15 @@ class FeaturedDocCard extends StatelessWidget {
                             child: Text(
                               'Open analysis',
                               style: GoogleFonts.plusJakartaSans(
-                                fontSize: 15,
+                                fontSize: 14,
                                 fontWeight: FontWeight.w700,
                                 color: Colors.white,
                               ),
                             ),
                           ),
                           Container(
-                            width: 40,
-                            height: 40,
+                            width: 36,
+                            height: 36,
                             decoration: const BoxDecoration(
                               color: Colors.white,
                               shape: BoxShape.circle,
@@ -167,22 +165,13 @@ class FeaturedDocCard extends StatelessWidget {
                             child: const Icon(
                               Icons.arrow_forward_rounded,
                               color: AppColors.ink,
-                              size: 20,
+                              size: 18,
                             ),
                           ),
                         ],
                       ),
                     ),
                   ],
-                ),
-              ),
-              Positioned(
-                top: 72,
-                left: 28,
-                child: Icon(
-                  Icons.description_outlined,
-                  size: 72,
-                  color: Colors.white.withValues(alpha: 0.12),
                 ),
               ),
             ],

@@ -11,7 +11,7 @@ class AppPageHeader extends StatelessWidget {
     this.subtitle,
     this.trailing,
     this.leading,
-    this.padding = const EdgeInsets.fromLTRB(24, 12, 24, 0),
+    this.padding = const EdgeInsets.fromLTRB(20, 8, 20, 0),
   });
 
   final String title;
@@ -26,7 +26,7 @@ class AppPageHeader extends StatelessWidget {
     required String name,
     String subtitle = 'Welcome to Legisense',
     Widget? trailing,
-    EdgeInsetsGeometry padding = const EdgeInsets.fromLTRB(24, 12, 24, 0),
+    EdgeInsetsGeometry padding = const EdgeInsets.fromLTRB(20, 8, 20, 0),
   }) {
     final initial = name.isNotEmpty ? name[0].toUpperCase() : 'L';
     return AppPageHeader(
@@ -36,8 +36,8 @@ class AppPageHeader extends StatelessWidget {
       padding: padding,
       trailing: trailing ??
           Container(
-            width: 48,
-            height: 48,
+            width: 40,
+            height: 40,
             decoration: BoxDecoration(
               color: AppColors.chip,
               shape: BoxShape.circle,
@@ -47,7 +47,7 @@ class AppPageHeader extends StatelessWidget {
             child: Text(
               initial,
               style: GoogleFonts.plusJakartaSans(
-                fontSize: 18,
+                fontSize: 16,
                 fontWeight: FontWeight.w700,
                 color: AppColors.ink,
               ),
@@ -74,20 +74,20 @@ class AppPageHeader extends StatelessWidget {
                 Text(
                   title,
                   style: GoogleFonts.plusJakartaSans(
-                    fontSize: 26,
+                    fontSize: 22,
                     fontWeight: FontWeight.w700,
                     height: 1.15,
                     color: AppColors.ink,
                   ),
                 ),
                 if (subtitle != null) ...[
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 2),
                   Text(
                     subtitle!,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.plusJakartaSans(
-                      fontSize: 14,
+                      fontSize: 13,
                       fontWeight: FontWeight.w400,
                       color: AppColors.mute,
                     ),
@@ -123,13 +123,13 @@ class AppHeaderIconButton extends StatelessWidget {
         customBorder: const CircleBorder(),
         onTap: onTap,
         child: Container(
-          width: 44,
-          height: 44,
+          width: 40,
+          height: 40,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             boxShadow: AppShadows.soft,
           ),
-          child: Icon(icon, size: 20, color: AppColors.ink),
+          child: Icon(icon, size: 18, color: AppColors.ink),
         ),
       ),
     );

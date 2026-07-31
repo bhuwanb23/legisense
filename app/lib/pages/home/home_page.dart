@@ -137,7 +137,7 @@ class _HomePageState extends State<HomePage> {
           onRefresh: _loadDocs,
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.fromLTRB(24, 12, 24, 110),
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 110),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -159,26 +159,26 @@ class _HomePageState extends State<HomePage> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 14),
                 HomeSearchBar(
                   onSearch: widget.onOpenDocuments,
                   onFilter: widget.onOpenDocuments,
                 ),
-                const SizedBox(height: 28),
+                const SizedBox(height: 16),
                 Text(
                   'Select your next review',
                   style: GoogleFonts.plusJakartaSans(
-                    fontSize: 20,
+                    fontSize: 17,
                     fontWeight: FontWeight.w700,
                     color: AppColors.ink,
                   ),
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 10),
                 DocTypeFilters(
                   selectedId: _filterId,
                   onSelected: (id) => setState(() => _filterId = id),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 14),
                 if (_loading)
                   const Padding(
                     padding: EdgeInsets.symmetric(vertical: 40),
@@ -207,7 +207,7 @@ class _HomePageState extends State<HomePage> {
                   )
                 else
                   _EmptyUploadHint(onUpload: widget.onOpenUpload),
-                const SizedBox(height: 28),
+                const SizedBox(height: 18),
                 SectionHeader(
                   title: 'Quick stats',
                   actionLabel: 'Deadlines',
@@ -219,14 +219,14 @@ class _HomePageState extends State<HomePage> {
                     );
                   },
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 10),
                 GridView.count(
                   crossAxisCount: 2,
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
-                  mainAxisSpacing: 12,
-                  crossAxisSpacing: 12,
-                  childAspectRatio: 1.15,
+                  mainAxisSpacing: 10,
+                  crossAxisSpacing: 10,
+                  childAspectRatio: 1.25,
                   children: [
                     StatCard(
                       label: 'Total analyzed',
@@ -251,13 +251,13 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 28),
+                const SizedBox(height: 18),
                 SectionHeader(
                   title: 'Recent documents',
                   showAddButton: true,
                   onAction: widget.onOpenUpload,
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 10),
                 if (!_loading && docs.isEmpty)
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 24),
@@ -273,7 +273,7 @@ class _HomePageState extends State<HomePage> {
                 else
                   ...docs.take(5).map(
                     (doc) => Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.only(bottom: 10),
                       child: RecentDocTile(
                         document: doc,
                         onTap: () => _openDoc(doc),

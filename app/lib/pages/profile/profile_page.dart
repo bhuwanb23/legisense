@@ -120,7 +120,7 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.fromLTRB(24, 16, 24, 110),
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 110),
                 children: [
                   Container(
                     padding: const EdgeInsets.all(20),

@@ -110,7 +110,7 @@ ThemeData buildLegisenseTheme() {
         color: AppColors.ink,
       ),
       headlineMedium: GoogleFonts.plusJakartaSans(
-        fontSize: 26,
+        fontSize: 22,
         fontWeight: FontWeight.w700,
         height: 1.2,
         color: AppColors.ink,

@@ -308,9 +308,9 @@ class _DocumentsPageState extends State<DocumentsPage> {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(24, 18, 24, 0),
+              padding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
               child: Container(
-                height: 52,
+                height: 44,
                 decoration: BoxDecoration(
                   color: AppColors.surface,
                   borderRadius: BorderRadius.circular(AppRadii.pill),
@@ -332,53 +332,54 @@ class _DocumentsPageState extends State<DocumentsPage> {
                     prefixIcon: const Icon(
                       Icons.search_rounded,
                       color: AppColors.mute,
+                      size: 20,
                     ),
                     border: InputBorder.none,
                     enabledBorder: InputBorder.none,
                     focusedBorder: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                    contentPadding: const EdgeInsets.symmetric(vertical: 10),
                   ),
                 ),
               ),
             ),
-            const SizedBox(height: 18),
+            const SizedBox(height: 12),
             SizedBox(
-              height: 96,
+              height: 80,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 24),
+                padding: const EdgeInsets.symmetric(horizontal: 20),
                 itemCount: _categories.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 12),
+                separatorBuilder: (_, __) => const SizedBox(width: 10),
                 itemBuilder: (context, i) {
                   final c = _categories[i];
                   final selected = _filter == c.id;
                   return GestureDetector(
                     onTap: () => setState(() => _filter = c.id),
                     child: SizedBox(
-                      width: 64,
+                      width: 56,
                       child: Column(
                         children: [
                           AnimatedContainer(
                             duration: const Duration(milliseconds: 180),
-                            width: 58,
-                            height: 58,
+                            width: 48,
+                            height: 48,
                             decoration: BoxDecoration(
                               color: AppColors.surface,
-                              borderRadius: BorderRadius.circular(18),
+                              borderRadius: BorderRadius.circular(14),
                               border: selected
                                   ? Border.all(color: AppColors.ink, width: 1.6)
                                   : null,
                               boxShadow: AppShadows.soft,
                             ),
-                            child: Icon(c.icon, color: c.fg, size: 28),
+                            child: Icon(c.icon, color: c.fg, size: 22),
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 6),
                           Text(
                             c.label,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: GoogleFonts.plusJakartaSans(
-                              fontSize: 12,
+                              fontSize: 11,
                               fontWeight: selected
                                   ? FontWeight.w700
                                   : FontWeight.w500,
@@ -393,91 +394,14 @@ class _DocumentsPageState extends State<DocumentsPage> {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
-              child: Material(
-                color: AppColors.ink,
-                borderRadius: BorderRadius.circular(22),
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(22),
-                  onTap: () {
-                    setState(() => _filter = 'all');
-                    _loadDocs();
-                  },
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 14, 16),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 48,
-                          height: 48,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          child: const Icon(
-                            Icons.description_outlined,
-                            color: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Recently Added',
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w700,
-                                  color: Colors.white,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                'View your latest files in one place',
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 12,
-                                  color: Colors.white.withValues(alpha: 0.7),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        Icon(
-                          Icons.chevron_right_rounded,
-                          color: Colors.white.withValues(alpha: 0.85),
-                        ),
-                      ],
-                    ),
-                  ),
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
+              child: Text(
+                'All Documents',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.ink,
                 ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
-              child: Row(
-                children: [
-                  Text(
-                    'All Documents',
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.ink,
-                    ),
-                  ),
-                  const Spacer(),
-                  TextButton(
-                    onPressed: () => setState(() => _filter = 'all'),
-                    child: Text(
-                      'See all',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.mute,
-                      ),
-                    ),
-                  ),
-                ],
               ),
             ),
             Expanded(
@@ -486,7 +410,7 @@ class _DocumentsPageState extends State<DocumentsPage> {
                 decoration: BoxDecoration(
                   color: AppColors.surface,
                   borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(28),
+                    top: Radius.circular(20),
                   ),
                   boxShadow: AppShadows.soft,
                 ),
@@ -561,8 +485,8 @@ class _DocumentsPageState extends State<DocumentsPage> {
                                             child: Row(
                                               children: [
                                                 Container(
-                                                  width: 48,
-                                                  height: 48,
+                                                  width: 40,
+                                                  height: 40,
                                                   decoration: BoxDecoration(
                                                     color: style.tint,
                                                     borderRadius:

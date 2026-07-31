@@ -25,7 +25,7 @@ class SectionHeader extends StatelessWidget {
           child: Text(
             title,
             style: GoogleFonts.plusJakartaSans(
-              fontSize: 20,
+              fontSize: 17,
               fontWeight: FontWeight.w700,
               color: AppColors.ink,
             ),
