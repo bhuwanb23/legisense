@@ -215,7 +215,7 @@ class _ChatPageState extends State<ChatPage> {
             Text(
               'Chat',
               style: GoogleFonts.plusJakartaSans(
-                fontSize: 20,
+                fontSize: 16,
                 fontWeight: FontWeight.w700,
                 color: AppColors.ink,
               ),
@@ -235,7 +235,7 @@ class _ChatPageState extends State<ChatPage> {
       body: _initError != null
           ? Center(
               child: Padding(
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.all(16),
                 child: Text(
                   _initError!,
                   textAlign: TextAlign.center,
@@ -349,8 +349,8 @@ class _ChatPageState extends State<ChatPage> {
                                 customBorder: const CircleBorder(),
                                 onTap: _sending ? null : () => _send(),
                                 child: SizedBox(
-                                  width: 48,
-                                  height: 48,
+                                  width: 40,
+                                  height: 40,
                                   child: _sending
                                       ? const Padding(
                                           padding: EdgeInsets.all(12),

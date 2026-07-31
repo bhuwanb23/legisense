@@ -144,7 +144,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
               children: [
                 Expanded(
                   child: ListView(
-                    padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
                     children: [
                       Center(
                         child: Stack(
@@ -204,7 +204,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                           ],
                         ),
                       ),
-                      const SizedBox(height: 28),
+                      const SizedBox(height: 18),
                       _FieldRow(
                         label: 'Full Name',
                         controller: _name,

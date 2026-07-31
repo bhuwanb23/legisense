@@ -521,7 +521,7 @@ class _UploadPageState extends State<UploadPage>
                         ),
                       ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
               FadeTransition(
                 opacity: _fade(0.5, 0.9),
                 child: SlideTransition(
@@ -529,7 +529,7 @@ class _UploadPageState extends State<UploadPage>
                   child: const _TrustStrip(),
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
               FadeTransition(
                 opacity: _fade(0.58, 1.0),
                 child: SlideTransition(
