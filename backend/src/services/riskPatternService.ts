@@ -55,56 +55,62 @@ export async function runRiskPatternScan(documentId: number, analysisId: number)
     }
   }
 
-  // Batched semantic pass for clauses without keyword hits (or all if few)
-  const candidates = clauseRows.length <= 25
-    ? clauseRows
-    : clauseRows.filter((c) => (c.riskScore ?? 0) >= 40 || !flaggedClauseIds.has(c.id)).slice(0, 25);
+  // Optional semantic AI pass (off by default — keep process path to one LLM call)
+  const semanticOn = ['1', 'true', 'on'].includes(
+    (process.env.RISK_SEMANTIC_ENABLED || 'false').toLowerCase(),
+  );
 
-  if (candidates.length > 0) {
-    try {
-      const patternList = patterns.map((p) => ({ id: p.id, name: p.patternName, category: p.patternCategory })).slice(0, 60);
-      const clauseList = candidates.map((c) => ({
-        clauseNumber: c.clauseNumber,
-        clauseId: c.id,
-        title: c.clauseTitle,
-        text: (c.originalText || '').slice(0, 500),
-      }));
+  if (semanticOn) {
+    const candidates = clauseRows.length <= 25
+      ? clauseRows
+      : clauseRows.filter((c) => (c.riskScore ?? 0) >= 40 || !flaggedClauseIds.has(c.id)).slice(0, 25);
 
-      const { response } = await callWithFallback({
-        systemPrompt: `You detect risky legal clause patterns. Return ONLY JSON:
+    if (candidates.length > 0) {
+      try {
+        const patternList = patterns.map((p) => ({ id: p.id, name: p.patternName, category: p.patternCategory })).slice(0, 60);
+        const clauseList = candidates.map((c) => ({
+          clauseNumber: c.clauseNumber,
+          clauseId: c.id,
+          title: c.clauseTitle,
+          text: (c.originalText || '').slice(0, 500),
+        }));
+
+        const { response } = await callWithFallback({
+          systemPrompt: `You detect risky legal clause patterns. Return ONLY JSON:
 {"matches":[{"clauseId":number,"patternName":string,"confidence":0-100,"snippet":string}]}
 Only include genuine matches (confidence >= 70). Use pattern names exactly from the provided list.`,
-        userPrompt: JSON.stringify({ patterns: patternList, clauses: clauseList }),
-        temperature: 0.2,
-      }, { task: 'analysis' });
+          userPrompt: JSON.stringify({ patterns: patternList, clauses: clauseList }),
+          temperature: 0.2,
+        }, { task: 'analysis' });
 
-      const parsed = typeof response.text === 'string' ? parseAiResponse(response.text) : response.text;
-      const matches = Array.isArray((parsed as { matches?: unknown }).matches)
-        ? (parsed as { matches: Array<{ clauseId: number; patternName: string; confidence: number; snippet?: string }> }).matches
-        : [];
+        const parsed = typeof response.text === 'string' ? parseAiResponse(response.text) : response.text;
+        const matches = Array.isArray((parsed as { matches?: unknown }).matches)
+          ? (parsed as { matches: Array<{ clauseId: number; patternName: string; confidence: number; snippet?: string }> }).matches
+          : [];
 
-      for (const m of matches) {
-        if (!m || (m.confidence ?? 0) < 70) continue;
-        const pattern = patterns.find((p) => p.patternName.toLowerCase() === String(m.patternName || '').toLowerCase());
-        const clause = clauseRows.find((c) => c.id === m.clauseId || c.clauseNumber === m.clauseId);
-        if (!pattern || !clause) continue;
-        const key = `${clause.id}:${pattern.id}`;
-        if (existingPairs.has(key)) continue;
-        existingPairs.add(key);
+        for (const m of matches) {
+          if (!m || (m.confidence ?? 0) < 70) continue;
+          const pattern = patterns.find((p) => p.patternName.toLowerCase() === String(m.patternName || '').toLowerCase());
+          const clause = clauseRows.find((c) => c.id === m.clauseId || c.clauseNumber === m.clauseId);
+          if (!pattern || !clause) continue;
+          const key = `${clause.id}:${pattern.id}`;
+          if (existingPairs.has(key)) continue;
+          existingPairs.add(key);
 
-        db.insert(clauseRiskFlags).values({
-          clauseId: clause.id,
-          documentId,
-          analysisId,
-          patternId: pattern.id,
-          matchType: 'semantic',
-          matchConfidence: Math.min(100, Number(m.confidence) || 75),
-          flaggedTextSnippet: m.snippet || (clause.originalText || '').slice(0, 160),
-        }).run();
-        flaggedClauseIds.add(clause.id);
+          db.insert(clauseRiskFlags).values({
+            clauseId: clause.id,
+            documentId,
+            analysisId,
+            patternId: pattern.id,
+            matchType: 'semantic',
+            matchConfidence: Math.min(100, Number(m.confidence) || 75),
+            flaggedTextSnippet: m.snippet || (clause.originalText || '').slice(0, 160),
+          }).run();
+          flaggedClauseIds.add(clause.id);
+        }
+      } catch (err) {
+        console.error('Semantic risk pattern scan failed:', err instanceof Error ? err.message : err);
       }
-    } catch (err) {
-      console.error('Semantic risk pattern scan failed:', err instanceof Error ? err.message : err);
     }
   }
 

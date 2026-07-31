@@ -7,6 +7,7 @@ import {
   getDocumentStatus,
   getDocumentAnalysis,
   translateDocument,
+  processDocument,
 } from '../controllers/documentController';
 import { uploadFile, handleMulterError } from '../middleware/fileValidator';
 import { authenticate } from '../middleware/auth';
@@ -27,6 +28,7 @@ router.post(
 router.get('/:id', authenticate, getDocument);
 router.get('/:id/status', authenticate, getDocumentStatus);
 router.get('/:id/analysis', authenticate, getDocumentAnalysis);
+router.post('/:id/process', authenticate, aiRateLimiter, processDocument);
 router.post('/:id/translate', authenticate, aiRateLimiter, translateDocument);
 router.delete('/:id', authenticate, deleteDocument);
 

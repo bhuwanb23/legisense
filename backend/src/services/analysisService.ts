@@ -7,20 +7,19 @@ import { callWithFallback, selectProviderForTokens } from './ai';
 import { buildAnalysisUserPrompt, parseAiResponse, appendLanguageInstructions } from '../prompts/analysisPrompt';
 import { CLASSIFY_SYSTEM_PROMPT, ClassifyOutputSchema, buildClassifyUserPrompt, parseClassifyResponse, type ClassifyOutput } from '../prompts/classificationPrompt';
 import { getPromptForType } from '../prompts/promptTemplates';
-import { getTypeEntry } from '../data/documentTypes';
 import { AnalysisOutputSchema, type AnalysisOutput } from '../schemas/analysisSchemas';
 import { chunkText, estimateTotalRequestTokens, mergeAnalysisResults } from './chunkingService';
 import { createNotification } from './notificationService';
 import { encryptText, decryptText, isEncryptionConfigured } from './encryptionService';
 import { detectLanguage, toIso6391 } from './languageDetectionService';
-import { getLanguageName } from '../config/languages';
 import { runJurisdictionCheck } from './jurisdictionCheckService';
 import { runConflictDetection } from './conflictDetectionService';
 import { runRiskPatternScan } from './riskPatternService';
 import { buildDeadlineInputsFromAnalysis, saveDeadlinesForDocument } from './deadlineService';
 import { counterClausesQueue } from '../queue';
 
-const MAX_RETRIES = 3;
+/** Initial attempt + one repair prompt for tiny local models. */
+const MAX_RETRIES = 2;
 const CHUNK_TOKEN_LIMIT = 500_000;
 const ANALYSIS_MAX_CHARS = Number(process.env.ANALYSIS_MAX_CHARS || 8000);
 
@@ -117,9 +116,9 @@ export async function processDocumentSync(documentId: number): Promise<{
 
     // Clear prior partial analysis if any
     if (existing[0]) {
-      db.run(sql`DELETE FROM ${clauses} WHERE analysis_id = ${existing[0].id}`);
-      db.run(sql`DELETE FROM ${riskItems} WHERE analysis_id = ${existing[0].id}`);
-      db.run(sql`DELETE FROM ${analysisResults} WHERE id = ${existing[0].id}`);
+      db.run(sql`DELETE FROM clauses WHERE analysis_id = ${existing[0].id}`);
+      db.run(sql`DELETE FROM risk_items WHERE analysis_id = ${existing[0].id}`);
+      db.run(sql`DELETE FROM analysis_results WHERE id = ${existing[0].id}`);
     }
 
     const analysisId = saveAnalysisResults(
@@ -367,18 +366,9 @@ async function analyzeInChunks(
   let totalInputTokens = 0;
   let totalOutputTokens = 0;
 
-  const chunkRange = 70 / chunks.length;
-  let currentProgress = 25;
-
   for (let i = 0; i < chunks.length; i++) {
     const chunk = chunks[i];
-    const progress = currentProgress + Math.round(chunkRange * (i + 1));
-
-    emitToUser(userId, 'analysis:progress', {
-      documentId,
-      progress: Math.min(progress, 90),
-      stage: `Analyzing part ${i + 1} of ${chunks.length}...`,
-    });
+    console.log(`[process] chunk ${i + 1}/${chunks.length} for doc=${documentId}`);
 
     const text = `[This is part ${i + 1} of ${chunks.length} of a legal document. Analyze this portion and return the full JSON structure with all findings from this section.]\n\n${chunk.text}`;
 
@@ -457,7 +447,7 @@ function saveAnalysisResults(
     aiModelUsed: modelUsed || 'unknown',
     analysisLanguage,
     translations: '{}',
-    counterClausesStatus: 'pending',
+    counterClausesStatus: counterClausesEnabled() ? 'pending' : 'skipped',
   }).run();
 
   const analysisRows = db.select().from(analysisResults).where(sql`${analysisResults.documentId} = ${documentId}`).all();

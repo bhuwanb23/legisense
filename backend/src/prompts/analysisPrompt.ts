@@ -141,20 +141,19 @@ LANGUAGE INSTRUCTIONS:
 export function parseAiResponse(responseText: string): Record<string, unknown> {
   let cleaned = responseText.trim();
 
-  // Strip common provider safety/preamble lines before JSON extraction.
+  // Strip common provider safety/preamble lines (tiny models + cloud free tiers).
   cleaned = cleaned
-    .replace(/^User Safety:\s*\w+\s*/i, '')
-    .replace(/^Safety:\s*\w+\s*/i, '')
+    .replace(/^User Safety:\s*\w+\s*/gim, '')
+    .replace(/^Safety:\s*\w+\s*/gim, '')
+    .replace(/^Here(?:'s| is)(?: the)?(?: JSON| analysis| response)[:\s]*/i, '')
+    .replace(/^Sure[,!]?\s*/i, '')
+    .replace(/^Of course[,!]?\s*/i, '')
     .trim();
 
-  if (cleaned.startsWith('```json')) {
-    cleaned = cleaned.slice(7);
-  } else if (cleaned.startsWith('```')) {
-    cleaned = cleaned.slice(3);
-  }
-
-  if (cleaned.endsWith('```')) {
-    cleaned = cleaned.slice(0, -3);
+  // Prefer fenced JSON blocks when present.
+  const fence = cleaned.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  if (fence?.[1]) {
+    cleaned = fence[1].trim();
   }
 
   const jsonStart = cleaned.indexOf('{');
@@ -168,5 +167,13 @@ export function parseAiResponse(responseText: string): Record<string, unknown> {
 
   cleaned = cleaned.slice(jsonStart, jsonEnd + 1).trim();
 
-  return JSON.parse(cleaned);
+  // Tiny models sometimes emit trailing commas.
+  cleaned = cleaned.replace(/,\s*([}\]])/g, '$1');
+
+  try {
+    return JSON.parse(cleaned) as Record<string, unknown>;
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    throw new Error(`Failed to parse AI JSON: ${msg}`);
+  }
 }

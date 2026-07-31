@@ -1,56 +1,95 @@
 import { z } from 'zod';
 
+/** Coerce empty/missing strings to a fallback so tiny local models still validate. */
+const softStr = (fallback = '') =>
+  z.preprocess((v) => {
+    if (v == null) return fallback;
+    const s = String(v).trim();
+    return s.length > 0 ? s : fallback;
+  }, z.string());
+
+const softStrMin1 = (fallback = 'unknown') =>
+  z.preprocess((v) => {
+    if (v == null) return fallback;
+    const s = String(v).trim();
+    return s.length > 0 ? s : fallback;
+  }, z.string().min(1));
+
+const softNum = (fallback = 0, min = 0, max = 100) =>
+  z.preprocess((v) => {
+    const n = typeof v === 'number' ? v : Number(v);
+    if (!Number.isFinite(n)) return fallback;
+    return Math.min(max, Math.max(min, n));
+  }, z.number().min(min).max(max));
+
+function enumOr<T extends [string, ...string[]]>(values: T, fallback: T[number]) {
+  return z.preprocess((v) => {
+    if (v == null) return fallback;
+    const s = String(v).toLowerCase().trim().replace(/\s+/g, '_');
+    return (values as readonly string[]).includes(s) ? s : fallback;
+  }, z.enum(values));
+}
+
 export const PartySchema = z.object({
-  name: z.string().min(1),
-  role: z.string().min(1),
-  type: z.enum(['individual', 'company', 'government', 'unknown']).default('unknown'),
+  name: softStrMin1('Party'),
+  role: softStrMin1('party'),
+  type: enumOr(['individual', 'company', 'government', 'unknown'] as const, 'unknown'),
   obligations: z.array(z.string()).default([]),
-  obligations_summary: z.string().min(1),
+  obligations_summary: softStrMin1('No obligations summarized.'),
 });
 
 export const ClauseSchema = z.object({
-  clauseNumber: z.number().int().positive(),
-  clauseTitle: z.string().min(1),
-  originalText: z.string().min(1),
-  plainEnglishText: z.string().min(1),
-  readingLevel: z.enum(['grade_5', 'grade_8', 'standard']),
+  clauseNumber: z.preprocess((v) => {
+    const n = typeof v === 'number' ? v : Number(v);
+    return Number.isFinite(n) && n > 0 ? Math.floor(n) : 1;
+  }, z.number().int().positive()),
+  clauseTitle: softStrMin1('Clause'),
+  originalText: softStrMin1('(no text)'),
+  plainEnglishText: softStrMin1('(no summary)'),
+  readingLevel: enumOr(['grade_5', 'grade_8', 'standard'] as const, 'grade_8'),
   keyLegalTerms: z.array(z.object({
-    term: z.string().min(1),
-    definition: z.string().min(1),
+    term: softStrMin1('term'),
+    definition: softStrMin1('definition'),
   })).default([]),
-  riskLevel: z.enum(['none', 'low', 'medium', 'high']),
-  riskScore: z.number().min(0).max(100),
-  riskReason: z.string(),
-  riskCategory: z.enum(['financial', 'legal', 'privacy', 'termination', 'obligation', 'liability', 'compliance', 'intellectual_property', 'operational']),
-  counterSuggestion: z.string(),
+  riskLevel: enumOr(['none', 'low', 'medium', 'high'] as const, 'low'),
+  riskScore: softNum(0),
+  riskReason: softStr(''),
+  riskCategory: enumOr(
+    ['financial', 'legal', 'privacy', 'termination', 'obligation', 'liability', 'compliance', 'intellectual_property', 'operational'] as const,
+    'legal',
+  ),
+  counterSuggestion: softStr(''),
 });
 
 export const CriticalDateSchema = z.object({
-  label: z.string().min(1),
-  date: z.string().min(1),
-  urgency: z.enum(['high', 'medium', 'low']),
-  importance: z.string().min(1),
+  label: softStrMin1('Date'),
+  date: softStrMin1('unknown'),
+  urgency: enumOr(['high', 'medium', 'low'] as const, 'medium'),
+  importance: softStrMin1('Noted'),
 });
 
 export const KeyObligationSchema = z.object({
-  party: z.string().min(1),
-  obligation: z.string().min(1),
-  consequence: z.string().min(1),
+  party: softStrMin1('Party'),
+  obligation: softStrMin1('Obligation'),
+  consequence: softStrMin1('Not specified'),
 });
 
 export const BreachScenarioSchema = z.object({
-  scenario: z.string().min(1),
-  consequence: z.string().min(1),
+  scenario: softStrMin1('Scenario'),
+  consequence: softStrMin1('Consequence'),
 });
 
 export const RiskItemSchema = z.object({
-  riskType: z.enum(['financial', 'liability', 'privacy', 'termination', 'missing', 'compliance', 'legal', 'obligation', 'intellectual_property', 'operational']),
-  title: z.string().min(1),
-  description: z.string().min(1),
-  severity: z.enum(['critical', 'high', 'medium', 'low']),
-  severityScore: z.number().min(0).max(100),
-  recommendation: z.string(),
-  legalReference: z.string(),
+  riskType: enumOr(
+    ['financial', 'liability', 'privacy', 'termination', 'missing', 'compliance', 'legal', 'obligation', 'intellectual_property', 'operational'] as const,
+    'legal',
+  ),
+  title: softStrMin1('Risk'),
+  description: softStrMin1('No description'),
+  severity: enumOr(['critical', 'high', 'medium', 'low'] as const, 'medium'),
+  severityScore: softNum(50),
+  recommendation: softStr(''),
+  legalReference: softStr(''),
 });
 
 const RecurrenceSchema = z.preprocess((val) => {
@@ -67,24 +106,27 @@ const RecurrenceSchema = z.preprocess((val) => {
 }, z.enum(['one-time', 'monthly', 'yearly', 'quarterly']));
 
 export const DeadlineSchema = z.object({
-  title: z.string().min(1),
-  description: z.string().min(1),
-  dueDate: z.string().min(1),
+  title: softStrMin1('Deadline'),
+  description: softStrMin1('Deadline'),
+  dueDate: softStrMin1('unknown'),
   recurrence: RecurrenceSchema.default('one-time'),
-  deadlineType: z.enum(['payment', 'renewal', 'notice', 'termination', 'review', 'milestone', 'compliance', 'other']).default('other'),
-  partyResponsible: z.string().optional().default(''),
-  consequenceIfMissed: z.string().optional().default(''),
-  isRecurring: z.boolean().optional().default(false),
+  deadlineType: enumOr(
+    ['payment', 'renewal', 'notice', 'termination', 'review', 'milestone', 'compliance', 'other'] as const,
+    'other',
+  ),
+  partyResponsible: softStr(''),
+  consequenceIfMissed: softStr(''),
+  isRecurring: z.preprocess((v) => Boolean(v), z.boolean()).optional().default(false),
 });
 
 export const AnalysisOutputSchema = z.object({
-  documentType: z.string().min(1),
-  detectedTypeConfidence: z.number().min(0).max(100),
-  overallRiskScore: z.number().min(0).max(100),
-  riskLevel: z.enum(['low', 'medium', 'high']),
-  fairnessScore: z.number().min(0).max(100),
-  favorsParty: z.string().min(1),
-  summary: z.string().min(1),
+  documentType: softStrMin1('unknown'),
+  detectedTypeConfidence: softNum(50),
+  overallRiskScore: softNum(0),
+  riskLevel: enumOr(['low', 'medium', 'high'] as const, 'low'),
+  fairnessScore: softNum(50),
+  favorsParty: softStrMin1('neither'),
+  summary: softStrMin1('No summary available.'),
   keyParties: z.array(PartySchema).default([]),
   criticalDates: z.array(CriticalDateSchema).default([]),
   keyObligations: z.array(KeyObligationSchema).default([]),

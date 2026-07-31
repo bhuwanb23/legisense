@@ -3,12 +3,12 @@ import { getDb } from '../config/database';
 import { documents, analysisResults, clauses, riskItems, deadlines, users } from '../models';
 import { sql } from 'drizzle-orm';
 import { saveFile, deleteFile } from '../storage/fileStorage';
-import { analysisQueue, ocrQueue } from '../queue';
 import { NotFoundError, BadRequestError } from '../utils/errors';
 import { persistNow } from '../config/database';
 import { encryptText, isEncryptionConfigured } from '../services/encryptionService';
 import { scrapeUrl, isValidUrl } from '../services/urlScraper';
 import { parseUserJurisdiction } from '../services/jurisdictionCheckService';
+import { processDocumentSync } from '../services/analysisService';
 
 function nowPlus24Hours(): string {
   return new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
@@ -90,11 +90,16 @@ async function handleFileUpload(req: Request, res: Response, next: NextFunction)
     if (!doc) throw new Error('Failed to create document record');
     persistNow();
 
-    const job = await analysisQueue.add('analyze', { documentId: doc.id, userId: req.user.id });
-
     res.status(202).json({
       success: true,
-      data: { documentId: doc.id, originalName: doc.originalName, fileFormat: doc.fileFormat, fileSize: doc.fileSize, uploadStatus: 'uploaded', processingStatus: 'pending', jobId: job.id },
+      data: {
+        documentId: doc.id,
+        originalName: doc.originalName,
+        fileFormat: doc.fileFormat,
+        fileSize: doc.fileSize,
+        uploadStatus: 'uploaded',
+        processingStatus: 'pending',
+      },
     });
   } catch (err) { next(err); }
 }
@@ -138,12 +143,16 @@ async function handleScanUpload(req: Request, res: Response, next: NextFunction)
     if (!doc) throw new Error('Failed to create document record');
     persistNow();
 
-    const ocrJob = await ocrQueue.add('ocr', { documentId: doc.id, userId: req.user.id });
-    const analysisJob = await analysisQueue.add('analyze', { documentId: doc.id, userId: req.user.id });
-
     res.status(202).json({
       success: true,
-      data: { documentId: doc.id, originalName: doc.originalName, fileFormat: doc.fileFormat, fileSize: doc.fileSize, uploadStatus: 'uploaded', processingStatus: 'pending', ocrJobId: ocrJob.id, jobId: analysisJob.id },
+      data: {
+        documentId: doc.id,
+        originalName: doc.originalName,
+        fileFormat: doc.fileFormat,
+        fileSize: doc.fileSize,
+        uploadStatus: 'uploaded',
+        processingStatus: 'pending',
+      },
     });
   } catch (err) { next(err); }
 }
@@ -191,11 +200,16 @@ async function handlePasteUpload(req: Request, res: Response, next: NextFunction
     if (!doc) throw new Error('Failed to create document record');
     persistNow();
 
-    const job = await analysisQueue.add('analyze', { documentId: doc.id, userId: req.user.id });
-
     res.status(202).json({
       success: true,
-      data: { documentId: doc.id, originalName: doc.originalName, fileFormat: 'txt', fileSize: doc.fileSize, sourceType: 'paste', processingStatus: 'pending', jobId: job.id },
+      data: {
+        documentId: doc.id,
+        originalName: doc.originalName,
+        fileFormat: 'txt',
+        fileSize: doc.fileSize,
+        sourceType: 'paste',
+        processingStatus: 'pending',
+      },
     });
   } catch (err) { next(err); }
 }
@@ -246,11 +260,17 @@ async function handleUrlUpload(req: Request, res: Response, next: NextFunction):
     if (!doc) throw new Error('Failed to create document record');
     persistNow();
 
-    const job = await analysisQueue.add('analyze', { documentId: doc.id, userId: req.user.id });
-
     res.status(202).json({
       success: true,
-      data: { documentId: doc.id, originalName: doc.originalName, fileFormat: 'url', fileSize: doc.fileSize, sourceType: 'url', sourceUrl: url, processingStatus: 'pending', jobId: job.id },
+      data: {
+        documentId: doc.id,
+        originalName: doc.originalName,
+        fileFormat: 'url',
+        fileSize: doc.fileSize,
+        sourceType: 'url',
+        sourceUrl: url,
+        processingStatus: 'pending',
+      },
     });
   } catch (err) { next(err); }
 }
@@ -413,12 +433,6 @@ export async function getDocumentStatus(req: Request, res: Response, next: NextF
       throw new NotFoundError('Document');
     }
 
-    const jobs = await analysisQueue.getJobs();
-    const latestJob = jobs.filter(j => {
-      const d = j.data as { documentId?: number };
-      return d.documentId === documentId;
-    }).pop();
-
     res.json({
       success: true,
       data: {
@@ -429,11 +443,36 @@ export async function getDocumentStatus(req: Request, res: Response, next: NextF
         processingStatus: doc.processingStatus,
         isDeleted: doc.isDeleted,
         createdAt: doc.createdAt,
-        job: latestJob
-          ? { id: latestJob.id, status: latestJob.status, error: latestJob.error }
-          : null,
       },
     });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/** Blocking extract → LLM → save. One REST call; no status polls / sockets. */
+export async function processDocument(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    if (!req.user) {
+      res.status(401).json({ success: false, error: { message: 'Unauthorized', code: 'AUTH_REQUIRED', statusCode: 401 } });
+      return;
+    }
+
+    const documentId = Number(req.params.id);
+    if (!documentId) throw new BadRequestError('Invalid document ID');
+
+    const db = getDb();
+    const rows = db.select().from(documents).where(
+      sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = 0`
+    ).all();
+
+    if (!rows[0]) throw new NotFoundError('Document');
+
+    req.setTimeout?.(600_000);
+    res.setTimeout?.(600_000);
+
+    const bundle = await processDocumentSync(documentId);
+    res.json({ success: true, data: bundle });
   } catch (err) {
     next(err);
   }
