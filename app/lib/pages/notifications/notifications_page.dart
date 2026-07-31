@@ -389,15 +389,15 @@ class _NotificationsPageState extends State<NotificationsPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  width: 48,
-                  height: 48,
+                  width: 40,
+                  height: 40,
                   decoration: BoxDecoration(
                     color: style.tint,
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(style.icon, color: style.fg, size: 22),
+                  child: Icon(style.icon, color: style.fg, size: 18),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 10),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
