@@ -82,7 +82,7 @@ class _ConfirmTypePageState extends State<ConfirmTypePage> {
           : _error != null
               ? Center(child: Text(_error!))
               : ListView(
-                  padding: const EdgeInsets.fromLTRB(24, 12, 24, 110),
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
                   children: [
                     Text(
                       _data?['typeLabel'] as String? ??
@@ -112,7 +112,7 @@ class _ConfirmTypePageState extends State<ConfirmTypePage> {
                         onChanged: (v) => setState(() => _selected = v),
                       );
                     }),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 16),
                     FilledButton(
                       onPressed: _saving ? null : _confirm,
                       style: FilledButton.styleFrom(

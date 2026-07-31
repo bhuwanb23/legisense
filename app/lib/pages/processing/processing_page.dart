@@ -142,7 +142,7 @@ class _ProcessingPageState extends State<ProcessingPage> {
       backgroundColor: AppColors.paper,
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(28, 16, 28, 110),
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 100),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -182,7 +182,7 @@ class _ProcessingPageState extends State<ProcessingPage> {
                 textAlign: TextAlign.center,
                 style: GoogleFonts.plusJakartaSans(color: AppColors.mute),
               ),
-              const SizedBox(height: 28),
+              const SizedBox(height: 18),
               if (_error != null) ...[
                 Text(
                   _error!,

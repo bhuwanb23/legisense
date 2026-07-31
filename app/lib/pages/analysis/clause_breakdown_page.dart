@@ -108,52 +108,59 @@ class _ClauseBreakdownPageState extends State<ClauseBreakdownPage> {
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
             child: TextField(
               controller: _search,
               onChanged: (_) => setState(() {}),
-              style: GoogleFonts.plusJakartaSans(color: AppColors.primaryNavy),
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 14,
+                color: AppColors.primaryNavy,
+              ),
               decoration: InputDecoration(
                 hintText: 'Search clauses…',
                 hintStyle: GoogleFonts.plusJakartaSans(color: AppColors.inkSoft),
-                prefixIcon: const Icon(Icons.search_rounded),
+                prefixIcon: const Icon(Icons.search_rounded, size: 20),
+                isDense: true,
+                contentPadding: const EdgeInsets.symmetric(vertical: 10),
                 filled: true,
                 fillColor: AppColors.cloud,
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(14),
                   borderSide: BorderSide.none,
                 ),
               ),
             ),
           ),
           SizedBox(
-            height: 42,
+            height: 38,
             child: ListView(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 16),
               children: [
                 for (final f in _ClauseFilter.values)
                   Padding(
-                    padding: const EdgeInsets.only(right: 8),
+                    padding: const EdgeInsets.only(right: 6),
                     child: ChoiceChip(
                       label: Text(_filterLabel(f)),
                       selected: _filter == f,
                       onSelected: (_) => setState(() => _filter = f),
                       selectedColor: AppColors.primaryNavy,
                       labelStyle: GoogleFonts.plusJakartaSans(
+                        fontSize: 12,
                         fontWeight: FontWeight.w600,
                         color: _filter == f
                             ? AppColors.cloud
                             : AppColors.primaryNavy,
                       ),
                       backgroundColor: AppColors.cloud,
+                      visualDensity: VisualDensity.compact,
                       side: const BorderSide(color: AppColors.borderMuted),
                     ),
                   ),
               ],
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           Expanded(
             child: clauses.isEmpty
                 ? Center(
@@ -163,13 +170,13 @@ class _ClauseBreakdownPageState extends State<ClauseBreakdownPage> {
                     ),
                   )
                 : ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(20, 4, 20, 110),
+                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 100),
                     itemCount: clauses.length,
                     itemBuilder: (context, index) {
                       final c = clauses[index];
                       final open = _expanded.contains(c.id);
                       return Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
+                        padding: const EdgeInsets.only(bottom: 8),
                         child: SoftCard(
                           onTap: () {
                             setState(() {
