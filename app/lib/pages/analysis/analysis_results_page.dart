@@ -460,29 +460,29 @@ class _OverviewBody extends StatelessWidget {
     final bottomInset = MediaQuery.paddingOf(context).bottom;
 
     return ListView(
-      padding: EdgeInsets.fromLTRB(16, 12, 16, 88 + bottomInset),
+      padding: EdgeInsets.fromLTRB(16, 10, 16, 88 + bottomInset),
       children: [
         _ActionRow(
           onChat: onChat,
           onExport: onExport,
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 10),
         if (langLabel != null) ...[
           Material(
             color: const Color(0xFFE3F2FD),
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(12),
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               child: Row(
                 children: [
                   const Icon(Icons.translate_rounded,
-                      size: 18, color: Color(0xFF1E88E5)),
-                  const SizedBox(width: 10),
+                      size: 16, color: Color(0xFF1E88E5)),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       'Showing summary & plain language in $langLabel',
                       style: GoogleFonts.plusJakartaSans(
-                        fontSize: 12,
+                        fontSize: 11,
                         fontWeight: FontWeight.w600,
                         color: const Color(0xFF1565C0),
                       ),
@@ -492,66 +492,34 @@ class _OverviewBody extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
         ],
-        // Hero risk card
+        // Compact risk hero
         Container(
-          padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+          padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [accent, accentDeep],
-            ),
-            borderRadius: BorderRadius.circular(24),
-            boxShadow: [
-              BoxShadow(
-                color: accent.withValues(alpha: 0.35),
-                blurRadius: 24,
-                offset: const Offset(0, 10),
-              ),
-            ],
+            color: accent,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: AppShadows.soft,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Risk score',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.white.withValues(alpha: 0.85),
-                ),
-              ),
-              const SizedBox(height: 6),
               Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    '${r.riskScore}',
+                    'Risk score',
                     style: GoogleFonts.plusJakartaSans(
-                      fontSize: 40,
-                      fontWeight: FontWeight.w800,
-                      height: 1,
-                      color: Colors.white,
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 6, bottom: 6),
-                    child: Text(
-                      '/ 100',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white.withValues(alpha: 0.8),
-                      ),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.white.withValues(alpha: 0.8),
                     ),
                   ),
                   const Spacer(),
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 6,
+                      horizontal: 8,
+                      vertical: 4,
                     ),
                     decoration: BoxDecoration(
                       color: green,
@@ -559,12 +527,12 @@ class _OverviewBody extends StatelessWidget {
                     ),
                     child: Text(
                       r.scoreBand == AnalysisRiskLevel.high
-                          ? 'High exposure'
+                          ? 'High'
                           : r.scoreBand == AnalysisRiskLevel.medium
-                              ? 'Needs review'
-                              : 'Manageable',
+                              ? 'Medium'
+                              : 'Low',
                       style: GoogleFonts.plusJakartaSans(
-                        fontSize: 11,
+                        fontSize: 10,
                         fontWeight: FontWeight.w700,
                         color: Colors.white,
                       ),
@@ -572,64 +540,98 @@ class _OverviewBody extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 10),
-              Text(
-                r.biasSummary,
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 13,
-                  height: 1.35,
-                  color: Colors.white.withValues(alpha: 0.9),
-                ),
+              const SizedBox(height: 4),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    '${r.riskScore}',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 32,
+                      fontWeight: FontWeight.w800,
+                      height: 1,
+                      color: Colors.white,
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 4, bottom: 4),
+                    child: Text(
+                      '/100',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white.withValues(alpha: 0.75),
+                      ),
+                    ),
+                  ),
+                ],
               ),
+              if (r.biasSummary.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Text(
+                  r.biasSummary,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 12,
+                    height: 1.35,
+                    color: Colors.white.withValues(alpha: 0.9),
+                  ),
+                ),
+              ],
             ],
           ),
         ),
-        const SizedBox(height: 14),
-        // 2x2 stats
-        GridView.count(
-          crossAxisCount: 2,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          mainAxisSpacing: 12,
-          crossAxisSpacing: 12,
-          childAspectRatio: 1.55,
+        const SizedBox(height: 10),
+        Row(
           children: [
-            _StatTile(
-              icon: Icons.warning_amber_rounded,
-              iconBg: AppColors.chip,
-              iconColor: accentDeep,
-              label: 'High risk',
-              value: '${r.highRiskCount}',
-              onTap: onOpenRisk,
+            Expanded(
+              child: _StatTile(
+                icon: Icons.warning_amber_rounded,
+                iconBg: AppColors.chip,
+                iconColor: accentDeep,
+                label: 'High',
+                value: '${r.highRiskCount}',
+                onTap: onOpenRisk,
+              ),
             ),
-            _StatTile(
-              icon: Icons.article_outlined,
-              iconBg: AppColors.chip,
-              iconColor: accent,
-              label: 'Clauses',
-              value: '${r.clauses.length}',
-              onTap: onOpenSummary,
+            const SizedBox(width: 8),
+            Expanded(
+              child: _StatTile(
+                icon: Icons.article_outlined,
+                iconBg: AppColors.chip,
+                iconColor: accent,
+                label: 'Clauses',
+                value: '${r.clauses.length}',
+                onTap: onOpenSummary,
+              ),
             ),
-            _StatTile(
-              icon: Icons.groups_outlined,
-              iconBg: const Color(0xFFE8F5E9),
-              iconColor: green,
-              label: 'Parties',
-              value: '${r.partyCount}',
-              onTap: onOpenSummary,
+            const SizedBox(width: 8),
+            Expanded(
+              child: _StatTile(
+                icon: Icons.groups_outlined,
+                iconBg: const Color(0xFFE8F5E9),
+                iconColor: green,
+                label: 'Parties',
+                value: '${r.partyCount}',
+                onTap: onOpenSummary,
+              ),
             ),
-            _StatTile(
-              icon: Icons.translate_rounded,
-              iconBg: const Color(0xFFE3F2FD),
-              iconColor: const Color(0xFF1E88E5),
-              label: 'Plain terms',
-              value: '${r.clauses.length - r.missingCount}',
-              onTap: onOpenPlain,
+            const SizedBox(width: 8),
+            Expanded(
+              child: _StatTile(
+                icon: Icons.translate_rounded,
+                iconBg: const Color(0xFFE3F2FD),
+                iconColor: const Color(0xFF1E88E5),
+                label: 'Plain',
+                value: '${r.clauses.length - r.missingCount}',
+                onTap: onOpenPlain,
+              ),
             ),
           ],
         ),
         if (r.riskCategories.isNotEmpty) ...[
-          const SizedBox(height: 14),
+          const SizedBox(height: 10),
           _WhiteCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -637,14 +639,14 @@ class _OverviewBody extends StatelessWidget {
                 Text(
                   'Risk by category',
                   style: GoogleFonts.plusJakartaSans(
-                    fontSize: 15,
+                    fontSize: 14,
                     fontWeight: FontWeight.w700,
                     color: AppColors.ink,
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 10),
                 SizedBox(
-                  height: 160,
+                  height: 120,
                   child: BarChart(
                     BarChartData(
                       maxY: () {
