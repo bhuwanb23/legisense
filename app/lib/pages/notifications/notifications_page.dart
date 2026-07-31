@@ -53,8 +53,9 @@ class _NotificationsPageState extends State<NotificationsPage> {
   _NotifItem _map(Map<String, dynamic> raw) {
     final id = (raw['id'] as num?)?.toInt() ?? 0;
     final title = raw['title']?.toString() ?? 'Notification';
-    final body =
-        (raw['body'] ?? raw['message'] ?? '').toString();
+    final type = (raw['type'] ?? 'tip').toString();
+    final rawBody = (raw['body'] ?? raw['message'] ?? '').toString();
+    final body = _friendlyBody(type, title, rawBody);
     final createdRaw = raw['createdAt']?.toString();
     final created = DateTime.tryParse(createdRaw ?? '');
     final isRead = raw['isRead'] == true || raw['isRead'] == 1;
@@ -69,7 +70,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
         : int.tryParse(docRaw?.toString() ?? '');
     return _NotifItem(
       id: id,
-      type: (raw['type'] ?? 'tip').toString(),
+      type: type,
       title: title,
       body: body,
       timeLabel: AnalysisMapper.relativeDate(createdRaw),
@@ -77,6 +78,33 @@ class _NotificationsPageState extends State<NotificationsPage> {
       unread: unread,
       documentId: documentId,
     );
+  }
+
+  /// Hide stack traces / Zod dumps — keep a short human message.
+  String _friendlyBody(String type, String title, String body) {
+    final t = type.toLowerCase();
+    if (t.contains('fail') || title.toLowerCase().contains('fail')) {
+      final cut = RegExp(r'failed:\s*', caseSensitive: false).firstMatch(body);
+      if (cut != null) {
+        final before = body.substring(0, cut.start).trim();
+        if (before.isNotEmpty) {
+          return before.endsWith('.')
+              ? '$before Tap to retry.'
+              : '$before. Tap to retry.';
+        }
+      }
+      if (body.contains('AI analysis failed') ||
+          body.contains('invalid_type') ||
+          body.contains('INTERNAL_ERROR') ||
+          body.contains('Expected') ||
+          body.length > 160) {
+        return 'We couldn’t finish analyzing this document. Tap to retry.';
+      }
+    }
+    if (body.length > 140) {
+      return '${body.substring(0, 137).trim()}…';
+    }
+    return body;
   }
 
   Future<void> _load() async {
@@ -190,6 +218,13 @@ class _NotificationsPageState extends State<NotificationsPage> {
 
   ({IconData icon, Color tint, Color fg}) _style(String type) {
     final t = type.toLowerCase();
+    if (t.contains('fail') || t.contains('error')) {
+      return (
+        icon: Icons.error_outline_rounded,
+        tint: AppColors.riskHighBg,
+        fg: AppColors.riskHigh,
+      );
+    }
     if (t.contains('deadline')) {
       return (
         icon: Icons.event_outlined,
@@ -394,6 +429,8 @@ class _NotificationsPageState extends State<NotificationsPage> {
                       const SizedBox(height: 4),
                       Text(
                         n.body,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
                         style: GoogleFonts.plusJakartaSans(
                           fontSize: 12,
                           height: 1.4,

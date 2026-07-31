@@ -156,8 +156,13 @@ class _DocumentsPageState extends State<DocumentsPage> {
   }
 
   String _sizeLabel(MockDocument doc) {
-    final kb = 48 + doc.riskScore * 1.6 + doc.id.hashCode % 40;
-    return '${kb.toStringAsFixed(1)} KB';
+    final bytes = doc.fileSize;
+    if (bytes == null || bytes <= 0) return doc.relativeDate;
+    if (bytes < 1024) return '$bytes B';
+    if (bytes < 1024 * 1024) {
+      return '${(bytes / 1024).toStringAsFixed(1)} KB';
+    }
+    return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
   }
 
   String _dateLabel(MockDocument doc) {
@@ -165,6 +170,12 @@ class _DocumentsPageState extends State<DocumentsPage> {
     final mm = d.month.toString().padLeft(2, '0');
     final dd = d.day.toString().padLeft(2, '0');
     return '$dd/$mm/${d.year}';
+  }
+
+  String _metaLine(MockDocument doc) {
+    if (doc.isFailed) return '${_dateLabel(doc)}  ·  Failed';
+    if (doc.isProcessing) return '${_dateLabel(doc)}  ·  Processing…';
+    return '${_dateLabel(doc)}  ·  ${_sizeLabel(doc)}';
   }
 
   ({Color tint, Color fg, IconData icon}) _styleFor(MockDocument doc) {
@@ -587,16 +598,61 @@ class _DocumentsPageState extends State<DocumentsPage> {
                                                       ),
                                                       const SizedBox(height: 4),
                                                       Text(
-                                                        '${_dateLabel(doc)}  ·  ${_sizeLabel(doc)}',
+                                                        _metaLine(doc),
                                                         style: GoogleFonts
                                                             .plusJakartaSans(
                                                           fontSize: 12,
-                                                          color: AppColors.mute,
+                                                          color: doc.isFailed
+                                                              ? AppColors.error
+                                                              : AppColors.mute,
                                                         ),
                                                       ),
                                                     ],
                                                   ),
                                                 ),
+                                                if (doc.isFailed ||
+                                                    doc.isProcessing)
+                                                  Padding(
+                                                    padding:
+                                                        const EdgeInsets.only(
+                                                      right: 4,
+                                                    ),
+                                                    child: Container(
+                                                      padding:
+                                                          const EdgeInsets
+                                                              .symmetric(
+                                                        horizontal: 8,
+                                                        vertical: 4,
+                                                      ),
+                                                      decoration: BoxDecoration(
+                                                        color: doc.isFailed
+                                                            ? AppColors
+                                                                .riskHighBg
+                                                            : AppColors.chip,
+                                                        borderRadius:
+                                                            BorderRadius
+                                                                .circular(
+                                                          AppRadii.pill,
+                                                        ),
+                                                      ),
+                                                      child: Text(
+                                                        doc.isFailed
+                                                            ? 'Failed'
+                                                            : 'Busy',
+                                                        style: GoogleFonts
+                                                            .plusJakartaSans(
+                                                          fontSize: 11,
+                                                          fontWeight:
+                                                              FontWeight.w700,
+                                                          color: doc.isFailed
+                                                              ? AppColors
+                                                                  .riskHigh
+                                                              : AppColors
+                                                                  .inkSoft,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
                                                 IconButton(
                                                   onPressed: () =>
                                                       _menuFor(doc),

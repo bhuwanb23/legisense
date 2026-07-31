@@ -83,16 +83,29 @@ class _AnalysisResultsPageState extends State<AnalysisResultsPage> {
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
                 child: Text(
-                  'Translate document',
+                  'Translate analysis',
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
               ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
+                child: Text(
+                  'Summary and plain-language clauses will update in the language you pick.',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 13,
+                    color: AppColors.mute,
+                  ),
+                ),
+              ),
               for (final lang in ProfileOptions.languages)
                 ListTile(
                   title: Text(lang.label),
+                  trailing: r.displayLanguage == lang.code
+                      ? const Icon(Icons.check_rounded, color: AppColors.ink)
+                      : null,
                   onTap: () => Navigator.pop(context, lang.code),
                 ),
             ],
@@ -103,18 +116,25 @@ class _AnalysisResultsPageState extends State<AnalysisResultsPage> {
     if (picked == null || !mounted) return;
     setState(() => _translating = true);
     try {
-      await DocumentsRepository().translate(id, targetLanguage: picked);
-      final bundle = await DocumentsRepository().getAnalysis(id);
+      final snapshot = await DocumentsRepository().translate(
+        id,
+        targetLanguage: picked,
+      );
       if (!mounted) return;
+      final match = ProfileOptions.languages.where((l) => l.code == picked);
+      final langLabel = match.isEmpty ? picked : match.first.label;
       setState(() {
-        _result = AnalysisMapper.fromBundle(
-          bundle,
-          documentId: id,
-          documentTitle: r.documentTitle,
-        );
+        _result = AnalysisMapper.applyTranslation(_result, snapshot);
         _translating = false;
+        _mode = 0;
       });
-      _toast('Translation applied.');
+      _toast('Showing $langLabel translation');
+      if (!mounted) return;
+      await Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => DocumentSummaryPage(result: _result),
+        ),
+      );
     } on ApiException catch (e) {
       if (!mounted) return;
       setState(() => _translating = false);
@@ -151,6 +171,7 @@ class _AnalysisResultsPageState extends State<AnalysisResultsPage> {
     return Scaffold(
       backgroundColor: _canvas,
       body: SafeArea(
+        bottom: false,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -420,9 +441,44 @@ class _OverviewBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final r = result;
+    final langCode = r.displayLanguage;
+    final langMatch = langCode == null
+        ? null
+        : ProfileOptions.languages.where((l) => l.code == langCode);
+    final langLabel = (langMatch == null || langMatch.isEmpty)
+        ? null
+        : langMatch.first.label;
+
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
       children: [
+        if (langLabel != null) ...[
+          Material(
+            color: const Color(0xFFE3F2FD),
+            borderRadius: BorderRadius.circular(14),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              child: Row(
+                children: [
+                  const Icon(Icons.translate_rounded,
+                      size: 18, color: Color(0xFF1E88E5)),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Showing summary & plain language in $langLabel',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFF1565C0),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+        ],
         // Hero risk card
         Container(
           padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
@@ -880,7 +936,11 @@ class _OverviewBody extends StatelessWidget {
                 if (onTranslate != null)
                   _NavTile(
                     icon: Icons.translate_rounded,
-                    label: translating ? 'Translating…' : 'Translate',
+                    label: translating
+                        ? 'Translating…'
+                        : langLabel != null
+                            ? 'Translate ($langLabel)'
+                            : 'Translate',
                     onTap: translating ? () {} : onTranslate!,
                   ),
               ],
@@ -1377,11 +1437,11 @@ class _BottomActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Dock is ~68 + 16 bottom inset; keep actions just above it — no tall white slab.
-    const dockClearance = 88.0;
+    // Nested under MainShell dock (~72) + home indicator — avoid SafeArea bottom + gap.
+    const dockClearance = 96.0;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, dockClearance),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, dockClearance),
       child: Row(
         children: [
           Expanded(

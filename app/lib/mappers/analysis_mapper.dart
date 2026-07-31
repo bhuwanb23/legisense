@@ -71,6 +71,40 @@ abstract final class AnalysisMapper {
       relativeDate: relativeDate(doc.createdAt),
       riskScore: doc.overallRiskScore ?? 0,
       daysAgo: _daysAgo(doc.createdAt),
+      processingStatus: doc.processingStatus,
+      fileSize: doc.fileSize,
+    );
+  }
+
+  /// Apply a translate API snapshot onto an existing [AnalysisResult].
+  static AnalysisResult applyTranslation(
+    AnalysisResult result,
+    Map<String, dynamic> snapshot,
+  ) {
+    final lang = snapshot['language']?.toString();
+    final summary = snapshot['summary']?.toString();
+    final rawClauses = snapshot['clauses'];
+    final byId = <String, Map<String, dynamic>>{};
+    if (rawClauses is List) {
+      for (final item in rawClauses.whereType<Map>()) {
+        final m = Map<String, dynamic>.from(item);
+        final id = (m['id'] ?? '').toString();
+        if (id.isNotEmpty) byId[id] = m;
+      }
+    }
+
+    final clauses = result.clauses.map((c) {
+      final t = byId[c.id];
+      if (t == null) return c;
+      final plain = t['plainEnglishText']?.toString();
+      if (plain == null || plain.isEmpty) return c;
+      return c.copyWith(plainEnglish: plain);
+    }).toList();
+
+    return result.copyWith(
+      overview: (summary != null && summary.isNotEmpty) ? summary : null,
+      clauses: clauses,
+      displayLanguage: lang,
     );
   }
 
