@@ -362,6 +362,12 @@ async function start() {
 
   await startQueueSystem();
 
+  // Long local-LLM process calls (extract + Ollama) need generous timeouts.
+  server.timeout = 600_000;
+  server.headersTimeout = 610_000;
+  server.requestTimeout = 600_000;
+  server.keepAliveTimeout = 120_000;
+
   server.listen(port, () => {
     console.log(`Legisense API listening on http://localhost:${port}`);
   });
