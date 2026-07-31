@@ -1437,11 +1437,12 @@ class _BottomActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Nested under MainShell dock (~72) + home indicator — avoid SafeArea bottom + gap.
-    const dockClearance = 96.0;
+    final bottomInset = MediaQuery.paddingOf(context).bottom;
+    // Floating dock (~56) + margin (~16) + system inset.
+    final dockClearance = 72.0 + bottomInset;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, dockClearance),
+      padding: EdgeInsets.fromLTRB(16, 8, 16, dockClearance),
       child: Row(
         children: [
           Expanded(

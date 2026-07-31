@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../mappers/analysis_mapper.dart';
+import '../../models/api/analysis_models.dart';
 import '../../repositories/documents_repository.dart';
 import '../../services/api_exception.dart';
 import '../../theme/app_theme.dart';
@@ -25,6 +26,7 @@ class AnalysisLoaderPage extends StatefulWidget {
 
 class _AnalysisLoaderPageState extends State<AnalysisLoaderPage> {
   String? _error;
+  bool _busy = false;
 
   @override
   void initState() {
@@ -33,24 +35,28 @@ class _AnalysisLoaderPageState extends State<AnalysisLoaderPage> {
   }
 
   Future<void> _load() async {
+    setState(() {
+      _error = null;
+      _busy = true;
+    });
     try {
       final status = await DocumentsRepository().getStatus(widget.documentId);
       if (status.processingStatus == 'failed') {
-        setState(() => _error = 'Analysis failed for this document.');
+        setState(() {
+          _error =
+              'We couldn’t analyze this document. Tap Retry to run analysis again.';
+          _busy = false;
+        });
         return;
       }
       if (status.processingStatus != 'analyzed') {
-        // Still processing — show message
-        setState(
-          () => _error =
-              'Document is still ${status.processingStatus}. Open Upload history later.',
-        );
+        // Kick off sync process instead of leaving user stuck.
+        await _runProcess();
         return;
       }
       final bundle =
           await DocumentsRepository().getAnalysis(widget.documentId);
       if (!bundle.hasAnalysis) {
-        // Might need type confirmation
         if (!mounted) return;
         final confirmed = await Navigator.of(context).push<bool>(
           MaterialPageRoute(
@@ -66,21 +72,64 @@ class _AnalysisLoaderPageState extends State<AnalysisLoaderPage> {
             return;
           }
         }
-        setState(() => _error = 'Analysis not ready yet.');
+        setState(() {
+          _error = 'Analysis not ready yet.';
+          _busy = false;
+        });
         return;
       }
       if (!mounted) return;
       _open(bundle);
     } on ApiException catch (e) {
       if (!mounted) return;
-      setState(() => _error = e.message);
+      setState(() {
+        _error = e.message;
+        _busy = false;
+      });
     } catch (e) {
       if (!mounted) return;
-      setState(() => _error = e.toString());
+      setState(() {
+        _error = e.toString();
+        _busy = false;
+      });
     }
   }
 
-  void _open(dynamic bundle) {
+  Future<void> _runProcess() async {
+    setState(() {
+      _error = null;
+      _busy = true;
+    });
+    try {
+      final bundle =
+          await DocumentsRepository().process(widget.documentId);
+      if (!mounted) return;
+      if (!bundle.hasAnalysis) {
+        setState(() {
+          _error = 'Analysis returned empty. Try again.';
+          _busy = false;
+        });
+        return;
+      }
+      _open(bundle);
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = e.message.length > 120
+            ? 'We couldn’t analyze this document. Please try again.'
+            : e.message;
+        _busy = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _error = 'We couldn’t analyze this document. Please try again.';
+        _busy = false;
+      });
+    }
+  }
+
+  void _open(AnalysisBundle bundle) {
     final result = AnalysisMapper.fromBundle(
       bundle,
       documentId: widget.documentId,
@@ -108,7 +157,21 @@ class _AnalysisLoaderPageState extends State<AnalysisLoaderPage> {
       ),
       body: Center(
         child: _error == null
-            ? const CircularProgressIndicator()
+            ? Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const CircularProgressIndicator(color: AppColors.ink),
+                  if (_busy) ...[
+                    const SizedBox(height: 16),
+                    Text(
+                      'Analyzing…',
+                      style: GoogleFonts.plusJakartaSans(
+                        color: AppColors.mute,
+                      ),
+                    ),
+                  ],
+                ],
+              )
             : Padding(
                 padding: const EdgeInsets.all(24),
                 child: Column(
@@ -121,10 +184,7 @@ class _AnalysisLoaderPageState extends State<AnalysisLoaderPage> {
                     ),
                     const SizedBox(height: 16),
                     FilledButton(
-                      onPressed: () {
-                        setState(() => _error = null);
-                        _load();
-                      },
+                      onPressed: _busy ? null : _runProcess,
                       style: FilledButton.styleFrom(
                         backgroundColor: AppColors.ink,
                       ),
