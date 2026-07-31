@@ -128,7 +128,16 @@ export function saveDeadlinesForDocument(
 export function buildDeadlineInputsFromAnalysis(ai: AnalysisOutput): DeadlineInput[] {
   const items: DeadlineInput[] = [];
 
+  const usableDate = (value: string | null | undefined) => {
+    if (!value) return false;
+    const v = String(value).trim();
+    if (!v || v.toLowerCase() === 'unknown' || v.length < 8) return false;
+    if (/^\d{4}-\d{2}-\d{2}/.test(v)) return !Number.isNaN(Date.parse(v.slice(0, 10)));
+    return !Number.isNaN(Date.parse(v));
+  };
+
   for (const d of ai.deadlines || []) {
+    if (!usableDate(d.dueDate)) continue;
     items.push({
       title: d.title,
       description: d.description,
@@ -142,6 +151,7 @@ export function buildDeadlineInputsFromAnalysis(ai: AnalysisOutput): DeadlineInp
   }
 
   for (const cd of ai.criticalDates || []) {
+    if (!usableDate(cd.date)) continue;
     if (items.some((i) => i.title === cd.label && i.dueDate === cd.date)) continue;
     items.push({
       title: cd.label,

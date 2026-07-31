@@ -551,31 +551,22 @@ function generateRiskItemsFromClauses(analysisId: number): void {
     sql`${clauses.analysisId} = ${analysisId}`
   ).all();
 
-  const grouped: Record<string, typeof clauseRows> = {};
   for (const c of clauseRows) {
-    const cat = c.riskCategory || 'other';
-    if (!grouped[cat]) grouped[cat] = [];
-    grouped[cat].push(c);
-  }
+    const score = c.riskScore ?? 0;
+    if (!shouldPromoteClauseToRisk(score, c.riskReason)) continue;
 
-  for (const [category, catClauses] of Object.entries(grouped)) {
-    const maxRiskClause = catClauses.reduce((best, c) =>
-      (c.riskScore ?? 0) > (best.riskScore ?? 0) ? c : best
-    , catClauses[0]);
-
-    const score = maxRiskClause.riskScore ?? 0;
     const severity = severityFromScore(score);
-    const label = category.charAt(0).toUpperCase() + category.slice(1).replace(/_/g, ' ');
+    const title = (c.clauseTitle || 'Clause').trim();
 
     db.insert(riskItems).values({
       analysisId,
-      clauseId: maxRiskClause.id,
-      riskType: category,
-      title: `${label} Risk — ${catClauses.length} clause${catClauses.length > 1 ? 's' : ''} found`,
-      description: maxRiskClause.riskReason || maxRiskClause.plainEnglishText || `Clauses categorized as ${label}.`,
+      clauseId: c.id,
+      riskType: c.riskCategory || 'legal',
+      title: `${title} risk`,
+      description: c.riskReason || c.plainEnglishText || `Review “${title}” carefully.`,
       severity,
       severityScore: score,
-      recommendation: maxRiskClause.counterSuggestion || 'Review this clause for potential risk mitigation.',
+      recommendation: c.counterSuggestion || 'Negotiate clearer, fairer wording before you sign.',
       legalReference: '',
     }).run();
   }
