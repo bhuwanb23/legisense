@@ -184,7 +184,7 @@ class _AnalysisResultsPageState extends State<AnalysisResultsPage> {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
               child: _ModeToggle(
                 mode: _mode,
                 onChanged: (v) => setState(() => _mode = v),
