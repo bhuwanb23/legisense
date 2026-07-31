@@ -83,53 +83,54 @@ class RiskDashboardPage extends StatelessWidget {
         ),
       ),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 4, 16, 100),
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
         children: [
           SoftCard(
-            padding: const EdgeInsets.fromLTRB(12, 16, 12, 14),
+            padding: const EdgeInsets.fromLTRB(16, 20, 16, 16),
             child: Column(
               children: [
-                RiskGauge(score: result.riskScore, size: 140),
-                const SizedBox(height: 6),
+                RiskGauge(score: result.riskScore, size: 152),
+                const SizedBox(height: 10),
                 Text(
                   result.biasSummary,
                   textAlign: TextAlign.center,
-                  maxLines: 2,
+                  maxLines: 3,
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
+                    height: 1.4,
                     color: AppColors.ink,
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 20),
           Text(
             'Risk breakdown',
             style: GoogleFonts.plusJakartaSans(
-              fontSize: 14,
+              fontSize: 15,
               fontWeight: FontWeight.w700,
               color: AppColors.ink,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           SoftCard(
             child: Column(
               children: [
                 SizedBox(
-                  height: 140,
+                  height: 150,
                   child: PieChart(
                     PieChartData(
                       sectionsSpace: 2,
-                      centerSpaceRadius: 28,
+                      centerSpaceRadius: 30,
                       pieTouchData: PieTouchData(enabled: false),
                       sections: sections,
                     ),
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 12),
                 _LegendRow(
                   color: AppColors.riskHigh,
                   label: 'High risk',
@@ -159,19 +160,19 @@ class RiskDashboardPage extends StatelessWidget {
             ),
           ),
           if (result.riskCategories.isNotEmpty) ...[
-            const SizedBox(height: 14),
+            const SizedBox(height: 20),
             Text(
               'Risk by category',
               style: GoogleFonts.plusJakartaSans(
-                fontSize: 14,
+                fontSize: 15,
                 fontWeight: FontWeight.w700,
                 color: AppColors.ink,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
             ...result.riskCategories.map(
               (cat) => Padding(
-                padding: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.only(bottom: 10),
                 child: _CategoryCard(
                   category: cat,
                   clauses: result.clauses

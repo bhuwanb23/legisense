@@ -308,9 +308,9 @@ class _DocumentsPageState extends State<DocumentsPage> {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
               child: Container(
-                height: 44,
+                height: 48,
                 decoration: BoxDecoration(
                   color: AppColors.surface,
                   borderRadius: BorderRadius.circular(AppRadii.pill),
@@ -337,49 +337,49 @@ class _DocumentsPageState extends State<DocumentsPage> {
                     border: InputBorder.none,
                     enabledBorder: InputBorder.none,
                     focusedBorder: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                    contentPadding: const EdgeInsets.symmetric(vertical: 12),
                   ),
                 ),
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             SizedBox(
-              height: 80,
+              height: 88,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 itemCount: _categories.length,
-                separatorBuilder: (_, __) => const SizedBox(width: 10),
+                separatorBuilder: (_, __) => const SizedBox(width: 12),
                 itemBuilder: (context, i) {
                   final c = _categories[i];
                   final selected = _filter == c.id;
                   return GestureDetector(
                     onTap: () => setState(() => _filter = c.id),
                     child: SizedBox(
-                      width: 56,
+                      width: 60,
                       child: Column(
                         children: [
                           AnimatedContainer(
                             duration: const Duration(milliseconds: 180),
-                            width: 48,
-                            height: 48,
+                            width: 52,
+                            height: 52,
                             decoration: BoxDecoration(
                               color: AppColors.surface,
-                              borderRadius: BorderRadius.circular(14),
+                              borderRadius: BorderRadius.circular(16),
                               border: selected
                                   ? Border.all(color: AppColors.ink, width: 1.6)
                                   : null,
                               boxShadow: AppShadows.soft,
                             ),
-                            child: Icon(c.icon, color: c.fg, size: 22),
+                            child: Icon(c.icon, color: c.fg, size: 24),
                           ),
-                          const SizedBox(height: 6),
+                          const SizedBox(height: 8),
                           Text(
                             c.label,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: GoogleFonts.plusJakartaSans(
-                              fontSize: 11,
+                              fontSize: 12,
                               fontWeight: selected
                                   ? FontWeight.w700
                                   : FontWeight.w500,
@@ -394,7 +394,7 @@ class _DocumentsPageState extends State<DocumentsPage> {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 10),
               child: Text(
                 'All Documents',
                 style: GoogleFonts.plusJakartaSans(

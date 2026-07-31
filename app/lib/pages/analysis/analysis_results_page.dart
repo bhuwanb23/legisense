@@ -184,7 +184,7 @@ class _AnalysisResultsPageState extends State<AnalysisResultsPage> {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
               child: _ModeToggle(
                 mode: _mode,
                 onChanged: (v) => setState(() => _mode = v),
@@ -460,29 +460,29 @@ class _OverviewBody extends StatelessWidget {
     final bottomInset = MediaQuery.paddingOf(context).bottom;
 
     return ListView(
-      padding: EdgeInsets.fromLTRB(16, 10, 16, 88 + bottomInset),
+      padding: EdgeInsets.fromLTRB(20, 12, 20, 96 + bottomInset),
       children: [
         _ActionRow(
           onChat: onChat,
           onExport: onExport,
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 16),
         if (langLabel != null) ...[
           Material(
             color: const Color(0xFFE3F2FD),
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(14),
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               child: Row(
                 children: [
                   const Icon(Icons.translate_rounded,
-                      size: 16, color: Color(0xFF1E88E5)),
-                  const SizedBox(width: 8),
+                      size: 18, color: Color(0xFF1E88E5)),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: Text(
                       'Showing summary & plain language in $langLabel',
                       style: GoogleFonts.plusJakartaSans(
-                        fontSize: 11,
+                        fontSize: 12,
                         fontWeight: FontWeight.w600,
                         color: const Color(0xFF1565C0),
                       ),
@@ -492,14 +492,14 @@ class _OverviewBody extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 16),
         ],
-        // Compact risk hero
+        // Risk hero
         Container(
-          padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
+          padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
           decoration: BoxDecoration(
             color: accent,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(18),
             boxShadow: AppShadows.soft,
           ),
           child: Column(
@@ -510,7 +510,7 @@ class _OverviewBody extends StatelessWidget {
                   Text(
                     'Risk score',
                     style: GoogleFonts.plusJakartaSans(
-                      fontSize: 12,
+                      fontSize: 13,
                       fontWeight: FontWeight.w500,
                       color: Colors.white.withValues(alpha: 0.8),
                     ),
@@ -518,8 +518,8 @@ class _OverviewBody extends StatelessWidget {
                   const Spacer(),
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
+                      horizontal: 10,
+                      vertical: 5,
                     ),
                     decoration: BoxDecoration(
                       color: green,
@@ -532,7 +532,7 @@ class _OverviewBody extends StatelessWidget {
                               ? 'Medium'
                               : 'Low',
                       style: GoogleFonts.plusJakartaSans(
-                        fontSize: 10,
+                        fontSize: 11,
                         fontWeight: FontWeight.w700,
                         color: Colors.white,
                       ),
@@ -540,25 +540,25 @@ class _OverviewBody extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 8),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
                     '${r.riskScore}',
                     style: GoogleFonts.plusJakartaSans(
-                      fontSize: 32,
+                      fontSize: 36,
                       fontWeight: FontWeight.w800,
                       height: 1,
                       color: Colors.white,
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.only(left: 4, bottom: 4),
+                    padding: const EdgeInsets.only(left: 6, bottom: 4),
                     child: Text(
                       '/100',
                       style: GoogleFonts.plusJakartaSans(
-                        fontSize: 13,
+                        fontSize: 14,
                         fontWeight: FontWeight.w600,
                         color: Colors.white.withValues(alpha: 0.75),
                       ),
@@ -567,14 +567,14 @@ class _OverviewBody extends StatelessWidget {
                 ],
               ),
               if (r.biasSummary.isNotEmpty) ...[
-                const SizedBox(height: 8),
+                const SizedBox(height: 12),
                 Text(
                   r.biasSummary,
-                  maxLines: 2,
+                  maxLines: 3,
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.plusJakartaSans(
-                    fontSize: 12,
-                    height: 1.35,
+                    fontSize: 13,
+                    height: 1.4,
                     color: Colors.white.withValues(alpha: 0.9),
                   ),
                 ),
@@ -582,52 +582,47 @@ class _OverviewBody extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(height: 10),
-        Row(
+        const SizedBox(height: 16),
+        GridView.count(
+          crossAxisCount: 2,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          mainAxisSpacing: 12,
+          crossAxisSpacing: 12,
+          childAspectRatio: 1.55,
           children: [
-            Expanded(
-              child: _StatTile(
-                icon: Icons.warning_amber_rounded,
-                iconColor: accentDeep,
-                label: 'High',
-                value: '${r.highRiskCount}',
-                onTap: onOpenRisk,
-              ),
+            _StatTile(
+              icon: Icons.warning_amber_rounded,
+              iconColor: accentDeep,
+              label: 'High risk',
+              value: '${r.highRiskCount}',
+              onTap: onOpenRisk,
             ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _StatTile(
-                icon: Icons.article_outlined,
-                iconColor: accent,
-                label: 'Clauses',
-                value: '${r.clauses.length}',
-                onTap: onOpenSummary,
-              ),
+            _StatTile(
+              icon: Icons.article_outlined,
+              iconColor: accent,
+              label: 'Clauses',
+              value: '${r.clauses.length}',
+              onTap: onOpenSummary,
             ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _StatTile(
-                icon: Icons.groups_outlined,
-                iconColor: green,
-                label: 'Parties',
-                value: '${r.partyCount}',
-                onTap: onOpenSummary,
-              ),
+            _StatTile(
+              icon: Icons.groups_outlined,
+              iconColor: green,
+              label: 'Parties',
+              value: '${r.partyCount}',
+              onTap: onOpenSummary,
             ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _StatTile(
-                icon: Icons.translate_rounded,
-                iconColor: const Color(0xFF1E88E5),
-                label: 'Plain',
-                value: '${r.clauses.length - r.missingCount}',
-                onTap: onOpenPlain,
-              ),
+            _StatTile(
+              icon: Icons.translate_rounded,
+              iconColor: const Color(0xFF1E88E5),
+              label: 'Plain terms',
+              value: '${r.clauses.length - r.missingCount}',
+              onTap: onOpenPlain,
             ),
           ],
         ),
         if (r.riskCategories.isNotEmpty) ...[
-          const SizedBox(height: 10),
+          const SizedBox(height: 16),
           _WhiteCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -635,14 +630,14 @@ class _OverviewBody extends StatelessWidget {
                 Text(
                   'Risk by category',
                   style: GoogleFonts.plusJakartaSans(
-                    fontSize: 14,
+                    fontSize: 15,
                     fontWeight: FontWeight.w700,
                     color: AppColors.ink,
                   ),
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 14),
                 SizedBox(
-                  height: 120,
+                  height: 140,
                   child: BarChart(
                     BarChartData(
                       maxY: () {
@@ -741,7 +736,7 @@ class _OverviewBody extends StatelessWidget {
             ),
           ),
         ],
-        const SizedBox(height: 10),
+        const SizedBox(height: 16),
         // Review progress
         _WhiteCard(
           child: Column(
@@ -752,7 +747,7 @@ class _OverviewBody extends StatelessWidget {
                   Text(
                     'Review progress',
                     style: GoogleFonts.plusJakartaSans(
-                      fontSize: 14,
+                      fontSize: 15,
                       fontWeight: FontWeight.w700,
                       color: AppColors.ink,
                     ),
@@ -761,18 +756,18 @@ class _OverviewBody extends StatelessWidget {
                   Text(
                     '${r.clauses.length} clauses · $reviewPct%',
                     style: GoogleFonts.plusJakartaSans(
-                      fontSize: 11,
+                      fontSize: 12,
                       fontWeight: FontWeight.w600,
                       color: AppColors.mute,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 12),
               ClipRRect(
                 borderRadius: BorderRadius.circular(AppRadii.pill),
                 child: SizedBox(
-                  height: 7,
+                  height: 8,
                   child: Stack(
                     children: [
                       Container(color: const Color(0xFFEEEEEE)),
@@ -784,24 +779,21 @@ class _OverviewBody extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: 10),
               Text(
                 '${r.highRiskCount + r.mediumRiskCount} flagged for review',
                 style: GoogleFonts.plusJakartaSans(
-                  fontSize: 11,
+                  fontSize: 12,
                   color: AppColors.mute,
                 ),
               ),
             ],
           ),
         ),
+        const SizedBox(height: 4),
         Align(
           alignment: Alignment.centerLeft,
           child: TextButton(
-            style: TextButton.styleFrom(
-              visualDensity: VisualDensity.compact,
-              padding: const EdgeInsets.symmetric(horizontal: 4),
-            ),
             onPressed: onOpenSummary,
             child: Text(
               'Open full summary',
@@ -814,6 +806,7 @@ class _OverviewBody extends StatelessWidget {
           ),
         ),
         if (result.documentId != null) ...[
+          const SizedBox(height: 4),
           _WhiteCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -821,12 +814,12 @@ class _OverviewBody extends StatelessWidget {
                 Text(
                   'Explore analysis',
                   style: GoogleFonts.plusJakartaSans(
-                    fontSize: 14,
+                    fontSize: 15,
                     fontWeight: FontWeight.w700,
                     color: AppColors.ink,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 8),
                 if (onOpenJurisdiction != null)
                   _NavTile(
                     icon: Icons.gavel_rounded,
@@ -896,29 +889,27 @@ class _NavTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      dense: true,
-      visualDensity: VisualDensity.compact,
-      contentPadding: EdgeInsets.zero,
-      minLeadingWidth: 32,
+      contentPadding: const EdgeInsets.symmetric(vertical: 2),
+      minLeadingWidth: 36,
       leading: Container(
-        width: 32,
-        height: 32,
+        width: 36,
+        height: 36,
         decoration: BoxDecoration(
           color: AppColors.chip,
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(10),
         ),
-        child: Icon(icon, size: 16, color: AppColors.ink),
+        child: Icon(icon, size: 18, color: AppColors.ink),
       ),
       title: Text(
         label,
         style: GoogleFonts.plusJakartaSans(
-          fontSize: 13,
+          fontSize: 14,
           fontWeight: FontWeight.w600,
           color: AppColors.ink,
         ),
       ),
       trailing: const Icon(Icons.chevron_right_rounded,
-          size: 18, color: AppColors.mute),
+          size: 20, color: AppColors.mute),
       onTap: onTap,
     );
   }
@@ -943,41 +934,54 @@ class _StatTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: Colors.white,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(16),
       child: InkWell(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         onTap: onTap,
         child: Ink(
-          padding: const EdgeInsets.fromLTRB(8, 10, 8, 8),
+          padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(16),
             boxShadow: AppShadows.soft,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Icon(icon, size: 16, color: iconColor),
-              const SizedBox(height: 8),
-              Text(
-                value,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
-                  height: 1.1,
-                  color: AppColors.ink,
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: iconColor.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(10),
                 ),
+                child: Icon(icon, size: 17, color: iconColor),
               ),
-              const SizedBox(height: 2),
-              Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 10,
-                  color: AppColors.mute,
-                ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    value,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                      height: 1.1,
+                      color: AppColors.ink,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 12,
+                      color: AppColors.mute,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -1017,13 +1021,13 @@ class _ClausesBody extends StatelessWidget {
     final r = result;
     final bottomInset = MediaQuery.paddingOf(context).bottom;
     return ListView(
-      padding: EdgeInsets.fromLTRB(16, 12, 16, 88 + bottomInset),
+      padding: EdgeInsets.fromLTRB(20, 12, 20, 96 + bottomInset),
       children: [
         _ActionRow(
           onChat: onChat,
           onExport: onExport,
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 16),
         _WhiteCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1033,7 +1037,7 @@ class _ClausesBody extends StatelessWidget {
                   Text(
                     'Risk by category',
                     style: GoogleFonts.plusJakartaSans(
-                      fontSize: 14,
+                      fontSize: 15,
                       fontWeight: FontWeight.w700,
                       color: AppColors.ink,
                     ),
@@ -1042,15 +1046,15 @@ class _ClausesBody extends StatelessWidget {
                   Text(
                     'This doc',
                     style: GoogleFonts.plusJakartaSans(
-                      fontSize: 11,
+                      fontSize: 12,
                       color: AppColors.mute,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 14),
               SizedBox(
-                height: 130,
+                height: 150,
                 child: BarChart(
                   BarChartData(
                     maxY: (r.highRiskCount + r.mediumRiskCount + r.lowRiskCount)
@@ -1201,26 +1205,26 @@ class _ClausesBody extends StatelessWidget {
               const SizedBox(height: 8),
               ...clauses.take(8).map(
                 (c) => Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.only(bottom: 12),
                   child: InkWell(
                     onTap: () => onOpenPlain(c.id),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(14),
                     child: Row(
                       children: [
                         Container(
-                          width: 40,
-                          height: 40,
+                          width: 44,
+                          height: 44,
                           decoration: BoxDecoration(
                             color: RiskStyle.background(c.risk),
-                            borderRadius: BorderRadius.circular(10),
+                            borderRadius: BorderRadius.circular(12),
                           ),
                           child: Icon(
                             Icons.description_outlined,
-                            size: 18,
+                            size: 20,
                             color: RiskStyle.color(c.risk),
                           ),
                         ),
-                        const SizedBox(width: 10),
+                        const SizedBox(width: 12),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1331,10 +1335,10 @@ class _WhiteCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(18),
         boxShadow: AppShadows.soft,
       ),
       child: child,

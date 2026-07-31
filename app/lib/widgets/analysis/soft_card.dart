@@ -7,7 +7,7 @@ class SoftCard extends StatelessWidget {
   const SoftCard({
     super.key,
     required this.child,
-    this.padding = const EdgeInsets.all(12),
+    this.padding = const EdgeInsets.all(14),
     this.onTap,
   });
 
@@ -56,23 +56,23 @@ class MiniStatCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return SoftCard(
       onTap: onTap,
-      padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
+      padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             title,
             style: GoogleFonts.plusJakartaSans(
-              fontSize: 11,
+              fontSize: 12,
               fontWeight: FontWeight.w500,
               color: AppColors.mute,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 6),
           Text(
             value,
             style: GoogleFonts.plusJakartaSans(
-              fontSize: 16,
+              fontSize: 18,
               fontWeight: FontWeight.w700,
               color: AppColors.ink,
             ),

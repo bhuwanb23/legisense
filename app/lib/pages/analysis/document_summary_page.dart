@@ -7,7 +7,7 @@ import '../../widgets/analysis/soft_card.dart';
 import '../chat/chat_page.dart';
 import 'clause_breakdown_page.dart';
 
-/// Full document summary — dense letter-stack layout.
+/// Full document summary — balanced spacing.
 class DocumentSummaryPage extends StatelessWidget {
   const DocumentSummaryPage({super.key, required this.result});
 
@@ -41,24 +41,24 @@ class DocumentSummaryPage extends StatelessWidget {
         ),
       ),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 4, 16, 100),
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
         children: [
           _SectionLabel('Overview'),
           SoftCard(
             child: Text(
               result.overview,
               style: GoogleFonts.plusJakartaSans(
-                fontSize: 13,
-                height: 1.45,
+                fontSize: 14,
+                height: 1.5,
                 color: AppColors.inkSoft,
               ),
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 20),
           _SectionLabel('Key parties'),
           ...result.parties.map(
             (p) => Padding(
-              padding: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.only(bottom: 10),
               child: SoftCard(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -66,11 +66,12 @@ class DocumentSummaryPage extends StatelessWidget {
                     Text(
                       p.name,
                       style: GoogleFonts.plusJakartaSans(
-                        fontSize: 14,
+                        fontSize: 15,
                         fontWeight: FontWeight.w700,
                         color: AppColors.ink,
                       ),
                     ),
+                    const SizedBox(height: 2),
                     Text(
                       p.role,
                       style: GoogleFonts.plusJakartaSans(
@@ -80,10 +81,10 @@ class DocumentSummaryPage extends StatelessWidget {
                       ),
                     ),
                     if (p.obligations.isNotEmpty) ...[
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 10),
                       ...p.obligations.map(
                         (o) => Padding(
-                          padding: const EdgeInsets.only(bottom: 4),
+                          padding: const EdgeInsets.only(bottom: 6),
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -98,8 +99,8 @@ class DocumentSummaryPage extends StatelessWidget {
                                 child: Text(
                                   o,
                                   style: GoogleFonts.plusJakartaSans(
-                                    fontSize: 12,
-                                    height: 1.35,
+                                    fontSize: 13,
+                                    height: 1.4,
                                     color: AppColors.inkSoft,
                                   ),
                                 ),
@@ -114,7 +115,7 @@ class DocumentSummaryPage extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: 10),
           _SectionLabel('Critical dates'),
           SoftCard(
             padding: EdgeInsets.zero,
@@ -123,8 +124,8 @@ class DocumentSummaryPage extends StatelessWidget {
                 for (var i = 0; i < result.criticalDates.length; i++) ...[
                   Padding(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 10,
+                      horizontal: 14,
+                      vertical: 12,
                     ),
                     child: Row(
                       children: [
@@ -156,7 +157,7 @@ class DocumentSummaryPage extends StatelessWidget {
             ),
           ),
           if (result.breachScenarios.isNotEmpty) ...[
-            const SizedBox(height: 14),
+            const SizedBox(height: 20),
             _SectionLabel('What happens if…'),
             SoftCard(
               child: Column(
@@ -165,23 +166,23 @@ class DocumentSummaryPage extends StatelessWidget {
                   for (var i = 0; i < result.breachScenarios.length; i++)
                     Padding(
                       padding: EdgeInsets.only(
-                        bottom: i == result.breachScenarios.length - 1 ? 0 : 8,
+                        bottom: i == result.breachScenarios.length - 1 ? 0 : 10,
                       ),
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Icon(
                             Icons.warning_amber_rounded,
-                            size: 16,
+                            size: 18,
                             color: AppColors.riskMedium,
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: 10),
                           Expanded(
                             child: Text(
                               result.breachScenarios[i],
                               style: GoogleFonts.plusJakartaSans(
-                                fontSize: 12,
-                                height: 1.4,
+                                fontSize: 13,
+                                height: 1.45,
                                 color: AppColors.inkSoft,
                               ),
                             ),
@@ -193,7 +194,7 @@ class DocumentSummaryPage extends StatelessWidget {
               ),
             ),
           ],
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
           Row(
             children: [
               Expanded(
@@ -208,7 +209,7 @@ class DocumentSummaryPage extends StatelessWidget {
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppColors.ink,
                     side: const BorderSide(color: AppColors.rule),
-                    minimumSize: const Size.fromHeight(40),
+                    minimumSize: const Size.fromHeight(44),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(AppRadii.pill),
                     ),
@@ -222,7 +223,7 @@ class DocumentSummaryPage extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 10),
               Expanded(
                 child: FilledButton(
                   onPressed: () {
@@ -234,7 +235,7 @@ class DocumentSummaryPage extends StatelessWidget {
                   },
                   style: FilledButton.styleFrom(
                     backgroundColor: AppColors.ink,
-                    minimumSize: const Size.fromHeight(40),
+                    minimumSize: const Size.fromHeight(44),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(AppRadii.pill),
                     ),
@@ -248,7 +249,7 @@ class DocumentSummaryPage extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 10),
               Expanded(
                 child: OutlinedButton(
                   onPressed: () =>
@@ -256,7 +257,7 @@ class DocumentSummaryPage extends StatelessWidget {
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppColors.ink,
                     side: const BorderSide(color: AppColors.rule),
-                    minimumSize: const Size.fromHeight(40),
+                    minimumSize: const Size.fromHeight(44),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(AppRadii.pill),
                     ),
@@ -286,11 +287,11 @@ class _SectionLabel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.only(bottom: 10),
       child: Text(
         text,
         style: GoogleFonts.plusJakartaSans(
-          fontSize: 14,
+          fontSize: 15,
           fontWeight: FontWeight.w700,
           color: AppColors.ink,
         ),

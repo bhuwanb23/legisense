@@ -11,7 +11,7 @@ class AppPageHeader extends StatelessWidget {
     this.subtitle,
     this.trailing,
     this.leading,
-    this.padding = const EdgeInsets.fromLTRB(20, 8, 20, 0),
+    this.padding = const EdgeInsets.fromLTRB(20, 12, 20, 0),
   });
 
   final String title;
@@ -26,7 +26,7 @@ class AppPageHeader extends StatelessWidget {
     required String name,
     String subtitle = 'Welcome to Legisense',
     Widget? trailing,
-    EdgeInsetsGeometry padding = const EdgeInsets.fromLTRB(20, 8, 20, 0),
+    EdgeInsetsGeometry padding = const EdgeInsets.fromLTRB(20, 12, 20, 0),
   }) {
     final initial = name.isNotEmpty ? name[0].toUpperCase() : 'L';
     return AppPageHeader(
@@ -81,7 +81,7 @@ class AppPageHeader extends StatelessWidget {
                   ),
                 ),
                 if (subtitle != null) ...[
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 4),
                   Text(
                     subtitle!,
                     maxLines: 1,
