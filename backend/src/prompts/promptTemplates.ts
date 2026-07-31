@@ -1,82 +1,82 @@
 const BASE_RULES = `RULES:
-1. Extract EVERY clause you can find — even implicit/unlabeled clauses — and assign them sequential numbers starting from 1.
-2. For each party, include a "type" field: "individual", "company", "government", or "unknown".
-3. For each party, include an "obligations_summary" field with a 1-2 sentence plain English summary of that party's overall duties under the document.
-4. For each key obligation, include a "consequence" field describing what happens if the obligation is breached.
-5. For each critical date, include an "importance" field explaining why that date matters and what action is required.
-6. Include a "breachScenarios" array with likely breach scenarios and their consequences.
-7. The "originalText" field must contain the exact text from the document for each clause.
-8. If the document has no explicit clause numbering, number clauses sequentially in order of appearance.
-9. For "missingClauses", list important clause types that a reasonable reader would expect but are absent.
-10. All risk scores must be 0-100. All severity scores must be 0-100.
-11. The "favorsParty" field must be "Party A", "Party B", or "Balanced" — use actual party names from the document if possible.
-12. For each clause, set "riskCategory" to one of: financial, legal, privacy, termination, obligation, liability, compliance, intellectual_property, operational. Choose the single most relevant category.
-13. For each clause, include a "plainEnglishText" field explaining the clause in everyday language.
-14. For each clause, include a "readingLevel" field: "grade_5", "grade_8", or "standard".
-15. For each clause, include a "keyLegalTerms" array listing 1-3 legal terms with plain English definitions.`;
+1. Extract EVERY numbered or titled section as its own clause. Assign sequential clauseNumber starting at 1. Prefer more clauses over fewer.
+2. documentType MUST be ONE short label from this list only: NDA, Employment Agreement, Lease Agreement, Loan Agreement, Service Agreement, Sale Deed, Partnership Deed, Power of Attorney, Terms of Service, Privacy Policy, Will, Court Notice, MOU, Other. NEVER copy example text or the words "string" / "detected document type".
+3. summary MUST be 4–8 full sentences (at least 350 characters): purpose, parties, money/term, one-sided terms, and the top risks a reader should notice.
+4. plainEnglishText MUST explain what the clause means for a non-lawyer in 2–4 concrete sentences. NEVER write meta lines like "Identifies who is signing" or "Identifies obligations".
+5. originalText MUST be a real quote copied from the document for that clause. NEVER use placeholders like "(no text)".
+6. riskReason MUST say WHY the clause is risky or safe for a specific party. NEVER use only "Standard clause."
+7. Score one-sided terms honestly: long non-competes, unlimited indemnity, lock-in, deposit forfeiture, acceleration on default → medium/high riskScore (40–95).
+8. For each party include type (individual|company|government|unknown) and obligations_summary (1–2 sentences).
+9. missingClauses: list protections that are truly ABSENT. Do NOT list anything already covered by an extracted clause title.
+10. deadlines and criticalDates: ONLY include items with a real calendar date found in the text (YYYY-MM-DD preferred). If no date exists, omit it — do not invent dates.
+11. riskItems: 3–8 named risks with severity, description, and recommendation. Do NOT invent filler titles like "Legal Risk — N clauses found".
+12. favorsParty: use a real party name from the document, or "Balanced".
+13. readingLevel: grade_5 | grade_8 | standard. riskCategory: financial|legal|privacy|termination|obligation|liability|compliance|intellectual_property|operational.
+14. If the text is a resume/CV, syllabus, or invoice with no contract terms, set documentType to "Other", summary explaining it is not a contract, and clauses/riskItems/deadlines to [].`;
 
 const JSON_EXAMPLE = `{
-  "documentType": "string — detected document type",
-  "detectedTypeConfidence": 95,
-  "overallRiskScore": 45,
-  "riskLevel": "medium",
-  "fairnessScore": 55,
-  "favorsParty": "Party A",
-  "summary": "3-5 sentence plain English summary",
+  "documentType": "Employment Agreement",
+  "detectedTypeConfidence": 90,
+  "overallRiskScore": 72,
+  "riskLevel": "high",
+  "fairnessScore": 35,
+  "favorsParty": "TechVista Pvt Ltd",
+  "summary": "This employment agreement hires Jordan Lee as a senior engineer at TechVista in Bangalore. Pay is INR 24 lakh per year with a six-month probation. After leaving, a 24-month non-compete covers India, Singapore, and the UAE, and confidentiality lasts indefinitely. The company may terminate with only 15 days notice while the employee must give 90 days. Unlimited indemnity and automatic renewal of restrictive covenants make the deal strongly company-friendly.",
   "keyParties": [
-    {"name": "Acme Corp", "role": "Employer", "type": "company", "obligations": ["Pay salary"], "obligations_summary": "Acme Corp must pay salary on time."},
-    {"name": "John Doe", "role": "Employee", "type": "individual", "obligations": ["Perform duties"], "obligations_summary": "John Doe must perform assigned duties."}
+    {"name": "TechVista Pvt Ltd", "role": "Employer", "type": "company", "obligations": ["Pay salary"], "obligations_summary": "TechVista must pay the agreed salary monthly and may end employment on short notice."},
+    {"name": "Jordan Lee", "role": "Employee", "type": "individual", "obligations": ["Perform duties", "Honor non-compete"], "obligations_summary": "Jordan must do the job, keep secrets forever, and avoid competitor work for two years after exit."}
   ],
   "criticalDates": [
-    {"label": "Contract Start", "date": "2024-01-01", "urgency": "high", "importance": "All obligations begin on this date."}
+    {"label": "Employment start", "date": "2025-03-01", "urgency": "high", "importance": "All duties and pay begin on this date."}
   ],
   "keyObligations": [
-    {"party": "Acme Corp", "obligation": "Pay salary by 30th of each month", "consequence": "Late payment penalties."}
+    {"party": "Jordan Lee", "obligation": "Give 90 days notice to resign", "consequence": "Company can treat early exit as breach."}
   ],
   "breachScenarios": [
-    {"scenario": "Failure to maintain confidentiality", "consequence": "Legal action for damages."}
+    {"scenario": "Employee joins a competitor within 24 months", "consequence": "Injunction and damages under the non-compete."}
   ],
-  "missingClauses": ["Termination clause", "Governing law clause"],
+  "missingClauses": ["Dispute resolution / arbitration", "Statutory benefits (PF/ESI) details"],
   "clauses": [
     {
       "clauseNumber": 1,
-      "clauseTitle": "Parties",
-      "originalText": "This Agreement is entered into between Acme Corp and John Doe...",
-      "plainEnglishText": "Identifies who is signing.",
+      "clauseTitle": "Non-Compete",
+      "originalText": "For 24 months after termination, Employee shall not work for any competitor in India, Singapore, or the UAE.",
+      "plainEnglishText": "After you leave, you cannot take a job with a competitor in India, Singapore, or the UAE for two full years. That is a long ban and covers three countries, so it can block many future roles.",
       "readingLevel": "grade_5",
-      "keyLegalTerms": [{"term": "Agreement", "definition": "A legally binding contract."}],
-      "riskLevel": "none",
-      "riskScore": 5,
-      "riskReason": "Standard clause.",
-      "riskCategory": "legal",
-      "counterSuggestion": ""
+      "keyLegalTerms": [{"term": "Non-compete", "definition": "A rule that stops you working for rivals for a set time."}],
+      "riskLevel": "high",
+      "riskScore": 85,
+      "riskReason": "Two-year multi-country ban after exit is unusually broad for an employee and may be hard to challenge later.",
+      "riskCategory": "termination",
+      "counterSuggestion": "Limit to 6–12 months and India-only, with a clear competitor definition."
     }
   ],
   "riskItems": [
     {
       "riskType": "termination",
-      "title": "Unilateral termination without cause",
-      "description": "Clause allows termination on short notice.",
+      "title": "Unequal notice periods",
+      "description": "Company may exit in 15 days while the employee must give 90 days.",
       "severity": "high",
-      "severityScore": 75,
-      "recommendation": "Negotiate for longer notice.",
+      "severityScore": 78,
+      "recommendation": "Negotiate equal notice of at least 60 days for both sides.",
       "legalReference": "Indian Contract Act, 1872"
     }
   ],
   "deadlines": [
-    {"title": "Renewal Notice", "description": "Provide 30 days notice.", "dueDate": "2024-12-01", "recurrence": "yearly"}
+    {"title": "Employment start", "description": "Start of employment", "dueDate": "2025-03-01", "recurrence": "one-time", "deadlineType": "milestone", "partyResponsible": "Both", "consequenceIfMissed": "Duties and pay do not begin", "isRecurring": false}
   ]
 }`;
 
-const JSON_INSTRUCTION = `\n\nThe JSON must match this exact structure. Every field must be present. Use empty arrays [] for lists with no items. Use empty string "" for optional text fields that are not applicable. Never omit a field.`;
+const JSON_INSTRUCTION = `\n\nReturn ONLY valid JSON matching this structure. Every field must be present. Use [] when a list is empty. Use "" for unused optional strings. Never invent calendar dates. Never echo example placeholder wording.`;
 
 function buildPrompt(prefix: string): string {
   return `${prefix}
 
-CRITICAL: You MUST respond with valid JSON only. No markdown, no explanation, no code fences. Just raw JSON.
+CRITICAL: Respond with valid JSON only. No markdown, no commentary, no code fences.
 
 ${BASE_RULES}
 
+Example shape (values are illustrative — replace with THIS document's facts):
 ${JSON_EXAMPLE}${JSON_INSTRUCTION}`;
 }
 

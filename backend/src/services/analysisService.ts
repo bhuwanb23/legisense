@@ -17,6 +17,11 @@ import { runConflictDetection } from './conflictDetectionService';
 import { runRiskPatternScan } from './riskPatternService';
 import { buildDeadlineInputsFromAnalysis, saveDeadlinesForDocument } from './deadlineService';
 import { counterClausesQueue } from '../queue';
+import {
+  enrichAnalysisOutput,
+  looksLikeNonLegalDocument,
+  shouldPromoteClauseToRisk,
+} from './analysisCleanup';
 
 /** Initial attempt + one repair prompt for tiny local models. */
 const MAX_RETRIES = 2;
@@ -39,9 +44,12 @@ export async function analyzeDocumentPipeline(documentId: number, _userId: numbe
 
 /**
  * Single blocking pipeline: extract text → one LLM analysis → save.
- * No sockets, no status polling, no extra AI passes.
+ * Pass force=true to re-run even if already analyzed.
  */
-export async function processDocumentSync(documentId: number): Promise<{
+export async function processDocumentSync(
+  documentId: number,
+  options?: { force?: boolean },
+): Promise<{
   status: string;
   analysis: Record<string, unknown> | null;
   clauses: unknown[];
@@ -55,9 +63,9 @@ export async function processDocumentSync(documentId: number): Promise<{
   const doc = rows[0];
   if (!doc) throw new Error(`Document ${documentId} not found`);
 
-  // Already analyzed — return existing bundle
+  // Already analyzed — return existing bundle unless force refresh
   const existing = db.select().from(analysisResults).where(sql`${analysisResults.documentId} = ${documentId}`).all();
-  if (existing[0] && doc.processingStatus === 'analyzed') {
+  if (!options?.force && existing[0] && doc.processingStatus === 'analyzed') {
     return getAnalysisBundleForDocument(documentId);
   }
 
@@ -85,12 +93,47 @@ export async function processDocumentSync(documentId: number): Promise<{
     );
 
     console.log(`[process] doc=${documentId} chars=${llmText.length} lang=${detectedLang} → LLM`);
-    const singleResult = await analyzeSingle(llmText, selectedPrompt, detectedLang);
-    const analysisResult = singleResult.result;
-    const providerUsed = singleResult.provider;
-    const modelUsed = singleResult.model;
-    const totalInputTokens = singleResult.inputTokens;
-    const totalOutputTokens = singleResult.outputTokens;
+
+    let analysisResult: AnalysisOutput;
+    let providerUsed: string;
+    let modelUsed: string;
+    let totalInputTokens: number;
+    let totalOutputTokens: number;
+
+    if (looksLikeNonLegalDocument(rawText)) {
+      console.log(`[process] doc=${documentId} treated as non-contract (skip LLM)`);
+      analysisResult = enrichAnalysisOutput(
+        {
+          documentType: 'Other',
+          detectedTypeConfidence: 85,
+          overallRiskScore: 0,
+          riskLevel: 'low',
+          fairnessScore: 50,
+          favorsParty: 'Balanced',
+          summary: 'Placeholder',
+          keyParties: [],
+          criticalDates: [],
+          keyObligations: [],
+          missingClauses: [],
+          clauses: [],
+          riskItems: [],
+          deadlines: [],
+          breachScenarios: [],
+        },
+        rawText,
+      );
+      providerUsed = 'none';
+      modelUsed = 'heuristic';
+      totalInputTokens = 0;
+      totalOutputTokens = 0;
+    } else {
+      const singleResult = await analyzeSingle(llmText, selectedPrompt, detectedLang);
+      analysisResult = enrichAnalysisOutput(singleResult.result, rawText);
+      providerUsed = singleResult.provider;
+      modelUsed = singleResult.model;
+      totalInputTokens = singleResult.inputTokens;
+      totalOutputTokens = singleResult.outputTokens;
+    }
 
     const typeKey = (analysisResult.documentType || 'unknown').toLowerCase().replace(/\s+/g, '_');
     db.run(sql`UPDATE ${documents} SET
@@ -332,7 +375,10 @@ async function analyzeSingle(
 
       const parsed = typeof response.text === 'string' ? parseAiResponse(response.text) : response.text;
 
-      const validated = AnalysisOutputSchema.parse(parsed);
+      const validated = enrichAnalysisOutput(
+        AnalysisOutputSchema.parse(parsed),
+        text,
+      );
 
       return {
         result: validated,
