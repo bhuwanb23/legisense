@@ -45,7 +45,7 @@ class _PlainLanguagePageState extends State<PlainLanguagePage> {
       ),
       builder: (context) {
         return Padding(
-          padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -53,17 +53,17 @@ class _PlainLanguagePageState extends State<PlainLanguagePage> {
               Text(
                 term,
                 style: GoogleFonts.plusJakartaSans(
-                  fontSize: 20,
+                  fontSize: 17,
                   fontWeight: FontWeight.w700,
                   color: AppColors.primaryNavy,
                 ),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 8),
               Text(
                 definition,
                 style: GoogleFonts.plusJakartaSans(
-                  fontSize: 15,
-                  height: 1.5,
+                  fontSize: 13,
+                  height: 1.45,
                   color: AppColors.inkSoft,
                 ),
               ),
@@ -93,25 +93,25 @@ class _PlainLanguagePageState extends State<PlainLanguagePage> {
               ..sort((a, b) => a.key.compareTo(b.key));
             return ListView(
               controller: scroll,
-              padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
               children: [
                 Text(
                   'Legal glossary',
                   style: GoogleFonts.plusJakartaSans(
-                    fontSize: 20,
+                    fontSize: 17,
                     fontWeight: FontWeight.w700,
                     color: AppColors.primaryNavy,
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
                 Text(
                   'Tap a highlighted word in the original text, or browse here.',
                   style: GoogleFonts.plusJakartaSans(
-                    fontSize: 13,
+                    fontSize: 12,
                     color: AppColors.inkSoft,
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 12),
                 ...entries.map(
                   (e) => ListTile(
                     contentPadding: EdgeInsets.zero,
@@ -262,7 +262,7 @@ class _PlainLanguagePageState extends State<PlainLanguagePage> {
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -350,7 +350,7 @@ class _PlainLanguagePageState extends State<PlainLanguagePage> {
           ),
           Expanded(
             child: ListView.builder(
-              padding: const EdgeInsets.fromLTRB(20, 4, 20, 110),
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 100),
               itemCount: clauses.length,
               itemBuilder: (context, index) {
                 final c = clauses[index];
@@ -441,14 +441,17 @@ class _PlainLanguagePageState extends State<PlainLanguagePage> {
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppColors.primaryNavy,
                         side: const BorderSide(color: AppColors.borderMuted),
-                        minimumSize: const Size.fromHeight(48),
+                        minimumSize: const Size.fromHeight(40),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(AppRadii.pill),
                         ),
                       ),
                       child: Text(
                         'Clauses',
-                        style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ),
                   ),
@@ -464,14 +467,17 @@ class _PlainLanguagePageState extends State<PlainLanguagePage> {
                       },
                       style: FilledButton.styleFrom(
                         backgroundColor: AppColors.ink,
-                        minimumSize: const Size.fromHeight(48),
+                        minimumSize: const Size.fromHeight(40),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(AppRadii.pill),
                         ),
                       ),
                       child: Text(
                         'Chat',
-                        style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ),
                   ),
@@ -506,12 +512,12 @@ class _ToggleHalf extends StatelessWidget {
           borderRadius: BorderRadius.circular(AppRadii.pill),
           onTap: onTap,
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12),
+            padding: const EdgeInsets.symmetric(vertical: 8),
             child: Text(
               label,
               textAlign: TextAlign.center,
               style: GoogleFonts.plusJakartaSans(
-                fontSize: 13,
+                fontSize: 12,
                 fontWeight: FontWeight.w700,
                 color: selected ? AppColors.cloud : AppColors.inkSoft,
               ),
@@ -568,7 +574,7 @@ class _SectionBlock extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
