@@ -180,6 +180,8 @@ class MockDocument {
     required this.relativeDate,
     this.riskScore = 50,
     this.daysAgo = 0,
+    this.processingStatus,
+    this.fileSize,
   });
 
   final String id;
@@ -190,4 +192,13 @@ class MockDocument {
   final String relativeDate;
   final int riskScore;
   final int daysAgo;
+  final String? processingStatus;
+  final int? fileSize;
+
+  bool get isFailed => processingStatus == 'failed';
+  bool get isProcessing =>
+      processingStatus == 'pending' ||
+      processingStatus == 'processing' ||
+      processingStatus == 'ocr_processing';
+  bool get isAnalyzed => processingStatus == 'analyzed';
 }

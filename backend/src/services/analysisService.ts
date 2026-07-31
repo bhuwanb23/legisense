@@ -186,7 +186,7 @@ export async function processDocumentSync(documentId: number): Promise<{
       doc.userId,
       'analysis_failed',
       'Analysis Failed',
-      `Analysis of "${doc.originalName}" failed: ${message}`,
+      `We couldn't analyze "${doc.originalName}". Open the document to try again.`,
       documentId,
     );
     persistNow();

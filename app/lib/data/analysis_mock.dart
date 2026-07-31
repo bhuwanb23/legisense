@@ -39,6 +39,20 @@ class AnalysisClause {
   final String originalText;
   final String plainEnglish;
   final List<String> categories;
+
+  AnalysisClause copyWith({
+    String? plainEnglish,
+  }) {
+    return AnalysisClause(
+      id: id,
+      number: number,
+      title: title,
+      risk: risk,
+      originalText: originalText,
+      plainEnglish: plainEnglish ?? this.plainEnglish,
+      categories: categories,
+    );
+  }
 }
 
 class RiskCategory {
@@ -82,6 +96,7 @@ class AnalysisResult {
     this.documentId,
     this.fairnessScore,
     this.riskLevelLabel,
+    this.displayLanguage,
   });
 
   final int? documentId;
@@ -107,11 +122,47 @@ class AnalysisResult {
   final int mediumRiskCount;
   final int lowRiskCount;
   final int missingCount;
+  /// ISO code of active UI translation, if any (e.g. `hi`).
+  final String? displayLanguage;
 
   AnalysisRiskLevel get scoreBand {
     if (riskScore <= 33) return AnalysisRiskLevel.low;
     if (riskScore <= 66) return AnalysisRiskLevel.medium;
     return AnalysisRiskLevel.high;
+  }
+
+  AnalysisResult copyWith({
+    String? overview,
+    List<AnalysisClause>? clauses,
+    String? displayLanguage,
+    String? biasSummary,
+  }) {
+    return AnalysisResult(
+      documentId: documentId,
+      documentTitle: documentTitle,
+      documentType: documentType,
+      typeEmoji: typeEmoji,
+      pageCount: pageCount,
+      partyCount: partyCount,
+      analyzedLabel: analyzedLabel,
+      riskScore: riskScore,
+      fairnessScore: fairnessScore,
+      riskLevelLabel: riskLevelLabel,
+      biasSummary: biasSummary ?? this.biasSummary,
+      overview: overview ?? this.overview,
+      parties: parties,
+      durationLabel: durationLabel,
+      keyDatesCount: keyDatesCount,
+      criticalDates: criticalDates,
+      breachScenarios: breachScenarios,
+      clauses: clauses ?? this.clauses,
+      riskCategories: riskCategories,
+      highRiskCount: highRiskCount,
+      mediumRiskCount: mediumRiskCount,
+      lowRiskCount: lowRiskCount,
+      missingCount: missingCount,
+      displayLanguage: displayLanguage ?? this.displayLanguage,
+    );
   }
 
   static AnalysisResult fromMockDocument(MockDocument doc) {
