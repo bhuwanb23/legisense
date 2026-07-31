@@ -619,38 +619,38 @@ class _DropHero extends StatelessWidget {
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.fromLTRB(22, 22, 22, 20),
+                padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Container(
-                      width: 52,
-                      height: 52,
+                      width: 40,
+                      height: 40,
                       decoration: BoxDecoration(
                         color: Colors.white.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Icon(
                         Icons.cloud_upload_rounded,
                         color: Colors.white,
-                        size: 26,
+                        size: 22,
                       ),
                     ),
                     const Spacer(),
                     Text(
                       'Choose a file',
                       style: GoogleFonts.plusJakartaSans(
-                        fontSize: 24,
+                        fontSize: 18,
                         fontWeight: FontWeight.w700,
                         color: Colors.white,
                         height: 1.15,
                       ),
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 4),
                     Text(
                       'PDF, DOC, DOCX, TXT  ·  max 10 MB',
                       style: GoogleFonts.plusJakartaSans(
-                        fontSize: 13,
+                        fontSize: 12,
                         fontWeight: FontWeight.w500,
                         color: Colors.white.withValues(alpha: 0.62),
                       ),

@@ -127,7 +127,7 @@ class _MissingClausesPageState extends State<MissingClausesPage> {
                             )
                           : ListView.separated(
                               padding:
-                                  const EdgeInsets.fromLTRB(20, 12, 20, 110),
+                                  const EdgeInsets.fromLTRB(16, 8, 16, 100),
                               itemCount: _items.length,
                               separatorBuilder: (_, __) =>
                                   const SizedBox(height: 10),

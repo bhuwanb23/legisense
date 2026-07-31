@@ -88,7 +88,7 @@ class _ConfirmTypePageState extends State<ConfirmTypePage> {
                       _data?['typeLabel'] as String? ??
                           'We detected a document type',
                       style: GoogleFonts.plusJakartaSans(
-                        fontSize: 18,
+                        fontSize: 15,
                         fontWeight: FontWeight.w700,
                       ),
                     ),

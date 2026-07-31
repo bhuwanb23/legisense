@@ -86,7 +86,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                   color: AppColors.inkSoft,
                 ),
               ),
-              const SizedBox(height: 28),
+              const SizedBox(height: 16),
               AuthTextField(
                 label: 'Email address',
                 icon: Icons.mail_outline_rounded,
@@ -101,7 +101,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                   return null;
                 },
               ),
-              const SizedBox(height: 28),
+              const SizedBox(height: 16),
               AuthPrimaryButton(
                 label: 'Submit',
                 showArrow: true,

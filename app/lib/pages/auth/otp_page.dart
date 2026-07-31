@@ -136,7 +136,7 @@ class _OtpPageState extends State<OtpPage> {
                 color: AppColors.inkSoft,
               ),
             ),
-            const SizedBox(height: 28),
+            const SizedBox(height: 16),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: List.generate(_length, (i) {
@@ -196,7 +196,7 @@ class _OtpPageState extends State<OtpPage> {
                 ),
               ),
             ],
-            const SizedBox(height: 28),
+            const SizedBox(height: 16),
             AuthPrimaryButton(
               label: 'Verify',
               loading: _loading,

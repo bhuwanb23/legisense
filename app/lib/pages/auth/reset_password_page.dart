@@ -110,7 +110,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                   color: AppColors.inkSoft,
                 ),
               ),
-              const SizedBox(height: 28),
+              const SizedBox(height: 16),
               AuthTextField(
                 label: 'Reset token',
                 icon: Icons.vpn_key_outlined,
@@ -151,7 +151,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
                   return null;
                 },
               ),
-              const SizedBox(height: 28),
+              const SizedBox(height: 16),
               AuthPrimaryButton(
                 label: 'Reset Password',
                 loading: _loading,
