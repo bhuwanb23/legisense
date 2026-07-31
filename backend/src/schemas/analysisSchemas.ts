@@ -130,7 +130,21 @@ export const AnalysisOutputSchema = z.object({
   keyParties: z.array(PartySchema).default([]),
   criticalDates: z.array(CriticalDateSchema).default([]),
   keyObligations: z.array(KeyObligationSchema).default([]),
-  missingClauses: z.array(z.string()).default([]),
+  // Tiny models often emit objects/arrays instead of plain strings.
+  missingClauses: z.preprocess((v) => {
+    if (!Array.isArray(v)) return [];
+    return v.map((item) => {
+      if (typeof item === 'string') return item;
+      if (item && typeof item === 'object') {
+        const o = item as Record<string, unknown>;
+        const pick = o.clause || o.name || o.title || o.description || o.text;
+        if (typeof pick === 'string' && pick.trim()) return pick.trim();
+        try { return JSON.stringify(item); } catch { return String(item); }
+      }
+      if (Array.isArray(item)) return item.map(String).join(': ');
+      return String(item ?? '');
+    }).filter((s) => s.length > 0);
+  }, z.array(z.string()).default([])),
   clauses: z.array(ClauseSchema).default([]),
   riskItems: z.array(RiskItemSchema).default([]),
   deadlines: z.array(DeadlineSchema).default([]),

@@ -167,13 +167,32 @@ export function parseAiResponse(responseText: string): Record<string, unknown> {
 
   cleaned = cleaned.slice(jsonStart, jsonEnd + 1).trim();
 
-  // Tiny models sometimes emit trailing commas.
+  // Tiny models sometimes emit trailing commas / duplicate JSON blobs.
   cleaned = cleaned.replace(/,\s*([}\]])/g, '$1');
 
   try {
     return JSON.parse(cleaned) as Record<string, unknown>;
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err);
+  } catch {
+    // Walk braces to find the first complete top-level object.
+    let depth = 0;
+    let end = -1;
+    for (let i = 0; i < cleaned.length; i++) {
+      const ch = cleaned[i];
+      if (ch === '{') depth++;
+      else if (ch === '}') {
+        depth--;
+        if (depth === 0) { end = i; break; }
+      }
+    }
+    if (end > 0) {
+      const first = cleaned.slice(0, end + 1).replace(/,\s*([}\]])/g, '$1');
+      try {
+        return JSON.parse(first) as Record<string, unknown>;
+      } catch {
+        /* fall through */
+      }
+    }
+    const msg = 'Unexpected non-whitespace after JSON / invalid structure';
     throw new Error(`Failed to parse AI JSON: ${msg}`);
   }
 }
