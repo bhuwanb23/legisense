@@ -163,6 +163,7 @@ export async function processDocumentSync(
       db.run(sql`DELETE FROM risk_items WHERE analysis_id = ${existing[0].id}`);
       db.run(sql`DELETE FROM analysis_results WHERE id = ${existing[0].id}`);
     }
+    db.run(sql`DELETE FROM deadlines WHERE document_id = ${documentId}`);
 
     const analysisId = saveAnalysisResults(
       documentId,

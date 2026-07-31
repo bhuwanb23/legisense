@@ -471,7 +471,13 @@ export async function processDocument(req: Request, res: Response, next: NextFun
     req.setTimeout?.(600_000);
     res.setTimeout?.(600_000);
 
-    const bundle = await processDocumentSync(documentId);
+    const force =
+      req.query.force === '1' ||
+      req.query.force === 'true' ||
+      req.body?.force === true ||
+      req.body?.force === '1';
+
+    const bundle = await processDocumentSync(documentId, { force });
     res.json({ success: true, data: bundle });
   } catch (err) {
     next(err);
