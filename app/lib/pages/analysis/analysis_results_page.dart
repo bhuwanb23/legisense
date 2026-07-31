@@ -1033,7 +1033,7 @@ class _ClausesBody extends StatelessWidget {
                   Text(
                     'Risk by category',
                     style: GoogleFonts.plusJakartaSans(
-                      fontSize: 15,
+                      fontSize: 14,
                       fontWeight: FontWeight.w700,
                       color: AppColors.ink,
                     ),
@@ -1042,15 +1042,15 @@ class _ClausesBody extends StatelessWidget {
                   Text(
                     'This doc',
                     style: GoogleFonts.plusJakartaSans(
-                      fontSize: 12,
+                      fontSize: 11,
                       color: AppColors.mute,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 10),
               SizedBox(
-                height: 180,
+                height: 130,
                 child: BarChart(
                   BarChartData(
                     maxY: (r.highRiskCount + r.mediumRiskCount + r.lowRiskCount)
@@ -1201,25 +1201,26 @@ class _ClausesBody extends StatelessWidget {
               const SizedBox(height: 8),
               ...clauses.take(8).map(
                 (c) => Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
+                  padding: const EdgeInsets.only(bottom: 8),
                   child: InkWell(
                     onTap: () => onOpenPlain(c.id),
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(12),
                     child: Row(
                       children: [
                         Container(
-                          width: 48,
-                          height: 48,
+                          width: 40,
+                          height: 40,
                           decoration: BoxDecoration(
                             color: RiskStyle.background(c.risk),
-                            borderRadius: BorderRadius.circular(14),
+                            borderRadius: BorderRadius.circular(10),
                           ),
                           child: Icon(
                             Icons.description_outlined,
+                            size: 18,
                             color: RiskStyle.color(c.risk),
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 10),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
