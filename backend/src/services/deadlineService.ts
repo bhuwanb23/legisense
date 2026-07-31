@@ -97,13 +97,19 @@ export function saveDeadlinesForDocument(
 
     if (!isRecurring) continue;
 
+    // Only expand payment-like schedules — avoid flooding UI from weak model recurrence tags.
+    const blob = `${item.title} ${item.description || ''}`.toLowerCase();
+    if (!/\b(emi|rent|salary|installment|subscription|monthly payment)\b/.test(blob)) {
+      continue;
+    }
+
     const parentRows = db.select().from(deadlines).where(
       sql`${deadlines.documentId} = ${documentId} AND ${deadlines.userId} = ${userId} AND ${deadlines.title} = ${item.title} AND ${deadlines.dueDate} = ${item.dueDate}`
     ).all();
     const parent = parentRows[parentRows.length - 1];
     if (!parent) continue;
 
-    const childDates = expandRecurringDates(item.dueDate, recurrence, 12).slice(1);
+    const childDates = expandRecurringDates(item.dueDate, recurrence, 4).slice(1);
     for (const childDate of childDates) {
       db.insert(deadlines).values({
         documentId,
