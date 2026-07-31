@@ -138,61 +138,131 @@ LANGUAGE INSTRUCTIONS:
 - originalText must remain the exact text from the document (do not translate originalText).`;
 }
 
+/**
+ * Extract and parse a JSON object from messy LLM output (tiny local models).
+ * Handles preambles, fences, trailing junk, trailing commas, and light repairs.
+ */
 export function parseAiResponse(responseText: string): Record<string, unknown> {
   let cleaned = responseText.trim();
 
-  // Strip common provider safety/preamble lines (tiny models + cloud free tiers).
   cleaned = cleaned
     .replace(/^User Safety:\s*\w+\s*/gim, '')
     .replace(/^Safety:\s*\w+\s*/gim, '')
-    .replace(/^Here(?:'s| is)(?: the)?(?: JSON| analysis| response)[:\s]*/i, '')
+    .replace(/^Here(?:'s| is)(?: the)?(?: JSON| analysis| response| translation)[:\s]*/i, '')
     .replace(/^Sure[,!]?\s*/i, '')
     .replace(/^Of course[,!]?\s*/i, '')
     .trim();
 
-  // Prefer fenced JSON blocks when present.
   const fence = cleaned.match(/```(?:json)?\s*([\s\S]*?)```/i);
   if (fence?.[1]) {
     cleaned = fence[1].trim();
   }
 
-  const jsonStart = cleaned.indexOf('{');
-  const jsonEnd = cleaned.lastIndexOf('}');
-
-  if (jsonStart === -1 || jsonEnd === -1 || jsonEnd <= jsonStart) {
+  const extracted = extractBalancedObject(cleaned);
+  if (!extracted) {
     throw new Error(
       `AI response contained no JSON object: ${cleaned.slice(0, 120)}`,
     );
   }
 
-  cleaned = cleaned.slice(jsonStart, jsonEnd + 1).trim();
+  const attempts = [
+    extracted,
+    stripTrailingCommas(extracted),
+    softRepairJson(stripTrailingCommas(extracted)),
+  ];
 
-  // Tiny models sometimes emit trailing commas / duplicate JSON blobs.
-  cleaned = cleaned.replace(/,\s*([}\]])/g, '$1');
-
-  try {
-    return JSON.parse(cleaned) as Record<string, unknown>;
-  } catch {
-    // Walk braces to find the first complete top-level object.
-    let depth = 0;
-    let end = -1;
-    for (let i = 0; i < cleaned.length; i++) {
-      const ch = cleaned[i];
-      if (ch === '{') depth++;
-      else if (ch === '}') {
-        depth--;
-        if (depth === 0) { end = i; break; }
-      }
+  let lastErr: unknown;
+  for (const attempt of attempts) {
+    try {
+      return JSON.parse(attempt) as Record<string, unknown>;
+    } catch (err) {
+      lastErr = err;
     }
-    if (end > 0) {
-      const first = cleaned.slice(0, end + 1).replace(/,\s*([}\]])/g, '$1');
-      try {
-        return JSON.parse(first) as Record<string, unknown>;
-      } catch {
-        /* fall through */
-      }
-    }
-    const msg = 'Unexpected non-whitespace after JSON / invalid structure';
-    throw new Error(`Failed to parse AI JSON: ${msg}`);
   }
+
+  const msg = lastErr instanceof Error ? lastErr.message : 'invalid structure';
+  throw new Error(`Failed to parse AI JSON: ${msg}`);
 }
+
+/** Walk characters respecting strings so braces inside strings don't confuse us. */
+function extractBalancedObject(text: string): string | null {
+  const start = text.indexOf('{');
+  if (start === -1) return null;
+
+  let depth = 0;
+  let inString = false;
+  let escape = false;
+
+  for (let i = start; i < text.length; i++) {
+    const ch = text[i];
+    if (inString) {
+      if (escape) {
+        escape = false;
+        continue;
+      }
+      if (ch === '\\') {
+        escape = true;
+        continue;
+      }
+      if (ch === '"') inString = false;
+      continue;
+    }
+    if (ch === '"') {
+      inString = true;
+      continue;
+    }
+    if (ch === '{') depth++;
+    else if (ch === '}') {
+      depth--;
+      if (depth === 0) return text.slice(start, i + 1);
+    }
+  }
+  return null;
+}
+
+function stripTrailingCommas(json: string): string {
+  return json.replace(/,\s*([}\]])/g, '$1');
+}
+
+/** Best-effort fixes for common tiny-model JSON mistakes. */
+function softRepairJson(json: string): string {
+  let s = json;
+  s = s.replace(/[\u201C\u201D]/g, '"').replace(/[\u2018\u2019]/g, "'");
+  // Escape raw control chars inside strings by rebuilding string literals carefully
+  let out = '';
+  let inString = false;
+  let escape = false;
+  for (let i = 0; i < s.length; i++) {
+    const ch = s[i];
+    if (inString) {
+      if (escape) {
+        out += ch;
+        escape = false;
+        continue;
+      }
+      if (ch === '\\') {
+        out += ch;
+        escape = true;
+        continue;
+      }
+      if (ch === '"') {
+        out += ch;
+        inString = false;
+        continue;
+      }
+      if (ch === '\n') { out += '\\n'; continue; }
+      if (ch === '\r') { out += '\\n'; continue; }
+      if (ch === '\t') { out += '\\t'; continue; }
+      out += ch;
+      continue;
+    }
+    if (ch === '"') {
+      inString = true;
+      out += ch;
+      continue;
+    }
+    out += ch;
+  }
+  return stripTrailingCommas(out);
+}
+
