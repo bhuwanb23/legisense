@@ -1,8 +1,8 @@
 import { getDb, persistNow } from '../config/database';
-import { documents, analysisResults, clauses, riskItems, usageLogs, users } from '../models';
+import { documents, analysisResults, clauses, riskItems, usageLogs, users, deadlines } from '../models';
 import { sql } from 'drizzle-orm';
 import { readFile } from '../storage/fileStorage';
-import { extractText } from './textExtractor';
+import { extractDocumentText, extractFormatFromPath } from './documentExtractService';
 import { callWithFallback, selectProviderForTokens } from './ai';
 import { buildAnalysisUserPrompt, parseAiResponse, appendLanguageInstructions } from '../prompts/analysisPrompt';
 import { CLASSIFY_SYSTEM_PROMPT, ClassifyOutputSchema, buildClassifyUserPrompt, parseClassifyResponse, type ClassifyOutput } from '../prompts/classificationPrompt';
@@ -10,7 +10,6 @@ import { getPromptForType } from '../prompts/promptTemplates';
 import { getTypeEntry } from '../data/documentTypes';
 import { AnalysisOutputSchema, type AnalysisOutput } from '../schemas/analysisSchemas';
 import { chunkText, estimateTotalRequestTokens, mergeAnalysisResults } from './chunkingService';
-import { emitToUser } from './socketService';
 import { createNotification } from './notificationService';
 import { encryptText, decryptText, isEncryptionConfigured } from './encryptionService';
 import { detectLanguage, toIso6391 } from './languageDetectionService';
@@ -18,31 +17,56 @@ import { getLanguageName } from '../config/languages';
 import { runJurisdictionCheck } from './jurisdictionCheckService';
 import { runConflictDetection } from './conflictDetectionService';
 import { runRiskPatternScan } from './riskPatternService';
-import { runMissingClauseCheck } from './missingClauseService';
 import { buildDeadlineInputsFromAnalysis, saveDeadlinesForDocument } from './deadlineService';
 import { counterClausesQueue } from '../queue';
 
 const MAX_RETRIES = 3;
 const CHUNK_TOKEN_LIMIT = 500_000;
+const ANALYSIS_MAX_CHARS = Number(process.env.ANALYSIS_MAX_CHARS || 8000);
 
-export async function analyzeDocumentPipeline(documentId: number, userId: number): Promise<void> {
+function counterClausesEnabled(): boolean {
+  const v = (process.env.COUNTER_CLAUSES_ENABLED || 'false').toLowerCase();
+  return v === '1' || v === 'true' || v === 'on';
+}
+
+function truncateForLlm(text: string): string {
+  if (text.length <= ANALYSIS_MAX_CHARS) return text;
+  return `${text.slice(0, ANALYSIS_MAX_CHARS)}\n\n[Document truncated for local model context…]`;
+}
+
+export async function analyzeDocumentPipeline(documentId: number, _userId: number): Promise<void> {
+  await processDocumentSync(documentId);
+}
+
+/**
+ * Single blocking pipeline: extract text → one LLM analysis → save.
+ * No sockets, no status polling, no extra AI passes.
+ */
+export async function processDocumentSync(documentId: number): Promise<{
+  status: string;
+  analysis: Record<string, unknown> | null;
+  clauses: unknown[];
+  riskItems: unknown[];
+  deadlines: unknown[];
+}> {
   const db = getDb();
   const startTime = Date.now();
 
   const rows = db.select().from(documents).where(sql`${documents.id} = ${documentId}`).all();
   const doc = rows[0];
+  if (!doc) throw new Error(`Document ${documentId} not found`);
 
-  if (!doc) {
-    throw new Error(`Document ${documentId} not found`);
+  // Already analyzed — return existing bundle
+  const existing = db.select().from(analysisResults).where(sql`${analysisResults.documentId} = ${documentId}`).all();
+  if (existing[0] && doc.processingStatus === 'analyzed') {
+    return getAnalysisBundleForDocument(documentId);
   }
 
   updateDocumentStatus(documentId, 'processing');
-  emitToUser(doc.userId, 'analysis:started', { documentId });
 
   try {
-    emitToUser(doc.userId, 'analysis:progress', { documentId, progress: 5, stage: 'Reading document text...' });
-
-    const rawText = await resolveDocumentText(doc, documentId);
+    const rawText = await resolveDocumentText(doc as unknown as Record<string, unknown>, documentId);
+    const llmText = truncateForLlm(rawText);
 
     const userRows = db.select().from(users).where(sql`${users.id} = ${doc.userId}`).all();
     const preferredLanguage = toIso6391(userRows[0]?.preferredLanguage || 'en');
@@ -54,76 +78,28 @@ export async function analyzeDocumentPipeline(documentId: number, userId: number
       updated_at = datetime('now')
       WHERE id = ${documentId}`);
 
-    emitToUser(doc.userId, 'analysis:progress', {
-      documentId,
-      progress: 10,
-      stage: `Language detected: ${getLanguageName(detectedLang)} → respond in ${getLanguageName(preferredLanguage)}`,
-    });
-
-    emitToUser(doc.userId, 'analysis:progress', { documentId, progress: 12, stage: 'Classifying document type...' });
-
-    const classification = await classifyDocument(rawText, detectedLang, preferredLanguage);
-
-    const typeEntry = getTypeEntry(classification.type);
-    const needsConfirmation = classification.confidence < 60;
-
-    db.run(sql`UPDATE ${documents} SET
-      detected_type = ${classification.type},
-      detected_type_confidence = ${classification.confidence},
-      needs_type_confirmation = ${needsConfirmation ? 1 : 0},
-      updated_at = datetime('now')
-      WHERE id = ${documentId}`);
-
-    emitToUser(doc.userId, 'analysis:progress', {
-      documentId,
-      progress: 15,
-      stage: `Detected: ${typeEntry.typeLabel} (${classification.confidence}% confidence)`,
-    });
-
-    if (needsConfirmation) {
-      emitToUser(doc.userId, 'analysis:needs_confirmation', {
-        documentId,
-        detectedType: classification.type,
-        typeLabel: typeEntry.typeLabel,
-        confidence: classification.confidence,
-      });
-    }
-
+    // One LLM call — document type comes from the analysis JSON itself.
     const selectedPrompt = appendLanguageInstructions(
-      getPromptForType(classification.type),
+      getPromptForType('unknown'),
       detectedLang,
       preferredLanguage,
     );
 
-    emitToUser(doc.userId, 'analysis:progress', { documentId, progress: 18, stage: 'Estimating document size...' });
+    console.log(`[process] doc=${documentId} chars=${llmText.length} lang=${detectedLang} → LLM`);
+    const singleResult = await analyzeSingle(llmText, selectedPrompt, detectedLang);
+    const analysisResult = singleResult.result;
+    const providerUsed = singleResult.provider;
+    const modelUsed = singleResult.model;
+    const totalInputTokens = singleResult.inputTokens;
+    const totalOutputTokens = singleResult.outputTokens;
 
-    const totalTokens = estimateTotalRequestTokens(selectedPrompt, rawText);
-
-    let analysisResult: AnalysisOutput;
-    let providerUsed = 'unknown';
-    let modelUsed = 'unknown';
-    let totalInputTokens = 0;
-    let totalOutputTokens = 0;
-
-    if (totalTokens > CHUNK_TOKEN_LIMIT) {
-      emitToUser(doc.userId, 'analysis:progress', { documentId, progress: 20, stage: `Large document (${totalTokens.toLocaleString()} tokens). Splitting into chunks...` });
-      const chunkResult = await analyzeInChunks(rawText, selectedPrompt, documentId, doc.userId, detectedLang);
-      analysisResult = chunkResult.result;
-      providerUsed = chunkResult.provider;
-      modelUsed = chunkResult.model;
-      totalInputTokens = chunkResult.inputTokens;
-      totalOutputTokens = chunkResult.outputTokens;
-    } else {
-      emitToUser(doc.userId, 'analysis:progress', { documentId, progress: 25, stage: 'Analyzing document...' });
-      const singleResult = await analyzeSingle(rawText, selectedPrompt, detectedLang);
-      analysisResult = singleResult.result;
-      providerUsed = singleResult.provider;
-      modelUsed = singleResult.model;
-      totalInputTokens = singleResult.inputTokens;
-      totalOutputTokens = singleResult.outputTokens;
-    }
-
-    emitToUser(doc.userId, 'analysis:progress', { documentId, progress: 90, stage: 'Saving results...' });
+    const typeKey = (analysisResult.documentType || 'unknown').toLowerCase().replace(/\s+/g, '_');
+    db.run(sql`UPDATE ${documents} SET
+      detected_type = ${typeKey},
+      detected_type_confidence = ${analysisResult.detectedTypeConfidence || 70},
+      needs_type_confirmation = 0,
+      updated_at = datetime('now')
+      WHERE id = ${documentId}`);
 
     const totalTime = (Date.now() - startTime) / 1000;
 
@@ -139,39 +115,63 @@ export async function analyzeDocumentPipeline(documentId: number, userId: number
       outputTokens: totalOutputTokens,
     }).run();
 
-    const analysisId = saveAnalysisResults(documentId, doc.userId, analysisResult, totalTime, modelUsed, preferredLanguage);
+    // Clear prior partial analysis if any
+    if (existing[0]) {
+      db.run(sql`DELETE FROM ${clauses} WHERE analysis_id = ${existing[0].id}`);
+      db.run(sql`DELETE FROM ${riskItems} WHERE analysis_id = ${existing[0].id}`);
+      db.run(sql`DELETE FROM ${analysisResults} WHERE id = ${existing[0].id}`);
+    }
+
+    const analysisId = saveAnalysisResults(
+      documentId,
+      doc.userId,
+      analysisResult,
+      totalTime,
+      modelUsed,
+      preferredLanguage,
+    );
 
     if (analysisId) {
-      emitToUser(doc.userId, 'analysis:progress', { documentId, progress: 91, stage: 'Saving deadlines...' });
       saveDeadlinesForDocument(documentId, doc.userId, buildDeadlineInputsFromAnalysis(analysisResult));
 
-      emitToUser(doc.userId, 'analysis:progress', { documentId, progress: 93, stage: 'Running jurisdiction compliance check...' });
-      const flags = await runJurisdictionCheck(documentId, analysisId, analysisResult.documentType || classification.type);
-      emitToUser(doc.userId, 'analysis:progress', { documentId, progress: 94, stage: 'Detecting cross-state conflicts...' });
-      await runConflictDetection(documentId, analysisId, flags);
+      try {
+        const flags = await runJurisdictionCheck(
+          documentId,
+          analysisId,
+          analysisResult.documentType || typeKey,
+        );
+        await runConflictDetection(documentId, analysisId, flags);
+      } catch (err) {
+        console.warn('[process] jurisdiction/conflict skipped:', err instanceof Error ? err.message : err);
+      }
 
-      emitToUser(doc.userId, 'analysis:progress', { documentId, progress: 95, stage: 'Scanning risky clause patterns...' });
-      await runRiskPatternScan(documentId, analysisId);
+      try {
+        // Keyword-only path still runs; semantic AI inside is best-effort.
+        await runRiskPatternScan(documentId, analysisId);
+      } catch (err) {
+        console.warn('[process] risk pattern scan skipped:', err instanceof Error ? err.message : err);
+      }
 
-      emitToUser(doc.userId, 'analysis:progress', { documentId, progress: 96, stage: 'Checking missing clauses...' });
-      await runMissingClauseCheck(
-        documentId,
-        analysisId,
-        analysisResult.documentType || classification.type,
-        analysisResult.missingClauses || [],
-      );
-
-      db.run(sql`UPDATE ${analysisResults} SET counter_clauses_status = 'pending' WHERE id = ${analysisId}`);
-      await counterClausesQueue.add('generate-counters', { documentId, userId: doc.userId });
+      if (counterClausesEnabled()) {
+        db.run(sql`UPDATE ${analysisResults} SET counter_clauses_status = 'pending' WHERE id = ${analysisId}`);
+        await counterClausesQueue.add('generate-counters', { documentId, userId: doc.userId });
+      } else {
+        db.run(sql`UPDATE ${analysisResults} SET counter_clauses_status = 'skipped' WHERE id = ${analysisId}`);
+      }
     }
 
     updateDocumentStatus(documentId, 'analyzed');
-
-    createNotification(doc.userId, 'analysis_complete', 'Analysis Complete', `Analysis of "${doc.originalName}" is complete.`, documentId);
-
-    emitToUser(doc.userId, 'analysis:completed', { documentId });
-
+    createNotification(
+      doc.userId,
+      'analysis_complete',
+      'Analysis Complete',
+      `Analysis of "${doc.originalName}" is complete.`,
+      documentId,
+    );
     persistNow();
+
+    console.log(`[process] doc=${documentId} done in ${totalTime.toFixed(1)}s via ${providerUsed}/${modelUsed}`);
+    return getAnalysisBundleForDocument(documentId);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
 
@@ -183,16 +183,64 @@ export async function analyzeDocumentPipeline(documentId: number, userId: number
     }).run();
 
     updateDocumentStatus(documentId, 'failed');
-
-    createNotification(doc.userId, 'analysis_failed', 'Analysis Failed', `Analysis of "${doc.originalName}" failed: ${message}`, documentId);
-
-    emitToUser(doc.userId, 'analysis:failed', { documentId, error: message });
-
+    createNotification(
+      doc.userId,
+      'analysis_failed',
+      'Analysis Failed',
+      `Analysis of "${doc.originalName}" failed: ${message}`,
+      documentId,
+    );
     persistNow();
-
     console.error(`Analysis failed for document ${documentId}:`, message);
     throw err;
   }
+}
+
+export function getAnalysisBundleForDocument(documentId: number): {
+  status: string;
+  analysis: Record<string, unknown> | null;
+  clauses: unknown[];
+  riskItems: unknown[];
+  deadlines: unknown[];
+} {
+  const db = getDb();
+  const docRows = db.select().from(documents).where(sql`${documents.id} = ${documentId}`).all();
+  const analysisRows = db.select().from(analysisResults).where(sql`${analysisResults.documentId} = ${documentId}`).all();
+  const analysis = analysisRows[0];
+
+  if (!analysis) {
+    return {
+      status: docRows[0]?.processingStatus || 'pending',
+      analysis: null,
+      clauses: [],
+      riskItems: [],
+      deadlines: [],
+    };
+  }
+
+  const clauseRows = db.select().from(clauses).where(sql`${clauses.analysisId} = ${analysis.id}`).all();
+  const riskRows = db.select().from(riskItems).where(sql`${riskItems.analysisId} = ${analysis.id}`).all();
+  const deadlineRows = db.select().from(deadlines).where(sql`${deadlines.documentId} = ${documentId}`).all();
+
+  const parse = (v: string | null) => {
+    if (!v) return [];
+    try { return JSON.parse(v); } catch { return []; }
+  };
+
+  return {
+    status: docRows[0]?.processingStatus || 'analyzed',
+    analysis: {
+      ...analysis,
+      keyParties: parse(analysis.keyParties),
+      criticalDates: parse(analysis.criticalDates),
+      keyObligations: parse(analysis.keyObligations),
+      missingClauses: parse(analysis.missingClauses),
+      jurisdictionFlags: parse(analysis.jurisdictionFlags),
+    },
+    clauses: clauseRows,
+    riskItems: riskRows,
+    deadlines: deadlineRows,
+  };
 }
 
 function updateDocumentStatus(documentId: number, status: string): void {
@@ -212,11 +260,16 @@ async function resolveDocumentText(doc: Record<string, unknown>, documentId: num
     return rawText;
   }
 
-  const db = getDb();
-  emitToUser((doc as { userId: number }).userId, 'analysis:progress', { documentId, progress: 8, stage: 'Extracting text from file...' });
+  const storagePath = (doc as { storagePath: string }).storagePath;
+  if (!storagePath) {
+    throw new Error('Document has no stored text and no file path');
+  }
 
-  const buffer = await readFile((doc as { storagePath: string }).storagePath);
-  const { text } = await extractText(buffer, (doc as { fileFormat: string }).fileFormat);
+  const db = getDb();
+  const buffer = await readFile(storagePath);
+  const format = extractFormatFromPath(storagePath, (doc as { fileFormat?: string }).fileFormat);
+  const { text, method } = await extractDocumentText(buffer, format);
+  console.log(`[extract] doc=${documentId} method=${method} chars=${text.length}`);
 
   let storedText = text;
   let storedIv: string | null = null;

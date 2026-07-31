@@ -1,4 +1,4 @@
-export type ProviderName = 'openrouter' | 'gemini' | 'openai';
+export type ProviderName = 'ollama' | 'openrouter' | 'gemini' | 'openai';
 
 export interface AiRequest {
   systemPrompt: string;
