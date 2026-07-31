@@ -107,7 +107,7 @@ function normalizeMissingClauses(missing: string[], clauses: Clause[]): string[]
 
   return missing
     .map((m) => m.trim())
-    .filter((m) => m.length > 0)
+    .filter((m) => m.length > 2)
     .filter((m) => {
       const key = m
         .toLowerCase()
@@ -132,6 +132,41 @@ function isFillerRisk(r: RiskItem): boolean {
   if (desc === 'standard clause.' || desc === 'standard clause') return true;
   if (r.title === 'Risk' && (!r.description || r.description === 'No description')) return true;
   return false;
+}
+
+/** Drop prompt-example risks that don't match the source document. */
+function riskSupportedByDocument(r: RiskItem, sourceText: string, documentType: string): boolean {
+  const title = (r.title || '').toLowerCase();
+  const text = sourceText.toLowerCase();
+  const type = documentType.toLowerCase();
+
+  if (title.includes('unequal notice')) {
+    return (
+      type.includes('employment') &&
+      /\b(resign|90 days|15 days|probation)\b/i.test(text)
+    );
+  }
+  if (title.includes('unlimited damages') || title.includes('unlimited indemnity')) {
+    return /\b(indemnif|unlimited|consequential)\b/.test(text);
+  }
+  if (title.includes('statutory benefits') || title.includes('pf/esi')) {
+    return type.includes('employment');
+  }
+  return true;
+}
+
+function filterMissingForType(missing: string[], documentType: string): string[] {
+  const type = documentType.toLowerCase();
+  return missing.filter((m) => {
+    const low = m.toLowerCase();
+    if (/pf\/esi|statutory benefits|provident fund/.test(low) && !type.includes('employment')) {
+      return false;
+    }
+    if (/non[-\s]?compete/.test(low) && (type.includes('lease') || type.includes('loan') || type === 'nda')) {
+      return false;
+    }
+    return true;
+  });
 }
 
 function cleanClause(c: Clause): Clause {
@@ -231,8 +266,13 @@ export function enrichAnalysisOutput(ai: AnalysisOutput, sourceText: string): An
       'Open the clause list and risk items for details; re-run analysis with a stronger model for a richer summary.';
   }
 
-  const missingClauses = normalizeMissingClauses(ai.missingClauses || [], clauses);
-  const riskItems = (ai.riskItems || []).filter((r) => !isFillerRisk(r));
+  const missingClauses = filterMissingForType(
+    normalizeMissingClauses(ai.missingClauses || [], clauses),
+    documentType,
+  );
+  const riskItems = (ai.riskItems || [])
+    .filter((r) => !isFillerRisk(r))
+    .filter((r) => riskSupportedByDocument(r, sourceText, documentType));
   const deadlines = filterDeadlines(ai.deadlines || []);
   const criticalDates = (ai.criticalDates || []).filter((d) => isParseableDate(d.date));
 
