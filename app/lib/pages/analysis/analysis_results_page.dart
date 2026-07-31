@@ -588,7 +588,6 @@ class _OverviewBody extends StatelessWidget {
             Expanded(
               child: _StatTile(
                 icon: Icons.warning_amber_rounded,
-                iconBg: AppColors.chip,
                 iconColor: accentDeep,
                 label: 'High',
                 value: '${r.highRiskCount}',
@@ -599,7 +598,6 @@ class _OverviewBody extends StatelessWidget {
             Expanded(
               child: _StatTile(
                 icon: Icons.article_outlined,
-                iconBg: AppColors.chip,
                 iconColor: accent,
                 label: 'Clauses',
                 value: '${r.clauses.length}',
@@ -610,7 +608,6 @@ class _OverviewBody extends StatelessWidget {
             Expanded(
               child: _StatTile(
                 icon: Icons.groups_outlined,
-                iconBg: const Color(0xFFE8F5E9),
                 iconColor: green,
                 label: 'Parties',
                 value: '${r.partyCount}',
@@ -621,7 +618,6 @@ class _OverviewBody extends StatelessWidget {
             Expanded(
               child: _StatTile(
                 icon: Icons.translate_rounded,
-                iconBg: const Color(0xFFE3F2FD),
                 iconColor: const Color(0xFF1E88E5),
                 label: 'Plain',
                 value: '${r.clauses.length - r.missingCount}',
@@ -931,7 +927,6 @@ class _NavTile extends StatelessWidget {
 class _StatTile extends StatelessWidget {
   const _StatTile({
     required this.icon,
-    required this.iconBg,
     required this.iconColor,
     required this.label,
     required this.value,
@@ -939,7 +934,6 @@ class _StatTile extends StatelessWidget {
   });
 
   final IconData icon;
-  final Color iconBg;
   final Color iconColor;
   final String label;
   final String value;
