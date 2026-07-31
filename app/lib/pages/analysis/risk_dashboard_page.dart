@@ -9,7 +9,7 @@ import '../../widgets/analysis/risk_style.dart';
 import '../../widgets/analysis/soft_card.dart';
 import 'clause_breakdown_page.dart';
 
-/// Page 16 — Full risk visual dashboard.
+/// Full risk visual dashboard.
 class RiskDashboardPage extends StatelessWidget {
   const RiskDashboardPage({super.key, required this.result});
 
@@ -23,11 +23,11 @@ class RiskDashboardPage extends StatelessWidget {
           value: result.highRiskCount.toDouble(),
           color: AppColors.riskHigh,
           title: '${result.highRiskCount}',
-          radius: 48,
+          radius: 36,
           titleStyle: GoogleFonts.plusJakartaSans(
             fontWeight: FontWeight.w700,
             color: AppColors.cloud,
-            fontSize: 12,
+            fontSize: 11,
           ),
         ),
       if (result.mediumRiskCount > 0)
@@ -35,11 +35,11 @@ class RiskDashboardPage extends StatelessWidget {
           value: result.mediumRiskCount.toDouble(),
           color: AppColors.riskMedium,
           title: '${result.mediumRiskCount}',
-          radius: 48,
+          radius: 36,
           titleStyle: GoogleFonts.plusJakartaSans(
             fontWeight: FontWeight.w700,
             color: AppColors.cloud,
-            fontSize: 12,
+            fontSize: 11,
           ),
         ),
       if (result.lowRiskCount > 0)
@@ -47,11 +47,11 @@ class RiskDashboardPage extends StatelessWidget {
           value: result.lowRiskCount.toDouble(),
           color: AppColors.riskLow,
           title: '${result.lowRiskCount}',
-          radius: 48,
+          radius: 36,
           titleStyle: GoogleFonts.plusJakartaSans(
             fontWeight: FontWeight.w700,
             color: AppColors.cloud,
-            fontSize: 12,
+            fontSize: 11,
           ),
         ),
       if (result.missingCount > 0)
@@ -59,93 +59,98 @@ class RiskDashboardPage extends StatelessWidget {
           value: result.missingCount.toDouble(),
           color: AppColors.riskMissing,
           title: '${result.missingCount}',
-          radius: 48,
+          radius: 36,
           titleStyle: GoogleFonts.plusJakartaSans(
             fontWeight: FontWeight.w700,
             color: AppColors.cloud,
-            fontSize: 12,
+            fontSize: 11,
           ),
         ),
     ];
 
     return Scaffold(
-      backgroundColor: AppColors.paper,
+      backgroundColor: AppColors.bg,
       appBar: AppBar(
-        backgroundColor: AppColors.paper,
+        backgroundColor: AppColors.bg,
         elevation: 0,
-        foregroundColor: AppColors.primaryNavy,
+        foregroundColor: AppColors.ink,
         title: Text(
           'Risk dashboard',
-          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+          ),
         ),
       ),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 110),
+        padding: const EdgeInsets.fromLTRB(16, 4, 16, 100),
         children: [
           SoftCard(
-            padding: const EdgeInsets.fromLTRB(16, 24, 16, 24),
+            padding: const EdgeInsets.fromLTRB(12, 16, 12, 14),
             child: Column(
               children: [
-                RiskGauge(score: result.riskScore, size: 196),
-                const SizedBox(height: 8),
+                RiskGauge(score: result.riskScore, size: 140),
+                const SizedBox(height: 6),
                 Text(
                   result.biasSummary,
                   textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.plusJakartaSans(
-                    fontSize: 14,
+                    fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.primaryNavy,
+                    color: AppColors.ink,
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 14),
           Text(
             'Risk breakdown',
             style: GoogleFonts.plusJakartaSans(
-              fontSize: 18,
+              fontSize: 14,
               fontWeight: FontWeight.w700,
-              color: AppColors.primaryNavy,
+              color: AppColors.ink,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           SoftCard(
             child: Column(
               children: [
                 SizedBox(
-                  height: 180,
+                  height: 140,
                   child: PieChart(
                     PieChartData(
-                      sectionsSpace: 3,
-                      centerSpaceRadius: 36,
+                      sectionsSpace: 2,
+                      centerSpaceRadius: 28,
                       pieTouchData: PieTouchData(enabled: false),
                       sections: sections,
                     ),
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 8),
                 _LegendRow(
                   color: AppColors.riskHigh,
-                  label: 'High Risk Clauses',
+                  label: 'High risk',
                   count: result.highRiskCount,
                   onTap: () => _openClauses(context, AnalysisRiskLevel.high),
                 ),
                 _LegendRow(
                   color: AppColors.riskMedium,
-                  label: 'Medium Risk Clauses',
+                  label: 'Medium risk',
                   count: result.mediumRiskCount,
                   onTap: () => _openClauses(context, AnalysisRiskLevel.medium),
                 ),
                 _LegendRow(
                   color: AppColors.riskLow,
-                  label: 'Low Risk Clauses',
+                  label: 'Low risk',
                   count: result.lowRiskCount,
                   onTap: () => _openClauses(context, AnalysisRiskLevel.low),
                 ),
                 _LegendRow(
                   color: AppColors.riskMissing,
-                  label: 'Missing Clauses',
+                  label: 'Missing',
                   count: result.missingCount,
                   onTap: () =>
                       _openClauses(context, AnalysisRiskLevel.missing),
@@ -153,28 +158,30 @@ class RiskDashboardPage extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: 24),
-          Text(
-            'Risk by category',
-            style: GoogleFonts.plusJakartaSans(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: AppColors.primaryNavy,
-            ),
-          ),
-          const SizedBox(height: 12),
-          ...result.riskCategories.map(
-            (cat) => Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: _CategoryCard(
-                category: cat,
-                clauses: result.clauses
-                    .where((c) => cat.clauseIds.contains(c.id))
-                    .toList(),
-                onOpenClauses: () => _openClauses(context, cat.level),
+          if (result.riskCategories.isNotEmpty) ...[
+            const SizedBox(height: 14),
+            Text(
+              'Risk by category',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: AppColors.ink,
               ),
             ),
-          ),
+            const SizedBox(height: 8),
+            ...result.riskCategories.map(
+              (cat) => Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: _CategoryCard(
+                  category: cat,
+                  clauses: result.clauses
+                      .where((c) => cat.clauseIds.contains(c.id))
+                      .toList(),
+                  onOpenClauses: () => _openClauses(context, cat.level),
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -210,30 +217,31 @@ class _LegendRow extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8),
+        padding: const EdgeInsets.symmetric(vertical: 6),
         child: Row(
           children: [
             Container(
-              width: 12,
-              height: 12,
+              width: 10,
+              height: 10,
               decoration: BoxDecoration(color: color, shape: BoxShape.circle),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 8),
             Expanded(
               child: Text(
                 label,
                 style: GoogleFonts.plusJakartaSans(
-                  fontSize: 13,
+                  fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.primaryNavy,
+                  color: AppColors.ink,
                 ),
               ),
             ),
             Text(
               '$count',
               style: GoogleFonts.plusJakartaSans(
+                fontSize: 12,
                 fontWeight: FontWeight.w700,
-                color: AppColors.inkSoft,
+                color: AppColors.mute,
               ),
             ),
           ],
@@ -275,39 +283,42 @@ class _CategoryCardState extends State<_CategoryCard> {
                 child: Text(
                   cat.title,
                   style: GoogleFonts.plusJakartaSans(
+                    fontSize: 13,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.primaryNavy,
+                    color: AppColors.ink,
                   ),
                 ),
               ),
               RiskChip(level: cat.level),
-              const SizedBox(width: 4),
               Icon(
                 _open ? Icons.expand_less : Icons.expand_more,
-                color: AppColors.inkSoft,
+                size: 20,
+                color: AppColors.mute,
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           Text(
             cat.summary,
+            maxLines: _open ? null : 2,
+            overflow: _open ? null : TextOverflow.ellipsis,
             style: GoogleFonts.plusJakartaSans(
-              fontSize: 13,
-              height: 1.4,
+              fontSize: 12,
+              height: 1.35,
               color: AppColors.inkSoft,
             ),
           ),
           if (_open) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
             ...widget.clauses.map(
               (c) => Padding(
-                padding: const EdgeInsets.only(bottom: 6),
+                padding: const EdgeInsets.only(bottom: 4),
                 child: Text(
-                  '• Clause ${c.number} — ${c.title}',
+                  '· Clause ${c.number} — ${c.title}',
                   style: GoogleFonts.plusJakartaSans(
-                    fontSize: 13,
+                    fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.primaryNavy,
+                    color: AppColors.ink,
                   ),
                 ),
               ),
@@ -315,10 +326,17 @@ class _CategoryCardState extends State<_CategoryCard> {
             Align(
               alignment: Alignment.centerLeft,
               child: TextButton(
+                style: TextButton.styleFrom(
+                  visualDensity: VisualDensity.compact,
+                  padding: EdgeInsets.zero,
+                ),
                 onPressed: widget.onOpenClauses,
                 child: Text(
                   'View in clause breakdown',
-                  style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
             ),
