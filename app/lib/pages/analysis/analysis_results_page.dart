@@ -745,45 +745,27 @@ class _OverviewBody extends StatelessWidget {
             ),
           ),
         ],
-        const SizedBox(height: 14),
+        const SizedBox(height: 10),
         // Review progress
         _WhiteCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Review progress',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.mute,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                '${r.clauses.length} clauses',
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 26,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.ink,
-                ),
-              ),
-              const SizedBox(height: 14),
               Row(
                 children: [
                   Text(
-                    '$reviewPct%',
+                    'Review progress',
                     style: GoogleFonts.plusJakartaSans(
-                      fontSize: 12,
+                      fontSize: 14,
                       fontWeight: FontWeight.w700,
-                      color: accentDeep,
+                      color: AppColors.ink,
                     ),
                   ),
                   const Spacer(),
                   Text(
-                    '${r.highRiskCount + r.mediumRiskCount} flagged',
+                    '${r.clauses.length} clauses · $reviewPct%',
                     style: GoogleFonts.plusJakartaSans(
-                      fontSize: 12,
+                      fontSize: 11,
                       fontWeight: FontWeight.w600,
                       color: AppColors.mute,
                     ),
@@ -794,40 +776,48 @@ class _OverviewBody extends StatelessWidget {
               ClipRRect(
                 borderRadius: BorderRadius.circular(AppRadii.pill),
                 child: SizedBox(
-                  height: 10,
+                  height: 7,
                   child: Stack(
                     children: [
                       Container(color: const Color(0xFFEEEEEE)),
                       FractionallySizedBox(
                         widthFactor: reviewPct / 100,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [accent, accentDeep],
-                            ),
-                          ),
-                        ),
+                        child: Container(color: accent),
                       ),
                     ],
                   ),
                 ),
               ),
+              const SizedBox(height: 6),
+              Text(
+                '${r.highRiskCount + r.mediumRiskCount} flagged for review',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 11,
+                  color: AppColors.mute,
+                ),
+              ),
             ],
           ),
         ),
-        const SizedBox(height: 8),
-        TextButton(
-          onPressed: onOpenSummary,
-          child: Text(
-            'Open full summary',
-            style: GoogleFonts.plusJakartaSans(
-              fontWeight: FontWeight.w700,
-              color: accentDeep,
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton(
+            style: TextButton.styleFrom(
+              visualDensity: VisualDensity.compact,
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+            ),
+            onPressed: onOpenSummary,
+            child: Text(
+              'Open full summary',
+              style: GoogleFonts.plusJakartaSans(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: accentDeep,
+              ),
             ),
           ),
         ),
         if (result.documentId != null) ...[
-          const SizedBox(height: 8),
           _WhiteCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -835,12 +825,12 @@ class _OverviewBody extends StatelessWidget {
                 Text(
                   'Explore analysis',
                   style: GoogleFonts.plusJakartaSans(
-                    fontSize: 15,
+                    fontSize: 14,
                     fontWeight: FontWeight.w700,
                     color: AppColors.ink,
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 4),
                 if (onOpenJurisdiction != null)
                   _NavTile(
                     icon: Icons.gavel_rounded,
@@ -910,25 +900,29 @@ class _NavTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
+      dense: true,
+      visualDensity: VisualDensity.compact,
       contentPadding: EdgeInsets.zero,
+      minLeadingWidth: 32,
       leading: Container(
-        width: 40,
-        height: 40,
+        width: 32,
+        height: 32,
         decoration: BoxDecoration(
           color: AppColors.chip,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(8),
         ),
-        child: Icon(icon, size: 20, color: AppColors.ink),
+        child: Icon(icon, size: 16, color: AppColors.ink),
       ),
       title: Text(
         label,
         style: GoogleFonts.plusJakartaSans(
-          fontSize: 14,
+          fontSize: 13,
           fontWeight: FontWeight.w600,
           color: AppColors.ink,
         ),
       ),
-      trailing: const Icon(Icons.chevron_right_rounded, color: AppColors.mute),
+      trailing: const Icon(Icons.chevron_right_rounded,
+          size: 18, color: AppColors.mute),
       onTap: onTap,
     );
   }
@@ -955,56 +949,41 @@ class _StatTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: Colors.white,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(12),
       child: InkWell(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         onTap: onTap,
         child: Ink(
-          padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+          padding: const EdgeInsets.fromLTRB(8, 10, 8, 8),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(12),
             boxShadow: AppShadows.soft,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            mainAxisSize: MainAxisSize.max,
             children: [
-              Container(
-                width: 28,
-                height: 28,
-                decoration: BoxDecoration(
-                  color: iconBg,
-                  borderRadius: BorderRadius.circular(8),
+              Icon(icon, size: 16, color: iconColor),
+              const SizedBox(height: 8),
+              Text(
+                value,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w800,
+                  height: 1.1,
+                  color: AppColors.ink,
                 ),
-                child: Icon(icon, size: 15, color: iconColor),
               ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    value,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w800,
-                      height: 1.1,
-                      color: AppColors.ink,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 11,
-                      color: AppColors.mute,
-                    ),
-                  ),
-                ],
+              const SizedBox(height: 2),
+              Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 10,
+                  color: AppColors.mute,
+                ),
               ),
             ],
           ),
@@ -1357,10 +1336,10 @@ class _WhiteCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(16),
         boxShadow: AppShadows.soft,
       ),
       child: child,
