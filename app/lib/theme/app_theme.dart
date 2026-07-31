@@ -97,7 +97,7 @@ ThemeData buildLegisenseTheme() {
       foregroundColor: AppColors.ink,
       elevation: 0,
       titleTextStyle: GoogleFonts.plusJakartaSans(
-        fontSize: 18,
+        fontSize: 16,
         fontWeight: FontWeight.w700,
         color: AppColors.ink,
       ),
