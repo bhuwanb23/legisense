@@ -138,6 +138,5 @@ class AuthRepository {
         await SessionPrefs.setDisplayName(user.fullName);
       }
     }
-    await SocketService.instance.connect();
   }
 }

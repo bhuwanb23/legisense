@@ -62,6 +62,18 @@ class DocumentsRepository {
     );
   }
 
+  /// Blocking extract + LLM analysis. Long timeout for local Ollama.
+  Future<AnalysisBundle> process(int id) async {
+    return _api.post(
+      '/api/documents/$id/process',
+      options: Options(
+        receiveTimeout: const Duration(minutes: 10),
+        sendTimeout: const Duration(minutes: 2),
+      ),
+      parse: (d) => AnalysisBundle.fromJson(d as Map<String, dynamic>),
+    );
+  }
+
   Future<void> delete(int id) async {
     await _api.delete('/api/documents/$id');
   }

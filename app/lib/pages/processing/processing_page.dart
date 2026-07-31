@@ -5,13 +5,12 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:lottie/lottie.dart';
 
 import '../../models/pending_upload.dart';
+import '../../models/api/analysis_models.dart';
 import '../../mappers/analysis_mapper.dart';
 import '../../repositories/documents_repository.dart';
 import '../../services/api_exception.dart';
-import '../../services/socket_service.dart';
 import '../../theme/app_theme.dart';
 import '../analysis/analysis_results_page.dart';
-import '../analysis/confirm_type_page.dart';
 import '../shell/main_shell.dart';
 
 class ProcessingPage extends StatefulWidget {
@@ -25,12 +24,12 @@ class ProcessingPage extends StatefulWidget {
 
 class _ProcessingPageState extends State<ProcessingPage> {
   final _docs = DocumentsRepository();
-  String _stage = 'Starting…';
-  int _progress = 5;
+  String _stage = 'Extracting text…';
+  double _progress = 0.15;
   bool _cancelled = false;
   bool _finished = false;
-  Timer? _poll;
   String? _error;
+  Timer? _fakeProgress;
 
   int? get _docId => widget.upload.documentId;
 
@@ -46,143 +45,94 @@ class _ProcessingPageState extends State<ProcessingPage> {
       setState(() => _error = 'Missing document id. Upload again.');
       return;
     }
-    await SocketService.instance.connect();
-    SocketService.instance.subscribeDocument(id);
-    SocketService.instance.on('ocr:progress', _onOcrProgress);
-    SocketService.instance.on('ocr:completed', _onOcrDone);
-    SocketService.instance.on('analysis:progress', _onAnalysisProgress);
-    SocketService.instance.on('analysis:completed', _onAnalysisDone);
-    SocketService.instance.on('analysis:failed', _onFailed);
-    SocketService.instance.on('ocr:failed', _onFailed);
-    SocketService.instance.on('analysis:needs_confirmation', _onNeedsConfirm);
 
-    _poll = Timer.periodic(const Duration(seconds: 3), (_) => _checkStatus());
-    await _checkStatus();
-  }
-
-  void _onOcrProgress(dynamic data) {
-    if (!mounted || _cancelled) return;
-    final m = data is Map ? Map<String, dynamic>.from(data) : {};
-    setState(() {
-      _stage = 'OCR: ${m['stage'] ?? 'extracting'}';
-      _progress = (m['progress'] as num?)?.toInt() ?? _progress;
-    });
-  }
-
-  void _onOcrDone(dynamic _) {
-    if (!mounted || _cancelled) return;
-    setState(() {
-      _stage = 'OCR complete — starting analysis…';
-      _progress = 40;
-    });
-  }
-
-  void _onAnalysisProgress(dynamic data) {
-    if (!mounted || _cancelled) return;
-    final m = data is Map ? Map<String, dynamic>.from(data) : {};
-    setState(() {
-      _stage = 'Analysis: ${m['stage'] ?? 'running'}';
-      final p = (m['progress'] as num?)?.toInt();
-      if (p != null) _progress = 40 + (p * 0.55).round();
-    });
-  }
-
-  Future<void> _onAnalysisDone(dynamic _) async {
-    await _finish();
-  }
-
-  void _onFailed(dynamic data) {
-    if (!mounted || _cancelled) return;
-    final m = data is Map ? Map<String, dynamic>.from(data) : {};
-    setState(() => _error = m['error']?.toString() ?? 'Processing failed');
-  }
-
-  Future<void> _onNeedsConfirm(dynamic _) async {
-    if (!mounted || _cancelled) return;
-    final id = _docId!;
-    final ok = await Navigator.of(context).push<bool>(
-      MaterialPageRoute(builder: (_) => ConfirmTypePage(documentId: id)),
-    );
-    if (ok == true) await _checkStatus();
-  }
-
-  Future<void> _checkStatus() async {
-    final id = _docId;
-    if (id == null || _cancelled) return;
-    try {
-      final status = await _docs.getStatus(id);
-      if (!mounted) return;
+    _fakeProgress = Timer.periodic(const Duration(milliseconds: 800), (_) {
+      if (!mounted || _cancelled || _error != null) return;
       setState(() {
-        _stage = 'Status: ${status.processingStatus}';
-        if (status.processingStatus == 'ocr_processing') _progress = 25;
-        if (status.processingStatus == 'processing') _progress = 60;
+        // Indeterminate local UI only — no server status polls.
+        if (_progress < 0.85) {
+          _progress = (_progress + 0.04).clamp(0.15, 0.85);
+          if (_progress > 0.4 && _stage.startsWith('Extract')) {
+            _stage = 'Analyzing with local AI…';
+          }
+        }
       });
-      if (status.processingStatus == 'analyzed') {
-        await _finish();
-      } else if (status.processingStatus == 'failed') {
-        setState(() => _error = 'Analysis failed');
-      }
-    } catch (_) {}
-  }
+    });
 
-  Future<void> _finish() async {
-    if (_cancelled || _finished || !mounted) return;
-    _finished = true;
-    _poll?.cancel();
-    final id = _docId!;
     try {
-      final bundle = await _docs.getAnalysis(id);
+      setState(() {
+        _stage = 'Extracting text…';
+        _progress = 0.2;
+      });
+
+      final bundle = await _docs.process(id);
+      if (_cancelled || !mounted) return;
+
       if (!bundle.hasAnalysis) {
-        _finished = false;
-        setState(() => _stage = 'Waiting for analysis payload…');
+        setState(() => _error = 'Analysis returned empty. Retry.');
         return;
       }
-      if (!mounted || _cancelled) return;
-      final result = AnalysisMapper.fromBundle(
-        bundle,
-        documentId: id,
-        documentTitle: widget.upload.title,
-      );
-      final shell = ShellScope.maybeOf(context);
-      if (shell != null) {
-        shell.openAnalysisOnDocuments(result);
-      } else {
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute<void>(
-            builder: (_) => AnalysisResultsPage(result: result),
-          ),
-          (route) => route.isFirst,
-        );
-      }
+
+      await _openAnalysis(bundle);
     } on ApiException catch (e) {
-      _finished = false;
-      if (!mounted) return;
+      if (!mounted || _cancelled) return;
       setState(() => _error = e.message);
+    } catch (e) {
+      if (!mounted || _cancelled) return;
+      setState(() => _error = e.toString());
+    } finally {
+      _fakeProgress?.cancel();
     }
+  }
+
+  Future<void> _openAnalysis(AnalysisBundle bundle) async {
+    if (_cancelled || _finished || !mounted) return;
+    _finished = true;
+    _fakeProgress?.cancel();
+
+    final id = _docId!;
+    setState(() {
+      _stage = 'Opening results…';
+      _progress = 1;
+    });
+
+    final result = AnalysisMapper.fromBundle(
+      bundle,
+      documentId: id,
+      documentTitle: widget.upload.title,
+    );
+    final shell = ShellScope.maybeOf(context);
+    if (shell != null) {
+      shell.openAnalysisOnDocuments(result);
+    } else {
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute<void>(
+          builder: (_) => AnalysisResultsPage(result: result),
+        ),
+        (route) => route.isFirst,
+      );
+    }
+  }
+
+  Future<void> _retry() async {
+    setState(() {
+      _error = null;
+      _finished = false;
+      _stage = 'Extracting text…';
+      _progress = 0.15;
+    });
+    await _boot();
   }
 
   void _cancel() {
     _cancelled = true;
-    _poll?.cancel();
-    final id = _docId;
-    if (id != null) SocketService.instance.unsubscribeDocument(id);
+    _fakeProgress?.cancel();
     Navigator.of(context).maybePop();
   }
 
   @override
   void dispose() {
-    _poll?.cancel();
-    final id = _docId;
-    if (id != null) {
-      SocketService.instance.off('ocr:progress');
-      SocketService.instance.off('ocr:completed');
-      SocketService.instance.off('analysis:progress');
-      SocketService.instance.off('analysis:completed');
-      SocketService.instance.off('analysis:failed');
-      SocketService.instance.off('ocr:failed');
-      SocketService.instance.off('analysis:needs_confirmation');
-      SocketService.instance.unsubscribeDocument(id);
-    }
+    _fakeProgress?.cancel();
     super.dispose();
   }
 
@@ -233,17 +183,31 @@ class _ProcessingPageState extends State<ProcessingPage> {
                 style: GoogleFonts.plusJakartaSans(color: AppColors.mute),
               ),
               const SizedBox(height: 28),
-              if (_error != null)
+              if (_error != null) ...[
                 Text(
                   _error!,
                   textAlign: TextAlign.center,
                   style: GoogleFonts.plusJakartaSans(color: AppColors.error),
-                )
-              else ...[
+                ),
+                const SizedBox(height: 16),
+                Center(
+                  child: FilledButton(
+                    onPressed: _retry,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppColors.ink,
+                      foregroundColor: Colors.white,
+                    ),
+                    child: Text(
+                      'Retry',
+                      style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ),
+              ] else ...[
                 ClipRRect(
                   borderRadius: BorderRadius.circular(AppRadii.pill),
                   child: LinearProgressIndicator(
-                    value: (_progress.clamp(0, 100)) / 100,
+                    value: _progress.clamp(0.05, 1),
                     minHeight: 10,
                     backgroundColor: AppColors.chip,
                     color: AppColors.ink,
