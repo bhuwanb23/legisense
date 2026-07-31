@@ -49,23 +49,23 @@ class AuthScaffold extends StatelessWidget {
             ),
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
+                padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 4),
                     if (hero != null) ...[
                       Center(child: hero!),
-                      const SizedBox(height: 28),
+                      const SizedBox(height: 20),
                     ],
                     if (title != null || subtitle != null)
                       _Header(title: title, subtitle: subtitle),
                     body,
                     if (footer != null) ...[
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 20),
                       footer!,
                     ],
-                    const SizedBox(height: 28),
+                    const SizedBox(height: 20),
                   ],
                 ),
               ),
@@ -86,26 +86,28 @@ class _Header extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 28),
+      padding: const EdgeInsets.only(bottom: 20),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           if (title != null)
             Text(
               title!,
+              textAlign: TextAlign.center,
               style: GoogleFonts.plusJakartaSans(
-                fontSize: 30,
+                fontSize: 24,
                 fontWeight: FontWeight.w700,
                 height: 1.15,
                 color: AppColors.ink,
               ),
             ),
           if (subtitle != null) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             Text(
               subtitle!,
+              textAlign: TextAlign.center,
               style: GoogleFonts.plusJakartaSans(
-                fontSize: 14,
+                fontSize: 13,
                 fontWeight: FontWeight.w400,
                 height: 1.45,
                 color: AppColors.mute,

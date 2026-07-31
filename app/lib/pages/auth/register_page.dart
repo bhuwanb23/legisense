@@ -77,25 +77,30 @@ class _RegisterPageState extends State<RegisterPage> {
           key: _formKey,
           child: Column(
             children: [
-              const AuthIllustration(type: AuthIllustrationType.register),
-              const SizedBox(height: 24),
+              const AuthIllustration(
+                type: AuthIllustrationType.register,
+                size: 112,
+              ),
+              const SizedBox(height: 16),
               Text(
                 'Sign Up',
+                textAlign: TextAlign.center,
                 style: GoogleFonts.plusJakartaSans(
-                  fontSize: 26,
+                  fontSize: 22,
                   fontWeight: FontWeight.w700,
                   color: AppColors.primaryNavy,
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
               Text(
                 'Use proper information to continue',
+                textAlign: TextAlign.center,
                 style: GoogleFonts.plusJakartaSans(
-                  fontSize: 13,
+                  fontSize: 12,
                   color: AppColors.inkSoft,
                 ),
               ),
-              const SizedBox(height: 28),
+              const SizedBox(height: 20),
               AuthTextField(
                 label: 'Full name',
                 icon: Icons.person_outline_rounded,
@@ -110,7 +115,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   return null;
                 },
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               AuthTextField(
                 label: 'Email address',
                 icon: Icons.mail_outline_rounded,
@@ -127,7 +132,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   return null;
                 },
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               AuthTextField(
                 label: 'Password',
                 icon: Icons.lock_outline_rounded,
@@ -143,11 +148,12 @@ class _RegisterPageState extends State<RegisterPage> {
                   return null;
                 },
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 14),
               Text.rich(
+                textAlign: TextAlign.center,
                 TextSpan(
                   style: GoogleFonts.plusJakartaSans(
-                    fontSize: 12,
+                    fontSize: 11,
                     color: AppColors.inkSoft,
                   ),
                   children: [
@@ -170,24 +176,25 @@ class _RegisterPageState extends State<RegisterPage> {
                   ],
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
               AuthPrimaryButton(
                 label: 'Create Account',
                 loading: _loading,
                 onPressed: _submit,
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 18),
               const AuthOrDivider(label: 'Or Continue with'),
-              const SizedBox(height: 20),
+              const SizedBox(height: 14),
               AuthSocialRow(
                 onGoogle: () => showAuthComingSoon(context, 'Google'),
                 onFacebook: () => showAuthComingSoon(context, 'Facebook'),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 18),
               Text.rich(
+                textAlign: TextAlign.center,
                 TextSpan(
                   style: GoogleFonts.plusJakartaSans(
-                    fontSize: 14,
+                    fontSize: 13,
                     color: AppColors.inkSoft,
                   ),
                   children: [
@@ -206,7 +213,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         child: Text(
                           'Sign in',
                           style: GoogleFonts.plusJakartaSans(
-                            fontSize: 14,
+                            fontSize: 13,
                             fontWeight: FontWeight.w700,
                             color: AppColors.ink,
                           ),

@@ -120,25 +120,30 @@ class _LoginPageState extends State<LoginPage> {
           key: _formKey,
           child: Column(
             children: [
-              const AuthIllustration(type: AuthIllustrationType.login),
-              const SizedBox(height: 24),
+              const AuthIllustration(
+                type: AuthIllustrationType.login,
+                size: 112,
+              ),
+              const SizedBox(height: 16),
               Text(
                 'Sign In',
+                textAlign: TextAlign.center,
                 style: GoogleFonts.plusJakartaSans(
-                  fontSize: 26,
+                  fontSize: 22,
                   fontWeight: FontWeight.w700,
                   color: AppColors.primaryNavy,
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
               Text(
                 'Enter your email & password to continue',
+                textAlign: TextAlign.center,
                 style: GoogleFonts.plusJakartaSans(
-                  fontSize: 13,
+                  fontSize: 12,
                   color: AppColors.inkSoft,
                 ),
               ),
-              const SizedBox(height: 28),
+              const SizedBox(height: 20),
               AuthTextField(
                 label: 'Email',
                 icon: Icons.mail_outline_rounded,
@@ -153,7 +158,7 @@ class _LoginPageState extends State<LoginPage> {
                   return null;
                 },
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               AuthTextField(
                 label: 'Password',
                 icon: Icons.lock_outline_rounded,
@@ -167,10 +172,14 @@ class _LoginPageState extends State<LoginPage> {
                   return null;
                 },
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 4),
               Align(
                 alignment: Alignment.centerRight,
                 child: TextButton(
+                  style: TextButton.styleFrom(
+                    visualDensity: VisualDensity.compact,
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                  ),
                   onPressed: () {
                     Navigator.of(context).push(
                       MaterialPageRoute<void>(
@@ -181,32 +190,33 @@ class _LoginPageState extends State<LoginPage> {
                   child: Text(
                     'Forget password',
                     style: GoogleFonts.plusJakartaSans(
-                      fontSize: 13,
+                      fontSize: 12,
                       fontWeight: FontWeight.w600,
                       color: AppColors.ink,
                     ),
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               AuthPrimaryButton(
                 label: 'Login',
                 showArrow: true,
                 loading: _loading,
                 onPressed: _submit,
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 18),
               const AuthOrDivider(label: 'Or Continue with'),
-              const SizedBox(height: 20),
+              const SizedBox(height: 14),
               AuthSocialRow(
                 onGoogle: () => showAuthComingSoon(context, 'Google'),
                 onFacebook: () => showAuthComingSoon(context, 'Facebook'),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 18),
               Text.rich(
+                textAlign: TextAlign.center,
                 TextSpan(
                   style: GoogleFonts.plusJakartaSans(
-                    fontSize: 14,
+                    fontSize: 13,
                     color: AppColors.inkSoft,
                   ),
                   children: [
@@ -225,7 +235,7 @@ class _LoginPageState extends State<LoginPage> {
                         child: Text(
                           'Sign up',
                           style: GoogleFonts.plusJakartaSans(
-                            fontSize: 14,
+                            fontSize: 13,
                             fontWeight: FontWeight.w700,
                             color: AppColors.ink,
                           ),

@@ -201,6 +201,17 @@ class _AnalysisResultsPageState extends State<AnalysisResultsPage> {
                       accentDeep: _accentDeep,
                       green: _green,
                       translating: _translating,
+                      onChat: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (_) => ChatPage(result: r),
+                          ),
+                        );
+                      },
+                      onExport: () =>
+                          _toast('Export report comes with backend.'),
+                      onCompare: () =>
+                          _toast('Version compare comes later.'),
                       onOpenSummary: () {
                         Navigator.of(context).push(
                           MaterialPageRoute<void>(
@@ -272,6 +283,17 @@ class _AnalysisResultsPageState extends State<AnalysisResultsPage> {
                       accent: _accent,
                       accentDeep: _accentDeep,
                       onFilter: (id) => setState(() => _clauseFilter = id),
+                      onChat: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (_) => ChatPage(result: r),
+                          ),
+                        );
+                      },
+                      onExport: () =>
+                          _toast('Export report comes with backend.'),
+                      onCompare: () =>
+                          _toast('Version compare comes later.'),
                       onOpenAll: () {
                         Navigator.of(context).push(
                           MaterialPageRoute<void>(
@@ -290,19 +312,6 @@ class _AnalysisResultsPageState extends State<AnalysisResultsPage> {
                         );
                       },
                     ),
-            ),
-            _BottomActions(
-              onChat: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute<void>(
-                    builder: (_) => ChatPage(result: r),
-                  ),
-                );
-              },
-              onExport: () => _toast('Export report comes with backend.'),
-              onCompare: () => _toast('Version compare comes later.'),
-              accent: _accent,
-              accentDeep: _accentDeep,
             ),
           ],
         ),
@@ -411,6 +420,9 @@ class _OverviewBody extends StatelessWidget {
     required this.onOpenSummary,
     required this.onOpenRisk,
     required this.onOpenPlain,
+    required this.onChat,
+    required this.onExport,
+    required this.onCompare,
     this.translating = false,
     this.onOpenJurisdiction,
     this.onOpenStateConflicts,
@@ -430,6 +442,9 @@ class _OverviewBody extends StatelessWidget {
   final VoidCallback onOpenSummary;
   final VoidCallback onOpenRisk;
   final VoidCallback onOpenPlain;
+  final VoidCallback onChat;
+  final VoidCallback onExport;
+  final VoidCallback onCompare;
   final VoidCallback? onOpenJurisdiction;
   final VoidCallback? onOpenStateConflicts;
   final VoidCallback? onOpenFlagged;
@@ -448,16 +463,23 @@ class _OverviewBody extends StatelessWidget {
     final langLabel = (langMatch == null || langMatch.isEmpty)
         ? null
         : langMatch.first.label;
+    final bottomInset = MediaQuery.paddingOf(context).bottom;
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+      padding: EdgeInsets.fromLTRB(16, 12, 16, 88 + bottomInset),
       children: [
+        _ActionRow(
+          onChat: onChat,
+          onExport: onExport,
+          onCompare: onCompare,
+        ),
+        const SizedBox(height: 12),
         if (langLabel != null) ...[
           Material(
             color: const Color(0xFFE3F2FD),
             borderRadius: BorderRadius.circular(14),
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               child: Row(
                 children: [
                   const Icon(Icons.translate_rounded,
@@ -467,7 +489,7 @@ class _OverviewBody extends StatelessWidget {
                     child: Text(
                       'Showing summary & plain language in $langLabel',
                       style: GoogleFonts.plusJakartaSans(
-                        fontSize: 13,
+                        fontSize: 12,
                         fontWeight: FontWeight.w600,
                         color: const Color(0xFF1565C0),
                       ),
@@ -611,7 +633,7 @@ class _OverviewBody extends StatelessWidget {
           physics: const NeverScrollableScrollPhysics(),
           mainAxisSpacing: 12,
           crossAxisSpacing: 12,
-          childAspectRatio: 1.35,
+          childAspectRatio: 1.55,
           children: [
             _StatTile(
               icon: Icons.warning_amber_rounded,
@@ -1017,56 +1039,69 @@ class _StatTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       color: Colors.white,
-      borderRadius: BorderRadius.circular(20),
+      borderRadius: BorderRadius.circular(16),
       child: InkWell(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(16),
         onTap: onTap,
         child: Ink(
-          padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
+          padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(16),
             boxShadow: AppShadows.soft,
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            mainAxisSize: MainAxisSize.max,
             children: [
               Row(
                 children: [
                   Container(
-                    width: 34,
-                    height: 34,
+                    width: 28,
+                    height: 28,
                     decoration: BoxDecoration(
                       color: iconBg,
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Icon(icon, size: 18, color: iconColor),
+                    child: Icon(icon, size: 15, color: iconColor),
                   ),
                   const Spacer(),
                   Text(
                     delta,
                     style: GoogleFonts.plusJakartaSans(
-                      fontSize: 11,
+                      fontSize: 10,
                       fontWeight: FontWeight.w700,
                       color: green,
                     ),
                   ),
                 ],
               ),
-              const Spacer(),
-              Text(
-                value,
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.ink,
-                ),
-              ),
-              Text(
-                label,
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 12,
-                  color: AppColors.mute,
-                ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    value,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                      height: 1.1,
+                      color: AppColors.ink,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 11,
+                      color: AppColors.mute,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
@@ -1084,6 +1119,9 @@ class _ClausesBody extends StatelessWidget {
     required this.accent,
     required this.accentDeep,
     required this.onFilter,
+    required this.onChat,
+    required this.onExport,
+    required this.onCompare,
     required this.onOpenAll,
     required this.onOpenPlain,
   });
@@ -1094,15 +1132,25 @@ class _ClausesBody extends StatelessWidget {
   final Color accent;
   final Color accentDeep;
   final ValueChanged<String> onFilter;
+  final VoidCallback onChat;
+  final VoidCallback onExport;
+  final VoidCallback onCompare;
   final VoidCallback onOpenAll;
   final ValueChanged<String> onOpenPlain;
 
   @override
   Widget build(BuildContext context) {
     final r = result;
+    final bottomInset = MediaQuery.paddingOf(context).bottom;
     return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+      padding: EdgeInsets.fromLTRB(16, 12, 16, 88 + bottomInset),
       children: [
+        _ActionRow(
+          onChat: onChat,
+          onExport: onExport,
+          onCompare: onCompare,
+        ),
+        const SizedBox(height: 12),
         _WhiteCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1420,85 +1468,75 @@ class _WhiteCard extends StatelessWidget {
   }
 }
 
-class _BottomActions extends StatelessWidget {
-  const _BottomActions({
+class _ActionRow extends StatelessWidget {
+  const _ActionRow({
     required this.onChat,
     required this.onExport,
     required this.onCompare,
-    required this.accent,
-    required this.accentDeep,
   });
 
   final VoidCallback onChat;
   final VoidCallback onExport;
   final VoidCallback onCompare;
-  final Color accent;
-  final Color accentDeep;
 
   @override
   Widget build(BuildContext context) {
-    final bottomInset = MediaQuery.paddingOf(context).bottom;
-    // Floating dock (~56) + margin (~16) + system inset.
-    final dockClearance = 72.0 + bottomInset;
-
-    return Padding(
-      padding: EdgeInsets.fromLTRB(16, 8, 16, dockClearance),
-      child: Row(
-        children: [
-          Expanded(
-            flex: 3,
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                borderRadius: BorderRadius.circular(AppRadii.pill),
-                onTap: onChat,
-                child: Ink(
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: AppColors.ink,
-                    borderRadius: BorderRadius.circular(AppRadii.pill),
-                    boxShadow: AppShadows.soft,
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.chat_bubble_outline_rounded,
-                          color: Colors.white, size: 18),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Chat',
-                        maxLines: 1,
-                        style: GoogleFonts.plusJakartaSans(
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                        ),
+    return Row(
+      children: [
+        Expanded(
+          flex: 3,
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(AppRadii.pill),
+              onTap: onChat,
+              child: Ink(
+                height: 44,
+                decoration: BoxDecoration(
+                  color: AppColors.ink,
+                  borderRadius: BorderRadius.circular(AppRadii.pill),
+                  boxShadow: AppShadows.soft,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.chat_bubble_outline_rounded,
+                        color: Colors.white, size: 17),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Chat',
+                      maxLines: 1,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ),
           ),
-          const SizedBox(width: 8),
-          Expanded(
-            flex: 2,
-            child: _ActionChip(
-              label: 'Export',
-              icon: Icons.ios_share_rounded,
-              onTap: onExport,
-            ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          flex: 2,
+          child: _ActionChip(
+            label: 'Export',
+            icon: Icons.ios_share_rounded,
+            onTap: onExport,
           ),
-          const SizedBox(width: 8),
-          Expanded(
-            flex: 2,
-            child: _ActionChip(
-              label: 'Compare',
-              icon: Icons.compare_arrows_rounded,
-              onTap: onCompare,
-            ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          flex: 2,
+          child: _ActionChip(
+            label: 'Compare',
+            icon: Icons.compare_arrows_rounded,
+            onTap: onCompare,
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
@@ -1523,7 +1561,7 @@ class _ActionChip extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadii.pill),
         onTap: onTap,
         child: Container(
-          height: 48,
+          height: 44,
           alignment: Alignment.center,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(AppRadii.pill),
@@ -1534,7 +1572,7 @@ class _ActionChip extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, size: 16, color: AppColors.ink),
+              Icon(icon, size: 15, color: AppColors.ink),
               const SizedBox(width: 4),
               Flexible(
                 child: Text(
@@ -1543,7 +1581,7 @@ class _ActionChip extends StatelessWidget {
                   softWrap: false,
                   overflow: TextOverflow.ellipsis,
                   style: GoogleFonts.plusJakartaSans(
-                    fontSize: 13,
+                    fontSize: 12,
                     fontWeight: FontWeight.w700,
                     color: AppColors.ink,
                   ),

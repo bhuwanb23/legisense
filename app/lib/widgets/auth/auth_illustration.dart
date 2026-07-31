@@ -9,7 +9,7 @@ class AuthIllustration extends StatelessWidget {
   const AuthIllustration({
     super.key,
     required this.type,
-    this.size = 160,
+    this.size = 112,
   });
 
   final AuthIllustrationType type;
