@@ -171,7 +171,7 @@ class _ClauseBreakdownPageState extends State<ClauseBreakdownPage> {
                     ),
                   )
                 : ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 100),
+                    padding: EdgeInsets.fromLTRB(16, 4, 16, AppInsets.shellBottom(context)),
                     itemCount: clauses.length,
                     itemBuilder: (context, index) {
                       final c = clauses[index];
