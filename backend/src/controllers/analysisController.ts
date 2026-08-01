@@ -1042,19 +1042,19 @@ export async function rewritePlainEnglish(
 
     const db = getDb();
     const docRows = db.select().from(documents).where(
-      sql$ = {documentId} AND {documents.userId} = {req.user.id} AND {documents.isDeleted} = 0
+      sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = 0`
     ).all();
 
     if (!docRows[0]) throw new NotFoundError('Document');
 
     const analysisRows = db.select().from(analysisResults).where(
-      sql$ = {documentId}
+      sql`${analysisResults.documentId} = ${documentId}`
     ).all();
 
     if (!analysisRows[0]) throw new NotFoundError('Analysis not found for this document');
 
     const clauseRows = db.select().from(clauses).where(
-      sql$ = {analysisRows[0].id}
+      sql`${clauses.analysisId} = ${analysisRows[0].id}`
     ).all();
 
     const readingLevelMap: Record<string, string> = {
@@ -1068,30 +1068,31 @@ export async function rewritePlainEnglish(
     const aiProvider = getAiProvider();
 
     for (const clause of clauseRows) {
-      const prompt = Rewrite the following legal text at a  reading level. Keep it simple, clear, and use short sentences. Do not lose legal meaning.\n\nOriginal: {clause.clauseText || clause.originalText}\n\nRewritten:;
+      const levelDesc = readingLevel === 'grade5' ? 'Grade 5 (age 10-11)' : readingLevel === 'grade8' ? 'Grade 8 (age 13-14)' : 'standard college';
+      const prompt = `Rewrite the following legal text at a ${levelDesc} reading level. Keep it simple, clear, and use short sentences. Do not lose legal meaning.\n\nOriginal: ${clause.clauseText || clause.originalText}\n\nRewritten:`;
 
       try {
         const response = await aiProvider.generate(prompt);
         const plainEnglishText = response.trim();
 
         db.run(
-          sqlUPDATE {clauses} SET plain_english = {plainEnglishText}, reading_level = {levelLabel} WHERE id = {clause.id}
+          sql`UPDATE ${clauses} SET plain_english = ${plainEnglishText}, reading_level = ${levelLabel} WHERE id = ${clause.id}`
         );
       } catch (err) {
-        console.error(Failed to rewrite clause {clause.id}:, err);
+        console.error(`Failed to rewrite clause ${clause.id}:`, err);
       }
     }
 
     persistNow();
 
     const updatedClauseRows = db.select().from(clauses).where(
-      sql$ = {analysisRows[0].id}
+      sql`${clauses.analysisId} = ${analysisRows[0].id}`
     ).all();
 
     res.json({
       success: true,
       data: {
-        message: Clauses rewritten at {readingLevel} level,
+        message: `Clauses rewritten at ${readingLevel} level`,
         clauses: updatedClauseRows.map((c) => ({
           id: c.id,
           title: c.title,

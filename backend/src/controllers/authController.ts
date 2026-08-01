@@ -1178,7 +1178,7 @@ export async function verifyOtpCode(
     let userRows = db
       .select()
       .from(users)
-      .where(sql$ = {email})
+      .where(sql`${users.email} = ${email}`)
       .all();
 
     let user = userRows[0];
@@ -1199,7 +1199,7 @@ export async function verifyOtpCode(
       userRows = db
         .select()
         .from(users)
-        .where(sql$ = {email})
+        .where(sql`${users.email} = ${email}`)
         .all();
 
       user = userRows[0];
@@ -1222,7 +1222,7 @@ export async function verifyOtpCode(
       })
       .run();
 
-    db.run(sqlUPDATE {users} SET last_login_at = datetime('now') WHERE id = {user.id});
+    db.run(sql`UPDATE ${users} SET last_login_at = datetime('now') WHERE id = ${user.id}`);
 
     persistNow();
     clearOtp(email);
