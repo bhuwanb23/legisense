@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../data/auth_constants.dart';
 import '../../repositories/auth_repository.dart';
 import '../../services/session_prefs.dart';
+import '../../theme/app_insets.dart';
 import '../../theme/app_theme.dart';
 
 /// Edit Profile — label / value / trailing icon rows + Discard / Save.
@@ -144,7 +145,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
               children: [
                 Expanded(
                   child: ListView(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
                     children: [
                       Center(
                         child: Stack(
@@ -260,11 +261,11 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 SafeArea(
                   top: false,
                   child: Padding(
-                    padding: EdgeInsets.fromLTRB(
+                    padding: const EdgeInsets.fromLTRB(
                       20,
                       8,
                       20,
-                      88 + MediaQuery.paddingOf(context).bottom,
+                      AppInsets.shellBottomInsideSafeArea,
                     ),
                     child: Row(
                       children: [
