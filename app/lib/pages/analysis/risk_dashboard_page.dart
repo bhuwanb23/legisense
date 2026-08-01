@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../data/analysis_mock.dart';
+import '../../theme/app_insets.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/analysis/risk_gauge.dart';
 import '../../widgets/analysis/risk_style.dart';
