@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../data/analysis_mock.dart';
 import '../../data/legal_glossary.dart';
+import '../../repositories/analysis_repository.dart';
 import '../../theme/app_insets.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/analysis/soft_card.dart';
@@ -36,6 +37,22 @@ class _PlainLanguagePageState extends State<PlainLanguagePage> {
   List<AnalysisClause> get _clauses => widget.result.clauses
       .where((c) => c.risk != AnalysisRiskLevel.missing)
       .toList();
+
+  Future<void> _lookupAndShow(String term, [String? fallback]) async {
+    var definition = fallback ?? LegalGlossary.terms[term] ??
+        LegalGlossary.terms[term.toLowerCase()];
+    try {
+      final data = await AnalysisRepository().glossary(term);
+      final apiDef = data['definition']?.toString();
+      if (apiDef != null && apiDef.isNotEmpty) {
+        definition = apiDef;
+      }
+    } catch (_) {
+      // Keep local fallback.
+    }
+    if (!mounted) return;
+    _showDefinition(term, definition ?? 'No definition found for “$term”.');
+  }
 
   void _showDefinition(String term, String definition) {
     // Root navigator so the sheet sits above the floating shell dock.
@@ -138,7 +155,7 @@ class _PlainLanguagePageState extends State<PlainLanguagePage> {
                       ),
                       onTap: () {
                         Navigator.pop(context);
-                        _showDefinition(e.key, e.value);
+                        _lookupAndShow(e.key, e.value);
                       },
                     ),
                   ),
@@ -200,7 +217,7 @@ class _PlainLanguagePageState extends State<PlainLanguagePage> {
           alignment: PlaceholderAlignment.baseline,
           baseline: TextBaseline.alphabetic,
           child: GestureDetector(
-            onTap: () => _showDefinition(termKey, definition),
+            onTap: () => _lookupAndShow(termKey, definition),
             child: Text(term, style: linkStyle),
           ),
         ),
