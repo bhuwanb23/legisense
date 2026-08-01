@@ -72,11 +72,11 @@ class _ScanPreviewPageState extends State<ScanPreviewPage> {
       ),
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(
+          padding: EdgeInsets.fromLTRB(
             20,
             8,
             20,
-            AppInsets.shellBottomInsideSafeArea,
+            AppInsets.footerAboveDock(context),
           ),
           child: Column(
             children: [

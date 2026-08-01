@@ -38,8 +38,10 @@ class _PlainLanguagePageState extends State<PlainLanguagePage> {
       .toList();
 
   void _showDefinition(String term, String definition) {
+    // Root navigator so the sheet sits above the floating shell dock.
     showModalBottomSheet<void>(
       context: context,
+      useRootNavigator: true,
       backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -47,12 +49,7 @@ class _PlainLanguagePageState extends State<PlainLanguagePage> {
       builder: (context) {
         return SafeArea(
           child: Padding(
-            padding: EdgeInsets.fromLTRB(
-              20,
-              16,
-              20,
-              16 + AppInsets.dockClearance,
-            ),
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -85,6 +82,7 @@ class _PlainLanguagePageState extends State<PlainLanguagePage> {
   void _openGlossaryList() {
     showModalBottomSheet<void>(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
@@ -99,56 +97,53 @@ class _PlainLanguagePageState extends State<PlainLanguagePage> {
           builder: (context, scroll) {
             final entries = LegalGlossary.terms.entries.toList()
               ..sort((a, b) => a.key.compareTo(b.key));
-            return ListView(
-              controller: scroll,
-              padding: EdgeInsets.fromLTRB(
-                20,
-                16,
-                20,
-                16 + AppInsets.dockClearance,
+            return SafeArea(
+              child: ListView(
+                controller: scroll,
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+                children: [
+                  Text(
+                    'Legal glossary',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.primaryNavy,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Tap a highlighted word in the original text, or browse here.',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 12,
+                      color: AppColors.inkSoft,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  ...entries.map(
+                    (e) => ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: Text(
+                        e.key,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.primaryNavy,
+                        ),
+                      ),
+                      subtitle: Text(
+                        e.value,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 13,
+                          color: AppColors.inkSoft,
+                        ),
+                      ),
+                      onTap: () {
+                        Navigator.pop(context);
+                        _showDefinition(e.key, e.value);
+                      },
+                    ),
+                  ),
+                ],
               ),
-              children: [
-                Text(
-                  'Legal glossary',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.primaryNavy,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  'Tap a highlighted word in the original text, or browse here.',
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 12,
-                    color: AppColors.inkSoft,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                ...entries.map(
-                  (e) => ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    title: Text(
-                      e.key,
-                      style: GoogleFonts.plusJakartaSans(
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.primaryNavy,
-                      ),
-                    ),
-                    subtitle: Text(
-                      e.value,
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 13,
-                        color: AppColors.inkSoft,
-                      ),
-                    ),
-                    onTap: () {
-                      Navigator.pop(context);
-                      _showDefinition(e.key, e.value);
-                    },
-                  ),
-                ),
-              ],
             );
           },
         );
@@ -362,154 +357,170 @@ class _PlainLanguagePageState extends State<PlainLanguagePage> {
             ),
           ),
           Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
-              itemCount: clauses.length,
-              itemBuilder: (context, index) {
-                final c = clauses[index];
-                final highlight = c.id == widget.initialClauseId;
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: SoftCard(
-                    padding: EdgeInsets.zero,
-                    child: Container(
-                      decoration: highlight
-                          ? BoxDecoration(
-                              borderRadius:
-                                  BorderRadius.circular(AppRadii.md),
-                              border: Border.all(
-                                color: AppColors.accentSky,
-                                width: 1.5,
+            child: Stack(
+              children: [
+                ListView.builder(
+                  padding: EdgeInsets.fromLTRB(
+                    16,
+                    4,
+                    16,
+                    // Action bar (~64) + air above dock.
+                    64 + AppInsets.footerAboveDock(context),
+                  ),
+                  itemCount: clauses.length,
+                  itemBuilder: (context, index) {
+                    final c = clauses[index];
+                    final highlight = c.id == widget.initialClauseId;
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: SoftCard(
+                        padding: EdgeInsets.zero,
+                        child: Container(
+                          decoration: highlight
+                              ? BoxDecoration(
+                                  borderRadius:
+                                      BorderRadius.circular(AppRadii.md),
+                                  border: Border.all(
+                                    color: AppColors.accentSky,
+                                    width: 1.5,
+                                  ),
+                                )
+                              : null,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              if (_mode == _ViewMode.stacked ||
+                                  _showOriginal)
+                                _SectionBlock(
+                                  title: 'ORIGINAL (Legal)',
+                                  titleColor: AppColors.inkSoft,
+                                  child: Text.rich(
+                                    _glossarySpan(c.originalText),
+                                  ),
+                                ),
+                              if (_mode == _ViewMode.stacked)
+                                const Divider(
+                                  height: 1,
+                                  color: AppColors.borderMuted,
+                                ),
+                              if (_mode == _ViewMode.stacked ||
+                                  !_showOriginal)
+                                _SectionBlock(
+                                  title: 'PLAIN ENGLISH',
+                                  titleColor: AppColors.riskLow,
+                                  trailing: const Text('🟢'),
+                                  child: Text(
+                                    _plainForLevel(c.plainEnglish),
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 14,
+                                      height: 1.5,
+                                      color: AppColors.primaryNavy,
+                                    ),
+                                  ),
+                                ),
+                              Padding(
+                                padding:
+                                    const EdgeInsets.fromLTRB(14, 0, 14, 10),
+                                child: Text(
+                                  'Clause ${c.number} — ${c.title}',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.inkSoft,
+                                  ),
+                                ),
                               ),
-                            )
-                          : null,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          if (_mode == _ViewMode.stacked || _showOriginal)
-                            _SectionBlock(
-                              title: 'ORIGINAL (Legal)',
-                              titleColor: AppColors.inkSoft,
-                              child: Text.rich(_glossarySpan(c.originalText)),
-                            ),
-                          if (_mode == _ViewMode.stacked)
-                            const Divider(
-                              height: 1,
-                              color: AppColors.borderMuted,
-                            ),
-                          if (_mode == _ViewMode.stacked || !_showOriginal)
-                            _SectionBlock(
-                              title: 'PLAIN ENGLISH',
-                              titleColor: AppColors.riskLow,
-                              trailing: const Text('🟢'),
-                              child: Text(
-                                _plainForLevel(c.plainEnglish),
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 14,
-                                  height: 1.5,
-                                  color: AppColors.primaryNavy,
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: AppInsets.footerAboveDock(context),
+                  child: Material(
+                    color: AppColors.paper,
+                    elevation: 0,
+                    child: DecoratedBox(
+                      decoration: const BoxDecoration(
+                        border: Border(
+                          top: BorderSide(color: AppColors.rule),
+                        ),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: OutlinedButton(
+                                onPressed: () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute<void>(
+                                      builder: (_) => ClauseBreakdownPage(
+                                        result: widget.result,
+                                      ),
+                                    ),
+                                  );
+                                },
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: AppColors.ink,
+                                  side:
+                                      const BorderSide(color: AppColors.rule),
+                                  minimumSize: const Size.fromHeight(44),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(
+                                      AppRadii.pill,
+                                    ),
+                                  ),
+                                ),
+                                child: Text(
+                                  'Clauses',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w700,
+                                  ),
                                 ),
                               ),
                             ),
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
-                            child: Text(
-                              'Clause ${c.number} — ${c.title}',
-                              style: GoogleFonts.plusJakartaSans(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.inkSoft,
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: FilledButton(
+                                onPressed: () {
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute<void>(
+                                      builder: (_) =>
+                                          ChatPage(result: widget.result),
+                                    ),
+                                  );
+                                },
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: AppColors.ink,
+                                  minimumSize: const Size.fromHeight(44),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(
+                                      AppRadii.pill,
+                                    ),
+                                  ),
+                                ),
+                                child: Text(
+                                  'Chat',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
                               ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                );
-              },
-            ),
-          ),
-          Material(
-            color: AppColors.surface,
-            elevation: 0,
-            child: DecoratedBox(
-              decoration: const BoxDecoration(
-                border: Border(top: BorderSide(color: AppColors.rule)),
-              ),
-              child: SafeArea(
-                top: false,
-                bottom: false,
-                child: Padding(
-                  padding: EdgeInsets.fromLTRB(
-                    16,
-                    10,
-                    16,
-                    AppInsets.footerAboveDock(context),
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: OutlinedButton(
-                          onPressed: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute<void>(
-                                builder: (_) => ClauseBreakdownPage(
-                                  result: widget.result,
-                                ),
-                              ),
-                            );
-                          },
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: AppColors.ink,
-                            side: const BorderSide(color: AppColors.rule),
-                            minimumSize: const Size.fromHeight(44),
-                            shape: RoundedRectangleBorder(
-                              borderRadius:
-                                  BorderRadius.circular(AppRadii.pill),
-                            ),
-                          ),
-                          child: Text(
-                            'Clauses',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: FilledButton(
-                          onPressed: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute<void>(
-                                builder: (_) =>
-                                    ChatPage(result: widget.result),
-                              ),
-                            );
-                          },
-                          style: FilledButton.styleFrom(
-                            backgroundColor: AppColors.ink,
-                            minimumSize: const Size.fromHeight(44),
-                            shape: RoundedRectangleBorder(
-                              borderRadius:
-                                  BorderRadius.circular(AppRadii.pill),
-                            ),
-                          ),
-                          child: Text(
-                            'Chat',
-                            style: GoogleFonts.plusJakartaSans(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
                 ),
-              ),
+              ],
             ),
           ),
         ],

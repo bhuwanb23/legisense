@@ -260,12 +260,13 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 ),
                 SafeArea(
                   top: false,
+                  bottom: false,
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(
+                    padding: EdgeInsets.fromLTRB(
                       20,
                       8,
                       20,
-                      AppInsets.shellBottomInsideSafeArea,
+                      AppInsets.footerAboveDock(context),
                     ),
                     child: Row(
                       children: [

@@ -72,6 +72,7 @@ class _AnalysisResultsPageState extends State<AnalysisResultsPage> {
     if (id == null || _translating) return;
     final picked = await showModalBottomSheet<String>(
       context: context,
+      useRootNavigator: true,
       backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
