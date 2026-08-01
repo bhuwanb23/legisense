@@ -6,6 +6,7 @@ import '../../repositories/chat_repository.dart';
 import '../../services/api_exception.dart';
 import '../../theme/app_insets.dart';
 import '../../theme/app_theme.dart';
+import '../analysis/plain_language_page.dart';
 
 class _ChatBubbleMsg {
   const _ChatBubbleMsg({
@@ -286,7 +287,10 @@ class _ChatPageState extends State<ChatPage> {
                         padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
                         itemCount: _messages.length,
                         itemBuilder: (context, i) {
-                          return _Bubble(message: _messages[i]);
+                          return _Bubble(
+                            message: _messages[i],
+                            result: widget.result,
+                          );
                         },
                       ),
                     ),
@@ -385,9 +389,40 @@ class _ChatPageState extends State<ChatPage> {
 }
 
 class _Bubble extends StatelessWidget {
-  const _Bubble({required this.message});
+  const _Bubble({
+    required this.message,
+    required this.result,
+  });
 
   final _ChatBubbleMsg message;
+  final AnalysisResult result;
+
+  void _openCitation(BuildContext context, String cite) {
+    final lower = cite.toLowerCase();
+    AnalysisClause? match;
+    for (final c in result.clauses) {
+      if (c.id == cite ||
+          'clause ${c.number}' == lower ||
+          c.title.toLowerCase() == lower ||
+          lower.contains(c.title.toLowerCase()) ||
+          lower.contains('clause ${c.number}')) {
+        match = c;
+        break;
+      }
+    }
+    match ??= result.clauses.cast<AnalysisClause?>().firstWhere(
+          (c) => c != null && lower.contains(c.number.toString()),
+          orElse: () => null,
+        );
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => PlainLanguagePage(
+          result: result,
+          initialClauseId: match?.id,
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -436,19 +471,33 @@ class _Bubble extends StatelessWidget {
               for (final c in message.citedClauses)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 4),
-                  child: Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: AppColors.chip,
+                  child: Material(
+                    color: AppColors.chip,
+                    borderRadius: BorderRadius.circular(10),
+                    child: InkWell(
                       borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Text(
-                      c,
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 11,
-                        height: 1.35,
-                        color: AppColors.ink,
+                      onTap: () => _openCitation(context, c),
+                      child: Padding(
+                        padding: const EdgeInsets.all(8),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                c,
+                                style: GoogleFonts.plusJakartaSans(
+                                  fontSize: 11,
+                                  height: 1.35,
+                                  color: AppColors.ink,
+                                ),
+                              ),
+                            ),
+                            const Icon(
+                              Icons.chevron_right_rounded,
+                              size: 16,
+                              color: AppColors.mute,
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),

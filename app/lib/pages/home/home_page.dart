@@ -18,6 +18,7 @@ import '../../widgets/home/section_header.dart';
 import '../../widgets/home/stat_card.dart';
 import '../analysis/analysis_loader_page.dart';
 import '../deadlines/deadlines_page.dart';
+import '../shell/main_shell.dart';
 
 /// Home — TripGlide Operate workbench (live documents).
 class HomePage extends StatefulWidget {
@@ -162,8 +163,14 @@ class _HomePageState extends State<HomePage> {
                 ),
                 const SizedBox(height: 16),
                 HomeSearchBar(
-                  onSearch: widget.onOpenDocuments,
-                  onFilter: widget.onOpenDocuments,
+                  onSubmitted: (q) {
+                    final scope = ShellScope.maybeOf(context);
+                    scope?.openDocuments(query: q.trim());
+                  },
+                  onFilter: () {
+                    final scope = ShellScope.maybeOf(context);
+                    scope?.openDocuments(filter: _filterId);
+                  },
                 ),
                 const SizedBox(height: 20),
                 Text(
@@ -233,22 +240,36 @@ class _HomePageState extends State<HomePage> {
                       label: 'Total analyzed',
                       value: '$analyzed',
                       icon: Icons.analytics_outlined,
+                      onTap: widget.onOpenDocuments,
                     ),
                     StatCard(
                       label: 'High risk',
                       value: '$highRisk',
                       icon: Icons.warning_amber_rounded,
                       accent: true,
+                      onTap: () {
+                        ShellScope.maybeOf(context)
+                            ?.openDocuments(filter: 'all');
+                        widget.onOpenDocuments();
+                      },
                     ),
                     StatCard(
                       label: 'Deadlines',
                       value: '$_deadlineCount',
                       icon: Icons.event_outlined,
+                      onTap: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (_) => const DeadlinesPage(),
+                          ),
+                        );
+                      },
                     ),
                     StatCard(
                       label: 'Documents',
                       value: '${_docs.length}',
                       icon: Icons.folder_outlined,
+                      onTap: widget.onOpenDocuments,
                     ),
                   ],
                 ),

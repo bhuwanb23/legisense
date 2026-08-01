@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../data/dashboard_mock.dart';
 import '../../mappers/analysis_mapper.dart';
@@ -13,9 +14,18 @@ import '../analysis/analysis_loader_page.dart';
 
 /// Documents library — live DocumentsRepository feed.
 class DocumentsPage extends StatefulWidget {
-  const DocumentsPage({super.key, this.onOpenUpload});
+  const DocumentsPage({
+    super.key,
+    this.onOpenUpload,
+    this.initialQuery,
+    this.initialFilter,
+    this.onInitialApplied,
+  });
 
   final VoidCallback? onOpenUpload;
+  final String? initialQuery;
+  final String? initialFilter;
+  final VoidCallback? onInitialApplied;
 
   @override
   State<DocumentsPage> createState() => _DocumentsPageState();
@@ -72,8 +82,36 @@ class _DocumentsPageState extends State<DocumentsPage> {
   @override
   void initState() {
     super.initState();
+    _applyInitial();
     _loadName();
     _loadDocs();
+  }
+
+  @override
+  void didUpdateWidget(covariant DocumentsPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.initialQuery != oldWidget.initialQuery ||
+        widget.initialFilter != oldWidget.initialFilter) {
+      _applyInitial();
+    }
+  }
+
+  void _applyInitial() {
+    var changed = false;
+    if (widget.initialQuery != null && widget.initialQuery!.isNotEmpty) {
+      _search.text = widget.initialQuery!;
+      changed = true;
+    }
+    if (widget.initialFilter != null && widget.initialFilter!.isNotEmpty) {
+      _filter = widget.initialFilter!;
+      changed = true;
+    }
+    if (changed) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        widget.onInitialApplied?.call();
+        if (mounted) setState(() {});
+      });
+    }
   }
 
   Future<void> _loadName() async {
@@ -273,10 +311,25 @@ class _DocumentsPageState extends State<DocumentsPage> {
       case 'view':
         _openAnalysis(doc);
       case 'share':
-        _toast('Share for “${doc.title}” comes soon.');
+        await _share(doc);
       case 'delete':
         await _delete(doc);
     }
+  }
+
+  Future<void> _share(MockDocument doc) async {
+    final risk = switch (doc.risk) {
+      DocRisk.low => 'Low',
+      DocRisk.medium => 'Medium',
+      DocRisk.high => 'High',
+    };
+    final text = StringBuffer()
+      ..writeln('${doc.title}')
+      ..writeln('Type: ${doc.typeLabel}')
+      ..writeln('Risk: $risk (${doc.riskScore}/100)')
+      ..writeln()
+      ..writeln('Shared from Legisense — Your AI Legal Advisor');
+    await SharePlus.instance.share(ShareParams(text: text.toString()));
   }
 
   @override

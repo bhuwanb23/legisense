@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
+import 'dart:io';
 
 import '../../repositories/deadlines_repository.dart';
 import '../../services/api_exception.dart';
@@ -61,6 +64,44 @@ class _DeadlinesPageState extends State<DeadlinesPage> {
     await _load();
   }
 
+  Future<void> _exportIcs() async {
+    final ids = _items
+        .map((d) => (d['id'] as num?)?.toInt())
+        .whereType<int>()
+        .toList();
+    if (ids.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No deadlines to export')),
+      );
+      return;
+    }
+    try {
+      final ics = await _repo.exportIcsText(ids);
+      if (ics == null || ics.isEmpty) {
+        throw Exception('Empty calendar');
+      }
+      final dir = await getTemporaryDirectory();
+      final file = File('${dir.path}/legisense-deadlines.ics');
+      await file.writeAsString(ics);
+      await SharePlus.instance.share(
+        ShareParams(
+          files: [XFile(file.path, mimeType: 'text/calendar')],
+          subject: 'Legisense deadlines',
+        ),
+      );
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message)),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -76,6 +117,12 @@ class _DeadlinesPageState extends State<DeadlinesPage> {
                 icon: Icons.arrow_back_rounded,
                 onTap: () => Navigator.maybePop(context),
               ),
+              trailing: _items.isEmpty
+                  ? null
+                  : AppHeaderIconButton(
+                      icon: Icons.ios_share_rounded,
+                      onTap: _exportIcs,
+                    ),
             ),
             Expanded(
               child: _loading
