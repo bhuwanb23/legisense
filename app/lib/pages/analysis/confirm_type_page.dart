@@ -83,7 +83,7 @@ class _ConfirmTypePageState extends State<ConfirmTypePage> {
           : _error != null
               ? Center(child: Text(_error!))
               : ListView(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
+                  padding: EdgeInsets.fromLTRB(16, 8, 16, AppInsets.shellBottom(context)),
                   children: [
                     Text(
                       _data?['typeLabel'] as String? ??
