@@ -103,6 +103,50 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
+  Future<void> _deleteAccount() async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(
+          'Delete account?',
+          style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
+        ),
+        content: Text(
+          'This deactivates your account. You will be signed out.',
+          style: GoogleFonts.plusJakartaSans(),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(
+              'Delete',
+              style: GoogleFonts.plusJakartaSans(
+                fontWeight: FontWeight.w700,
+                color: AppColors.error,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    try {
+      await AuthRepository().deleteAccount();
+      if (!mounted) return;
+      Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+        MaterialPageRoute<void>(builder: (_) => const LoginPage()),
+        (_) => false,
+      );
+    } catch (e) {
+      if (!mounted) return;
+      _toast(e.toString());
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final initial = _name.isNotEmpty ? _name[0].toUpperCase() : 'L';
@@ -199,15 +243,31 @@ class _ProfilePageState extends State<ProfilePage> {
                       _MenuTile(
                         icon: Icons.headset_mic_outlined,
                         label: 'Help & Support',
-                        onTap: () =>
-                            _toast('Support chat comes with the backend.'),
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute<void>(
+                              builder: (_) => const HelpSupportPage(),
+                            ),
+                          );
+                        },
                       ),
                       _MenuTile(
                         icon: Icons.settings_outlined,
                         label: 'Settings',
-                        onTap: () =>
-                            _toast('Settings come with the backend.'),
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute<void>(
+                              builder: (_) => const SettingsPage(),
+                            ),
+                          );
+                        },
+                      ),
+                      _MenuTile(
+                        icon: Icons.delete_forever_outlined,
+                        label: 'Delete account',
+                        danger: true,
                         showDivider: false,
+                        onTap: _deleteAccount,
                       ),
                     ],
                   ),

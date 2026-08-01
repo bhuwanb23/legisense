@@ -1,4 +1,5 @@
 import '../services/api_client.dart';
+import 'package:dio/dio.dart';
 
 class AnalysisRepository {
   AnalysisRepository({ApiClient? client}) : _api = client ?? ApiClient.instance;
@@ -88,6 +89,20 @@ class AnalysisRepository {
     return _api.post(
       '/api/analysis/glossary',
       data: {'term': term},
+      parse: (d) => Map<String, dynamic>.from(d as Map),
+    );
+  }
+
+  Future<Map<String, dynamic>> rewritePlainEnglish(
+    int documentId, {
+    required String readingLevel,
+  }) {
+    return _api.post(
+      '/api/analysis/$documentId/plain-english/rewrite',
+      data: {'readingLevel': readingLevel},
+      options: Options(
+        receiveTimeout: const Duration(minutes: 5),
+      ),
       parse: (d) => Map<String, dynamic>.from(d as Map),
     );
   }
