@@ -153,7 +153,12 @@ class _JurisdictionFlagsPageState extends State<JurisdictionFlagsPage> {
                             )
                           : ListView.separated(
                               padding:
-                                  const EdgeInsets.fromLTRB(16, 8, 16, 100),
+                                  EdgeInsets.fromLTRB(
+                                    16,
+                                    8,
+                                    16,
+                                    AppInsets.shellBottom(context),
+                                  ),
                               itemCount: _items.length,
                               separatorBuilder: (_, __) =>
                                   const SizedBox(height: 10),
