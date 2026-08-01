@@ -6,6 +6,8 @@ import {
   refreshToken,
   forgotPassword,
   resetPassword,
+  oauthGoogle,
+  oauthFacebook,
 } from '../controllers/authController';
 import { authenticate } from '../middleware/auth';
 import { validate } from '../middleware/validate';
@@ -25,5 +27,7 @@ router.post('/logout', authenticate, logout);
 router.post('/refresh-token', validate(refreshTokenSchema), refreshToken);
 router.post('/forgot-password', validate(forgotPasswordSchema), forgotPassword);
 router.post('/reset-password', validate(resetPasswordSchema), resetPassword);
+router.post('/oauth/google', oauthGoogle);
+router.post('/oauth/facebook', oauthFacebook);
 
 export default router;
