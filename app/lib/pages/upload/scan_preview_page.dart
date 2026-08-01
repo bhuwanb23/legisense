@@ -1,5 +1,7 @@
 import 'dart:io';
+import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
@@ -9,7 +11,7 @@ import '../../theme/app_insets.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/auth/auth_primary_button.dart';
 
-/// Camera capture preview — mock edge frame + OCR, then return [PendingUpload].
+/// Camera capture preview — then return [PendingUpload] for upload/OCR on process.
 class ScanPreviewPage extends StatefulWidget {
   const ScanPreviewPage({super.key, required this.imagePath});
 
@@ -21,7 +23,21 @@ class ScanPreviewPage extends StatefulWidget {
 
 class _ScanPreviewPageState extends State<ScanPreviewPage> {
   late String _path = widget.imagePath;
-  bool _ocrRunning = false;
+  Uint8List? _bytes;
+  bool _busy = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadBytes();
+  }
+
+  Future<void> _loadBytes() async {
+    try {
+      final b = await XFile(_path).readAsBytes();
+      if (mounted) setState(() => _bytes = b);
+    } catch (_) {}
+  }
 
   Future<void> _retake() async {
     final picker = ImagePicker();
@@ -30,27 +46,46 @@ class _ScanPreviewPageState extends State<ScanPreviewPage> {
       imageQuality: 90,
     );
     if (shot == null || !mounted) return;
-    setState(() => _path = shot.path);
+    setState(() {
+      _path = shot.path;
+      _bytes = null;
+    });
+    await _loadBytes();
+  }
+
+  Future<void> _replaceFromGallery() async {
+    final picker = ImagePicker();
+    final shot = await picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 92,
+      maxWidth: 2000,
+    );
+    if (shot == null || !mounted) return;
+    setState(() {
+      _path = shot.path;
+      _bytes = null;
+    });
+    await _loadBytes();
   }
 
   Future<void> _usePhoto() async {
-    if (_ocrRunning) return;
-    setState(() => _ocrRunning = true);
+    if (_busy) return;
+    setState(() => _busy = true);
     try {
-      final bytes = await XFile(_path).readAsBytes();
+      final bytes = _bytes ?? await XFile(_path).readAsBytes();
       if (!mounted) return;
       Navigator.of(context).pop(
         PendingUpload(
           source: UploadSource.scan,
           title: 'Scanned document',
-          detail: 'Ready for OCR',
+          detail: 'Image ready — OCR runs during analysis',
           localPath: _path,
           bytes: bytes,
         ),
       );
     } catch (_) {
       if (!mounted) return;
-      setState(() => _ocrRunning = false);
+      setState(() => _busy = false);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Could not read image')),
       );
@@ -86,27 +121,25 @@ class _ScanPreviewPageState extends State<ScanPreviewPage> {
                   children: [
                     ClipRRect(
                       borderRadius: BorderRadius.circular(AppRadii.md),
-                      child: Image.file(
-                        File(_path),
-                        fit: BoxFit.cover,
-                        width: double.infinity,
-                        height: double.infinity,
-                      ),
+                      child: _bytes != null
+                          ? Image.memory(
+                              _bytes!,
+                              fit: BoxFit.cover,
+                              width: double.infinity,
+                              height: double.infinity,
+                            )
+                          : (!kIsWeb
+                              ? Image.file(
+                                  File(_path),
+                                  fit: BoxFit.cover,
+                                  width: double.infinity,
+                                  height: double.infinity,
+                                )
+                              : const Center(
+                                  child: CircularProgressIndicator(),
+                                )),
                     ),
-                    // Mock auto-crop guide
-                    IgnorePointer(
-                      child: Container(
-                        margin: const EdgeInsets.all(28),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: AppColors.accentSky,
-                            width: 2.5,
-                          ),
-                        ),
-                      ),
-                    ),
-                    if (_ocrRunning)
+                    if (_busy)
                       Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 20,
@@ -122,17 +155,13 @@ class _ScanPreviewPageState extends State<ScanPreviewPage> {
                             const SizedBox(
                               width: 22,
                               height: 22,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2.2,
-                                color: AppColors.primaryNavy,
-                              ),
+                              child: CircularProgressIndicator(strokeWidth: 2),
                             ),
-                            const SizedBox(width: 14),
+                            const SizedBox(width: 12),
                             Text(
-                              'Running OCR…',
+                              'Preparing…',
                               style: GoogleFonts.plusJakartaSans(
                                 fontWeight: FontWeight.w700,
-                                color: AppColors.primaryNavy,
                               ),
                             ),
                           ],
@@ -143,42 +172,50 @@ class _ScanPreviewPageState extends State<ScanPreviewPage> {
               ),
               const SizedBox(height: 12),
               Text(
-                'Edges detected — adjust framing if needed',
+                'Adjust framing, then continue. Text extraction runs during analysis.',
+                textAlign: TextAlign.center,
                 style: GoogleFonts.plusJakartaSans(
                   fontSize: 13,
-                  color: AppColors.cloud.withValues(alpha: 0.8),
+                  color: AppColors.cloud.withValues(alpha: 0.85),
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 16),
               Row(
                 children: [
                   Expanded(
                     child: OutlinedButton(
-                      onPressed: _ocrRunning ? null : _retake,
+                      onPressed: _busy ? null : _retake,
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppColors.cloud,
-                        side: const BorderSide(color: AppColors.cloud),
-                        minimumSize: const Size.fromHeight(52),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppRadii.pill),
+                        side: BorderSide(
+                          color: AppColors.cloud.withValues(alpha: 0.5),
                         ),
+                        minimumSize: const Size.fromHeight(48),
                       ),
-                      child: Text(
-                        'Retake',
-                        style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700),
-                      ),
+                      child: const Text('Retake'),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 10),
                   Expanded(
-                    flex: 1,
-                    child: AuthPrimaryButton(
-                      label: 'Use Photo',
-                      loading: _ocrRunning,
-                      onPressed: _usePhoto,
+                    child: OutlinedButton(
+                      onPressed: _busy ? null : _replaceFromGallery,
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.cloud,
+                        side: BorderSide(
+                          color: AppColors.cloud.withValues(alpha: 0.5),
+                        ),
+                        minimumSize: const Size.fromHeight(48),
+                      ),
+                      child: const Text('Replace'),
                     ),
                   ),
                 ],
+              ),
+              const SizedBox(height: 10),
+              AuthPrimaryButton(
+                label: 'Use Photo',
+                loading: _busy,
+                onPressed: _usePhoto,
               ),
             ],
           ),

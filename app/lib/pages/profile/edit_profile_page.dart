@@ -467,6 +467,7 @@ class _FieldRow extends StatelessWidget {
                 child: TextField(
                   controller: controller,
                   keyboardType: keyboardType,
+                  readOnly: readOnly,
                   style: GoogleFonts.plusJakartaSans(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
