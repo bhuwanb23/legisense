@@ -15,6 +15,7 @@ import {
   NotFoundError,
 } from '../utils/errors';
 import { persistNow } from '../config/database';
+import fetch from 'node-fetch';
 
 const BCRYPT_ROUNDS = 12;
 
@@ -369,6 +370,204 @@ export async function resetPassword(
     res.json({
       success: true,
       data: { message: 'Password reset successfully. Please log in again.' },
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+async function verifyGoogleToken(idToken: string): Promise<{ email: string; name: string; sub: string }> {
+  try {
+    const response = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${idToken}`);
+    if (!response.ok) {
+      throw new Error('Invalid token');
+    }
+    const data = (await response.json()) as { email?: string; name?: string; sub?: string };
+    if (!data.email) throw new Error('No email in token');
+    return {
+      email: data.email,
+      name: data.name || data.email.split('@')[0],
+      sub: data.sub || '',
+    };
+  } catch (err) {
+    throw new UnauthorizedError('Failed to verify Google token');
+  }
+}
+
+async function verifyFacebookToken(accessToken: string): Promise<{ email: string; name: string; id: string }> {
+  try {
+    const response = await fetch(`https://graph.facebook.com/me?fields=id,name,email&access_token=${accessToken}`);
+    if (!response.ok) {
+      throw new Error('Invalid token');
+    }
+    const data = (await response.json()) as { id?: string; name?: string; email?: string };
+    if (!data.email) throw new Error('No email in response');
+    return {
+      email: data.email,
+      name: data.name || 'User',
+      id: data.id || '',
+    };
+  } catch (err) {
+    throw new UnauthorizedError('Failed to verify Facebook token');
+  }
+}
+
+export async function oauthGoogle(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const { idToken } = req.body;
+
+    if (!idToken) {
+      throw new BadRequestError('idToken is required');
+    }
+
+    const googleUser = await verifyGoogleToken(idToken);
+    const db = getDb();
+
+    let userRows = db
+      .select()
+      .from(users)
+      .where(sql`${users.email} = ${googleUser.email}`)
+      .all();
+
+    let user = userRows[0];
+
+    if (!user) {
+      db.insert(users)
+        .values({
+          email: googleUser.email,
+          fullName: googleUser.name,
+          authProvider: 'google',
+          oauthSubject: googleUser.sub,
+          passwordHash: null,
+          isVerified: true,
+          isActive: true,
+        })
+        .run();
+
+      userRows = db
+        .select()
+        .from(users)
+        .where(sql`${users.email} = ${googleUser.email}`)
+        .all();
+
+      user = userRows[0];
+      if (!user) throw new Error('Failed to create user');
+    } else if (user.authProvider === 'email') {
+      db.run(sql`UPDATE ${users} SET oauth_subject = ${googleUser.sub}, auth_provider = 'google' WHERE id = ${user.id}`);
+    }
+
+    const tokenPayload = { userId: user.id, email: user.email };
+    const accessToken = generateToken(tokenPayload);
+    const refreshToken = generateRefreshToken(tokenPayload);
+
+    const thirtyDays = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+    db.insert(sessions)
+      .values({
+        userId: user.id,
+        refreshToken,
+        deviceInfo: req.headers['user-agent'] || null,
+        ipAddress: req.ip || null,
+        expiresAt: thirtyDays.toISOString(),
+        isRevoked: false,
+      })
+      .run();
+
+    db.run(sql`UPDATE ${users} SET last_login_at = datetime('now') WHERE id = ${user.id}`);
+
+    persistNow();
+
+    res.json({
+      success: true,
+      data: {
+        user: { id: user.id, email: user.email, fullName: user.fullName },
+        accessToken,
+        refreshToken,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function oauthFacebook(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const { accessToken } = req.body;
+
+    if (!accessToken) {
+      throw new BadRequestError('accessToken is required');
+    }
+
+    const fbUser = await verifyFacebookToken(accessToken);
+    const db = getDb();
+
+    let userRows = db
+      .select()
+      .from(users)
+      .where(sql`${users.email} = ${fbUser.email}`)
+      .all();
+
+    let user = userRows[0];
+
+    if (!user) {
+      db.insert(users)
+        .values({
+          email: fbUser.email,
+          fullName: fbUser.name,
+          authProvider: 'facebook',
+          oauthSubject: fbUser.id,
+          passwordHash: null,
+          isVerified: true,
+          isActive: true,
+        })
+        .run();
+
+      userRows = db
+        .select()
+        .from(users)
+        .where(sql`${users.email} = ${fbUser.email}`)
+        .all();
+
+      user = userRows[0];
+      if (!user) throw new Error('Failed to create user');
+    } else if (user.authProvider === 'email') {
+      db.run(sql`UPDATE ${users} SET oauth_subject = ${fbUser.id}, auth_provider = 'facebook' WHERE id = ${user.id}`);
+    }
+
+    const tokenPayload = { userId: user.id, email: user.email };
+    const accessToken_jwt = generateToken(tokenPayload);
+    const refreshToken = generateRefreshToken(tokenPayload);
+
+    const thirtyDays = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+    db.insert(sessions)
+      .values({
+        userId: user.id,
+        refreshToken,
+        deviceInfo: req.headers['user-agent'] || null,
+        ipAddress: req.ip || null,
+        expiresAt: thirtyDays.toISOString(),
+        isRevoked: false,
+      })
+      .run();
+
+    db.run(sql`UPDATE ${users} SET last_login_at = datetime('now') WHERE id = ${user.id}`);
+
+    persistNow();
+
+    res.json({
+      success: true,
+      data: {
+        user: { id: user.id, email: user.email, fullName: user.fullName },
+        accessToken: accessToken_jwt,
+        refreshToken,
+      },
     });
   } catch (err) {
     next(err);
