@@ -1064,8 +1064,15 @@ export async function rewritePlainEnglish(
     };
 
     const levelLabel = readingLevelMap[readingLevel];
-    const { getAiProvider } = await import('../services/ai/aiProviderService');
-    const aiProvider = getAiProvider();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let aiProvider: any;
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const { getAiProvider } = require('../services/ai/aiProviderService');
+      aiProvider = getAiProvider();
+    } catch (err) {
+      throw new BadRequestError('AI service not configured. Rewrite feature requires AI provider.');
+    }
 
     for (const clause of clauseRows) {
       const levelDesc = readingLevel === 'grade5' ? 'Grade 5 (age 10-11)' : readingLevel === 'grade8' ? 'Grade 8 (age 13-14)' : 'standard college';

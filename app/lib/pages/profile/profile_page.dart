@@ -8,6 +8,8 @@ import '../../widgets/home/app_page_header.dart';
 import '../../repositories/auth_repository.dart';
 import '../auth/login_page.dart';
 import 'edit_profile_page.dart';
+import 'help_support_page.dart';
+import 'settings_page.dart';
 
 /// Profile — TripGlide Operate (Home theme).
 class ProfilePage extends StatefulWidget {
