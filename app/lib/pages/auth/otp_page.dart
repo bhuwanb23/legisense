@@ -4,24 +4,29 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../data/auth_constants.dart';
+import '../../repositories/auth_repository.dart';
+import '../../services/api_exception.dart';
 import '../../services/session_prefs.dart';
+import '../../services/socket_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/auth/auth_card.dart';
 import '../../widgets/auth/auth_illustration.dart';
 import '../../widgets/auth/auth_primary_button.dart';
 import '../../widgets/auth/auth_scaffold.dart';
 import '../shell/main_shell.dart';
+import 'profile_setup_page.dart';
 
 class OtpPage extends StatefulWidget {
   const OtpPage({
     super.key,
     required this.contact,
-    required this.isNewUser,
+    this.isNewUser = false,
+    this.devOtpHint,
   });
 
   final String contact;
   final bool isNewUser;
+  final String? devOtpHint;
 
   @override
   State<OtpPage> createState() => _OtpPageState();
@@ -36,11 +41,23 @@ class _OtpPageState extends State<OtpPage> {
   int _secondsLeft = 30;
   String? _error;
   bool _loading = false;
+  String? _devHint;
 
   @override
   void initState() {
     super.initState();
+    _devHint = widget.devOtpHint;
     _startTimer();
+    _requestIfNeeded();
+  }
+
+  Future<void> _requestIfNeeded() async {
+    if (widget.devOtpHint != null) return;
+    try {
+      final res = await AuthRepository().requestOtp(widget.contact);
+      final hint = res['devOtp']?.toString();
+      if (hint != null && mounted) setState(() => _devHint = hint);
+    } catch (_) {}
   }
 
   void _startTimer() {
@@ -76,179 +93,145 @@ class _OtpPageState extends State<OtpPage> {
       setState(() => _error = 'Enter the $_length-digit code');
       return;
     }
-    if (code != AuthMock.demoOtp) {
-      setState(() => _error = 'Invalid OTP. Use ${AuthMock.demoOtp} for demo.');
-      return;
-    }
-
     setState(() {
-      _error = null;
       _loading = true;
+      _error = null;
     });
-
-    await SessionPrefs.setLoggedIn(true);
-    await SessionPrefs.setProfileComplete(true);
-    if (!mounted) return;
-    setState(() => _loading = false);
-
-    Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute<void>(builder: (_) => const MainShell()),
-      (_) => false,
-    );
+    try {
+      await AuthRepository().verifyOtp(email: widget.contact, otp: code);
+      await SocketService.instance.connect();
+      final complete = await SessionPrefs.isProfileComplete();
+      if (!mounted) return;
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute<void>(
+          builder: (_) => complete || !widget.isNewUser
+              ? const MainShell()
+              : const ProfileSetupPage(),
+        ),
+        (_) => false,
+      );
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() => _error = e.message);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _error = e.toString());
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
   }
 
-  void _onChanged(int index, String value) {
-    setState(() => _error = null);
-    if (value.length == 1 && index < _length - 1) {
-      _focusNodes[index + 1].requestFocus();
-    }
-    if (value.isEmpty && index > 0) {
-      _focusNodes[index - 1].requestFocus();
-    }
-    if (_code.length == _length) {
-      FocusScope.of(context).unfocus();
+  Future<void> _resend() async {
+    if (_secondsLeft > 0) return;
+    try {
+      final res = await AuthRepository().requestOtp(widget.contact);
+      final hint = res['devOtp']?.toString();
+      if (!mounted) return;
+      setState(() {
+        _devHint = hint;
+        _error = null;
+      });
+      _startTimer();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            hint != null ? 'OTP resent. Dev: $hint' : 'OTP resent.',
+          ),
+        ),
+      );
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() => _error = e.message);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final masked = AuthMock.maskContact(widget.contact);
-
     return AuthScaffold(
       body: AuthCard(
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const AuthIllustration(type: AuthIllustrationType.otp),
-            const SizedBox(height: 24),
+            const SizedBox(height: 12),
             Text(
-              'Enter code',
+              'Verify email',
+              textAlign: TextAlign.center,
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 22,
                 fontWeight: FontWeight.w700,
-                color: AppColors.primaryNavy,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             Text(
-              'Sent to $masked',
+              'Code sent to ${widget.contact}',
+              textAlign: TextAlign.center,
               style: GoogleFonts.plusJakartaSans(
                 fontSize: 13,
                 color: AppColors.inkSoft,
               ),
             ),
-            const SizedBox(height: 16),
+            if (_devHint != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                'Dev OTP: $_devHint',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 12,
+                  color: AppColors.mute,
+                ),
+              ),
+            ],
+            const SizedBox(height: 20),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: List.generate(_length, (i) {
                 return SizedBox(
-                  width: AppSizes.otpBox,
-                  height: AppSizes.otpBox,
+                  width: 44,
                   child: TextField(
                     controller: _controllers[i],
                     focusNode: _focusNodes[i],
                     textAlign: TextAlign.center,
                     keyboardType: TextInputType.number,
                     maxLength: 1,
-                    style: GoogleFonts.plusJakartaSans(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.primaryNavy,
-                    ),
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    decoration: InputDecoration(
-                      counterText: '',
-                      contentPadding: EdgeInsets.zero,
-                      filled: true,
-                      fillColor: AppColors.cloud,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppRadii.field),
-                        borderSide: BorderSide(
-                          color: AppColors.borderMuted.withValues(alpha: 0.6),
-                        ),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppRadii.field),
-                        borderSide: BorderSide(
-                          color: AppColors.borderMuted.withValues(alpha: 0.6),
-                        ),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppRadii.field),
-                        borderSide: const BorderSide(
-                          color: AppColors.primaryNavy,
-                          width: 1.4,
-                        ),
-                      ),
-                    ),
-                    onChanged: (v) => _onChanged(i, v),
+                    decoration: const InputDecoration(counterText: ''),
+                    onChanged: (v) {
+                      if (v.isNotEmpty && i < _length - 1) {
+                        _focusNodes[i + 1].requestFocus();
+                      }
+                      if (v.isEmpty && i > 0) {
+                        _focusNodes[i - 1].requestFocus();
+                      }
+                    },
                   ),
                 );
               }),
             ),
             if (_error != null) ...[
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
               Text(
                 _error!,
+                textAlign: TextAlign.center,
                 style: GoogleFonts.plusJakartaSans(
-                  fontSize: 13,
                   color: AppColors.error,
-                  fontWeight: FontWeight.w500,
+                  fontSize: 12,
                 ),
               ),
             ],
-            const SizedBox(height: 16),
+            const SizedBox(height: 18),
             AuthPrimaryButton(
               label: 'Verify',
               loading: _loading,
               onPressed: _verify,
             ),
-            const SizedBox(height: 20),
-            Center(
-              child: _secondsLeft > 0
-                  ? Text(
-                      'Resend in ${_secondsLeft}s',
-                      style: GoogleFonts.plusJakartaSans(
-                        fontSize: 14,
-                        color: AppColors.inkSoft,
-                      ),
-                    )
-                  : TextButton(
-                      onPressed: () {
-                        for (final c in _controllers) {
-                          c.clear();
-                        }
-                        _focusNodes.first.requestFocus();
-                        _startTimer();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              'OTP resent. Demo: ${AuthMock.demoOtp}',
-                            ),
-                            backgroundColor: AppColors.primaryNavy,
-                            behavior: SnackBarBehavior.floating,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
-                            ),
-                          ),
-                        );
-                      },
-                      child: Text(
-                        'Resend OTP',
-                        style: GoogleFonts.plusJakartaSans(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.ink,
-                        ),
-                      ),
-                    ),
-            ),
             const SizedBox(height: 12),
-            Text(
-              'Demo: ${AuthMock.demoOtp}',
-              textAlign: TextAlign.center,
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 12,
-                color: AppColors.inkSoft.withValues(alpha: 0.75),
+            TextButton(
+              onPressed: _secondsLeft == 0 ? _resend : null,
+              child: Text(
+                _secondsLeft == 0
+                    ? 'Resend code'
+                    : 'Resend in ${_secondsLeft}s',
               ),
             ),
           ],

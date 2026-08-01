@@ -9,6 +9,7 @@ import '../../models/api/analysis_models.dart';
 import '../../mappers/analysis_mapper.dart';
 import '../../repositories/documents_repository.dart';
 import '../../services/api_exception.dart';
+import '../../services/socket_service.dart';
 import '../../theme/app_insets.dart';
 import '../../theme/app_theme.dart';
 import '../analysis/analysis_results_page.dart';
@@ -47,10 +48,27 @@ class _ProcessingPageState extends State<ProcessingPage> {
       return;
     }
 
+    final socket = SocketService.instance;
+    await socket.connect();
+    socket.subscribeDocument(id);
+    void onProgress(dynamic data) {
+      if (!mounted || _cancelled) return;
+      if (data is Map) {
+        final p = (data['progress'] as num?)?.toDouble();
+        final stage = data['stage']?.toString();
+        setState(() {
+          if (p != null) _progress = (p / 100).clamp(0.05, 0.95);
+          if (stage != null && stage.isNotEmpty) _stage = stage;
+        });
+      }
+    }
+
+    socket.on('analysis:progress', onProgress);
+
     _fakeProgress = Timer.periodic(const Duration(milliseconds: 800), (_) {
       if (!mounted || _cancelled || _error != null) return;
+      if (socket.isConnected && _progress > 0.2) return;
       setState(() {
-        // Indeterminate local UI only — no server status polls.
         if (_progress < 0.85) {
           _progress = (_progress + 0.04).clamp(0.15, 0.85);
           if (_progress > 0.4 && _stage.startsWith('Extract')) {
@@ -58,6 +76,28 @@ class _ProcessingPageState extends State<ProcessingPage> {
           }
         }
       });
+    });
+
+    // Status poll backup
+    Timer? poll;
+    poll = Timer.periodic(const Duration(seconds: 3), (_) async {
+      if (!mounted || _cancelled || _finished) {
+        poll?.cancel();
+        return;
+      }
+      try {
+        final st = await _docs.getStatus(id);
+        final label = st.processingStatus;
+        if (label.isNotEmpty && mounted) {
+          setState(() {
+            _stage = label.replaceAll('_', ' ');
+            final jp = st.job?['progress'];
+            if (jp is num) {
+              _progress = (jp / 100).clamp(0.05, 0.95);
+            }
+          });
+        }
+      } catch (_) {}
     });
 
     try {
@@ -83,6 +123,9 @@ class _ProcessingPageState extends State<ProcessingPage> {
       setState(() => _error = e.toString());
     } finally {
       _fakeProgress?.cancel();
+      poll.cancel();
+      socket.off('analysis:progress', onProgress);
+      socket.unsubscribeDocument(id);
     }
   }
 

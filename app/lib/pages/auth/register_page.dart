@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../config/app_links.dart';
 import '../../repositories/auth_repository.dart';
 import '../../services/api_exception.dart';
+import '../../services/auth_social_actions.dart';
 import '../../services/session_prefs.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/auth/auth_card.dart';
@@ -14,7 +15,6 @@ import '../../widgets/auth/auth_primary_button.dart';
 import '../../widgets/auth/auth_scaffold.dart';
 import '../../widgets/auth/auth_social_button.dart';
 import '../../widgets/auth/auth_text_field.dart';
-import '../shell/main_shell.dart';
 import 'login_page.dart';
 import 'profile_setup_page.dart';
 
@@ -195,8 +195,8 @@ class _RegisterPageState extends State<RegisterPage> {
               const AuthOrDivider(label: 'Or Continue with'),
               const SizedBox(height: 14),
               AuthSocialRow(
-                onGoogle: () => showAuthComingSoon(context, 'Google'),
-                onFacebook: () => showAuthComingSoon(context, 'Facebook'),
+                onGoogle: () => AuthSocialActions.signInWithGoogle(context),
+                onFacebook: () => AuthSocialActions.signInWithFacebook(context),
               ),
               const SizedBox(height: 18),
               Text.rich(

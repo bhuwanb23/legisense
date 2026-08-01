@@ -85,13 +85,23 @@ class _ProfileSetupPageState extends State<ProfileSetupPage> {
       await auth.updatePreferences(
         preferredLanguage: _language,
         defaultJurisdiction: '$_state,$country',
+        preferredDocumentTypes: _docTypes.toList(),
       );
+      if (_photo != null) {
+        final bytes = await _photo!.readAsBytes();
+        await auth.uploadAvatar(
+          filePath: _photo!.path,
+          bytes: bytes,
+          filename: _photo!.name,
+        );
+      }
       await SessionPrefs.setCountryCode(country);
       await SessionPrefs.setLoggedIn(true);
       await SessionPrefs.setProfileComplete(true);
       await SessionPrefs.setProfession(_profession);
       await SessionPrefs.setLanguage(_language);
       await SessionPrefs.setStateRegion(_state);
+      await SessionPrefs.setPreferredDocTypes(_docTypes.toList());
       final email = await SessionPrefs.userEmail();
       final existingName = await SessionPrefs.displayName();
       if (existingName == null || existingName.isEmpty) {

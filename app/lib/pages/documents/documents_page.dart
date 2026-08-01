@@ -275,6 +275,7 @@ class _DocumentsPageState extends State<DocumentsPage> {
   Future<void> _menuFor(MockDocument doc) async {
     final action = await showModalBottomSheet<String>(
       context: context,
+      useRootNavigator: true,
       backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),

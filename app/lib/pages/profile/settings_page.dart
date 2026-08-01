@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../services/session_prefs.dart';
 import '../../theme/app_insets.dart';
@@ -19,7 +18,6 @@ class SettingsPage extends StatefulWidget {
 class _SettingsPageState extends State<SettingsPage> {
   bool _deadlines = true;
   bool _analysis = true;
-  String _version = '—';
 
   @override
   void initState() {
@@ -30,16 +28,10 @@ class _SettingsPageState extends State<SettingsPage> {
   Future<void> _load() async {
     final d = await SessionPrefs.notifyDeadlines();
     final a = await SessionPrefs.notifyAnalysis();
-    String ver = '1.0.0';
-    try {
-      final info = await PackageInfo.fromPlatform();
-      ver = '${info.version}+${info.buildNumber}';
-    } catch (_) {}
     if (!mounted) return;
     setState(() {
       _deadlines = d;
       _analysis = a;
-      _version = ver;
     });
   }
 
@@ -145,7 +137,7 @@ class _SettingsPageState extends State<SettingsPage> {
                           ),
                         ),
                         trailing: Text(
-                          _version,
+                          '1.0.0',
                           style: GoogleFonts.plusJakartaSans(
                             color: AppColors.mute,
                           ),
