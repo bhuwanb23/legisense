@@ -8,6 +8,8 @@ import {
   resetPassword,
   oauthGoogle,
   oauthFacebook,
+  requestOtpCode,
+  verifyOtpCode,
 } from '../controllers/authController';
 import { authenticate } from '../middleware/auth';
 import { validate } from '../middleware/validate';
@@ -29,5 +31,7 @@ router.post('/forgot-password', validate(forgotPasswordSchema), forgotPassword);
 router.post('/reset-password', validate(resetPasswordSchema), resetPassword);
 router.post('/oauth/google', oauthGoogle);
 router.post('/oauth/facebook', oauthFacebook);
+router.post('/otp/request', requestOtpCode);
+router.post('/otp/verify', verifyOtpCode);
 
 export default router;

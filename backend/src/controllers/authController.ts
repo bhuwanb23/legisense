@@ -1127,3 +1127,115 @@ export async function oauthFacebook(
     next(err);
   }
 }
+
+export async function requestOtpCode(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      throw new BadRequestError('Email is required');
+    }
+
+    const { requestOtp } = await import('../services/otpService');
+    const result = await requestOtp(email);
+
+    res.json({
+      success: true,
+      data: {
+        message: 'OTP sent to email',
+        ...(result.otp && { devOtp: result.otp }),
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function verifyOtpCode(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const { email, otp } = req.body;
+
+    if (!email || !otp) {
+      throw new BadRequestError('Email and OTP are required');
+    }
+
+    const { verifyOtp, clearOtp } = await import('../services/otpService');
+
+    if (!verifyOtp(email, otp)) {
+      throw new UnauthorizedError('Invalid or expired OTP');
+    }
+
+    const db = getDb();
+
+    let userRows = db
+      .select()
+      .from(users)
+      .where(sql$ = {email})
+      .all();
+
+    let user = userRows[0];
+
+    if (!user) {
+      const namePart = email.split('@')[0];
+      db.insert(users)
+        .values({
+          email,
+          fullName: namePart,
+          authProvider: 'otp',
+          passwordHash: null,
+          isVerified: true,
+          isActive: true,
+        })
+        .run();
+
+      userRows = db
+        .select()
+        .from(users)
+        .where(sql$ = {email})
+        .all();
+
+      user = userRows[0];
+      if (!user) throw new Error('Failed to create user');
+    }
+
+    const tokenPayload = { userId: user.id, email: user.email };
+    const accessToken = generateToken(tokenPayload);
+    const refreshToken = generateRefreshToken(tokenPayload);
+
+    const thirtyDays = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+    db.insert(sessions)
+      .values({
+        userId: user.id,
+        refreshToken,
+        deviceInfo: req.headers['user-agent'] || null,
+        ipAddress: req.ip || null,
+        expiresAt: thirtyDays.toISOString(),
+        isRevoked: false,
+      })
+      .run();
+
+    db.run(sqlUPDATE {users} SET last_login_at = datetime('now') WHERE id = {user.id});
+
+    persistNow();
+    clearOtp(email);
+
+    res.json({
+      success: true,
+      data: {
+        user: { id: user.id, email: user.email, fullName: user.fullName },
+        accessToken,
+        refreshToken,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+}
