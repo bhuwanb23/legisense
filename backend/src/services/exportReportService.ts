@@ -11,7 +11,7 @@ export interface ExportData {
     riskLevel: string;
   }>;
   deadlines: Array<{
-    description: string;
+    description: string | null;
     dueDate: string;
   }>;
 }
@@ -51,7 +51,8 @@ export async function generatePdfBuffer(data: ExportData): Promise<Buffer> {
       doc.moveDown(0.5);
 
       for (const deadline of data.deadlines) {
-        doc.fontSize(10).font('Helvetica').text(`• ${deadline.description} (Due: ${deadline.dueDate})`);
+        const desc = deadline.description || 'No description';
+        doc.fontSize(10).font('Helvetica').text(`• ${desc} (Due: ${deadline.dueDate})`);
       }
     }
 
@@ -112,7 +113,7 @@ export async function generateDocxBuffer(data: ExportData): Promise<Buffer> {
               new Paragraph({
                 children: [
                   new TextRun({
-                    text: `• ${deadline.description} (Due: ${deadline.dueDate})`,
+                    text: `• ${deadline.description || 'No description'} (Due: ${deadline.dueDate})`,
                     size: 20,
                   }),
                 ],
