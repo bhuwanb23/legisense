@@ -619,11 +619,11 @@ export async function exportDocument(
 
     const exportData = {
       documentTitle: docRows[0].originalName,
-      riskScore: analysis.riskScore || 0,
+      riskScore: analysis.overallRiskScore || 0,
       summary: analysis.summary || 'No summary available',
       clauses: clauseRows.map((clause) => ({
-        title: clause.title,
-        plainEnglish: clause.plainEnglish || clause.clauseText || '',
+        title: clause.clauseTitle || `Clause ${clause.id}`,
+        plainEnglish: clause.plainEnglishText || clause.originalText || '',
         riskLevel: clause.riskLevel || 'Unknown',
       })),
       deadlines: deadlineRows.map((deadline) => ({

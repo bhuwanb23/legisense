@@ -1069,14 +1069,14 @@ export async function rewritePlainEnglish(
 
     for (const clause of clauseRows) {
       const levelDesc = readingLevel === 'grade5' ? 'Grade 5 (age 10-11)' : readingLevel === 'grade8' ? 'Grade 8 (age 13-14)' : 'standard college';
-      const prompt = `Rewrite the following legal text at a ${levelDesc} reading level. Keep it simple, clear, and use short sentences. Do not lose legal meaning.\n\nOriginal: ${clause.clauseText || clause.originalText}\n\nRewritten:`;
+      const prompt = `Rewrite the following legal text at a ${levelDesc} reading level. Keep it simple, clear, and use short sentences. Do not lose legal meaning.\n\nOriginal: ${clause.originalText || clause.plainEnglishText}\n\nRewritten:`;
 
       try {
         const response = await aiProvider.generate(prompt);
         const plainEnglishText = response.trim();
 
         db.run(
-          sql`UPDATE ${clauses} SET plain_english = ${plainEnglishText}, reading_level = ${levelLabel} WHERE id = ${clause.id}`
+          sql`UPDATE ${clauses} SET plain_english_text = ${plainEnglishText}, reading_level = ${levelLabel} WHERE id = ${clause.id}`
         );
       } catch (err) {
         console.error(`Failed to rewrite clause ${clause.id}:`, err);
@@ -1095,8 +1095,8 @@ export async function rewritePlainEnglish(
         message: `Clauses rewritten at ${readingLevel} level`,
         clauses: updatedClauseRows.map((c) => ({
           id: c.id,
-          title: c.title,
-          plainEnglish: c.plainEnglish,
+          clauseTitle: c.clauseTitle,
+          plainEnglishText: c.plainEnglishText,
           readingLevel: c.readingLevel,
         })),
       },
