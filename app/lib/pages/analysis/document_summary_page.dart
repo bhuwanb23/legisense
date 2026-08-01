@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../data/analysis_mock.dart';
 import '../../theme/app_insets.dart';
 import '../../theme/app_theme.dart';
+import '../../utils/export_report.dart';
 import '../../widgets/analysis/soft_card.dart';
 import '../chat/chat_page.dart';
 import 'clause_breakdown_page.dart';
@@ -253,8 +254,16 @@ class DocumentSummaryPage extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: OutlinedButton(
-                  onPressed: () =>
-                      _toast(context, 'Export comes with backend.'),
+                  onPressed: () async {
+                    final fmt = await pickExportFormat(context);
+                    if (fmt == null || !context.mounted) return;
+                    await exportAndShareReport(
+                      context,
+                      documentId: result.documentId,
+                      title: result.documentTitle,
+                      format: fmt,
+                    );
+                  },
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppColors.ink,
                     side: const BorderSide(color: AppColors.rule),

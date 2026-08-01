@@ -9,6 +9,7 @@ import '../../repositories/documents_repository.dart';
 import '../../services/api_exception.dart';
 import '../../theme/app_insets.dart';
 import '../../theme/app_theme.dart';
+import '../../utils/export_report.dart';
 import '../../widgets/analysis/risk_style.dart';
 import '../../widgets/home/app_page_header.dart';
 import '../chat/chat_page.dart';
@@ -210,8 +211,16 @@ class _AnalysisResultsPageState extends State<AnalysisResultsPage> {
                           ),
                         );
                       },
-                      onExport: () =>
-                          _toast('Export report comes with backend.'),
+                      onExport: () async {
+                        final fmt = await pickExportFormat(context);
+                        if (fmt == null || !mounted) return;
+                        await exportAndShareReport(
+                          context,
+                          documentId: r.documentId,
+                          title: r.documentTitle,
+                          format: fmt,
+                        );
+                      },
                       onOpenSummary: () {
                         Navigator.of(context).push(
                           MaterialPageRoute<void>(
@@ -290,8 +299,16 @@ class _AnalysisResultsPageState extends State<AnalysisResultsPage> {
                           ),
                         );
                       },
-                      onExport: () =>
-                          _toast('Export report comes with backend.'),
+                      onExport: () async {
+                        final fmt = await pickExportFormat(context);
+                        if (fmt == null || !mounted) return;
+                        await exportAndShareReport(
+                          context,
+                          documentId: r.documentId,
+                          title: r.documentTitle,
+                          format: fmt,
+                        );
+                      },
                       onOpenAll: () {
                         Navigator.of(context).push(
                           MaterialPageRoute<void>(
