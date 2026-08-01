@@ -33,10 +33,54 @@ class _PlainLanguagePageState extends State<PlainLanguagePage> {
   bool _showOriginal = true;
   _ViewMode _mode = _ViewMode.stacked;
   _ReadingLevel _level = _ReadingLevel.grade8;
+  bool _rewriting = false;
+  final Map<String, String> _rewrittenPlain = {};
 
   List<AnalysisClause> get _clauses => widget.result.clauses
       .where((c) => c.risk != AnalysisRiskLevel.missing)
       .toList();
+
+  Future<void> _setReadingLevel(_ReadingLevel level) async {
+    setState(() => _level = level);
+    final docId = widget.result.documentId;
+    if (docId == null) return;
+    setState(() => _rewriting = true);
+    try {
+      final levelKey = switch (level) {
+        _ReadingLevel.grade5 => 'grade5',
+        _ReadingLevel.grade8 => 'grade8',
+        _ReadingLevel.standard => 'standard',
+      };
+      final data = await AnalysisRepository().rewritePlainEnglish(
+        docId,
+        readingLevel: levelKey,
+      );
+      final raw = data['clauses'] ?? data['items'] ?? data['plainEnglish'];
+      if (raw is List) {
+        for (final item in raw) {
+          if (item is! Map) continue;
+          final id = item['id']?.toString() ??
+              item['clauseId']?.toString() ??
+              '';
+          final plain = item['plainEnglish']?.toString() ??
+              item['plain_english']?.toString() ??
+              item['text']?.toString();
+          if (id.isNotEmpty && plain != null) {
+            _rewrittenPlain[id] = plain;
+          }
+        }
+      }
+      if (mounted) setState(() {});
+    } catch (_) {
+      // Keep local fallback via _plainForLevel.
+    } finally {
+      if (mounted) setState(() => _rewriting = false);
+    }
+  }
+
+  String _displayPlain(AnalysisClause c) {
+    return _rewrittenPlain[c.id] ?? _plainForLevel(c.plainEnglish);
+  }
 
   Future<void> _lookupAndShow(String term, [String? fallback]) async {
     var definition = fallback ?? LegalGlossary.terms[term] ??
@@ -330,7 +374,7 @@ class _PlainLanguagePageState extends State<PlainLanguagePage> {
                     const Spacer(),
                     PopupMenuButton<_ReadingLevel>(
                       initialValue: _level,
-                      onSelected: (v) => setState(() => _level = v),
+                      onSelected: _setReadingLevel,
                       itemBuilder: (_) => const [
                         PopupMenuItem(
                           value: _ReadingLevel.grade5,
@@ -354,17 +398,30 @@ class _PlainLanguagePageState extends State<PlainLanguagePage> {
                           color: AppColors.riskLowBg,
                           borderRadius: BorderRadius.circular(AppRadii.pill),
                         ),
-                        child: Text(
-                          switch (_level) {
-                            _ReadingLevel.grade5 => 'Grade 5',
-                            _ReadingLevel.grade8 => 'Grade 8',
-                            _ReadingLevel.standard => 'Standard',
-                          },
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.riskLow,
-                          ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (_rewriting) ...[
+                              const SizedBox(
+                                width: 12,
+                                height: 12,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              ),
+                              const SizedBox(width: 8),
+                            ],
+                            Text(
+                              switch (_level) {
+                                _ReadingLevel.grade5 => 'Grade 5',
+                                _ReadingLevel.grade8 => 'Grade 8',
+                                _ReadingLevel.standard => 'Standard',
+                              },
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.riskLow,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
@@ -427,7 +484,7 @@ class _PlainLanguagePageState extends State<PlainLanguagePage> {
                                   titleColor: AppColors.riskLow,
                                   trailing: const Text('🟢'),
                                   child: Text(
-                                    _plainForLevel(c.plainEnglish),
+                                    _displayPlain(c),
                                     style: GoogleFonts.plusJakartaSans(
                                       fontSize: 14,
                                       height: 1.5,

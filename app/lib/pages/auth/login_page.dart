@@ -3,7 +3,9 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../repositories/auth_repository.dart';
 import '../../services/api_exception.dart';
+import '../../services/auth_social_actions.dart';
 import '../../services/session_prefs.dart';
+import '../../services/socket_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/auth/auth_card.dart';
 import '../../widgets/auth/auth_illustration.dart';
@@ -14,6 +16,7 @@ import '../../widgets/auth/auth_social_button.dart';
 import '../../widgets/auth/auth_text_field.dart';
 import '../shell/main_shell.dart';
 import 'forgot_password_page.dart';
+import 'otp_page.dart';
 import 'register_page.dart';
 
 class LoginPage extends StatefulWidget {
@@ -75,6 +78,7 @@ class _LoginPageState extends State<LoginPage> {
       } catch (_) {}
 
       await SessionPrefs.setProfileComplete(true);
+      await SocketService.instance.connect();
       if (!mounted) return;
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute<void>(builder: (_) => const MainShell()),
@@ -208,8 +212,45 @@ class _LoginPageState extends State<LoginPage> {
               const AuthOrDivider(label: 'Or Continue with'),
               const SizedBox(height: 14),
               AuthSocialRow(
-                onGoogle: () => showAuthComingSoon(context, 'Google'),
-                onFacebook: () => showAuthComingSoon(context, 'Facebook'),
+                onGoogle: () => AuthSocialActions.signInWithGoogle(context),
+                onFacebook: () => AuthSocialActions.signInWithFacebook(context),
+              ),
+              const SizedBox(height: 12),
+              TextButton(
+                onPressed: () async {
+                  final email = _contact.text.trim();
+                  if (email.isEmpty || !email.contains('@')) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Enter your email above first'),
+                      ),
+                    );
+                    return;
+                  }
+                  try {
+                    final res = await _auth.requestOtp(email);
+                    if (!mounted) return;
+                    Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => OtpPage(
+                          contact: email,
+                          devOtpHint: res['devOtp']?.toString(),
+                        ),
+                      ),
+                    );
+                  } on ApiException catch (e) {
+                    if (!mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(e.message)),
+                    );
+                  }
+                },
+                child: Text(
+                  'Sign in with email code',
+                  style: GoogleFonts.plusJakartaSans(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ),
               const SizedBox(height: 18),
               Text.rich(
