@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../data/analysis_mock.dart';
+import '../../repositories/analysis_repository.dart';
+import '../../services/api_exception.dart';
 import '../../theme/app_insets.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/analysis/risk_style.dart';
@@ -71,6 +73,30 @@ class _ClauseBreakdownPageState extends State<ClauseBreakdownPage> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       ),
     );
+  }
+
+  Future<void> _flagClause(AnalysisClause c) async {
+    final docId = widget.result.documentId;
+    final clauseId = int.tryParse(c.id);
+    if (docId == null || clauseId == null) {
+      _toast('Flagging needs a saved analysis.');
+      return;
+    }
+    try {
+      await AnalysisRepository().riskFeedback(
+        documentId: docId,
+        clauseId: clauseId,
+        feedbackType: 'mark_risky',
+      );
+      if (!mounted) return;
+      _toast('Flagged for review.');
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      _toast(e.message);
+    } catch (e) {
+      if (!mounted) return;
+      _toast(e.toString());
+    }
   }
 
   @override
@@ -262,8 +288,7 @@ class _ClauseBreakdownPageState extends State<ClauseBreakdownPage> {
                                     ),
                                   ),
                                   TextButton(
-                                    onPressed: () =>
-                                        _toast('Flagged for review (demo).'),
+                                    onPressed: () => _flagClause(c),
                                     child: Text(
                                       'Flag',
                                       style: GoogleFonts.plusJakartaSans(
