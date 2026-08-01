@@ -6,6 +6,7 @@ import '../../mappers/analysis_mapper.dart';
 import '../../repositories/documents_repository.dart';
 import '../../services/api_exception.dart';
 import '../../services/session_prefs.dart';
+import '../../theme/app_insets.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/home/app_page_header.dart';
 import '../analysis/analysis_loader_page.dart';
@@ -461,11 +462,11 @@ class _DocumentsPageState extends State<DocumentsPage> {
                                 : RefreshIndicator(
                                     onRefresh: _loadDocs,
                                     child: ListView.separated(
-                                      padding: const EdgeInsets.fromLTRB(
+                                      padding: EdgeInsets.fromLTRB(
                                         20,
                                         16,
                                         12,
-                                        110,
+                                        AppInsets.shellBottom(context),
                                       ),
                                       itemCount: docs.length,
                                       separatorBuilder: (_, __) =>
