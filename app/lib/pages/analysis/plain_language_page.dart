@@ -40,35 +40,42 @@ class _PlainLanguagePageState extends State<PlainLanguagePage> {
   void _showDefinition(String term, String definition) {
     showModalBottomSheet<void>(
       context: context,
-      backgroundColor: AppColors.cloud,
+      backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) {
-        return Padding(
-          padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                term,
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.primaryNavy,
+        return SafeArea(
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(
+              20,
+              16,
+              20,
+              16 + AppInsets.dockClearance,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  term,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.primaryNavy,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                definition,
-                style: GoogleFonts.plusJakartaSans(
-                  fontSize: 13,
-                  height: 1.45,
-                  color: AppColors.inkSoft,
+                const SizedBox(height: 8),
+                Text(
+                  definition,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 13,
+                    height: 1.45,
+                    color: AppColors.inkSoft,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         );
       },
@@ -79,9 +86,9 @@ class _PlainLanguagePageState extends State<PlainLanguagePage> {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppColors.cloud,
+      backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) {
         return DraggableScrollableSheet(
@@ -94,7 +101,12 @@ class _PlainLanguagePageState extends State<PlainLanguagePage> {
               ..sort((a, b) => a.key.compareTo(b.key));
             return ListView(
               controller: scroll,
-              padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
+              padding: EdgeInsets.fromLTRB(
+                20,
+                16,
+                20,
+                16 + AppInsets.dockClearance,
+              ),
               children: [
                 Text(
                   'Legal glossary',
@@ -419,72 +431,83 @@ class _PlainLanguagePageState extends State<PlainLanguagePage> {
             ),
           ),
           Material(
-            color: AppColors.bg,
-            child: SafeArea(
-              top: false,
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(
-                  16,
-                  10,
-                  16,
-                  AppInsets.shellBottomInsideSafeArea,
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute<void>(
-                              builder: (_) =>
-                                  ClauseBreakdownPage(result: widget.result),
+            color: AppColors.surface,
+            elevation: 0,
+            child: DecoratedBox(
+              decoration: const BoxDecoration(
+                border: Border(top: BorderSide(color: AppColors.rule)),
+              ),
+              child: SafeArea(
+                top: false,
+                bottom: false,
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    16,
+                    10,
+                    16,
+                    AppInsets.footerAboveDock(context),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute<void>(
+                                builder: (_) => ClauseBreakdownPage(
+                                  result: widget.result,
+                                ),
+                              ),
+                            );
+                          },
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppColors.ink,
+                            side: const BorderSide(color: AppColors.rule),
+                            minimumSize: const Size.fromHeight(44),
+                            shape: RoundedRectangleBorder(
+                              borderRadius:
+                                  BorderRadius.circular(AppRadii.pill),
                             ),
-                          );
-                        },
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: AppColors.primaryNavy,
-                          side: const BorderSide(color: AppColors.borderMuted),
-                          minimumSize: const Size.fromHeight(40),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(AppRadii.pill),
                           ),
-                        ),
-                        child: Text(
-                          'Clauses',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
+                          child: Text(
+                            'Clauses',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: FilledButton(
-                        onPressed: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute<void>(
-                              builder: (_) => ChatPage(result: widget.result),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: FilledButton(
+                          onPressed: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute<void>(
+                                builder: (_) =>
+                                    ChatPage(result: widget.result),
+                              ),
+                            );
+                          },
+                          style: FilledButton.styleFrom(
+                            backgroundColor: AppColors.ink,
+                            minimumSize: const Size.fromHeight(44),
+                            shape: RoundedRectangleBorder(
+                              borderRadius:
+                                  BorderRadius.circular(AppRadii.pill),
                             ),
-                          );
-                        },
-                        style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.ink,
-                          minimumSize: const Size.fromHeight(40),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(AppRadii.pill),
                           ),
-                        ),
-                        child: Text(
-                          'Chat',
-                          style: GoogleFonts.plusJakartaSans(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
+                          child: Text(
+                            'Chat',
+                            style: GoogleFonts.plusJakartaSans(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
