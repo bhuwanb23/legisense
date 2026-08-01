@@ -7,6 +7,7 @@ import '../../data/auth_constants.dart';
 import '../../mappers/analysis_mapper.dart';
 import '../../repositories/documents_repository.dart';
 import '../../services/api_exception.dart';
+import '../../theme/app_insets.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/analysis/risk_style.dart';
 import '../../widgets/home/app_page_header.dart';
@@ -457,10 +458,9 @@ class _OverviewBody extends StatelessWidget {
     final langLabel = (langMatch == null || langMatch.isEmpty)
         ? null
         : langMatch.first.label;
-    final bottomInset = MediaQuery.paddingOf(context).bottom;
 
     return ListView(
-      padding: EdgeInsets.fromLTRB(20, 12, 20, 96 + bottomInset),
+      padding: EdgeInsets.fromLTRB(20, 12, 20, AppInsets.shellBottom(context)),
       children: [
         _ActionRow(
           onChat: onChat,
@@ -589,7 +589,7 @@ class _OverviewBody extends StatelessWidget {
           physics: const NeverScrollableScrollPhysics(),
           mainAxisSpacing: 12,
           crossAxisSpacing: 12,
-          childAspectRatio: 1.55,
+          childAspectRatio: 1.35,
           children: [
             _StatTile(
               icon: Icons.warning_amber_rounded,
@@ -1019,9 +1019,8 @@ class _ClausesBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final r = result;
-    final bottomInset = MediaQuery.paddingOf(context).bottom;
     return ListView(
-      padding: EdgeInsets.fromLTRB(20, 12, 20, 96 + bottomInset),
+      padding: EdgeInsets.fromLTRB(20, 12, 20, AppInsets.shellBottom(context)),
       children: [
         _ActionRow(
           onChat: onChat,
