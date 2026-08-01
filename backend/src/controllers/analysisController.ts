@@ -1020,3 +1020,87 @@ export async function markCounterUsed(
   }
 }
 
+
+export async function rewritePlainEnglish(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    if (!req.user) {
+      res.status(401).json({ success: false, error: { message: 'Unauthorized', code: 'AUTH_REQUIRED', statusCode: 401 } });
+      return;
+    }
+
+    const documentId = Number(req.params.documentId);
+    if (!documentId) throw new BadRequestError('Invalid document ID');
+
+    const { readingLevel } = req.body;
+    if (!readingLevel || !['grade5', 'grade8', 'standard'].includes(readingLevel)) {
+      throw new BadRequestError('readingLevel must be grade5, grade8, or standard');
+    }
+
+    const db = getDb();
+    const docRows = db.select().from(documents).where(
+      sql$ = {documentId} AND {documents.userId} = {req.user.id} AND {documents.isDeleted} = 0
+    ).all();
+
+    if (!docRows[0]) throw new NotFoundError('Document');
+
+    const analysisRows = db.select().from(analysisResults).where(
+      sql$ = {documentId}
+    ).all();
+
+    if (!analysisRows[0]) throw new NotFoundError('Analysis not found for this document');
+
+    const clauseRows = db.select().from(clauses).where(
+      sql$ = {analysisRows[0].id}
+    ).all();
+
+    const readingLevelMap: Record<string, string> = {
+      grade5: 'grade_5',
+      grade8: 'grade_8',
+      standard: 'standard',
+    };
+
+    const levelLabel = readingLevelMap[readingLevel];
+    const { getAiProvider } = await import('../services/ai/aiProviderService');
+    const aiProvider = getAiProvider();
+
+    for (const clause of clauseRows) {
+      const prompt = Rewrite the following legal text at a  reading level. Keep it simple, clear, and use short sentences. Do not lose legal meaning.\n\nOriginal: {clause.clauseText || clause.originalText}\n\nRewritten:;
+
+      try {
+        const response = await aiProvider.generate(prompt);
+        const plainEnglishText = response.trim();
+
+        db.run(
+          sqlUPDATE {clauses} SET plain_english = {plainEnglishText}, reading_level = {levelLabel} WHERE id = {clause.id}
+        );
+      } catch (err) {
+        console.error(Failed to rewrite clause {clause.id}:, err);
+      }
+    }
+
+    persistNow();
+
+    const updatedClauseRows = db.select().from(clauses).where(
+      sql$ = {analysisRows[0].id}
+    ).all();
+
+    res.json({
+      success: true,
+      data: {
+        message: Clauses rewritten at {readingLevel} level,
+        clauses: updatedClauseRows.map((c) => ({
+          id: c.id,
+          title: c.title,
+          plainEnglish: c.plainEnglish,
+          readingLevel: c.readingLevel,
+        })),
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+}

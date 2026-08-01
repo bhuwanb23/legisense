@@ -18,6 +18,7 @@ import {
   getMissingClausesEndpoint,
   getCounterClauses,
   markCounterUsed,
+  rewritePlainEnglish,
 } from '../controllers/analysisController';
 import { authenticate } from '../middleware/auth';
 import { aiRateLimiter } from '../middleware/rateLimiter';
@@ -32,6 +33,7 @@ router.get('/:documentId/risks/:category', authenticate, getRisksByCategory);
 router.get('/:documentId/summary', authenticate, getSummary);
 router.get('/:documentId/risk-dashboard', authenticate, getRiskDashboard);
 router.get('/:documentId/plain-english', authenticate, getPlainEnglish);
+router.post('/:documentId/plain-english/rewrite', authenticate, aiRateLimiter, rewritePlainEnglish);
 router.get('/:documentId/jurisdiction-flags', authenticate, getJurisdictionFlags);
 router.get('/:documentId/state-conflicts', authenticate, getStateConflicts);
 router.get('/:documentId/flagged-clauses', authenticate, getFlaggedClauses);
