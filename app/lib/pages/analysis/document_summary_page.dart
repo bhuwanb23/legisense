@@ -42,7 +42,7 @@ class DocumentSummaryPage extends StatelessWidget {
         ),
       ),
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
+        padding: EdgeInsets.fromLTRB(20, 8, 20, AppInsets.shellBottom(context)),
         children: [
           _SectionLabel('Overview'),
           SoftCard(
