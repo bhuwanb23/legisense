@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../data/analysis_mock.dart';
 import '../../repositories/chat_repository.dart';
 import '../../services/api_exception.dart';
+import '../../theme/app_insets.dart';
 import '../../theme/app_theme.dart';
 
 class _ChatBubbleMsg {
@@ -292,7 +293,12 @@ class _ChatPageState extends State<ChatPage> {
                     SafeArea(
                       top: false,
                       child: Container(
-                        padding: const EdgeInsets.fromLTRB(16, 10, 16, 110),
+                        padding: const EdgeInsets.fromLTRB(
+                          16,
+                          10,
+                          16,
+                          AppInsets.shellBottomInsideSafeArea,
+                        ),
                         decoration: const BoxDecoration(
                           color: AppColors.surface,
                           border: Border(
