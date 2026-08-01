@@ -5,6 +5,7 @@ import 'package:dio/dio.dart';
 import '../models/api/analysis_models.dart';
 import '../models/api/document_models.dart';
 import '../services/api_client.dart';
+import '../services/api_exception.dart';
 
 class DocumentsRepository {
   DocumentsRepository({ApiClient? client}) : _api = client ?? ApiClient.instance;
@@ -149,5 +150,33 @@ class DocumentsRepository {
       data: {'targetLanguage': targetLanguage},
       parse: (d) => Map<String, dynamic>.from(d as Map),
     );
+  }
+
+  /// Downloads export bytes (pdf/docx). Returns file bytes + suggested name.
+  Future<({Uint8List bytes, String filename, String mime})> exportReport(
+    int id, {
+    String format = 'pdf',
+  }) async {
+    try {
+      final res = await _api.dio.get<List<int>>(
+        '/api/documents/$id/export',
+        queryParameters: {'format': format},
+        options: Options(
+          responseType: ResponseType.bytes,
+          receiveTimeout: const Duration(minutes: 2),
+        ),
+      );
+      final bytes = Uint8List.fromList(res.data ?? const []);
+      final mime = format == 'docx'
+          ? 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+          : 'application/pdf';
+      final filename = 'legisense-report-$id.$format';
+      return (bytes: bytes, filename: filename, mime: mime);
+    } on DioException catch (e) {
+      throw ApiException(
+        message: e.message ?? 'Export failed',
+        statusCode: e.response?.statusCode,
+      );
+    }
   }
 }

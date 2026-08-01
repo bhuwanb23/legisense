@@ -1,3 +1,5 @@
+import 'package:dio/dio.dart';
+
 import '../services/api_client.dart';
 import '../services/session_prefs.dart';
 import '../services/socket_service.dart';
@@ -131,6 +133,69 @@ class AuthRepository {
     if (nickname != null) {
       await SessionPrefs.setNickname(nickname);
     }
+    if (preferredDocumentTypes != null) {
+      await SessionPrefs.setPreferredDocTypes(preferredDocumentTypes);
+    }
+  }
+
+  Future<String> uploadAvatar({
+    required String filePath,
+    required List<int> bytes,
+    String filename = 'avatar.jpg',
+  }) async {
+    final form = FormData.fromMap({
+      'avatar': MultipartFile.fromBytes(bytes, filename: filename),
+    });
+    final data = await _api.postMultipart(
+      '/api/users/avatar',
+      formData: form,
+      parse: (d) => Map<String, dynamic>.from(d as Map),
+    );
+    final url = data['profilePhotoUrl']?.toString() ??
+        data['profile_photo_url']?.toString() ??
+        '';
+    return url;
+  }
+
+  Future<AuthTokens> oauthGoogle(String idToken) async {
+    final tokens = await _api.post(
+      '/api/auth/oauth/google',
+      data: {'idToken': idToken},
+      parse: (d) => AuthTokens.fromJson(d as Map<String, dynamic>),
+    );
+    await _persistSession(tokens);
+    return tokens;
+  }
+
+  Future<AuthTokens> oauthFacebook(String accessToken) async {
+    final tokens = await _api.post(
+      '/api/auth/oauth/facebook',
+      data: {'accessToken': accessToken},
+      parse: (d) => AuthTokens.fromJson(d as Map<String, dynamic>),
+    );
+    await _persistSession(tokens);
+    return tokens;
+  }
+
+  Future<Map<String, dynamic>> requestOtp(String email) {
+    return _api.post(
+      '/api/auth/otp/request',
+      data: {'email': email},
+      parse: (d) => Map<String, dynamic>.from(d as Map),
+    );
+  }
+
+  Future<AuthTokens> verifyOtp({
+    required String email,
+    required String otp,
+  }) async {
+    final tokens = await _api.post(
+      '/api/auth/otp/verify',
+      data: {'email': email, 'otp': otp},
+      parse: (d) => AuthTokens.fromJson(d as Map<String, dynamic>),
+    );
+    await _persistSession(tokens);
+    return tokens;
   }
 
   Future<void> deleteAccount() async {
