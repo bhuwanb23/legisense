@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../services/session_prefs.dart';
+import '../../theme/app_insets.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/home/app_page_header.dart';
 import '../../repositories/auth_repository.dart';
@@ -120,7 +121,12 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.fromLTRB(20, 12, 20, 110),
+                padding: EdgeInsets.fromLTRB(
+                  20,
+                  12,
+                  20,
+                  AppInsets.shellBottom(context),
+                ),
                 children: [
                   Container(
                     padding: const EdgeInsets.all(20),

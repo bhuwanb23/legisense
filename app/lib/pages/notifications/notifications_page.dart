@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../mappers/analysis_mapper.dart';
 import '../../repositories/notifications_repository.dart';
 import '../../services/api_exception.dart';
+import '../../theme/app_insets.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/home/app_page_header.dart';
 import '../analysis/analysis_loader_page.dart';
@@ -345,7 +346,12 @@ class _NotificationsPageState extends State<NotificationsPage> {
                               onRefresh: _load,
                               child: ListView(
                                 padding:
-                                    const EdgeInsets.fromLTRB(24, 12, 24, 110),
+                                    EdgeInsets.fromLTRB(
+                                      24,
+                                      12,
+                                      24,
+                                      AppInsets.shellBottom(context),
+                                    ),
                                 children: [
                                   if (today.isNotEmpty) ...[
                                     _SectionLabel('Today'),

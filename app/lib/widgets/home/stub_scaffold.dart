@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../theme/app_insets.dart';
 import '../../theme/app_theme.dart';
 
 class StubScaffold extends StatelessWidget {
@@ -22,7 +23,7 @@ class StubScaffold extends StatelessWidget {
       child: SafeArea(
         bottom: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 20, 24, 110),
+          padding: EdgeInsets.fromLTRB(24, 20, 24, AppInsets.shellBottom(context)),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [

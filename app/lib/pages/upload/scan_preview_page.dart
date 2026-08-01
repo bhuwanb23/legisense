@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../models/pending_upload.dart';
+import '../../theme/app_insets.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/auth/auth_primary_button.dart';
 
@@ -71,7 +72,12 @@ class _ScanPreviewPageState extends State<ScanPreviewPage> {
       ),
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+          padding: const EdgeInsets.fromLTRB(
+            20,
+            8,
+            20,
+            AppInsets.shellBottomInsideSafeArea,
+          ),
           child: Column(
             children: [
               Expanded(

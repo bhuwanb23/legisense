@@ -9,6 +9,7 @@ import '../../models/pending_upload.dart';
 import '../../repositories/documents_repository.dart';
 import '../../services/api_exception.dart';
 import '../../services/session_prefs.dart';
+import '../../theme/app_insets.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/auth/auth_primary_button.dart';
 import '../../widgets/home/app_page_header.dart';
@@ -404,7 +405,7 @@ class _UploadPageState extends State<UploadPage>
       child: SafeArea(
         bottom: false,
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 110),
+          padding: EdgeInsets.fromLTRB(20, 8, 20, AppInsets.shellBottom(context)),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [

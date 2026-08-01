@@ -9,6 +9,7 @@ import '../../models/api/analysis_models.dart';
 import '../../mappers/analysis_mapper.dart';
 import '../../repositories/documents_repository.dart';
 import '../../services/api_exception.dart';
+import '../../theme/app_insets.dart';
 import '../../theme/app_theme.dart';
 import '../analysis/analysis_results_page.dart';
 import '../shell/main_shell.dart';
@@ -142,7 +143,7 @@ class _ProcessingPageState extends State<ProcessingPage> {
       backgroundColor: AppColors.paper,
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 100),
+          padding: EdgeInsets.fromLTRB(20, 12, 20, AppInsets.shellBottom(context)),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
