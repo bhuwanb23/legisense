@@ -9,6 +9,7 @@ import '../../services/api_exception.dart';
 import '../../services/session_prefs.dart';
 import '../../theme/app_insets.dart';
 import '../../theme/app_theme.dart';
+import '../../utils/export_report.dart';
 import '../../widgets/home/app_page_header.dart';
 import '../analysis/analysis_loader_page.dart';
 
@@ -318,13 +319,27 @@ class _DocumentsPageState extends State<DocumentsPage> {
   }
 
   Future<void> _share(MockDocument doc) async {
+    final id = int.tryParse(doc.id);
+    if (id != null) {
+      try {
+        await exportAndShareReport(
+          context,
+          documentId: id,
+          title: doc.title,
+          format: 'pdf',
+        );
+        return;
+      } catch (_) {
+        // Fall through to text share.
+      }
+    }
     final risk = switch (doc.risk) {
       DocRisk.low => 'Low',
       DocRisk.medium => 'Medium',
       DocRisk.high => 'High',
     };
     final text = StringBuffer()
-      ..writeln('${doc.title}')
+      ..writeln(doc.title)
       ..writeln('Type: ${doc.typeLabel}')
       ..writeln('Risk: $risk (${doc.riskScore}/100)')
       ..writeln()

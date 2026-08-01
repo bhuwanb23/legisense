@@ -1,8 +1,13 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:image_picker/image_picker.dart';
 
+import '../../config/api_config.dart';
 import '../../data/auth_constants.dart';
 import '../../repositories/auth_repository.dart';
+import '../../repositories/meta_repository.dart';
 import '../../services/session_prefs.dart';
 import '../../theme/app_insets.dart';
 import '../../theme/app_theme.dart';
@@ -24,11 +29,51 @@ class _EditProfilePageState extends State<EditProfilePage> {
   String _state = IndiaRegions.states.first;
   bool _loading = false;
   bool _hydrated = false;
+  String? _photoUrl;
+  Uint8List? _localPhotoBytes;
+  List<String> _languageLabels = [
+    for (final l in ProfileOptions.languages) l.label,
+  ];
+  List<String> _stateOptions = List.from(IndiaRegions.states);
+  final Map<String, String> _langCodeByLabel = {
+    for (final l in ProfileOptions.languages) l.label: l.code,
+  };
 
   @override
   void initState() {
     super.initState();
     _hydrate();
+    _loadMeta();
+  }
+
+  Future<void> _loadMeta() async {
+    try {
+      final langs = await MetaRepository().languages();
+      if (langs.isNotEmpty && mounted) {
+        setState(() {
+          _languageLabels = [
+            for (final l in langs)
+              (l['name'] ?? l['label'] ?? l['code']).toString(),
+          ];
+          for (final l in langs) {
+            final label = (l['name'] ?? l['label'] ?? l['code']).toString();
+            final code = (l['code'] ?? l['id'] ?? label).toString();
+            _langCodeByLabel[label] = code;
+          }
+        });
+      }
+      final states = await MetaRepository().states('IN');
+      if (states.isNotEmpty && mounted) {
+        setState(() {
+          _stateOptions = [
+            for (final s in states)
+              (s['name'] ?? s['code'] ?? s['id']).toString(),
+          ];
+        });
+      }
+    } catch (_) {
+      // Keep static fallbacks.
+    }
   }
 
   Future<void> _hydrate() async {
@@ -37,21 +82,20 @@ class _EditProfilePageState extends State<EditProfilePage> {
     final profession = await SessionPrefs.profession();
     final language = await SessionPrefs.language();
     final state = await SessionPrefs.stateRegion();
+    final nick = await SessionPrefs.nickname();
     if (!mounted) return;
     setState(() {
       _name.text = name.isNotEmpty ? name : _nameFromEmail(email);
-      _nickname.text = _name.text.split(' ').first;
+      _nickname.text =
+          (nick != null && nick.isNotEmpty) ? nick : _name.text.split(' ').first;
       _email.text = email;
       if (profession != null &&
           ProfileOptions.professions.contains(profession)) {
         _profession = profession;
       }
-      if (language != null &&
-          ProfileOptions.languages.any((l) => l.code == language)) {
-        _language = language;
-      }
-      if (state != null && IndiaRegions.states.contains(state)) {
-        _state = state;
+      if (language != null) _language = language;
+      if (state != null && state.isNotEmpty) {
+        _state = state.split(',').first;
       }
       _hydrated = true;
     });
@@ -62,6 +106,40 @@ class _EditProfilePageState extends State<EditProfilePage> {
     final local = email.split('@').first;
     if (local.isEmpty) return 'Member';
     return local[0].toUpperCase() + local.substring(1);
+  }
+
+  Future<void> _pickPhoto() async {
+    final file = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 85,
+      maxWidth: 1024,
+    );
+    if (file == null) return;
+    final bytes = await file.readAsBytes();
+    setState(() {
+      _localPhotoBytes = bytes;
+      _loading = true;
+    });
+    try {
+      final url = await AuthRepository().uploadAvatar(
+        filePath: file.path,
+        bytes: bytes,
+        filename: file.name,
+      );
+      if (!mounted) return;
+      setState(() {
+        _photoUrl = url.startsWith('http')
+            ? url
+            : '${ApiConfig.baseUrl}$url';
+      });
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
   }
 
   @override
@@ -96,8 +174,11 @@ class _EditProfilePageState extends State<EditProfilePage> {
       await auth.updatePreferences(
         preferredLanguage: _language,
         defaultJurisdiction: _state,
+        nickname: _nickname.text.trim(),
       );
       await SessionPrefs.setDisplayName(name);
+      await SessionPrefs.setUserEmail(_email.text.trim());
+      await SessionPrefs.setNickname(_nickname.text.trim());
       await SessionPrefs.setUserEmail(_email.text.trim());
       await SessionPrefs.setProfession(_profession);
       await SessionPrefs.setLanguage(_language);
@@ -179,17 +260,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                 shape: const CircleBorder(),
                                 child: InkWell(
                                   customBorder: const CircleBorder(),
-                                  onTap: () {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                          'Photo upload comes with the backend.',
-                                          style: GoogleFonts.plusJakartaSans(),
-                                        ),
-                                        backgroundColor: AppColors.ink,
-                                      ),
-                                    );
-                                  },
+                                  onTap: _loading ? null : _pickPhoto,
                                   child: const SizedBox(
                                     width: 32,
                                     height: 32,
