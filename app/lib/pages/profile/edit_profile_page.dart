@@ -242,15 +242,38 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                   width: 2,
                                 ),
                               ),
+                              clipBehavior: Clip.antiAlias,
                               alignment: Alignment.center,
-                              child: Text(
-                                initial,
-                                style: GoogleFonts.plusJakartaSans(
-                                  fontSize: 40,
-                                  fontWeight: FontWeight.w700,
-                                  color: AppColors.ink,
-                                ),
-                              ),
+                              child: _localPhotoBytes != null
+                                  ? Image.memory(
+                                      _localPhotoBytes!,
+                                      fit: BoxFit.cover,
+                                      width: 110,
+                                      height: 110,
+                                    )
+                                  : (_photoUrl != null
+                                      ? Image.network(
+                                          _photoUrl!,
+                                          fit: BoxFit.cover,
+                                          width: 110,
+                                          height: 110,
+                                          errorBuilder: (_, __, ___) => Text(
+                                            initial,
+                                            style: GoogleFonts.plusJakartaSans(
+                                              fontSize: 40,
+                                              fontWeight: FontWeight.w700,
+                                              color: AppColors.ink,
+                                            ),
+                                          ),
+                                        )
+                                      : Text(
+                                          initial,
+                                          style: GoogleFonts.plusJakartaSans(
+                                            fontSize: 40,
+                                            fontWeight: FontWeight.w700,
+                                            color: AppColors.ink,
+                                          ),
+                                        )),
                             ),
                             Positioned(
                               right: 2,
@@ -292,6 +315,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                         controller: _email,
                         icon: Icons.mail_outline_rounded,
                         keyboardType: TextInputType.emailAddress,
+                        readOnly: true,
                       ),
                       _SelectRow(
                         label: 'Occupation',
@@ -302,28 +326,34 @@ class _EditProfilePageState extends State<EditProfilePage> {
                       ),
                       _SelectRow(
                         label: 'Language',
-                        value: ProfileOptions.languages
+                        value: _langCodeByLabel.entries
                             .firstWhere(
-                              (l) => l.code == _language,
-                              orElse: () => ProfileOptions.languages.first,
+                              (e) => e.value == _language,
+                              orElse: () => MapEntry(
+                                _languageLabels.isNotEmpty
+                                    ? _languageLabels.first
+                                    : 'English',
+                                _language,
+                              ),
                             )
-                            .label,
+                            .key,
                         icon: Icons.translate_rounded,
-                        options: [
-                          for (final l in ProfileOptions.languages) l.label,
-                        ],
+                        options: _languageLabels,
                         onChanged: (label) {
-                          final match = ProfileOptions.languages.firstWhere(
-                            (l) => l.label == label,
-                          );
-                          setState(() => _language = match.code);
+                          setState(() {
+                            _language = _langCodeByLabel[label] ?? _language;
+                          });
                         },
                       ),
                       _SelectRow(
                         label: 'State / region',
-                        value: _state,
+                        value: _stateOptions.contains(_state)
+                            ? _state
+                            : (_stateOptions.isNotEmpty
+                                ? _stateOptions.first
+                                : _state),
                         icon: Icons.location_on_outlined,
-                        options: IndiaRegions.states,
+                        options: _stateOptions,
                         onChanged: (v) => setState(() => _state = v),
                       ),
                     ],
@@ -407,12 +437,14 @@ class _FieldRow extends StatelessWidget {
     required this.controller,
     required this.icon,
     this.keyboardType,
+    this.readOnly = false,
   });
 
   final String label;
   final TextEditingController controller;
   final IconData icon;
   final TextInputType? keyboardType;
+  final bool readOnly;
 
   @override
   Widget build(BuildContext context) {
