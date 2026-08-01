@@ -16,11 +16,13 @@ class ShellScope extends InheritedWidget {
     super.key,
     required this.goToTab,
     required this.openAnalysisOnDocuments,
+    required this.openDocuments,
     required super.child,
   });
 
   final void Function(int index) goToTab;
   final void Function(AnalysisResult result) openAnalysisOnDocuments;
+  final void Function({String? query, String? filter}) openDocuments;
 
   static ShellScope? maybeOf(BuildContext context) {
     return context.dependOnInheritedWidgetOfExactType<ShellScope>();
@@ -49,6 +51,8 @@ class MainShell extends StatefulWidget {
 
 class _MainShellState extends State<MainShell> {
   late int _index = widget.initialIndex;
+  String? _docsQuery;
+  String? _docsFilter;
 
   final _navKeys = List<GlobalKey<NavigatorState>>.generate(
     5,
@@ -62,6 +66,15 @@ class _MainShellState extends State<MainShell> {
       return;
     }
     setState(() => _index = index);
+  }
+
+  void openDocuments({String? query, String? filter}) {
+    setState(() {
+      _docsQuery = query;
+      _docsFilter = filter;
+      _index = 1;
+    });
+    _navKeys[1].currentState?.popUntil((route) => route.isFirst);
   }
 
   /// Clear upload stack, switch to Documents, open analysis there.
@@ -108,6 +121,7 @@ class _MainShellState extends State<MainShell> {
     return ShellScope(
       goToTab: goToTab,
       openAnalysisOnDocuments: openAnalysisOnDocuments,
+      openDocuments: openDocuments,
       child: PopScope(
         canPop: false,
         onPopInvokedWithResult: (didPop, _) async {
@@ -127,13 +141,25 @@ class _MainShellState extends State<MainShell> {
                 tabIndex: 0,
                 root: HomePage(
                   onOpenUpload: () => goToTab(2),
-                  onOpenDocuments: () => goToTab(1),
+                  onOpenDocuments: () => openDocuments(),
                   onOpenNotifications: () => goToTab(3),
                 ),
               ),
               _tabNavigator(
                 tabIndex: 1,
-                root: DocumentsPage(onOpenUpload: () => goToTab(2)),
+                root: DocumentsPage(
+                  onOpenUpload: () => goToTab(2),
+                  initialQuery: _docsQuery,
+                  initialFilter: _docsFilter,
+                  onInitialApplied: () {
+                    if (_docsQuery != null || _docsFilter != null) {
+                      setState(() {
+                        _docsQuery = null;
+                        _docsFilter = null;
+                      });
+                    }
+                  },
+                ),
               ),
               _tabNavigator(
                 tabIndex: 2,

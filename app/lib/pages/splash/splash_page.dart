@@ -7,6 +7,7 @@ import 'package:lottie/lottie.dart';
 import '../../services/session_prefs.dart';
 import '../../theme/app_theme.dart';
 import '../auth/login_page.dart';
+import '../auth/profile_setup_page.dart';
 import '../onboarding/onboarding_page.dart';
 import '../shell/main_shell.dart';
 
@@ -51,6 +52,7 @@ class _SplashPageState extends State<SplashPage>
         SplashDestination.home => const MainShell(),
         SplashDestination.login => const LoginPage(),
         SplashDestination.onboarding => const OnboardingPage(),
+        SplashDestination.profileSetup => const ProfileSetupPage(),
       };
       Navigator.of(context).pushReplacement(
         PageRouteBuilder<void>(

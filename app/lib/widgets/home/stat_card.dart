@@ -10,16 +10,18 @@ class StatCard extends StatelessWidget {
     required this.value,
     required this.icon,
     this.accent = false,
+    this.onTap,
   });
 
   final String label;
   final String value;
   final IconData icon;
   final bool accent;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    final card = Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
       decoration: BoxDecoration(
@@ -73,6 +75,16 @@ class StatCard extends StatelessWidget {
             ],
           ),
         ],
+      ),
+    );
+
+    if (onTap == null) return card;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppRadii.md),
+        child: card,
       ),
     );
   }

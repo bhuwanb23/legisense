@@ -16,6 +16,10 @@ class SessionPrefs {
   static const _languageKey = 'user_language';
   static const _stateKey = 'user_state';
   static const _countryKey = 'user_country';
+  static const _nicknameKey = 'user_nickname';
+  static const _docTypesKey = 'preferred_doc_types';
+  static const _notifyDeadlinesKey = 'notify_deadlines';
+  static const _notifyAnalysisKey = 'notify_analysis';
 
   static Future<SharedPreferences> get _prefs async =>
       SharedPreferences.getInstance();
@@ -146,9 +150,57 @@ class SessionPrefs {
     }
   }
 
+  static Future<String?> nickname() async {
+    final prefs = await _prefs;
+    return prefs.getString(_nicknameKey);
+  }
+
+  static Future<void> setNickname(String? value) async {
+    final prefs = await _prefs;
+    if (value == null || value.isEmpty) {
+      await prefs.remove(_nicknameKey);
+    } else {
+      await prefs.setString(_nicknameKey, value);
+    }
+  }
+
+  static Future<List<String>> preferredDocTypes() async {
+    final prefs = await _prefs;
+    return prefs.getStringList(_docTypesKey) ?? const [];
+  }
+
+  static Future<void> setPreferredDocTypes(List<String> value) async {
+    final prefs = await _prefs;
+    await prefs.setStringList(_docTypesKey, value);
+  }
+
+  static Future<bool> notifyDeadlines() async {
+    final prefs = await _prefs;
+    return prefs.getBool(_notifyDeadlinesKey) ?? true;
+  }
+
+  static Future<void> setNotifyDeadlines(bool value) async {
+    final prefs = await _prefs;
+    await prefs.setBool(_notifyDeadlinesKey, value);
+  }
+
+  static Future<bool> notifyAnalysis() async {
+    final prefs = await _prefs;
+    return prefs.getBool(_notifyAnalysisKey) ?? true;
+  }
+
+  static Future<void> setNotifyAnalysis(bool value) async {
+    final prefs = await _prefs;
+    await prefs.setBool(_notifyAnalysisKey, value);
+  }
+
   static Future<SplashDestination> resolveSplashDestination() async {
     final loggedIn = await isLoggedIn();
-    if (loggedIn) return SplashDestination.home;
+    if (loggedIn) {
+      final complete = await isProfileComplete();
+      if (!complete) return SplashDestination.profileSetup;
+      return SplashDestination.home;
+    }
 
     final onboardingSeen = await hasSeenOnboarding();
     if (onboardingSeen) return SplashDestination.login;
@@ -167,8 +219,12 @@ class SessionPrefs {
     await prefs.remove(_languageKey);
     await prefs.remove(_stateKey);
     await prefs.remove(_countryKey);
+    await prefs.remove(_nicknameKey);
+    await prefs.remove(_docTypesKey);
+    await prefs.remove(_notifyDeadlinesKey);
+    await prefs.remove(_notifyAnalysisKey);
     await TokenStore.clear();
   }
 }
 
-enum SplashDestination { onboarding, login, home }
+enum SplashDestination { onboarding, login, home, profileSetup }

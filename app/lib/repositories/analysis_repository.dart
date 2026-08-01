@@ -95,11 +95,15 @@ class AnalysisRepository {
   Future<void> riskFeedback({
     required int documentId,
     required int clauseId,
-    required String feedback,
+    required String feedbackType,
+    String? note,
   }) async {
     await _api.post(
       '/api/analysis/$documentId/clauses/$clauseId/risk-feedback',
-      data: {'feedback': feedback},
+      data: {
+        'feedback_type': feedbackType,
+        if (note != null) 'note': note,
+      },
     );
   }
 

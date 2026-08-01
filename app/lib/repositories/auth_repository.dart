@@ -108,6 +108,8 @@ class AuthRepository {
   Future<void> updatePreferences({
     String? preferredLanguage,
     String? defaultJurisdiction,
+    String? nickname,
+    List<String>? preferredDocumentTypes,
   }) async {
     await _api.put(
       '/api/users/preferences',
@@ -115,6 +117,9 @@ class AuthRepository {
         if (preferredLanguage != null) 'preferredLanguage': preferredLanguage,
         if (defaultJurisdiction != null)
           'defaultJurisdiction': defaultJurisdiction,
+        if (nickname != null) 'nickname': nickname,
+        if (preferredDocumentTypes != null)
+          'preferredDocumentTypes': preferredDocumentTypes,
       },
     );
     if (preferredLanguage != null) {
@@ -123,6 +128,16 @@ class AuthRepository {
     if (defaultJurisdiction != null) {
       await SessionPrefs.setStateRegion(defaultJurisdiction);
     }
+    if (nickname != null) {
+      await SessionPrefs.setNickname(nickname);
+    }
+  }
+
+  Future<void> deleteAccount() async {
+    await _api.delete('/api/users/account');
+    await SocketService.instance.disconnect();
+    await TokenStore.clear();
+    await SessionPrefs.setLoggedIn(false);
   }
 
   Future<void> _persistSession(AuthTokens tokens) async {

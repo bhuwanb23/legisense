@@ -36,24 +36,23 @@ class DeadlinesRepository {
     await _api.put('/api/deadlines/$id/reminders', data: body);
   }
 
-  Future<List<int>> exportIcs(List<int> ids) async {
+  Future<String?> exportIcsText(List<int> ids) async {
     final data = await _api.post(
-      '/api/deadlines/export/ics',
+      '/api/deadlines/export/ics?json=1',
       data: {'deadlineIds': ids},
       parse: (d) => d,
     );
-    // Backend may return ICS string or bytes metadata; caller handles.
-    if (data is String) return ids;
+    if (data is Map && data['ics'] is String) return data['ics'] as String;
+    if (data is String) return data;
+    return null;
+  }
+
+  Future<List<int>> exportIcs(List<int> ids) async {
+    await exportIcsText(ids);
     return ids;
   }
 
-  Future<dynamic> exportIcsRaw(List<int> ids) {
-    return _api.post(
-      '/api/deadlines/export/ics',
-      data: {'deadlineIds': ids},
-      parse: (d) => d,
-    );
-  }
+  Future<dynamic> exportIcsRaw(List<int> ids) => exportIcsText(ids);
 
   List<Map<String, dynamic>> _asList(dynamic d) {
     if (d is Map && d['deadlines'] is List) {
