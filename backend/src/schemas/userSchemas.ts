@@ -10,7 +10,10 @@ export const updateProfileSchema = z.object({
 export const updatePreferencesSchema = z.object({
   preferredLanguage: z.string().min(2).max(5).optional(),
   defaultJurisdiction: z.string().optional(),
+  nickname: z.string().min(1).max(100).optional(),
+  preferredDocumentTypes: z.array(z.string()).optional(),
 });
 
 export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
 export type UpdatePreferencesInput = z.infer<typeof updatePreferencesSchema>;
+

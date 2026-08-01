@@ -578,3 +578,76 @@ export async function translateDocument(req: Request, res: Response, next: NextF
     next(err);
   }
 }
+
+export async function exportDocument(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    if (!req.user) {
+      res.status(401).json({ success: false, error: { message: 'Unauthorized', code: 'AUTH_REQUIRED', statusCode: 401 } });
+      return;
+    }
+
+    const documentId = Number(req.params.documentId);
+    if (!documentId) throw new BadRequestError('Invalid document ID');
+
+    const format = (req.query.format as string) || 'pdf';
+    if (!['pdf', 'docx'].includes(format)) {
+      throw new BadRequestError('Format must be pdf or docx');
+    }
+
+    const db = getDb();
+    const docRows = db.select().from(documents).where(
+      sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = 0`
+    ).all();
+
+    if (!docRows[0]) throw new NotFoundError('Document');
+
+    const analysisRows = db.select().from(analysisResults).where(
+      sql`${analysisResults.documentId} = ${documentId}`
+    ).all();
+
+    const analysis = analysisRows[0];
+    if (!analysis) throw new NotFoundError('Analysis not found for this document');
+
+    const clauseRows = db.select().from(clauses).where(sql`${clauses.analysisId} = ${analysis.id}`).all();
+    const deadlineRows = db.select().from(deadlines).where(sql`${deadlines.documentId} = ${documentId}`).all();
+
+    const { generatePdfBuffer, generateDocxBuffer } = await import('../services/exportReportService');
+
+    const exportData = {
+      documentTitle: docRows[0].originalName,
+      riskScore: analysis.riskScore || 0,
+      summary: analysis.summary || 'No summary available',
+      clauses: clauseRows.map((clause) => ({
+        title: clause.title,
+        plainEnglish: clause.plainEnglish || clause.clauseText || '',
+        riskLevel: clause.riskLevel || 'Unknown',
+      })),
+      deadlines: deadlineRows.map((deadline) => ({
+        description: deadline.description,
+        dueDate: deadline.dueDate,
+      })),
+    };
+
+    let buffer: Buffer;
+    let contentType: string;
+    const filename = `${docRows[0].originalName.replace(/\.[^/.]+$/, '')}-analysis`;
+
+    if (format === 'pdf') {
+      buffer = await generatePdfBuffer(exportData);
+      contentType = 'application/pdf';
+    } else {
+      buffer = await generateDocxBuffer(exportData);
+      contentType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+    }
+
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}.${format}"`);
+    res.setHeader('Content-Type', contentType);
+    res.end(buffer);
+  } catch (err) {
+    next(err);
+  }
+}

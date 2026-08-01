@@ -308,6 +308,10 @@ async function start() {
   try { db.run(sql`ALTER TABLE ${clauses} ADD COLUMN used_counter INTEGER NOT NULL DEFAULT 0`); } catch {}
   try { db.run(sql`ALTER TABLE ${clauses} ADD COLUMN copied_at TEXT`); } catch {}
 
+  try { db.run(sql`ALTER TABLE ${users} ADD COLUMN nickname TEXT`); } catch {}
+  try { db.run(sql`ALTER TABLE ${users} ADD COLUMN preferred_document_types TEXT`); } catch {}
+  try { db.run(sql`ALTER TABLE ${users} ADD COLUMN oauth_subject TEXT`); } catch {}
+
   try { db.run(sql`ALTER TABLE ${documents} ADD COLUMN detected_type TEXT`); } catch {}
   try { db.run(sql`ALTER TABLE ${documents} ADD COLUMN detected_type_confidence REAL`); } catch {}
   try { db.run(sql`ALTER TABLE ${documents} ADD COLUMN needs_type_confirmation INTEGER NOT NULL DEFAULT 0`); } catch {}

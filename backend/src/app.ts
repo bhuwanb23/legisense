@@ -19,6 +19,7 @@ import notificationRoutes from './routes/notificationRoutes';
 import jurisdictionRoutes from './routes/jurisdictionRoutes';
 import languageRoutes from './routes/languageRoutes';
 import helmet from 'helmet';
+import path from 'path';
 
 const app = express();
 
@@ -34,6 +35,8 @@ app.use(corsMiddleware);
 app.use(requestLogger);
 app.use(rateLimiter);
 app.use(express.json());
+
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
 app.get('/health', (_req, res) => {
   res.json({
