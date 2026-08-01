@@ -1,6 +1,8 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../../config/app_links.dart';
 import '../../repositories/auth_repository.dart';
 import '../../services/api_exception.dart';
 import '../../services/session_prefs.dart';
@@ -14,6 +16,7 @@ import '../../widgets/auth/auth_social_button.dart';
 import '../../widgets/auth/auth_text_field.dart';
 import '../shell/main_shell.dart';
 import 'login_page.dart';
+import 'profile_setup_page.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -49,10 +52,10 @@ class _RegisterPageState extends State<RegisterPage> {
       );
       await SessionPrefs.setOnboardingSeen();
       await SessionPrefs.setDisplayName(_fullName.text.trim());
-      await SessionPrefs.setProfileComplete(true);
+      await SessionPrefs.setProfileComplete(false);
       if (!mounted) return;
       Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute<void>(builder: (_) => const MainShell()),
+        MaterialPageRoute<void>(builder: (_) => const ProfileSetupPage()),
         (_) => false,
       );
     } on ApiException catch (e) {
@@ -157,21 +160,27 @@ class _RegisterPageState extends State<RegisterPage> {
                     color: AppColors.inkSoft,
                   ),
                   children: [
-                    const TextSpan(text: 'By signing up, you are agree to our '),
+                    const TextSpan(text: 'By signing up, you agree to our '),
                     TextSpan(
                       text: 'Terms & Conditions',
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontWeight: FontWeight.w600,
                         color: AppColors.ink,
+                        decoration: TextDecoration.underline,
                       ),
+                      recognizer: TapGestureRecognizer()
+                        ..onTap = () => AppLinks.open(AppLinks.terms),
                     ),
                     const TextSpan(text: ' and '),
                     TextSpan(
                       text: 'Privacy Policy',
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontWeight: FontWeight.w600,
                         color: AppColors.ink,
+                        decoration: TextDecoration.underline,
                       ),
+                      recognizer: TapGestureRecognizer()
+                        ..onTap = () => AppLinks.open(AppLinks.privacy),
                     ),
                   ],
                 ),
