@@ -37,5 +37,16 @@ class AnalysisBundle {
     );
   }
 
+  Map<String, dynamic> toJson() {
+    return {
+      'status': status,
+      'analysis': analysis,
+      'clauses': clauses,
+      'riskItems': riskItems,
+      'deadlines': deadlines,
+      'documentTitle': documentTitle,
+    };
+  }
+
   bool get hasAnalysis => analysis != null;
 }
