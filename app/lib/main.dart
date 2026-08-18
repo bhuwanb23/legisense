@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'pages/splash/splash_page.dart';
+import 'services/tts_service.dart';
 import 'theme/app_theme.dart';
 
 void main() {
@@ -14,6 +15,8 @@ void main() {
       statusBarBrightness: Brightness.light,
     ),
   );
+  // Warm up the TTS engine so read-aloud is instant on first tap.
+  TtsService.instance.init();
   runApp(const LegisenseApp());
 }
 
