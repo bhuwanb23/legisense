@@ -23,9 +23,14 @@ function prefersCloud(context?: AiContext): boolean {
 
 function firstCloud(): AiProvider | null {
   if (geminiProvider.isAvailable()) return geminiProvider;
-  if (openRouterProvider.isAvailable()) return openRouterProvider;
+  if (openRouterProvider.isAvailable() && !isUnreliableOpenRouter()) return openRouterProvider;
   if (openAIProvider.isAvailable()) return openAIProvider;
   return null;
+}
+
+function isUnreliableOpenRouter(): boolean {
+  const model = (process.env.OPENROUTER_MODEL || 'openrouter/free').toLowerCase();
+  return model.includes('free') || model === 'openrouter/auto';
 }
 
 export function selectProvider(context?: AiContext): AiProvider | null {
@@ -54,7 +59,7 @@ export function selectProvider(context?: AiContext): AiProvider | null {
     return geminiProvider;
   }
 
-  if (openRouterProvider.isAvailable()) {
+  if (openRouterProvider.isAvailable() && !isUnreliableOpenRouter()) {
     return openRouterProvider;
   }
 
@@ -73,7 +78,7 @@ export function selectProviderForTokens(estimatedTokens: number): AiProvider | n
   if (ollamaProvider.isAvailable()) return ollamaProvider;
 
   if (estimatedTokens <= 100_000) {
-    if (openRouterProvider.isAvailable()) return openRouterProvider;
+    if (openRouterProvider.isAvailable() && !isUnreliableOpenRouter()) return openRouterProvider;
     if (geminiProvider.isAvailable()) return geminiProvider;
     if (openAIProvider.isAvailable()) return openAIProvider;
     return null;
@@ -144,18 +149,23 @@ function buildFallbackChain(primaryName: ProviderName, context?: AiContext): AiP
   const chain: AiProvider[] = [];
   const added = new Set<ProviderName>();
 
+  const skipOpenRouter = isUnreliableOpenRouter();
   const primary = ALL_PROVIDERS.find((p) => p.provider.name === primaryName);
-  if (primary && primary.provider.isAvailable()) {
+  if (primary && primary.provider.isAvailable() && !(primaryName === 'openrouter' && skipOpenRouter)) {
     chain.push(primary.provider);
     added.add(primaryName);
   }
 
   const cloudFirst = prefersCloud(context);
-  const rest = cloudFirst
-    ? [geminiProvider, openRouterProvider, openAIProvider, ollamaProvider]
-    : [ollamaProvider, geminiProvider, openRouterProvider, openAIProvider];
+  const analysisTask = context?.task === 'analysis';
+  const rest = analysisTask
+    ? [geminiProvider, ollamaProvider, openAIProvider]
+    : cloudFirst
+      ? [geminiProvider, openRouterProvider, openAIProvider, ollamaProvider]
+      : [ollamaProvider, geminiProvider, openRouterProvider, openAIProvider];
 
   for (const provider of rest) {
+    if (provider.name === 'openrouter' && skipOpenRouter) continue;
     if (!added.has(provider.name) && provider.isAvailable()) {
       chain.push(provider);
       added.add(provider.name);
