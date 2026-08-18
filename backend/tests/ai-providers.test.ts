@@ -88,11 +88,13 @@ describe('Provider Selection', () => {
   const oldGeminiKey = process.env.GEMINI_API_KEY;
   const oldOpenRouterKey = process.env.OPENROUTER_API_KEY;
   const oldOpenAIKey = process.env.OPENAI_API_KEY;
+  const oldOllama = process.env.OLLAMA_ENABLED;
 
   before(() => {
     process.env.GEMINI_API_KEY = 'test-gemini-key';
     process.env.OPENROUTER_API_KEY = 'test-or-key';
     process.env.OPENAI_API_KEY = 'test-oa-key';
+    process.env.OLLAMA_ENABLED = 'false';
   });
 
   after(() => {
@@ -102,6 +104,8 @@ describe('Provider Selection', () => {
     else delete process.env.OPENROUTER_API_KEY;
     if (oldOpenAIKey) process.env.OPENAI_API_KEY = oldOpenAIKey;
     else delete process.env.OPENAI_API_KEY;
+    if (oldOllama !== undefined) process.env.OLLAMA_ENABLED = oldOllama;
+    else delete process.env.OLLAMA_ENABLED;
   });
 
   it('selects OpenRouter by default when all providers available', () => {
@@ -132,6 +136,18 @@ describe('Provider Selection', () => {
     const provider = selectProvider({ pageCount: 50, task: 'analysis' });
     assert.ok(provider);
     assert.equal(provider!.name, 'openrouter');
+  });
+
+  it('selects Gemini for chat even when OpenRouter is available', () => {
+    const provider = selectProvider({ task: 'chat' });
+    assert.ok(provider);
+    assert.equal(provider!.name, 'gemini');
+  });
+
+  it('selects Gemini for rewrite', () => {
+    const provider = selectProvider({ task: 'rewrite' });
+    assert.ok(provider);
+    assert.equal(provider!.name, 'gemini');
   });
 });
 
@@ -208,9 +224,11 @@ describe('Edge Cases', () => {
     const oldGemini = process.env.GEMINI_API_KEY;
     const oldOR = process.env.OPENROUTER_API_KEY;
     const oldOA = process.env.OPENAI_API_KEY;
+    const oldOllama = process.env.OLLAMA_ENABLED;
     delete process.env.GEMINI_API_KEY;
     delete process.env.OPENROUTER_API_KEY;
     delete process.env.OPENAI_API_KEY;
+    process.env.OLLAMA_ENABLED = 'false';
 
     const provider = selectProvider({ task: 'analysis' });
     assert.equal(provider, null);
@@ -218,6 +236,8 @@ describe('Edge Cases', () => {
     if (oldGemini) process.env.GEMINI_API_KEY = oldGemini;
     if (oldOR) process.env.OPENROUTER_API_KEY = oldOR;
     if (oldOA) process.env.OPENAI_API_KEY = oldOA;
+    if (oldOllama !== undefined) process.env.OLLAMA_ENABLED = oldOllama;
+    else delete process.env.OLLAMA_ENABLED;
   });
 
   it('estimateTokens handles very long string', () => {
