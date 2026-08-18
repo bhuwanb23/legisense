@@ -4,8 +4,11 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../data/analysis_mock.dart';
 import '../../repositories/chat_repository.dart';
 import '../../services/api_exception.dart';
+import '../../services/speech_input_service.dart';
+import '../../services/tts_service.dart';
 import '../../theme/app_insets.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/analysis/listen_button.dart';
 import '../analysis/plain_language_page.dart';
 
 class _ChatBubbleMsg {
@@ -40,6 +43,7 @@ class _ChatPageState extends State<ChatPage> {
   String? _sessionId;
   bool _sending = false;
   bool _ready = false;
+  bool _micBusy = false;
   String? _initError;
 
   static const _prompts = <String>[
@@ -92,6 +96,7 @@ class _ChatPageState extends State<ChatPage> {
 
   @override
   void dispose() {
+    SpeechInputService.instance.dispose();
     _controller.dispose();
     _scroll.dispose();
     super.dispose();
@@ -190,6 +195,54 @@ class _ChatPageState extends State<ChatPage> {
       });
     }
     _scrollToEnd();
+  }
+
+  /// Toggles voice dictation into the input field (F40).
+  Future<void> _toggleMic() async {
+    final speech = SpeechInputService.instance;
+    if (speech.isListening) {
+      await speech.stop();
+      if (mounted) setState(() => _micBusy = false);
+      return;
+    }
+    if (!await speech.init()) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Voice input isn’t available on this device.'),
+          backgroundColor: AppColors.ink,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+        ),
+      );
+      return;
+    }
+    setState(() => _micBusy = true);
+    final started = await speech.listen(
+      onPartial: (text) {
+        if (!mounted) return;
+        _controller.text = text;
+        _controller.selection = TextSelection.fromPosition(
+          TextPosition(offset: text.length),
+        );
+      },
+    );
+    if (!started) {
+      if (!mounted) return;
+      setState(() => _micBusy = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Could not start voice input.'),
+          backgroundColor: AppColors.ink,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+        ),
+      );
+    }
   }
 
   void _scrollToEnd() {
@@ -352,7 +405,38 @@ class _ChatPageState extends State<ChatPage> {
                                 ),
                               ),
                             ),
-                            const SizedBox(width: 10),
+                            const SizedBox(width: 8),
+                            ValueListenableBuilder<bool>(
+                              valueListenable:
+                                  SpeechInputService.instance.listening,
+                              builder: (context, listening, _) {
+                                final micActive = listening || _micBusy;
+                                return Material(
+                                  color: micActive
+                                      ? AppColors.riskHigh
+                                      : AppColors.chip,
+                                  shape: const CircleBorder(),
+                                  child: InkWell(
+                                    customBorder: const CircleBorder(),
+                                    onTap: _sending ? null : _toggleMic,
+                                    child: SizedBox(
+                                      width: 40,
+                                      height: 40,
+                                      child: Icon(
+                                        micActive
+                                            ? Icons.mic_rounded
+                                            : Icons.mic_none_rounded,
+                                        color: micActive
+                                            ? Colors.white
+                                            : AppColors.ink,
+                                        size: 20,
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                            const SizedBox(width: 8),
                             Material(
                               color: AppColors.ink,
                               shape: const CircleBorder(),
@@ -457,6 +541,16 @@ class _Bubble extends StatelessWidget {
                 color: user ? AppColors.surface : AppColors.ink,
               ),
             ),
+            if (!user) ...[
+              Align(
+                alignment: Alignment.centerRight,
+                child: ListenButton(
+                  text: message.text,
+                  iconSize: 16,
+                  tooltip: 'Read reply aloud',
+                ),
+              ),
+            ],
             if (!user && message.citedClauses.isNotEmpty) ...[
               const SizedBox(height: 10),
               Text(
