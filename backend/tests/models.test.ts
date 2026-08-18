@@ -113,6 +113,7 @@ async function setup() {
     counter_suggestion TEXT,
     is_flagged INTEGER NOT NULL DEFAULT 0,
     page_number INTEGER,
+    party_references TEXT,
     start_position INTEGER,
     end_position INTEGER,
     reading_level TEXT,

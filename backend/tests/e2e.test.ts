@@ -211,7 +211,8 @@ describe('End-to-End Flow', () => {
         risk_reason TEXT, risk_category TEXT,
         counter_suggestion TEXT,
         is_flagged INTEGER NOT NULL DEFAULT 0,
-        page_number INTEGER, start_position INTEGER,
+        page_number INTEGER, party_references TEXT,
+        start_position INTEGER,
         end_position INTEGER,
         created_at TEXT NOT NULL DEFAULT (datetime('now'))
       )
