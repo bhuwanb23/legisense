@@ -6,6 +6,8 @@ export interface AiRequest {
   model?: string;
   maxTokens?: number;
   temperature?: number;
+  /** When true, Gemini may coerce the reply through JSON parse. Chat must leave this false. */
+  expectJson?: boolean;
 }
 
 export interface AiUsage {

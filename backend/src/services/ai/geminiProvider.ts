@@ -28,6 +28,24 @@ export function isGeminiConfigured(): boolean {
   return Boolean(process.env.GEMINI_API_KEY);
 }
 
+async function generateWithTimeout(model: ReturnType<GoogleGenerativeAI['getGenerativeModel']>, userPrompt: string) {
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+  try {
+    const result = await Promise.race([
+      model.generateContent(userPrompt),
+      new Promise<never>((_, reject) => {
+        timeoutId = setTimeout(
+          () => reject(new Error('Gemini request timed out')),
+          DEFAULT_TIMEOUT_MS,
+        );
+      }),
+    ]);
+    return result;
+  } finally {
+    if (timeoutId) clearTimeout(timeoutId);
+  }
+}
+
 export const geminiProvider: AiProvider = {
   name: 'gemini' as ProviderName,
 
@@ -51,17 +69,20 @@ export const geminiProvider: AiProvider = {
 
     for (let attempt = 0; attempt < DEFAULT_MAX_RETRIES; attempt++) {
       try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS);
-
-        const result = await model.generateContent(userPrompt);
-        clearTimeout(timeoutId);
+        const result = await generateWithTimeout(model, userPrompt);
 
         const text = result.response.text();
         if (!text) throw new Error('Gemini returned empty response');
 
-        const parsed = parseAiResponse(text);
-        const cleanedText = typeof parsed === 'object' ? JSON.stringify(parsed) : text;
+        let cleanedText = text;
+        if (request.expectJson) {
+          try {
+            const parsed = parseAiResponse(text);
+            cleanedText = typeof parsed === 'object' ? JSON.stringify(parsed) : text;
+          } catch {
+            cleanedText = text;
+          }
+        }
         const outputTokens = estimateTokens(cleanedText);
 
         return {

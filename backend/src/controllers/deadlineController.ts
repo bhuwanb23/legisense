@@ -3,7 +3,8 @@ import { getDb, persistNow } from '../config/database';
 import { deadlines, documents, users } from '../models';
 import { sql } from 'drizzle-orm';
 import { NotFoundError, BadRequestError } from '../utils/errors';
-import { computeDeadlineHealth } from '../services/deadlineService';
+import { computeDeadlineHealth, buildDeadlineInputsFromAnalysis, saveDeadlinesForDocument } from '../services/deadlineService';
+import { analysisResults, clauses } from '../models';
 import { buildIcsCalendar } from '../services/icsExportService';
 
 function mapDeadline(d: typeof deadlines.$inferSelect) {
@@ -134,9 +135,74 @@ export async function listDocumentDeadlines(
     ).all();
     if (!docRows[0]) throw new NotFoundError('Document');
 
-    const rows = db.select().from(deadlines).where(
+    let rows = db.select().from(deadlines).where(
       sql`${deadlines.documentId} = ${documentId} AND ${deadlines.userId} = ${req.user.id}`
     ).all();
+
+    const analysis = db.select().from(analysisResults).where(sql`${analysisResults.documentId} = ${documentId}`).all()[0];
+    if (analysis) {
+      let missing: unknown = [];
+      try { missing = JSON.parse(analysis.missingClauses || '[]'); } catch { missing = []; }
+      const clauseRows = db.select().from(clauses).where(sql`${clauses.analysisId} = ${analysis.id}`).all();
+      const extras = buildDeadlineInputsFromAnalysis({
+        documentType: analysis.documentType || 'Other',
+        detectedTypeConfidence: analysis.detectedTypeConfidence || 0,
+        overallRiskScore: analysis.overallRiskScore || 0,
+        riskLevel: (analysis.riskLevel as 'low' | 'medium' | 'high') || 'low',
+        fairnessScore: analysis.fairnessScore || 50,
+        favorsParty: analysis.favorsParty || 'Balanced',
+        imbalanceReason: analysis.imbalanceReason || '',
+        perCategoryFairness: {},
+        summary: analysis.summary || '',
+        keyParties: [],
+        criticalDates: [],
+        keyObligations: [],
+        missingClauses: Array.isArray(missing) ? missing.map(String) : [],
+        clauses: clauseRows.map((c) => ({
+          clauseNumber: c.clauseNumber || 1,
+          clauseTitle: c.clauseTitle || 'Clause',
+          originalText: c.originalText || '',
+          plainEnglishText: c.plainEnglishText || '',
+          readingLevel: 'grade_8' as const,
+          keyLegalTerms: [],
+          riskLevel: (c.riskLevel as 'low' | 'medium' | 'high' | 'none') || 'low',
+          riskScore: c.riskScore || 0,
+          riskReason: c.riskReason || '',
+          riskCategory: 'legal' as const,
+          partyReferences: [],
+          counterSuggestion: c.counterSuggestion || '',
+        })),
+        riskItems: [],
+        deadlines: rows.map((d) => ({
+          title: d.title,
+          description: d.description || d.title,
+          dueDate: d.dueDate,
+          recurrence: (d.recurrence as 'one-time') || 'one-time',
+          deadlineType: 'other' as const,
+          partyResponsible: d.partyResponsible || '',
+          consequenceIfMissed: d.consequenceIfMissed || '',
+          isRecurring: Boolean(d.isRecurring),
+        })),
+        breachScenarios: [],
+      });
+      const have = new Set(rows.map((r) => `${r.dueDate.slice(0, 10)}|${r.title.toLowerCase()}`));
+      const toAdd = extras.filter((e) => !have.has(`${e.dueDate.slice(0, 10)}|${e.title.toLowerCase()}`)
+        && !rows.some((r) => r.dueDate.slice(0, 10) === e.dueDate.slice(0, 10) && /start|commencement/.test(r.title.toLowerCase()) && /start|commencement/.test(e.title.toLowerCase())));
+      if (toAdd.length) {
+        saveDeadlinesForDocument(documentId, req.user.id, toAdd);
+        rows = db.select().from(deadlines).where(
+          sql`${deadlines.documentId} = ${documentId} AND ${deadlines.userId} = ${req.user.id}`
+        ).all();
+      }
+    }
+
+    const seen = new Set<string>();
+    rows = rows.filter((r) => {
+      const key = `${r.dueDate.slice(0, 10)}|${/start|commencement|begin/.test(r.title.toLowerCase()) ? 'start' : /end|expir/.test(r.title.toLowerCase()) ? 'end' : r.title.toLowerCase()}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
 
     rows.sort((a, b) => a.dueDate.localeCompare(b.dueDate));
     const health = computeDeadlineHealth(rows);

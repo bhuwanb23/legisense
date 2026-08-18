@@ -81,6 +81,7 @@ export async function runRiskPatternScan(documentId: number, analysisId: number)
 Only include genuine matches (confidence >= 70). Use pattern names exactly from the provided list.`,
           userPrompt: JSON.stringify({ patterns: patternList, clauses: clauseList }),
           temperature: 0.2,
+          expectJson: true,
         }, { task: 'analysis' });
 
         const parsed = typeof response.text === 'string' ? parseAiResponse(response.text) : response.text;

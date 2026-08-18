@@ -12,16 +12,25 @@ interface TranslationSnapshot {
   clauses: Array<{ id: number; plainEnglishText: string; riskReason: string | null; counterSuggestion: string | null }>;
   flags: Array<{ id: number; message: string }>;
   translatedAt: string;
+  partial?: boolean;
 }
 
-const MAX_CLAUSES = Number(process.env.TRANSLATE_MAX_CLAUSES || 6);
-const MAX_FIELD = Number(process.env.TRANSLATE_MAX_FIELD_CHARS || 280);
+const BATCH_SIZE = Number(process.env.TRANSLATE_BATCH_SIZE || 8);
+const MAX_FIELD = Number(process.env.TRANSLATE_MAX_FIELD_CHARS || 600);
 
 function clip(text: string | null | undefined, max = MAX_FIELD): string {
   if (!text) return '';
   const t = String(text).trim();
   if (t.length <= max) return t;
   return `${t.slice(0, max - 1)}…`;
+}
+
+function looksTranslated(text: string, targetLanguage: string): boolean {
+  if (!text || targetLanguage === 'en') return true;
+  if (targetLanguage === 'hi' || targetLanguage === 'mr') {
+    return /[\u0900-\u097F]/.test(text);
+  }
+  return text.trim().length > 0;
 }
 
 function normalizeClauses(
@@ -69,7 +78,7 @@ async function askTranslateJson(
   targetLanguage: string,
 ): Promise<Record<string, unknown>> {
   const { response } = await callWithFallback(
-    { systemPrompt, userPrompt, temperature: 0.1, maxTokens: 2048 },
+    { systemPrompt, userPrompt, temperature: 0.1, maxTokens: 4096, expectJson: true },
     { task: 'rewrite', language: targetLanguage },
   );
 
@@ -77,14 +86,14 @@ async function askTranslateJson(
   try {
     return parseAiResponse(text);
   } catch (firstErr) {
-    // One repair pass for tiny models
     const { response: repaired } = await callWithFallback(
       {
         systemPrompt:
           'Fix the following into valid JSON only. Keep the same keys and meaning. No markdown, no commentary.',
-        userPrompt: text.slice(0, 6000),
+        userPrompt: text.slice(0, 8000),
         temperature: 0,
-        maxTokens: 2048,
+        maxTokens: 4096,
+        expectJson: true,
       },
       { task: 'rewrite', language: targetLanguage },
     );
@@ -126,7 +135,7 @@ export async function translateAnalysisResults(
     existing = {};
   }
 
-  if (existing[targetLanguage]) {
+  if (existing[targetLanguage] && !existing[targetLanguage].partial) {
     return existing[targetLanguage];
   }
 
@@ -135,74 +144,72 @@ export async function translateAnalysisResults(
     sql`${jurisdictionFlags.analysisId} = ${analysis.id}`
   ).all();
 
-  // Compact payload — tiny local models choke on large clause arrays.
-  const compactClauses = clauseRows.slice(0, MAX_CLAUSES).map((c) => ({
+  const fallbackClauses = clauseRows.map((c) => ({
     id: c.id,
-    plainEnglishText: clip(c.plainEnglishText),
-    riskReason: clip(c.riskReason, 160) || null,
-    counterSuggestion: null as string | null,
+    plainEnglishText: c.plainEnglishText || '',
+    riskReason: c.riskReason,
+    counterSuggestion: c.counterSuggestion,
   }));
-
-  const compactFlags = flagRows.slice(0, 5).map((f) => ({
-    id: f.id,
-    message: clip(f.message, 160),
-  }));
-
-  const payload = {
-    summary: clip(analysis.summary, 600),
-    clauses: compactClauses,
-    flags: compactFlags,
-  };
+  const fallbackFlags = flagRows.map((f) => ({ id: f.id, message: f.message }));
 
   const langName = getLanguageName(targetLanguage);
   const systemPrompt = `You translate legal analysis UI text into ${langName} (${targetLanguage}).
-Return ONLY one JSON object with keys: summary (string), clauses (array of {id, plainEnglishText, riskReason}), flags (array of {id, message}).
+Return ONLY one JSON object with keys: summary (string), clauses (array of {id, plainEnglishText, riskReason, counterSuggestion}), flags (array of {id, message}).
 Keep ids unchanged. No markdown fences. No extra keys. No commentary.`;
 
-  let parsed: Record<string, unknown>;
+  let summary = analysis.summary || '';
+  let translatedFlags = fallbackFlags;
+  let partial = false;
+
   try {
-    parsed = await askTranslateJson(systemPrompt, JSON.stringify(payload), targetLanguage);
-  } catch (err) {
-    console.warn(
-      '[translate] full payload failed, falling back to summary-only:',
-      err instanceof Error ? err.message : err,
+    const header = await askTranslateJson(
+      systemPrompt,
+      JSON.stringify({
+        summary: clip(analysis.summary, 900),
+        clauses: [],
+        flags: fallbackFlags.map((f) => ({ id: f.id, message: clip(f.message, 240) })),
+      }),
+      targetLanguage,
     );
-    // Minimal fallback: translate summary only so the UI still updates.
+    summary = String(header.summary || summary);
+    translatedFlags = normalizeFlags(header.flags, fallbackFlags);
+  } catch (err) {
+    console.warn('[translate] summary/flags failed:', err instanceof Error ? err.message : err);
+    partial = true;
+  }
+
+  const translatedClauses: TranslationSnapshot['clauses'] = [];
+  for (let i = 0; i < fallbackClauses.length; i += BATCH_SIZE) {
+    const batch = fallbackClauses.slice(i, i + BATCH_SIZE).map((c) => ({
+      id: c.id,
+      plainEnglishText: clip(c.plainEnglishText),
+      riskReason: clip(c.riskReason, 240) || null,
+      counterSuggestion: clip(c.counterSuggestion, 240) || null,
+    }));
     try {
-      parsed = await askTranslateJson(
-        `Translate the "summary" field into ${langName}. Return ONLY JSON: {"summary":"...","clauses":[],"flags":[]}`,
-        JSON.stringify({ summary: payload.summary }),
+      const parsed = await askTranslateJson(
+        systemPrompt,
+        JSON.stringify({ summary: '', clauses: batch, flags: [] }),
         targetLanguage,
       );
-    } catch (err2) {
-      console.error('[translate] summary-only also failed:', err2 instanceof Error ? err2.message : err2);
-      throw new BadRequestError(
-        'Translation failed — the local model returned invalid JSON. Try again or use a larger model.',
-      );
+      translatedClauses.push(...normalizeClauses(parsed.clauses, batch));
+    } catch (err) {
+      console.warn('[translate] batch failed:', err instanceof Error ? err.message : err);
+      translatedClauses.push(...batch);
+      partial = true;
     }
   }
+
+  if (!looksTranslated(summary, targetLanguage)) partial = true;
 
   const snapshot: TranslationSnapshot = {
     language: targetLanguage,
-    summary: String(parsed.summary || analysis.summary || ''),
-    clauses: normalizeClauses(parsed.clauses, compactClauses),
-    flags: normalizeFlags(parsed.flags, compactFlags),
+    summary,
+    clauses: translatedClauses.length > 0 ? translatedClauses : fallbackClauses,
+    flags: translatedFlags,
     translatedAt: new Date().toISOString(),
+    partial,
   };
-
-  // Merge remaining untranslated clauses as English originals so UI still has full set.
-  if (clauseRows.length > compactClauses.length) {
-    const translatedIds = new Set(snapshot.clauses.map((c) => c.id));
-    for (const c of clauseRows) {
-      if (translatedIds.has(c.id)) continue;
-      snapshot.clauses.push({
-        id: c.id,
-        plainEnglishText: c.plainEnglishText || '',
-        riskReason: c.riskReason,
-        counterSuggestion: c.counterSuggestion,
-      });
-    }
-  }
 
   existing[targetLanguage] = snapshot;
   db.run(sql`UPDATE ${analysisResults} SET translations = ${JSON.stringify(existing)} WHERE id = ${analysis.id}`);

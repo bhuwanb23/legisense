@@ -2,7 +2,7 @@ import type { AiProvider, AiRequest, AiResponse, AiContext, ProviderName } from 
 import { geminiProvider } from './geminiProvider';
 import { openRouterProvider } from './openRouterProvider';
 import { openAIProvider } from './openAIProvider';
-import { ollamaProvider } from './ollamaProvider';
+import { ollamaProvider, refreshOllamaHealth } from './ollamaProvider';
 
 type ProviderEntry = { provider: AiProvider; label: string };
 
@@ -13,13 +13,34 @@ const ALL_PROVIDERS: ProviderEntry[] = [
   { provider: openAIProvider, label: 'OpenAI' },
 ];
 
+const PER_PROVIDER_TIMEOUT_MS = Number(process.env.AI_CALL_TIMEOUT_MS || 55_000);
+
+function prefersCloud(context?: AiContext): boolean {
+  const task = context?.task;
+  const language = context?.language;
+  return task === 'chat' || task === 'rewrite' || Boolean(language && language !== 'en');
+}
+
+function firstCloud(): AiProvider | null {
+  if (geminiProvider.isAvailable()) return geminiProvider;
+  if (openRouterProvider.isAvailable()) return openRouterProvider;
+  if (openAIProvider.isAvailable()) return openAIProvider;
+  return null;
+}
+
 export function selectProvider(context?: AiContext): AiProvider | null {
-  // Local Ollama first for all tasks when enabled (avoids cloud quota).
+  const { pageCount, language, task } = context || {};
+
+  if (prefersCloud(context)) {
+    const cloud = firstCloud();
+    if (cloud) return cloud;
+    if (ollamaProvider.isAvailable()) return ollamaProvider;
+    return null;
+  }
+
   if (ollamaProvider.isAvailable()) {
     return ollamaProvider;
   }
-
-  const { pageCount, language, task } = context || {};
 
   if (pageCount && pageCount > 100 && geminiProvider.isAvailable()) {
     return geminiProvider;
@@ -71,10 +92,26 @@ export function getProvider(name: ProviderName): AiProvider | undefined {
   return ALL_PROVIDERS.find((p) => p.provider.name === name)?.provider;
 }
 
+async function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      promise,
+      new Promise<never>((_, reject) => {
+        timer = setTimeout(() => reject(new Error(`${label} timed out after ${ms}ms`)), ms);
+      }),
+    ]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
 export async function callWithFallback(
   request: AiRequest,
   context?: AiContext,
 ): Promise<{ response: AiResponse; providerUsed: ProviderName }> {
+  await refreshOllamaHealth();
+
   const primary = selectProvider(context);
   if (!primary) {
     throw new Error(
@@ -82,13 +119,17 @@ export async function callWithFallback(
     );
   }
 
-  const fallbackChain = buildFallbackChain(primary.name);
+  const fallbackChain = buildFallbackChain(primary.name, context);
 
   let lastError: Error | null = null;
 
   for (const provider of fallbackChain) {
     try {
-      const response = await provider.generate(request);
+      const response = await withTimeout(
+        provider.generate(request),
+        PER_PROVIDER_TIMEOUT_MS,
+        provider.name,
+      );
       return { response, providerUsed: provider.name };
     } catch (err) {
       lastError = err instanceof Error ? err : new Error(String(err));
@@ -99,20 +140,25 @@ export async function callWithFallback(
   throw lastError || new Error('All AI providers failed');
 }
 
-function buildFallbackChain(primaryName: ProviderName): AiProvider[] {
+function buildFallbackChain(primaryName: ProviderName, context?: AiContext): AiProvider[] {
   const chain: AiProvider[] = [];
   const added = new Set<ProviderName>();
 
   const primary = ALL_PROVIDERS.find((p) => p.provider.name === primaryName);
-  if (primary) {
+  if (primary && primary.provider.isAvailable()) {
     chain.push(primary.provider);
     added.add(primaryName);
   }
 
-  for (const entry of ALL_PROVIDERS) {
-    if (!added.has(entry.provider.name) && entry.provider.isAvailable()) {
-      chain.push(entry.provider);
-      added.add(entry.provider.name);
+  const cloudFirst = prefersCloud(context);
+  const rest = cloudFirst
+    ? [geminiProvider, openRouterProvider, openAIProvider, ollamaProvider]
+    : [ollamaProvider, geminiProvider, openRouterProvider, openAIProvider];
+
+  for (const provider of rest) {
+    if (!added.has(provider.name) && provider.isAvailable()) {
+      chain.push(provider);
+      added.add(provider.name);
     }
   }
 
