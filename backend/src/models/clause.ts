@@ -23,6 +23,7 @@ export const clauses = sqliteTable('clauses', {
   copiedAt: text('copied_at'),
   isFlagged: integer('is_flagged', { mode: 'boolean' }).notNull().default(false),
   pageNumber: integer('page_number'),
+  partyReferences: text('party_references'),
   startPosition: integer('start_position'),
   endPosition: integer('end_position'),
   createdAt: text('created_at').notNull().default(sql`(datetime('now'))`),
