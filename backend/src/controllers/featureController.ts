@@ -3,9 +3,10 @@ import crypto from 'crypto';
 import { getDb, persistNow } from '../config/database';
 import { documents, analysisResults, clauses, shareLinks, clauseNotes, playbookRules } from '../models';
 import { sql } from 'drizzle-orm';
-import { NotFoundError, BadRequestError } from '../utils/errors';
+import { NotFoundError, BadRequestError, ForbiddenError } from '../utils/errors';
 import { generateBetterVersion, compareDocuments, listTemplates, getTemplate, exportTemplate, compareDocumentToTemplate } from '../services/featureService';
 import { getTypeEntry } from '../data/documentTypes';
+import { getDocumentAccess } from '../services/collaboratorService';
 
 /* ------------------------------ Favorites ------------------------------ */
 
@@ -186,9 +187,10 @@ export async function listNotes(req: Request, res: Response, next: NextFunction)
   try {
     if (!req.user) throw new NotFoundError('User');
     const documentId = Number(req.params.documentId);
+    if (!getDocumentAccess(req.user.id, documentId)) throw new NotFoundError('Document');
     const db = getDb();
     const rows = db.select().from(clauseNotes).where(
-      sql`${clauseNotes.documentId} = ${documentId} AND ${clauseNotes.userId} = ${req.user.id}`
+      sql`${clauseNotes.documentId} = ${documentId}`
     ).all();
     res.json({ success: true, data: { notes: rows } });
   } catch (err) {
@@ -203,6 +205,9 @@ export async function addNote(req: Request, res: Response, next: NextFunction): 
     const clauseId = Number(req.params.clauseId);
     const note = String(req.body?.note || '').trim();
     if (!note) throw new BadRequestError('note is required');
+    const access = getDocumentAccess(req.user.id, documentId);
+    if (!access) throw new NotFoundError('Document');
+    if (access.role === 'viewer') throw new ForbiddenError('Commenter role required to add notes');
 
     const db = getDb();
     const clauseRows = db.select().from(clauses).where(

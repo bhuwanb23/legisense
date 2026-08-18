@@ -133,10 +133,10 @@ export async function getAnalysis(
     const db = getDb();
 
     const docRows = db.select().from(documents).where(
-      sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = 0`
+      sql`${documents.id} = ${documentId} AND ${documents.isDeleted} = 0`
     ).all();
 
-    if (!docRows[0]) throw new NotFoundError('Document');
+    if (!docRows[0] || !getDocumentAccess(req.user.id, documentId)) throw new NotFoundError('Document');
 
     const analysisRows = db.select().from(analysisResults).where(
       sql`${analysisResults.documentId} = ${documentId}`
