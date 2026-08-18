@@ -184,7 +184,7 @@ export async function listDocumentDeadlines(
           isRecurring: Boolean(d.isRecurring),
         })),
         breachScenarios: [],
-      });
+      }, `${docRows[0].rawText || ''}\n${clauseRows.map((c) => c.originalText || '').join('\n')}`);
       const have = new Set(rows.map((r) => `${r.dueDate.slice(0, 10)}|${r.title.toLowerCase()}`));
       const toAdd = extras.filter((e) => !have.has(`${e.dueDate.slice(0, 10)}|${e.title.toLowerCase()}`)
         && !rows.some((r) => r.dueDate.slice(0, 10) === e.dueDate.slice(0, 10) && /start|commencement/.test(r.title.toLowerCase()) && /start|commencement/.test(e.title.toLowerCase())));
