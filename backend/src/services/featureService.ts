@@ -59,8 +59,29 @@ export async function generateBetterVersion(
 
   const jurisdiction = [doc.countryCode, doc.stateCode].filter(Boolean).join('-') || 'general';
 
-  const { response } = await callWithFallback({
-    systemPrompt: `You are a legal advisor helping a regular person negotiate a fairer contract.
+  const heuristicRewrite = () => {
+    const sections = clauseRows.map((c) => {
+      const body = (c.counterSuggestion || c.originalText || c.plainEnglishText || '').trim();
+      const heading = [c.clauseNumber, c.clauseTitle].filter(Boolean).join('. ');
+      return `${heading}\n${body}`.trim();
+    }).filter(Boolean);
+    const missingBlock = missing.length
+      ? `\n\nADDITIONAL PROTECTIONS\n${missing.map((m, i) => `${i + 1}. ${m}`).join('\n')}`
+      : '';
+    const rewrittenText = `${sections.join('\n\n')}${missingBlock}`.trim() || rawText;
+    const changes = [
+      ...counters.slice(0, 8).map((c) => `Replaced ${c.title || `clause ${c.number}`} with a fairer counter-clause.`),
+      ...missing.slice(0, 5).map((m) => `Added missing protection: ${m}`),
+    ];
+    if (changes.length === 0) changes.push('Neutralized one-sided terms using stored analysis.');
+    return { rewrittenText, changes, model: 'heuristic-fallback' };
+  };
+
+  let responseText = '';
+  let model = 'heuristic-fallback';
+  try {
+    const { response } = await callWithFallback({
+      systemPrompt: `You are a legal advisor helping a regular person negotiate a fairer contract.
 Rewrite the ENTIRE document below into a more balanced version that protects both parties fairly.
 - Keep every clause from the original
 - Replace risky clauses using the provided counter-suggestions
@@ -71,17 +92,23 @@ Rewrite the ENTIRE document below into a more balanced version that protects bot
 - Return ONLY a JSON object: {"rewrittenText": "the full rewritten document", "changes": ["bullet summary of key changes"]}
 - changes MUST list at least 3 concrete edits
 - No markdown fences, no commentary.`,
-    userPrompt: JSON.stringify({
-      originalDocument: rawText.slice(0, 18000),
-      counterSuggestions: counters.slice(0, 20),
-      missingClauses: missing.slice(0, 12),
-    }),
-    temperature: 0.3,
-    maxTokens: 8192,
-    expectJson: true,
-  }, { task: 'rewrite' });
+      userPrompt: JSON.stringify({
+        originalDocument: rawText.slice(0, 18000),
+        counterSuggestions: counters.slice(0, 20),
+        missingClauses: missing.slice(0, 12),
+      }),
+      temperature: 0.3,
+      maxTokens: 8192,
+      expectJson: true,
+    }, { task: 'rewrite' });
+    responseText = typeof response.text === 'string' ? response.text : JSON.stringify(response.text);
+    model = response.model;
+  } catch (err) {
+    console.warn('[better-version] AI failed, using stored counters:', err instanceof Error ? err.message : err);
+    return heuristicRewrite();
+  }
 
-  const text = typeof response.text === 'string' ? response.text : JSON.stringify(response.text);
+  const text = responseText;
   let parsed: Record<string, unknown>;
   try {
     parsed = parseAiResponse(text);
@@ -124,7 +151,7 @@ Rewrite the ENTIRE document below into a more balanced version that protects bot
   return {
     rewrittenText: rewritten,
     changes,
-    model: response.model,
+    model,
   };
 }
 
