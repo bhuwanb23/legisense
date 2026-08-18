@@ -9,7 +9,8 @@ plainEnglishText must explain the clause in 2–4 concrete sentences (never "Ide
 originalText must be a real quote from the document.
 riskReason must explain why the clause matters (never only "Standard clause").
 deadlines need real calendar dates only — do not invent dates.
-missingClauses must not repeat clauses you already extracted.`;
+missingClauses must not repeat clauses you already extracted.
+For each clause: pageReference is the page number where the clause appears (null if unknown), and partyReferences lists which party/parties the clause applies to (use names from keyParties, empty list if none specific).`;
 
 export function buildAnalysisUserPrompt(documentText: string): string {
   return `Analyze the following legal document and extract all information as JSON.
