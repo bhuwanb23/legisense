@@ -193,13 +193,13 @@ export function buildDeadlineInputsFromAnalysis(
   const endItem = items.find((i) => /end|expir/.test(normalizeLabel(i.title)));
 
   if (startDate && !Number.isNaN(startDate.getTime())) {
-    const lockMatch = blob.match(/lock[\s-]*in[^.]{0,80}?(\d+)\s*(month|months)/i)
-      || blob.match(/first\s+(three|3|six|6|twelve|12)\s+months/i);
+    const lockMatch = blob.match(/lock[\s-]*in[\s\S]{0,220}?(\d+|three|six|twelve)\s*(?:\([^)]+\))?\s*months?/i)
+      || blob.match(/first\s+(three|3|six|6|twelve|12)(?:\s*\(\d+\))?\s+months/i);
     if (lockMatch && !items.some((i) => /lock/.test(normalizeLabel(i.title)))) {
       let months = Number(lockMatch[1]);
       if (!Number.isFinite(months)) {
-        const word = String(lockMatch[1] || lockMatch[0]).toLowerCase();
-        months = word.includes('six') || word === '6' ? 6 : word.includes('twelve') || word === '12' ? 12 : 3;
+        const word = String(lockMatch[1] || '').toLowerCase();
+        months = word.includes('six') ? 6 : word.includes('twelve') ? 12 : 3;
       }
       const lockEnd = addMonths(startDate, months);
       pushUnique({
@@ -214,8 +214,9 @@ export function buildDeadlineInputsFromAnalysis(
   }
 
   if (endItem && usableDate(endItem.dueDate)) {
-    const noticeMatch = blob.match(/(\d+|eleven|thirty|sixty|ninety)\s+months?\s+(written\s+)?notice/i)
-      || blob.match(/notice of\s+(\d+)\s+days/i);
+    const noticeMatch = blob.match(/(\d+|eleven|thirty|sixty|ninety)(?:\s*\(\d+\))?\s+months?['’]?\s+(written\s+)?notice/i)
+      || blob.match(/(\d+)\s*\((eleven|thirty|sixty|ninety)\)\s+months?['’]?\s+(written\s+)?notice/i)
+      || blob.match(/notice of\s+(\d+)\s+(days|months)/i);
     if (noticeMatch && !items.some((i) => /notice/.test(normalizeLabel(i.title)))) {
       const raw = String(noticeMatch[1] || '').toLowerCase();
       const monthsMap: Record<string, number> = { eleven: 11, thirty: 1, sixty: 2, ninety: 3 };
