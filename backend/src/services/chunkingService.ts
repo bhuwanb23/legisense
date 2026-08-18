@@ -79,6 +79,8 @@ export function mergeAnalysisResults(results: AnalysisOutput[]): AnalysisOutput 
     riskLevel: worst.riskLevel || 'low',
     fairnessScore: worst.fairnessScore || 50,
     favorsParty: worst.favorsParty || 'Balanced',
+    imbalanceReason: worst.imbalanceReason || '',
+    perCategoryFairness: worst.perCategoryFairness || {},
     summary: mergedSummary,
     keyParties: deduplicateParties(allParties),
     criticalDates: allDates,

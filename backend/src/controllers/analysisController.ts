@@ -154,6 +154,9 @@ export async function getAnalysis(
       return;
     }
 
+    const clauseRows = db.select().from(clauses).where(sql`${clauses.analysisId} = ${analysis.id}`).all();
+    const fairness = fillFairness(analysis, clauseRows);
+
     res.json({
       success: true,
       data: {
@@ -165,8 +168,8 @@ export async function getAnalysis(
           keyObligations: safeJsonParse(analysis.keyObligations),
           missingClauses: safeJsonParse(analysis.missingClauses),
           jurisdictionFlags: safeJsonParse(analysis.jurisdictionFlags),
-          perCategoryFairness: safeJsonParse(analysis.perCategoryFairness),
-          imbalanceReason: analysis.imbalanceReason,
+          perCategoryFairness: fairness.perCategoryFairness,
+          imbalanceReason: fairness.imbalanceReason,
         },
       },
     });
@@ -666,6 +669,36 @@ export async function confirmDocumentType(
 function safeJsonParse(value: string | null): unknown {
   if (!value) return [];
   try { return JSON.parse(value); } catch { return []; }
+}
+
+function fillFairness(
+  analysis: { favorsParty: string | null; imbalanceReason: string | null; perCategoryFairness: string | null; fairnessScore: number | null },
+  clauseRows: Array<{ clauseTitle: string | null; riskScore: number | null; riskCategory: string | null }>,
+): { imbalanceReason: string; perCategoryFairness: Record<string, number> } {
+  let per = safeJsonParse(analysis.perCategoryFairness);
+  if (!per || typeof per !== 'object' || Array.isArray(per) || Object.keys(per as object).length === 0) {
+    const buckets: Record<string, number[]> = {};
+    for (const c of clauseRows) {
+      const cat = c.riskCategory || 'legal';
+      if (!buckets[cat]) buckets[cat] = [];
+      buckets[cat].push(c.riskScore ?? 50);
+    }
+    per = {};
+    for (const [cat, scores] of Object.entries(buckets)) {
+      const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
+      (per as Record<string, number>)[cat] = Math.round(Math.max(0, Math.min(100, 100 - avg)));
+    }
+  }
+  let reason = analysis.imbalanceReason || '';
+  if (!reason) {
+    const high = clauseRows.filter((c) => (c.riskScore ?? 0) >= 70).slice(0, 3);
+    reason = high.length
+      ? `This contract favors ${analysis.favorsParty || 'one party'} because of one-sided terms in ${high.map((c) => c.clauseTitle).join(', ')}.`
+      : (analysis.favorsParty && analysis.favorsParty.toLowerCase() !== 'balanced'
+        ? `The agreement leans toward ${analysis.favorsParty}.`
+        : 'Obligations appear reasonably balanced.');
+  }
+  return { imbalanceReason: reason, perCategoryFairness: per as Record<string, number> };
 }
 
 export async function getJurisdictionFlags(
