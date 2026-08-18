@@ -44,6 +44,9 @@ async function getWorker(language?: string): Promise<Worker> {
     }
   }
   if (!worker) {
+    // A fresh worker must not inherit a stale error from the previous one
+    // (e.g. a corrupt image failing one job would otherwise poison the next).
+    workerError = null;
     try {
       worker = await createWorker(lang, 1, { errorHandler: onWorkerError });
       currentLanguage = lang;

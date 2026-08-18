@@ -30,10 +30,16 @@ class _ProcessingPageState extends State<ProcessingPage> {
   double _progress = 0.15;
   bool _cancelled = false;
   bool _finished = false;
+  bool _analysisStarted = false;
+  int _ocrFallbackPolls = 0;
   String? _error;
   Timer? _fakeProgress;
 
   int? get _docId => widget.upload.documentId;
+
+  /// Scan uploads run OCR through the backend queue worker — wait for
+  /// `ocr:completed` (or `text_extracted` status) before running analysis.
+  bool get _isScan => widget.upload.source == UploadSource.scan;
 
   @override
   void initState() {
@@ -65,8 +71,29 @@ class _ProcessingPageState extends State<ProcessingPage> {
 
     socket.on('analysis:progress', onProgress);
 
+    // Scan uploads: OCR runs in the queue worker. When it finishes, the
+    // backend fires 'ocr:completed' (or the status becomes 'text_extracted').
+    void onOcrCompleted(dynamic data) {
+      if (!mounted || _cancelled || _finished) return;
+      if (data is Map && (data['documentId'] as num?)?.toInt() != id) return;
+      _runAnalysis(id, socket);
+    }
+
+    void onOcrFailed(dynamic data) {
+      if (!mounted || _cancelled) return;
+      final message = data is Map ? data['error']?.toString() : null;
+      setState(() => _error = message ?? 'OCR failed. Please retry.');
+      _fakeProgress?.cancel();
+    }
+
+    if (_isScan) {
+      socket.on('ocr:completed', onOcrCompleted);
+      socket.on('ocr:failed', onOcrFailed);
+      _stage = 'Running OCR on your scan…';
+    }
+
     _fakeProgress = Timer.periodic(const Duration(milliseconds: 800), (_) {
-      if (!mounted || _cancelled || _error != null) return;
+      if (!mounted || _cancelled || _error != null || _finished) return;
       if (socket.isConnected && _progress > 0.2) return;
       setState(() {
         if (_progress < 0.85) {
@@ -78,7 +105,8 @@ class _ProcessingPageState extends State<ProcessingPage> {
       });
     });
 
-    // Status poll backup
+    // Status poll backup — also drives scan → analysis handoff if the socket
+    // event was missed.
     Timer? poll;
     poll = Timer.periodic(const Duration(seconds: 3), (_) async {
       if (!mounted || _cancelled || _finished) {
@@ -97,13 +125,39 @@ class _ProcessingPageState extends State<ProcessingPage> {
             }
           });
         }
+        if (_isScan && !_analysisStarted &&
+            (label == 'text_extracted' || label == 'analyzed')) {
+          _runAnalysis(id, socket);
+        } else if (_isScan && !_analysisStarted && label == 'pending') {
+          // Safety net: if the queue OCR job never ran (enqueue failed),
+          // fall back to the sync path after ~24s so the user isn't stuck.
+          _ocrFallbackPolls++;
+          if (_ocrFallbackPolls >= 8) {
+            _runAnalysis(id, socket);
+          }
+        }
       } catch (_) {}
     });
 
+    if (_isScan) {
+      // Wait for the queue worker — the socket event or poll drives analysis.
+      setState(() {
+        _stage = 'Running OCR on your scan…';
+        _progress = 0.3;
+      });
+    } else {
+      await _runAnalysis(id, socket);
+    }
+  }
+
+  /// Runs the blocking process() and opens the results hub.
+  Future<void> _runAnalysis(int id, SocketService socket) async {
+    if (_analysisStarted || _cancelled || !mounted) return;
+    _analysisStarted = true;
     try {
       setState(() {
-        _stage = 'Extracting text…';
-        _progress = 0.2;
+        _stage = 'Analyzing with local AI…';
+        _progress = 0.55;
       });
 
       final bundle = await _docs.process(id);
@@ -123,8 +177,9 @@ class _ProcessingPageState extends State<ProcessingPage> {
       setState(() => _error = e.toString());
     } finally {
       _fakeProgress?.cancel();
-      poll.cancel();
-      socket.off('analysis:progress', onProgress);
+      socket.off('analysis:progress');
+      socket.off('ocr:completed');
+      socket.off('ocr:failed');
       socket.unsubscribeDocument(id);
     }
   }

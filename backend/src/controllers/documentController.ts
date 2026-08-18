@@ -10,6 +10,7 @@ import { scrapeUrl, isValidUrl } from '../services/urlScraper';
 import { parseUserJurisdiction } from '../services/jurisdictionCheckService';
 import { processDocumentSync } from '../services/analysisService';
 import { normalizeTypeKey } from '../data/documentTypes';
+import { ocrQueue } from '../queue';
 
 function nowPlus24Hours(): string {
   return new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
@@ -154,6 +155,20 @@ async function handleScanUpload(req: Request, res: Response, next: NextFunction)
     if (!doc) throw new Error('Failed to create document record');
     persistNow();
 
+    // F02: OCR runs through the queue worker (Tesseract → Mistral fallback →
+    // clean → save raw_text → 'text_extracted' → emits 'ocr:completed').
+    let ocrJobId: string | null = null;
+    try {
+      const job = await ocrQueue.add('scan-ocr', {
+        documentId: doc.id,
+        userId: req.user.id,
+      });
+      ocrJobId = job.id;
+    } catch (err) {
+      console.error(`Failed to enqueue OCR job for doc ${doc.id}:`, err);
+      // Non-fatal: the sync process() path can still extract text on demand.
+    }
+
     res.status(202).json({
       success: true,
       data: {
@@ -163,6 +178,7 @@ async function handleScanUpload(req: Request, res: Response, next: NextFunction)
         fileSize: doc.fileSize,
         uploadStatus: 'uploaded',
         processingStatus: 'pending',
+        ocrJobId,
       },
     });
   } catch (err) { next(err); }
