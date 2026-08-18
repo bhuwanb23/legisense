@@ -30,8 +30,10 @@ const CHUNK_TOKEN_LIMIT = 500_000;
 const ANALYSIS_MAX_CHARS = Number(process.env.ANALYSIS_MAX_CHARS || 8000);
 
 function counterClausesEnabled(): boolean {
-  const v = (process.env.COUNTER_CLAUSES_ENABLED || 'false').toLowerCase();
-  return v === '1' || v === 'true' || v === 'on';
+  const v = (process.env.COUNTER_CLAUSES_ENABLED || '').toLowerCase();
+  if (v === '0' || v === 'false' || v === 'off') return false;
+  if (v === '1' || v === 'true' || v === 'on') return true;
+  return Boolean(process.env.GEMINI_API_KEY || process.env.OPENROUTER_API_KEY);
 }
 
 function truncateForLlm(text: string): string {
@@ -113,6 +115,8 @@ export async function processDocumentSync(
           riskLevel: 'low',
           fairnessScore: 50,
           favorsParty: 'Balanced',
+          imbalanceReason: '',
+          perCategoryFairness: {},
           summary: 'Placeholder',
           keyParties: [],
           criticalDates: [],
@@ -196,6 +200,13 @@ export async function processDocumentSync(
         await runRiskPatternScan(documentId, analysisId);
       } catch (err) {
         console.warn('[process] risk pattern scan skipped:', err instanceof Error ? err.message : err);
+      }
+
+      try {
+        const { runPlaybookScan } = await import('./playbookService');
+        await runPlaybookScan(documentId, analysisId, doc.userId);
+      } catch (err) {
+        console.warn('[process] playbook scan skipped:', err instanceof Error ? err.message : err);
       }
 
       if (counterClausesEnabled()) {
@@ -346,6 +357,7 @@ export async function classifyDocument(
       systemPrompt,
       userPrompt: buildClassifyUserPrompt(text),
       temperature: 0.2,
+      expectJson: true,
     },
     { task: 'classification', language: documentLanguage },
   );
@@ -373,7 +385,7 @@ async function analyzeSingle(
       const userPrompt = buildAnalysisUserPrompt(text);
 
       const { response, providerUsed } = await callWithFallback(
-        { systemPrompt: prompt, userPrompt, temperature: 0.3 },
+        { systemPrompt: prompt, userPrompt, temperature: 0.3, expectJson: true },
         { task: 'analysis', language: documentLanguage },
       );
 
@@ -462,6 +474,34 @@ export function calculateOverallRiskScore(clauses: AnalysisOutput['clauses']): {
   return { overallScore: overall, riskLevel };
 }
 
+function derivePerCategoryFairness(
+  clauseList: AnalysisOutput['clauses'],
+): Record<string, number> {
+  const buckets: Record<string, number[]> = {};
+  for (const c of clauseList) {
+    const cat = c.riskCategory || 'legal';
+    if (!buckets[cat]) buckets[cat] = [];
+    buckets[cat].push(typeof c.riskScore === 'number' ? c.riskScore : 50);
+  }
+  const out: Record<string, number> = {};
+  for (const [cat, scores] of Object.entries(buckets)) {
+    const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
+    out[cat] = Math.round(Math.max(0, Math.min(100, 100 - avg)));
+  }
+  return out;
+}
+
+function deriveImbalanceReason(ai: AnalysisOutput): string {
+  const high = (ai.clauses || []).filter((c) => (c.riskScore || 0) >= 70).slice(0, 3);
+  if (high.length === 0) {
+    return ai.favorsParty && ai.favorsParty.toLowerCase() !== 'balanced'
+      ? `The agreement leans toward ${ai.favorsParty}.`
+      : 'Obligations appear reasonably balanced.';
+  }
+  const titles = high.map((c) => c.clauseTitle).join(', ');
+  return `This contract favors ${ai.favorsParty || 'one party'} because of one-sided terms in ${titles}.`;
+}
+
 function saveAnalysisResults(
   documentId: number,
   userId: number,
@@ -476,6 +516,11 @@ function saveAnalysisResults(
   ai.overallRiskScore = computed.overallScore;
   ai.riskLevel = computed.riskLevel;
 
+  const perCat =
+    ai.perCategoryFairness && Object.keys(ai.perCategoryFairness).length > 0
+      ? ai.perCategoryFairness
+      : derivePerCategoryFairness(ai.clauses);
+
   db.insert(analysisResults).values({
     documentId,
     userId,
@@ -485,6 +530,8 @@ function saveAnalysisResults(
     riskLevel: ai.riskLevel,
     fairnessScore: ai.fairnessScore,
     favorsParty: ai.favorsParty,
+    imbalanceReason: ai.imbalanceReason || deriveImbalanceReason(ai),
+    perCategoryFairness: JSON.stringify(perCat),
     summary: ai.summary,
     keyParties: JSON.stringify(ai.keyParties),
     criticalDates: JSON.stringify(ai.criticalDates),

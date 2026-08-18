@@ -131,6 +131,8 @@ export const AnalysisOutputSchema = z.object({
   riskLevel: enumOr(['low', 'medium', 'high'] as const, 'low'),
   fairnessScore: softNum(50),
   favorsParty: softStrMin1('neither'),
+  imbalanceReason: softStr(''),
+  perCategoryFairness: z.record(z.string(), softNum(50)).default({}),
   summary: softStrMin1('No summary available.'),
   keyParties: z.array(PartySchema).default([]),
   criticalDates: z.array(CriticalDateSchema).default([]),

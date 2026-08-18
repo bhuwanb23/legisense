@@ -55,7 +55,7 @@ async function analyzeSingle(
   const userPrompt = buildAnalysisUserPrompt(text);
 
   const { response, providerUsed } = await callWithFallback(
-    { systemPrompt, userPrompt, temperature: 0.3 },
+    { systemPrompt, userPrompt, temperature: 0.3, expectJson: true },
     { ...context, task: 'analysis' },
   );
 
@@ -124,7 +124,7 @@ export async function rewriteClause(
   const userPrompt = buildClauseRewritePrompt(clauseText, riskLevel);
 
   const { response } = await callWithFallback(
-    { systemPrompt, userPrompt, temperature: 0.5 },
+    { systemPrompt, userPrompt, temperature: 0.5, expectJson: true },
     { ...context, task: 'rewrite' },
   );
 
