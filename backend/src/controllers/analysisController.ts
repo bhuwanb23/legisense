@@ -336,6 +336,10 @@ export async function getSummary(
     ).all();
 
     const analysis = analysisRows[0];
+    const clauseRows = analysis
+      ? db.select().from(clauses).where(sql`${clauses.analysisId} = ${analysis.id}`).all()
+      : [];
+    const fairness = analysis ? fillFairness(analysis, clauseRows) : { imbalanceReason: null, perCategoryFairness: {} };
 
     res.json({
       success: true,
@@ -347,8 +351,8 @@ export async function getSummary(
         riskLevel: analysis?.riskLevel || null,
         fairnessScore: analysis?.fairnessScore ?? null,
         favorsParty: analysis?.favorsParty || null,
-        imbalanceReason: analysis?.imbalanceReason || null,
-        perCategoryFairness: safeJsonParse(analysis?.perCategoryFairness || null) || {},
+        imbalanceReason: fairness.imbalanceReason,
+        perCategoryFairness: fairness.perCategoryFairness,
       },
     });
   } catch (err) {

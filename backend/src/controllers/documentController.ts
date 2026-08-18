@@ -560,6 +560,25 @@ export async function getDocumentAnalysis(req: Request, res: Response, next: Nex
     const clauseRows = db.select().from(clauses).where(sql`${clauses.analysisId} = ${analysis.id}`).all();
     const riskRows = db.select().from(riskItems).where(sql`${riskItems.analysisId} = ${analysis.id}`).all();
     const deadlineRows = db.select().from(deadlines).where(sql`${deadlines.documentId} = ${documentId}`).all();
+    const cat = analysis.perCategoryFairness;
+    let per: unknown = [];
+    try { per = cat ? JSON.parse(cat) : {}; } catch { per = {}; }
+    if (!per || typeof per !== 'object' || Array.isArray(per) || Object.keys(per as object).length === 0) {
+      const buckets: Record<string, number[]> = {};
+      for (const c of clauseRows) {
+        const k = c.riskCategory || 'legal';
+        if (!buckets[k]) buckets[k] = [];
+        buckets[k].push(c.riskScore ?? 50);
+      }
+      per = {};
+      for (const [k, scores] of Object.entries(buckets)) {
+        (per as Record<string, number>)[k] = Math.round(100 - scores.reduce((a, b) => a + b, 0) / scores.length);
+      }
+    }
+    const high = clauseRows.filter((c) => (c.riskScore ?? 0) >= 70).slice(0, 3);
+    const imbalanceReason = analysis.imbalanceReason || (high.length
+      ? `This contract favors ${analysis.favorsParty || 'one party'} because of one-sided terms in ${high.map((c) => c.clauseTitle).join(', ')}.`
+      : `The agreement leans toward ${analysis.favorsParty || 'one party'}.`);
 
     res.json({
       success: true,
@@ -572,8 +591,8 @@ export async function getDocumentAnalysis(req: Request, res: Response, next: Nex
           keyObligations: safeJsonParse(analysis.keyObligations),
           missingClauses: safeJsonParse(analysis.missingClauses),
           jurisdictionFlags: safeJsonParse(analysis.jurisdictionFlags),
-          perCategoryFairness: safeJsonParse(analysis.perCategoryFairness),
-          imbalanceReason: analysis.imbalanceReason,
+          perCategoryFairness: per,
+          imbalanceReason,
         },
         clauses: clauseRows,
         riskItems: riskRows,
