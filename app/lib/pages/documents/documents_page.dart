@@ -7,6 +7,7 @@ import '../../mappers/analysis_mapper.dart';
 import '../../repositories/documents_repository.dart';
 import '../../repositories/features_repository.dart';
 import '../../services/api_exception.dart';
+import '../../services/offline_cache.dart';
 import '../../services/session_prefs.dart';
 import '../../theme/app_insets.dart';
 import '../../theme/app_theme.dart';
@@ -41,6 +42,7 @@ class _DocumentsPageState extends State<DocumentsPage> {
   String _name = 'Reader';
   List<MockDocument> _docs = [];
   bool _loading = true;
+  bool _offline = false;
   String? _error;
 
   static const _categories =
@@ -147,24 +149,38 @@ class _DocumentsPageState extends State<DocumentsPage> {
     });
     try {
       final apiDocs = await _repo.list();
+      await OfflineCache.saveDocuments(apiDocs);
       if (!mounted) return;
       setState(() {
         _docs = apiDocs.map(AnalysisMapper.toMockDocument).toList();
+        _offline = false;
         _loading = false;
       });
     } on ApiException catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _error = e.message;
-        _loading = false;
-      });
+      await _fallbackToCache(e.message);
     } catch (e) {
-      if (!mounted) return;
+      await _fallbackToCache(e.toString());
+    }
+  }
+
+  /// Shows cached documents when the network is down.
+  Future<void> _fallbackToCache(String message) async {
+    final cached = await OfflineCache.cachedDocuments();
+    if (!mounted) return;
+    if (cached.isEmpty) {
       setState(() {
-        _error = e.toString();
+        _error = message;
+        _offline = false;
         _loading = false;
       });
+      return;
     }
+    setState(() {
+      _docs = cached.map(AnalysisMapper.toMockDocument).toList();
+      _offline = true;
+      _error = null;
+      _loading = false;
+    });
   }
 
   @override
@@ -467,6 +483,41 @@ class _DocumentsPageState extends State<DocumentsPage> {
                 ],
               ),
             ),
+            if (_offline) ...[
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 10,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFF3CD),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.cloud_off_rounded,
+                        size: 18,
+                        color: Color(0xFFB7791F),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'Offline — showing saved documents. Reconnect and refresh to sync.',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: const Color(0xFF92610C),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
               child: Container(
