@@ -6,6 +6,7 @@ import '../../data/legal_glossary.dart';
 import '../../repositories/analysis_repository.dart';
 import '../../theme/app_insets.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/analysis/listen_button.dart';
 import '../../widgets/analysis/soft_card.dart';
 import '../chat/chat_page.dart';
 import 'clause_breakdown_page.dart';
@@ -482,7 +483,7 @@ class _PlainLanguagePageState extends State<PlainLanguagePage> {
                                 _SectionBlock(
                                   title: 'PLAIN ENGLISH',
                                   titleColor: AppColors.riskLow,
-                                  trailing: const Text('🟢'),
+                                  trailing: ListenButton(text: _displayPlain(c)),
                                   child: Text(
                                     _displayPlain(c),
                                     style: GoogleFonts.plusJakartaSans(
