@@ -7,9 +7,11 @@ import '../../data/auth_constants.dart';
 import '../../mappers/analysis_mapper.dart';
 import '../../repositories/documents_repository.dart';
 import '../../services/api_exception.dart';
+import '../../services/tts_service.dart';
 import '../../theme/app_insets.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/export_report.dart';
+import '../../widgets/analysis/listen_button.dart';
 import '../../widgets/analysis/risk_style.dart';
 import '../../widgets/home/app_page_header.dart';
 import '../chat/chat_page.dart';
@@ -596,15 +598,43 @@ class _OverviewBody extends StatelessWidget {
               ),
               if (r.biasSummary.isNotEmpty) ...[
                 const SizedBox(height: 12),
-                Text(
-                  r.biasSummary,
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
-                  style: GoogleFonts.plusJakartaSans(
-                    fontSize: 13,
-                    height: 1.4,
-                    color: Colors.white.withValues(alpha: 0.9),
-                  ),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        r.biasSummary,
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 13,
+                          height: 1.4,
+                          color: Colors.white.withValues(alpha: 0.9),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    ValueListenableBuilder<String?>(
+                      valueListenable: TtsService.instance.speakingText,
+                      builder: (context, speaking, _) {
+                        final active = speaking == r.biasSummary;
+                        return IconButton(
+                          onPressed: () =>
+                              TtsService.instance.toggle(r.biasSummary),
+                          visualDensity: VisualDensity.compact,
+                          icon: Icon(
+                            active
+                                ? Icons.stop_circle_rounded
+                                : Icons.volume_up_rounded,
+                            size: 18,
+                            color: active
+                                ? Colors.white
+                                : Colors.white.withValues(alpha: 0.8),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
                 ),
               ],
             ],
