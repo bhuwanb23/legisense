@@ -204,7 +204,7 @@ export async function processDocumentSync(
 
       try {
         const { runPlaybookScan } = await import('./playbookService');
-        await runPlaybookScan(documentId, analysisId, doc.userId);
+        runPlaybookScan(documentId, analysisId, doc.userId);
       } catch (err) {
         console.warn('[process] playbook scan skipped:', err instanceof Error ? err.message : err);
       }

@@ -58,6 +58,7 @@ Rules:
 - Return only JSON`,
           userPrompt: `Original clause:\n${clause.originalText}\n\nRisk: ${clause.riskReason || 'elevated risk'}\nRisk score: ${clause.riskScore}`,
           temperature: 0.3,
+          expectJson: true,
         }, { task: 'rewrite' });
 
         const parsed = typeof response.text === 'string' ? parseAiResponse(response.text) : response.text;

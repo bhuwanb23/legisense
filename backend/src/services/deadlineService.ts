@@ -109,7 +109,7 @@ export function saveDeadlinesForDocument(
     const parent = parentRows[parentRows.length - 1];
     if (!parent) continue;
 
-    const childDates = expandRecurringDates(item.dueDate, recurrence, 4).slice(1);
+    const childDates = expandRecurringDates(item.dueDate, recurrence, 12).slice(1);
     for (const childDate of childDates) {
       db.insert(deadlines).values({
         documentId,
@@ -131,7 +131,10 @@ export function saveDeadlinesForDocument(
   persistNow();
 }
 
-export function buildDeadlineInputsFromAnalysis(ai: AnalysisOutput): DeadlineInput[] {
+export function buildDeadlineInputsFromAnalysis(
+  ai: AnalysisOutput,
+  extraText = '',
+): DeadlineInput[] {
   const items: DeadlineInput[] = [];
 
   const usableDate = (value: string | null | undefined) => {
@@ -142,9 +145,25 @@ export function buildDeadlineInputsFromAnalysis(ai: AnalysisOutput): DeadlineInp
     return !Number.isNaN(Date.parse(v));
   };
 
+  const normalizeLabel = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+  const similar = (a: string, b: string) => {
+    const na = normalizeLabel(a);
+    const nb = normalizeLabel(b);
+    if (na === nb) return true;
+    const startish = (t: string) => /start|commencement|begin/.test(t);
+    const endish = (t: string) => /end|expir|terminat/.test(t);
+    return (startish(na) && startish(nb)) || (endish(na) && endish(nb));
+  };
+
+  const pushUnique = (item: DeadlineInput) => {
+    const date = item.dueDate.slice(0, 10);
+    if (items.some((i) => i.dueDate.slice(0, 10) === date && similar(i.title, item.title))) return;
+    items.push({ ...item, dueDate: date });
+  };
+
   for (const d of ai.deadlines || []) {
     if (!usableDate(d.dueDate)) continue;
-    items.push({
+    pushUnique({
       title: d.title,
       description: d.description,
       dueDate: d.dueDate,
@@ -158,8 +177,7 @@ export function buildDeadlineInputsFromAnalysis(ai: AnalysisOutput): DeadlineInp
 
   for (const cd of ai.criticalDates || []) {
     if (!usableDate(cd.date)) continue;
-    if (items.some((i) => i.title === cd.label && i.dueDate === cd.date)) continue;
-    items.push({
+    pushUnique({
       title: cd.label,
       description: cd.importance || cd.label,
       dueDate: cd.date,
@@ -167,6 +185,54 @@ export function buildDeadlineInputsFromAnalysis(ai: AnalysisOutput): DeadlineInp
       deadlineType: 'milestone',
       isRecurring: false,
     });
+  }
+
+  const blob = `${extraText}\n${JSON.stringify(ai.keyObligations || [])}\n${(ai.clauses || []).map((c) => `${c.clauseTitle} ${c.originalText}`).join('\n')}`;
+  const startItem = items.find((i) => /start|commencement|begin/.test(normalizeLabel(i.title)));
+  const startDate = startItem ? new Date(startItem.dueDate) : null;
+  const endItem = items.find((i) => /end|expir/.test(normalizeLabel(i.title)));
+
+  if (startDate && !Number.isNaN(startDate.getTime())) {
+    const lockMatch = blob.match(/lock[\s-]*in[^.]{0,80}?(\d+)\s*(month|months)/i)
+      || blob.match(/first\s+(three|3|six|6|twelve|12)\s+months/i);
+    if (lockMatch && !items.some((i) => /lock/.test(normalizeLabel(i.title)))) {
+      let months = Number(lockMatch[1]);
+      if (!Number.isFinite(months)) {
+        const word = String(lockMatch[1] || lockMatch[0]).toLowerCase();
+        months = word.includes('six') || word === '6' ? 6 : word.includes('twelve') || word === '12' ? 12 : 3;
+      }
+      const lockEnd = addMonths(startDate, months);
+      pushUnique({
+        title: 'Lock-in period ends',
+        description: `Licensee lock-in of ${months} months from commencement.`,
+        dueDate: toDateOnly(lockEnd),
+        recurrence: 'one-time',
+        deadlineType: 'notice',
+        isRecurring: false,
+      });
+    }
+  }
+
+  if (endItem && usableDate(endItem.dueDate)) {
+    const noticeMatch = blob.match(/(\d+|eleven|thirty|sixty|ninety)\s+months?\s+(written\s+)?notice/i)
+      || blob.match(/notice of\s+(\d+)\s+days/i);
+    if (noticeMatch && !items.some((i) => /notice/.test(normalizeLabel(i.title)))) {
+      const raw = String(noticeMatch[1] || '').toLowerCase();
+      const monthsMap: Record<string, number> = { eleven: 11, thirty: 1, sixty: 2, ninety: 3 };
+      const n = monthsMap[raw] || Number(raw);
+      if (Number.isFinite(n) && n > 0) {
+        const expiry = new Date(endItem.dueDate);
+        const noticeDate = addMonths(expiry, -n);
+        pushUnique({
+          title: 'Notice window to terminate',
+          description: `${n}-month notice required before term end.`,
+          dueDate: toDateOnly(noticeDate),
+          recurrence: 'one-time',
+          deadlineType: 'notice',
+          isRecurring: false,
+        });
+      }
+    }
   }
 
   return items;

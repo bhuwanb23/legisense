@@ -114,6 +114,7 @@ Use the required list as the source of truth. Mark incomplete when a topic is me
         })),
       }),
       temperature: 0.2,
+      expectJson: true,
     }, { task: 'analysis' });
 
     const parsed = typeof response.text === 'string' ? parseAiResponse(response.text) : response.text;
