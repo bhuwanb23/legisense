@@ -13,6 +13,8 @@ export const analysisResults = sqliteTable('analysis_results', {
   riskLevel: text('risk_level'),
   fairnessScore: real('fairness_score'),
   favorsParty: text('favors_party'),
+  imbalanceReason: text('imbalance_reason'),
+  perCategoryFairness: text('per_category_fairness'),
   summary: text('summary'),
   keyParties: text('key_parties'),
   criticalDates: text('critical_dates'),

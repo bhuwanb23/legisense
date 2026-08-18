@@ -80,6 +80,28 @@ export function authenticate(req: Request, _res: Response, next: NextFunction): 
   }
 }
 
+export function authenticateApiKey(req: Request, _res: Response, next: NextFunction): void {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return next(new UnauthorizedError('Missing or invalid authorization header'));
+  }
+  const token = authHeader.split(' ')[1];
+  try {
+    const { authenticateApiKey: lookup } = require('../services/apiKeyService') as typeof import('../services/apiKeyService');
+    const user = lookup(token);
+    req.user = {
+      id: user.id,
+      email: user.email,
+      fullName: user.fullName || '',
+      authProvider: user.authProvider || 'email',
+      isActive: user.isActive,
+    };
+    next();
+  } catch (err) {
+    next(err);
+  }
+}
+
 export function optionalAuth(req: Request, _res: Response, next: NextFunction): void {
   const authHeader = req.headers.authorization;
 

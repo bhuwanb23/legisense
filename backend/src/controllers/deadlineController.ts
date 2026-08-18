@@ -229,7 +229,7 @@ export async function exportDeadlinesIcs(
       : Array.isArray(req.body?.deadline_ids)
         ? req.body.deadline_ids.map(Number).filter((n: number) => Number.isFinite(n))
         : [];
-    const documentId = req.body?.documentId ?? req.body?.document_id;
+    const documentId = req.body?.documentId ?? req.body?.document_id ?? req.query.documentId ?? req.query.document_id;
 
     const db = getDb();
     let rows = db.select().from(deadlines).where(
