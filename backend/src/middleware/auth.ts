@@ -80,7 +80,7 @@ export function authenticate(req: Request, _res: Response, next: NextFunction): 
   }
 }
 
-export function authenticateApiKey(req: Request, _res: Response, next: NextFunction): void {
+function attachApiKeyUser(req: Request, next: NextFunction, countUsage: boolean): void {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return next(new UnauthorizedError('Missing or invalid authorization header'));
@@ -88,7 +88,7 @@ export function authenticateApiKey(req: Request, _res: Response, next: NextFunct
   const token = authHeader.split(' ')[1];
   try {
     const { authenticateApiKey: lookup } = require('../services/apiKeyService') as typeof import('../services/apiKeyService');
-    const user = lookup(token);
+    const user = lookup(token, { countUsage });
     req.user = {
       id: user.id,
       email: user.email,
@@ -100,6 +100,14 @@ export function authenticateApiKey(req: Request, _res: Response, next: NextFunct
   } catch (err) {
     next(err);
   }
+}
+
+export function authenticateApiKey(req: Request, _res: Response, next: NextFunction): void {
+  attachApiKeyUser(req, next, true);
+}
+
+export function authenticateApiKeyRead(req: Request, _res: Response, next: NextFunction): void {
+  attachApiKeyUser(req, next, false);
 }
 
 export function optionalAuth(req: Request, _res: Response, next: NextFunction): void {
