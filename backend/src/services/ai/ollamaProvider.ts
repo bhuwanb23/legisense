@@ -3,7 +3,7 @@ import type { AiProvider, AiRequest, AiResponse, ProviderName } from './types';
 import { estimateTokens } from './tokenManager';
 
 const DEFAULT_BASE = 'http://127.0.0.1:11434/v1';
-const DEFAULT_MODEL = 'llama3.2:1b';
+const DEFAULT_MODEL = 'gemma4:12b';
 
 let client: OpenAI | null = null;
 
