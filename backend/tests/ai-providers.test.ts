@@ -108,10 +108,10 @@ describe('Provider Selection', () => {
     else delete process.env.OLLAMA_ENABLED;
   });
 
-  it('selects OpenRouter by default when all providers available', () => {
+  it('selects Gemini for analysis when Gemini is configured', () => {
     const provider = selectProvider({ task: 'analysis' });
     assert.ok(provider);
-    assert.equal(provider!.name, 'openrouter');
+    assert.equal(provider!.name, 'gemini');
   });
 
   it('selects Gemini when pageCount > 100', () => {
@@ -132,10 +132,10 @@ describe('Provider Selection', () => {
     assert.equal(provider!.name, 'gemini');
   });
 
-  it('returns OpenRouter for pageCount <= 100', () => {
+  it('selects Gemini for analysis even when pageCount is small', () => {
     const provider = selectProvider({ pageCount: 50, task: 'analysis' });
     assert.ok(provider);
-    assert.equal(provider!.name, 'openrouter');
+    assert.equal(provider!.name, 'gemini');
   });
 
   it('selects Gemini for chat even when OpenRouter is available', () => {
@@ -206,7 +206,7 @@ describe('Prompt Builders', () => {
 
   it('CHAT_SYSTEM_PROMPT includes key instructions', () => {
     assert.ok(CHAT_SYSTEM_PROMPT.includes('legal document'));
-    assert.ok(CHAT_SYSTEM_PROMPT.includes('plain-English'));
+    assert.ok(CHAT_SYSTEM_PROMPT.toLowerCase().includes('plain english'));
   });
 
   it('buildChatUserPrompt combines document and message', () => {
