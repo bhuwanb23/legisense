@@ -3,7 +3,9 @@ import type { AiProvider, AiRequest, AiResponse, ProviderName } from './types';
 import { estimateTokens } from './tokenManager';
 import { parseAiResponse } from '../../prompts/analysisPrompt';
 
-const DEFAULT_MODEL = 'gemini-2.0-flash';
+// `gemini-2.0-flash` was retired by Google (404); the API recommends
+// `gemini-3.6-flash`. Overridable with GEMINI_MODEL in .env.
+const DEFAULT_MODEL = process.env.GEMINI_MODEL || 'gemini-3.6-flash';
 const DEFAULT_MAX_RETRIES = 3;
 const DEFAULT_TIMEOUT_MS = 60_000;
 
