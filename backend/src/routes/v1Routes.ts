@@ -1,8 +1,8 @@
 import { Router } from 'express';
-import { publicAnalyze } from '../controllers/publicAnalyzeController';
-import { authenticateApiKey } from '../middleware/auth';
-import { aiRateLimiter } from '../middleware/rateLimiter';
+import { publicAnalyze, getPublicAnalyze } from '../controllers/publicAnalyzeController';
+import { authenticateApiKey, authenticateApiKeyRead } from '../middleware/auth';
 
 const router = Router();
-router.post('/analyze', authenticateApiKey, aiRateLimiter, publicAnalyze);
+router.post('/analyze', authenticateApiKey, publicAnalyze);
+router.get('/analyze/:documentId', authenticateApiKeyRead, getPublicAnalyze);
 export default router;
