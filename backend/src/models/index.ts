@@ -21,3 +21,6 @@ export { requiredClausesTemplates, type RequiredClausesTemplate, type NewRequire
 export { shareLinks, type ShareLink, type NewShareLink } from './shareLink';
 export { clauseNotes, type ClauseNote, type NewClauseNote } from './clauseNote';
 export { playbookRules, type PlaybookRule, type NewPlaybookRule } from './playbookRule';
+export { playbookFlags, type PlaybookFlag, type NewPlaybookFlag } from './playbookFlag';
+export { apiKeys, type ApiKey, type NewApiKey } from './apiKey';
+export { documentCollaborators, type DocumentCollaborator, type NewDocumentCollaborator } from './documentCollaborator';
