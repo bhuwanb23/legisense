@@ -112,6 +112,9 @@ export const geminiProvider: AiProvider = {
 
 function isRetryable(err: Error): boolean {
   const msg = err.message.toLowerCase();
+  if (msg.includes('perday') || msg.includes('per_day') || msg.includes('free_tier') || msg.includes('freetier')) {
+    return false;
+  }
   return (
     msg.includes('timeout') ||
     msg.includes('rate limit') ||
