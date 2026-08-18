@@ -11,6 +11,7 @@ import { parseUserJurisdiction } from '../services/jurisdictionCheckService';
 import { processDocumentSync } from '../services/analysisService';
 import { normalizeTypeKey } from '../data/documentTypes';
 import { ocrQueue } from '../queue';
+import { getDocumentAccess } from '../services/collaboratorService';
 
 function nowPlus24Hours(): string {
   return new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
@@ -352,6 +353,7 @@ export async function listDocuments(req: Request, res: Response, next: NextFunct
           uploadStatus: doc.uploadStatus,
           processingStatus: doc.processingStatus,
           isFavorite: doc.isFavorite,
+          autoDeleteAt: doc.autoDeleteAt,
           createdAt: doc.createdAt,
         })),
         pagination: {
@@ -378,11 +380,11 @@ export async function getDocument(req: Request, res: Response, next: NextFunctio
     const db = getDb();
 
     const rows = db.select().from(documents).where(
-      sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = 0`
+      sql`${documents.id} = ${documentId} AND ${documents.isDeleted} = 0`
     ).all();
 
     const doc = rows[0];
-    if (!doc) {
+    if (!doc || !getDocumentAccess(req.user.id, documentId)) {
       throw new NotFoundError('Document');
     }
 
@@ -401,6 +403,7 @@ export async function getDocument(req: Request, res: Response, next: NextFunctio
         uploadStatus: doc.uploadStatus,
         processingStatus: doc.processingStatus,
         pageCount: doc.pageCount,
+        autoDeleteAt: doc.autoDeleteAt,
         createdAt: doc.createdAt,
         updatedAt: doc.updatedAt,
       },
@@ -476,6 +479,7 @@ export async function getDocumentStatus(req: Request, res: Response, next: NextF
         uploadStatus: doc.uploadStatus,
         processingStatus: doc.processingStatus,
         isDeleted: doc.isDeleted,
+        autoDeleteAt: doc.autoDeleteAt,
         createdAt: doc.createdAt,
       },
     });
@@ -529,10 +533,10 @@ export async function getDocumentAnalysis(req: Request, res: Response, next: Nex
     const db = getDb();
 
     const docRows = db.select().from(documents).where(
-      sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id}`
+      sql`${documents.id} = ${documentId} AND ${documents.isDeleted} = 0`
     ).all();
 
-    if (!docRows[0]) {
+    if (!docRows[0] || !getDocumentAccess(req.user.id, documentId)) {
       throw new NotFoundError('Document');
     }
 
@@ -568,6 +572,8 @@ export async function getDocumentAnalysis(req: Request, res: Response, next: Nex
           keyObligations: safeJsonParse(analysis.keyObligations),
           missingClauses: safeJsonParse(analysis.missingClauses),
           jurisdictionFlags: safeJsonParse(analysis.jurisdictionFlags),
+          perCategoryFairness: safeJsonParse(analysis.perCategoryFairness),
+          imbalanceReason: analysis.imbalanceReason,
         },
         clauses: clauseRows,
         riskItems: riskRows,

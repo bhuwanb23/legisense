@@ -10,6 +10,7 @@ import { getFilteredStateConflicts } from '../services/conflictDetectionService'
 import { parseUserJurisdiction } from '../services/jurisdictionCheckService';
 import { users } from '../models';
 import { persistNow } from '../config/database';
+import { getDocumentAccess } from '../services/collaboratorService';
 
 function applyJurisdictionToDocument(
   documentId: number,
@@ -164,6 +165,8 @@ export async function getAnalysis(
           keyObligations: safeJsonParse(analysis.keyObligations),
           missingClauses: safeJsonParse(analysis.missingClauses),
           jurisdictionFlags: safeJsonParse(analysis.jurisdictionFlags),
+          perCategoryFairness: safeJsonParse(analysis.perCategoryFairness),
+          imbalanceReason: analysis.imbalanceReason,
         },
       },
     });
@@ -341,6 +344,8 @@ export async function getSummary(
         riskLevel: analysis?.riskLevel || null,
         fairnessScore: analysis?.fairnessScore ?? null,
         favorsParty: analysis?.favorsParty || null,
+        imbalanceReason: analysis?.imbalanceReason || null,
+        perCategoryFairness: safeJsonParse(analysis?.perCategoryFairness || null) || {},
       },
     });
   } catch (err) {
@@ -953,8 +958,6 @@ export async function getCounterClauses(
     const analysisRows = db.select().from(analysisResults).where(
       sql`${analysisResults.documentId} = ${documentId}`
     ).all();
-    const status = analysisRows[0]?.counterClausesStatus || 'skipped';
-
     const clauseRows = db.select().from(clauses).where(sql`${clauses.documentId} = ${documentId}`).all()
       .filter((c) => {
         const score = c.riskScore ?? 0;
@@ -962,24 +965,35 @@ export async function getCounterClauses(
         const hasSuggestion = Boolean(c.counterSuggestion && c.counterSuggestion.trim());
         return hasSuggestion && (score > 50 || level === 'high' || level === 'medium');
       });
+    const status = (() => {
+      const raw = analysisRows[0]?.counterClausesStatus || 'skipped';
+      if (raw === 'skipped' && clauseRows.length > 0) return 'ready';
+      return raw;
+    })();
 
     res.json({
       success: true,
       data: {
         status,
-        clauses: clauseRows.map((c) => ({
-          id: c.id,
-          clauseNumber: c.clauseNumber,
-          clauseTitle: c.clauseTitle,
-          originalText: c.originalText,
-          riskScore: c.riskScore,
-          riskLevel: c.riskLevel,
-          riskReason: c.riskReason,
-          counterSuggestion: c.counterSuggestion,
-          negotiationTips: safeJsonParse(c.negotiationTips),
-          usedCounter: c.usedCounter,
-          copiedAt: c.copiedAt,
-        })),
+        clauses: clauseRows.map((c) => {
+          const tips = safeJsonParse(c.negotiationTips) as { steps?: string[]; email_template?: string } | null;
+          const steps = tips && typeof tips === 'object' ? tips.steps : undefined;
+          return {
+            id: c.id,
+            clauseNumber: c.clauseNumber,
+            clauseTitle: c.clauseTitle,
+            originalText: c.originalText,
+            riskScore: c.riskScore,
+            riskLevel: c.riskLevel,
+            riskReason: c.riskReason,
+            counterSuggestion: c.counterSuggestion,
+            negotiationTips: tips,
+            negotiationTip: Array.isArray(steps) ? steps[0] || null : null,
+            emailTemplate: tips && typeof tips === 'object' ? tips.email_template || null : null,
+            usedCounter: c.usedCounter,
+            copiedAt: c.copiedAt,
+          };
+        }),
         total: clauseRows.length,
       },
     });
