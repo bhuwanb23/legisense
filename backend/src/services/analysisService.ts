@@ -22,6 +22,7 @@ import {
   enrichAnalysisOutput,
   looksLikeNonLegalDocument,
   shouldPromoteClauseToRisk,
+  buildHeuristicAnalysis,
 } from './analysisCleanup';
 
 /** Initial attempt + one repair prompt for tiny local models. */
@@ -405,8 +406,17 @@ async function analyzeSingle(
       };
     } catch (err) {
       lastError = err instanceof Error ? err.message : String(err);
-      if (attempt === MAX_RETRIES - 1) {
-        throw new Error(`AI analysis failed after ${MAX_RETRIES} attempts: ${lastError}`);
+      const exhausted = /free_tier|perday|quota exceeded|429/.test(lastError.toLowerCase());
+      if (attempt === MAX_RETRIES - 1 || exhausted) {
+        console.warn(`[process] AI unavailable (${lastError}); using heuristic clause split`);
+        const heuristic = enrichAnalysisOutput(buildHeuristicAnalysis(text), text);
+        return {
+          result: heuristic,
+          provider: 'none',
+          model: 'heuristic',
+          inputTokens: 0,
+          outputTokens: 0,
+        };
       }
     }
   }

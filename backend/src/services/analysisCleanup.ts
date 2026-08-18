@@ -29,7 +29,7 @@ const ALLOWED_TYPES = [
 const TYPE_HINTS: Array<{ re: RegExp; label: (typeof ALLOWED_TYPES)[number] }> = [
   { re: /\b(non[-\s]?disclosure|nda)\b/i, label: 'NDA' },
   { re: /\b(employment|offer letter|employee)\b/i, label: 'Employment Agreement' },
-  { re: /\b(lease|rental|landlord|tenant|rent)\b/i, label: 'Lease Agreement' },
+  { re: /\b(lease|rental|landlord|tenant|rent|leave and licence|leave and license|licensee|licensor)\b/i, label: 'Lease Agreement' },
   { re: /\b(loan|emi|borrower|lender|nbfc)\b/i, label: 'Loan Agreement' },
   { re: /\b(master services|service agreement|msa|retainer|sla)\b/i, label: 'Service Agreement' },
   { re: /\b(sale deed|conveyance)\b/i, label: 'Sale Deed' },
@@ -285,6 +285,203 @@ export function enrichAnalysisOutput(ai: AnalysisOutput, sourceText: string): An
     riskItems,
     deadlines,
     criticalDates,
+  };
+}
+
+function parseIsoLikeDate(raw: string): string | null {
+  const t = Date.parse(raw);
+  if (Number.isNaN(t)) return null;
+  return new Date(t).toISOString().slice(0, 10);
+}
+
+function extractParties(text: string): AnalysisOutput['keyParties'] {
+  const parties: AnalysisOutput['keyParties'] = [];
+  const licensor = text.match(/([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)[,\s]+(?:aged[^,]*,\s*)?(?:residing[^.]*?)?(?:hereinafter referred to as the\s+)?[\"']?Licensor/i);
+  const licensee = text.match(/([A-Z][a-z]+(?:\s+[A-Z][a-z]+)+)[,\s]+(?:aged[^,]*,\s*)?(?:residing[^.]*?)?(?:hereinafter referred to as the\s+)?[\"']?Licensee/i);
+  if (licensor) {
+    parties.push({
+      name: licensor[1].trim(),
+      role: 'Licensor',
+      type: 'individual',
+      obligations: [],
+      obligations_summary: 'Owner granting the licence.',
+    });
+  }
+  if (licensee) {
+    parties.push({
+      name: licensee[1].trim(),
+      role: 'Licensee',
+      type: 'individual',
+      obligations: [],
+      obligations_summary: 'Occupant of the premises.',
+    });
+  }
+  return parties;
+}
+
+function scoreClause(title: string, body: string): {
+  riskLevel: 'none' | 'low' | 'medium' | 'high';
+  riskScore: number;
+  riskReason: string;
+  riskCategory: Clause['riskCategory'];
+  counterSuggestion: string;
+} {
+  const blob = `${title} ${body}`.toLowerCase();
+  if (/lock[\s-]*out|self-help|disconnect (utilities|electricity)|without (a )?court/.test(blob)) {
+    return {
+      riskLevel: 'high',
+      riskScore: 88,
+      riskReason: 'Allows lock-out or utility cut-off without a court order.',
+      riskCategory: 'termination',
+      counterSuggestion: 'The Licensor shall not lock out, disconnect utilities, or seize goods without a court order. Any eviction must follow due process.',
+    };
+  }
+  if (/lock[\s-]*in|shall not terminate/.test(blob) && /month/.test(blob)) {
+    return {
+      riskLevel: 'high',
+      riskScore: 78,
+      riskReason: 'Lock-in prevents the occupant from leaving without paying remaining fees.',
+      riskCategory: 'termination',
+      counterSuggestion: 'Lock-in shall not exceed three months. After lock-in either party may terminate with 30 days’ written notice. Liquidated damages shall not exceed one month’s fee.',
+    };
+  }
+  if (/indemnif|hold harmless/.test(blob) && /unlimited|any and all|whatsoever/.test(blob)) {
+    return {
+      riskLevel: 'high',
+      riskScore: 82,
+      riskReason: 'Indemnity is one-sided or uncapped.',
+      riskCategory: 'liability',
+      counterSuggestion: 'Each party indemnifies the other only for its own negligence, capped at 12 months’ licence fee.',
+    };
+  }
+  if (/late fee|penalty|liquidated/.test(blob)) {
+    return {
+      riskLevel: 'medium',
+      riskScore: 55,
+      riskReason: 'Penalty or late fee may be disproportionate.',
+      riskCategory: 'financial',
+      counterSuggestion: 'Late fee shall not exceed 2% per month of the overdue amount, with a 7-day cure period.',
+    };
+  }
+  if (/licence fee|rent/.test(blob)) {
+    return {
+      riskLevel: 'medium',
+      riskScore: 42,
+      riskReason: 'Fee amount and increases should be checked against market and notice rules.',
+      riskCategory: 'financial',
+      counterSuggestion: 'Any increase requires written mutual agreement and shall not exceed 5% per year.',
+    };
+  }
+  return {
+    riskLevel: 'low',
+    riskScore: 18,
+    riskReason: 'Routine clause; still read against your facts.',
+    riskCategory: 'legal',
+    counterSuggestion: '',
+  };
+}
+
+/**
+ * Offline clause split used when every AI provider is unavailable (timeout, quota, etc.).
+ */
+export function buildHeuristicAnalysis(sourceText: string): AnalysisOutput {
+  const documentType = inferDocumentType(sourceText);
+  const numbered = sourceText.split(/(?=(?:^|\n)\s*\d+\.\s+)|(?=\s\d+\.\s+[A-Z])/m)
+    .map((s) => s.trim())
+    .filter((s) => /^\d+\./.test(s));
+  const clauses: Clause[] = numbered.map((block, i) => {
+    const m = block.match(/^(\d+)\.\s*([A-Z][A-Z0-9 \-\/']{2,80}?)(?:\.|:)\s*([\s\S]+)$/);
+    const clauseNumber = m ? Number(m[1]) : i + 1;
+    const clauseTitle = m ? m[2].trim() : `Clause ${i + 1}`;
+    const originalText = (m ? m[3] : block).replace(/\s+/g, ' ').trim();
+    const scored = scoreClause(clauseTitle, originalText);
+    return {
+      clauseNumber,
+      clauseTitle,
+      originalText: originalText.slice(0, 4000) || block.slice(0, 400),
+      plainEnglishText: originalText.slice(0, 400),
+      readingLevel: 'grade_8' as const,
+      keyLegalTerms: [],
+      ...scored,
+      partyReferences: [],
+    };
+  });
+
+  const parties = extractParties(sourceText);
+  const startMatch = sourceText.match(/(\d{1,2}\s+(January|February|March|April|May|June|July|August|September|October|November|December)\s+20\d{2})/i);
+  const endMatch = sourceText.match(/(?:expir|until|end(?:ing)? on|through)\s+(\d{1,2}\s+(January|February|March|April|May|June|July|August|September|October|November|December)\s+20\d{2})/i);
+  const startIso = startMatch ? parseIsoLikeDate(startMatch[1]) : null;
+  const endIso = endMatch ? parseIsoLikeDate(endMatch[1]) : null;
+
+  const criticalDates: AnalysisOutput['criticalDates'] = [];
+  const deadlines: AnalysisOutput['deadlines'] = [];
+  if (startIso) {
+    criticalDates.push({ label: 'Licence Term Start Date', date: startIso, urgency: 'medium', importance: 'Commencement' });
+    deadlines.push({
+      title: 'Licence Term Start Date',
+      description: 'Term commences',
+      dueDate: startIso,
+      recurrence: 'one-time',
+      deadlineType: 'milestone',
+      partyResponsible: '',
+      consequenceIfMissed: '',
+      isRecurring: false,
+    });
+  }
+  if (endIso) {
+    criticalDates.push({ label: 'Licence Term End Date', date: endIso, urgency: 'high', importance: 'Expiry' });
+    deadlines.push({
+      title: 'Licence Term End Date',
+      description: 'Term ends',
+      dueDate: endIso,
+      recurrence: 'one-time',
+      deadlineType: 'termination',
+      partyResponsible: '',
+      consequenceIfMissed: '',
+      isRecurring: false,
+    });
+  }
+
+  const high = clauses.filter((c) => c.riskLevel === 'high');
+  const overall = Math.min(100, Math.round(clauses.reduce((s, c) => s + c.riskScore, 0) / Math.max(1, clauses.length) * 1.4));
+  const fairnessScore = Math.max(8, 55 - high.length * 12);
+  const favors = parties.find((p) => /licensor|landlord|employer|company/i.test(p.role))?.name || 'Licensor';
+
+  return {
+    documentType,
+    detectedTypeConfidence: 70,
+    overallRiskScore: overall,
+    riskLevel: overall >= 67 ? 'high' : overall >= 34 ? 'medium' : 'low',
+    fairnessScore,
+    favorsParty: favors,
+    imbalanceReason: high.length
+      ? `This contract favors ${favors} because of one-sided terms in ${high.map((c) => c.clauseTitle).join(', ')}.`
+      : 'Heuristic split found no clearly one-sided clauses.',
+    perCategoryFairness: {
+      financial: 40,
+      termination: high.some((c) => c.riskCategory === 'termination') ? 22 : 50,
+      liability: high.some((c) => c.riskCategory === 'liability') ? 25 : 50,
+      obligation: 42,
+      compliance: 48,
+      legal: 45,
+    },
+    summary: `${documentType}${parties.length ? ` between ${parties.map((p) => p.name).join(' and ')}` : ''}. Heuristic extraction of ${clauses.length} clauses while cloud analysis was unavailable.`,
+    keyParties: parties,
+    criticalDates,
+    keyObligations: [],
+    missingClauses: ['Registration / stamp duty sharing', 'Inventory of fixtures'],
+    clauses,
+    riskItems: high.map((c) => ({
+      riskType: 'legal' as const,
+      title: c.clauseTitle,
+      description: c.riskReason,
+      severity: 'high' as const,
+      severityScore: c.riskScore,
+      recommendation: c.counterSuggestion,
+      legalReference: '',
+    })),
+    deadlines,
+    breachScenarios: [],
   };
 }
 

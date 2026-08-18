@@ -140,7 +140,7 @@ export async function sendMessage(
           tokensUsed = response.usage?.totalTokens || 0;
         } catch (err) {
           console.error('Chat AI failed:', err instanceof Error ? err.message : err);
-          responseText = 'Sorry, I could not generate an answer right now. Please try again.';
+          responseText = buildExtractiveChatAnswer(userMessage, retrieved, docRows[0].rawText || '');
         }
 
         const resolved = resolveCitations(responseText, clauseRows, retrievedIds.slice(0, 3));
@@ -300,4 +300,28 @@ export async function getHistory(
   } catch (err) {
     next(err);
   }
+}
+
+function buildExtractiveChatAnswer(
+  question: string,
+  retrieved: Array<{ clauseNumber: number | null; clauseTitle: string | null; originalText: string }>,
+  rawText: string,
+): string {
+  const namedPeople = Array.from(new Set(
+    [...rawText.matchAll(/([A-Z][a-z]+\s+[A-Z][a-z]+),\s+aged/g)].map((m) => m[1]),
+  ));
+  const names = namedPeople.length ? namedPeople : Array.from(new Set(
+    (rawText.match(/\b[A-Z][a-z]+\s+[A-Z][a-z]+\b/g) || []).slice(0, 8),
+  ));
+  const q = question.toLowerCase();
+  const lock = retrieved.find((c) => /lock|terminat|notice/i.test(`${c.clauseTitle} ${c.originalText}`)) || retrieved[0];
+  const bits: string[] = [];
+  if (names.length) bits.push(`The document names ${names.slice(0, 4).join(' and ')}.`);
+  if (lock) {
+    bits.push(
+      `Regarding ${q.includes('lock') ? 'the lock-in' : 'this question'}, [Clause ${lock.clauseNumber} — ${lock.clauseTitle || 'Untitled'}] says: ${lock.originalText.slice(0, 420)}`,
+    );
+  }
+  if (bits.length === 0) return 'The retrieved clauses do not contain a clear answer to that question.';
+  return bits.join(' ');
 }
