@@ -58,6 +58,11 @@ export const ClauseSchema = z.object({
     ['financial', 'legal', 'privacy', 'termination', 'obligation', 'liability', 'compliance', 'intellectual_property', 'operational'] as const,
     'legal',
   ),
+  pageReference: z.preprocess((v) => {
+    const n = typeof v === 'number' ? v : Number(v);
+    return Number.isFinite(n) && n > 0 ? Math.floor(n) : null;
+  }, z.number().int().positive().nullable().optional()),
+  partyReferences: z.array(softStrMin1('')).default([]),
   counterSuggestion: softStr(''),
 });
 
