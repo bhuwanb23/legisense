@@ -4,7 +4,7 @@ import { getDb, persistNow } from '../config/database';
 import { documents, analysisResults, clauses, shareLinks, clauseNotes, playbookRules } from '../models';
 import { sql } from 'drizzle-orm';
 import { NotFoundError, BadRequestError } from '../utils/errors';
-import { generateBetterVersion, compareDocuments, listTemplates } from '../services/featureService';
+import { generateBetterVersion, compareDocuments, listTemplates, getTemplate, exportTemplate, compareDocumentToTemplate } from '../services/featureService';
 import { getTypeEntry } from '../data/documentTypes';
 
 /* ------------------------------ Favorites ------------------------------ */
@@ -411,6 +411,46 @@ export async function resolveType(_req: Request, res: Response, next: NextFuncti
         subTypes: entry.subTypes,
       },
     });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function getTemplateByType(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const type = String(req.params.type || '');
+    const jurisdiction = req.query.jurisdiction ? String(req.query.jurisdiction) : undefined;
+    const tpl = getTemplate(type, jurisdiction);
+    if (!tpl) throw new NotFoundError('Template');
+    res.json({ success: true, data: tpl });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function exportTemplateByType(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const type = String(req.params.type || '');
+    const format = String(req.query.format || 'pdf').toLowerCase() === 'docx' ? 'docx' : 'pdf';
+    const jurisdiction = req.query.jurisdiction ? String(req.query.jurisdiction) : undefined;
+    const result = await exportTemplate(type, format, jurisdiction);
+    res.setHeader('Content-Type', result.contentType);
+    res.setHeader('Content-Disposition', `attachment; filename="${result.filename}"`);
+    res.send(result.buffer);
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function compareTemplate(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    if (!req.user) throw new NotFoundError('User');
+    const documentId = Number(req.body?.documentId ?? req.body?.document_id);
+    const type = String(req.body?.type || '');
+    const jurisdiction = req.body?.jurisdiction ? String(req.body.jurisdiction) : undefined;
+    if (!documentId || !type) throw new BadRequestError('documentId and type are required');
+    const result = await compareDocumentToTemplate(documentId, type, req.user.id, jurisdiction);
+    res.json({ success: true, data: result });
   } catch (err) {
     next(err);
   }

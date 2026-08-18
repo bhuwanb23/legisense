@@ -9,6 +9,7 @@ import {
   glossary, jurisdictions, legalRules, jurisdictionFlags, jurisdictionConflicts,
   riskPatterns, clauseRiskFlags, communityRiskFeedback, requiredClausesTemplates,
   shareLinks, clauseNotes, playbookRules,
+  playbookFlags, apiKeys, documentCollaborators,
 } from './models';
 import { legalGlossary } from './data/legalGlossary';
 import { seedJurisdictionsAndRules } from './data/seedJurisdictions';
@@ -334,6 +335,41 @@ async function start() {
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
   )`);
 
+  await db.run(sql`CREATE TABLE IF NOT EXISTS ${playbookFlags} (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    document_id INTEGER NOT NULL REFERENCES documents(id),
+    analysis_id INTEGER NOT NULL REFERENCES analysis_results(id),
+    clause_id INTEGER NOT NULL REFERENCES clauses(id),
+    rule_id INTEGER NOT NULL REFERENCES playbook_rules(id),
+    message TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  )`);
+
+  await db.run(sql`CREATE TABLE IF NOT EXISTS ${apiKeys} (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    name TEXT NOT NULL DEFAULT 'default',
+    key_prefix TEXT NOT NULL,
+    key_hash TEXT NOT NULL UNIQUE,
+    is_active INTEGER NOT NULL DEFAULT 1,
+    daily_count INTEGER NOT NULL DEFAULT 0,
+    daily_reset TEXT,
+    last_used_at TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  )`);
+
+  await db.run(sql`CREATE TABLE IF NOT EXISTS ${documentCollaborators} (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    document_id INTEGER NOT NULL REFERENCES documents(id),
+    invited_by INTEGER NOT NULL REFERENCES users(id),
+    email TEXT NOT NULL,
+    user_id INTEGER REFERENCES users(id),
+    role TEXT NOT NULL DEFAULT 'viewer',
+    token TEXT NOT NULL UNIQUE,
+    status TEXT NOT NULL DEFAULT 'pending',
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  )`);
+
   try { db.run(sql`ALTER TABLE ${clauses} ADD COLUMN reading_level TEXT`); } catch {}
   try { db.run(sql`ALTER TABLE ${clauses} ADD COLUMN key_legal_terms TEXT`); } catch {}
   try { db.run(sql`ALTER TABLE ${clauses} ADD COLUMN negotiation_tips TEXT`); } catch {}
@@ -363,6 +399,8 @@ async function start() {
   try { db.run(sql`ALTER TABLE analysis_results ADD COLUMN analysis_language TEXT`); } catch {}
   try { db.run(sql`ALTER TABLE analysis_results ADD COLUMN translations TEXT DEFAULT '{}'`); } catch {}
   try { db.run(sql`ALTER TABLE analysis_results ADD COLUMN counter_clauses_status TEXT DEFAULT 'skipped'`); } catch {}
+  try { db.run(sql`ALTER TABLE analysis_results ADD COLUMN imbalance_reason TEXT`); } catch {}
+  try { db.run(sql`ALTER TABLE analysis_results ADD COLUMN per_category_fairness TEXT`); } catch {}
 
   try { db.run(sql`ALTER TABLE deadlines ADD COLUMN deadline_type TEXT`); } catch {}
   try { db.run(sql`ALTER TABLE deadlines ADD COLUMN party_responsible TEXT`); } catch {}

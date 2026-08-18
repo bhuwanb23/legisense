@@ -113,70 +113,74 @@ export async function sendMessage(
     let citationConfidence: 'high' | 'low' = 'low';
     let citedClauseIds: number[] = [];
     let citedPages: Array<number | null> = [];
+    const retrievedIds = retrieved.filter((r) => r.id > 0).map((r) => r.id);
+    let responseTime = 0;
 
-    if (retrieved.length === 0) {
-      // keep not-found
-    } else {
-      const contextBlocks = retrieved.map((c) =>
-        `Clause ${c.clauseNumber ?? '?'}: ${c.clauseTitle || 'Untitled'}\nPage: ${c.pageNumber ?? 'N/A'}\nText: ${c.originalText.slice(0, 700)}`
-      ).join('\n\n');
+    try {
+      if (retrieved.length === 0) {
+        // keep not-found
+      } else {
+        const contextBlocks = retrieved.map((c) =>
+          `Clause ${c.clauseNumber ?? '?'}: ${c.clauseTitle || 'Untitled'}\nPage: ${c.pageNumber ?? 'N/A'}\nText: ${c.originalText.slice(0, 700)}`
+        ).join('\n\n');
 
-      try {
-        const { response } = await callWithFallback({
-          systemPrompt: CHAT_SYSTEM_PROMPT,
-          userPrompt: buildChatUserPrompt(
-            contextBlocks,
-            userMessage,
-            conversationHistory.slice(0, -1),
-          ),
-          temperature: 0.3,
-        }, { task: 'chat' });
+        try {
+          const { response } = await callWithFallback({
+            systemPrompt: CHAT_SYSTEM_PROMPT,
+            userPrompt: buildChatUserPrompt(
+              contextBlocks,
+              userMessage,
+              conversationHistory.slice(0, -1),
+            ),
+            temperature: 0.3,
+            expectJson: false,
+          }, { task: 'chat' });
 
-        responseText = response.text;
-        tokensUsed = response.usage?.totalTokens || 0;
+          responseText = response.text;
+          tokensUsed = response.usage?.totalTokens || 0;
+        } catch (err) {
+          console.error('Chat AI failed:', err instanceof Error ? err.message : err);
+          responseText = 'Sorry, I could not generate an answer right now. Please try again.';
+        }
 
-        const resolved = resolveCitations(responseText, clauseRows);
+        const resolved = resolveCitations(responseText, clauseRows, retrievedIds.slice(0, 3));
         citedClauses = resolved.citedClauses;
         citationConfidence = resolved.citationConfidence;
         citedClauseIds = resolved.citedClauseIds;
         citedPages = resolved.citedPages;
 
-        // If AI answered without usable citations and retrieval existed, append citations from top hits
-        if (citationConfidence === 'low' && clauseRows.length > 0 && retrieved.some((r) => r.id > 0)) {
+        if (citationConfidence === 'low' && retrievedIds.length > 0 && !responseText.includes('[Clause')) {
           const top = retrieved.filter((r) => r.id > 0).slice(0, 2);
           const autoCite = top.map((c) =>
             `[Clause ${c.clauseNumber} — ${c.clauseTitle || 'Untitled'}] (Page ${c.pageNumber ?? 'N/A'})`
           ).join('\n');
-          if (!responseText.includes('[Clause')) {
-            responseText = `${responseText.trim()}\n\n${autoCite}`;
-          }
-          const resolved2 = resolveCitations(responseText, clauseRows);
+          responseText = `${responseText.trim()}\n\n${autoCite}`;
+          const resolved2 = resolveCitations(responseText, clauseRows, retrievedIds.slice(0, 3));
           citedClauses = resolved2.citedClauses;
           citationConfidence = resolved2.citationConfidence;
           citedClauseIds = resolved2.citedClauseIds;
           citedPages = resolved2.citedPages;
         }
-      } catch (err) {
-        console.error('Chat AI failed:', err instanceof Error ? err.message : err);
-        responseText = 'Sorry, I could not generate an answer right now. Please try again.';
+      }
+    } finally {
+      responseTime = (Date.now() - startTime) / 1000;
+      try {
+        db.insert(chatMessages).values({
+          documentId,
+          userId: req.user.id,
+          sessionId: sessionIdFinal,
+          role: 'assistant',
+          message: responseText,
+          citedClauseIds: JSON.stringify(citedClauseIds),
+          citedPages: JSON.stringify(citedPages),
+          tokensUsed,
+          responseTime,
+        }).run();
+        persistNow();
+      } catch (persistErr) {
+        console.error('Failed to persist assistant chat row:', persistErr);
       }
     }
-
-    const responseTime = (Date.now() - startTime) / 1000;
-
-    db.insert(chatMessages).values({
-      documentId,
-      userId: req.user.id,
-      sessionId: sessionIdFinal,
-      role: 'assistant',
-      message: responseText,
-      citedClauseIds: JSON.stringify(citedClauseIds),
-      citedPages: JSON.stringify(citedPages),
-      tokensUsed,
-      responseTime,
-    }).run();
-
-    persistNow();
 
     emitToUser(req.user.id, 'chat:message', {
       documentId,

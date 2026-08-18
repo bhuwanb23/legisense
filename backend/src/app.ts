@@ -19,6 +19,7 @@ import notificationRoutes from './routes/notificationRoutes';
 import jurisdictionRoutes from './routes/jurisdictionRoutes';
 import languageRoutes from './routes/languageRoutes';
 import featureRoutes from './routes/featureRoutes';
+import v1Routes from './routes/v1Routes';
 import helmet from 'helmet';
 import path from 'path';
 
@@ -57,6 +58,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/jurisdictions', jurisdictionRoutes);
 app.use('/api/languages', languageRoutes);
 app.use('/api', featureRoutes);
+app.use('/api/v1', v1Routes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);
