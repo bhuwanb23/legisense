@@ -518,6 +518,10 @@ function saveAnalysisResults(
         riskScore: clause.riskScore,
         riskReason: clause.riskReason,
         riskCategory: clause.riskCategory,
+        pageNumber: clause.pageReference ?? null,
+        partyReferences: clause.partyReferences.length > 0
+          ? JSON.stringify(clause.partyReferences)
+          : null,
         counterSuggestion: clause.counterSuggestion,
       }).run();
     }
