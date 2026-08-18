@@ -52,6 +52,25 @@ class ApiDocument {
     );
   }
 
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'originalName': originalName,
+      'fileFormat': fileFormat,
+      'fileSize': fileSize,
+      'processingStatus': processingStatus,
+      'uploadStatus': uploadStatus,
+      'documentType': documentType,
+      'sourceType': sourceType,
+      'countryCode': countryCode,
+      'stateCode': stateCode,
+      'createdAt': createdAt,
+      'overallRiskScore': overallRiskScore,
+      'riskLevel': riskLevel,
+      'isFavorite': isFavorite,
+    };
+  }
+
   bool get isAnalyzed => processingStatus == 'analyzed';
   bool get isFailed => processingStatus == 'failed';
   bool get isProcessing =>
