@@ -153,19 +153,41 @@ abstract final class AnalysisMapper {
         byCat.putIfAbsent(cat, () => []).add(c);
       }
     }
+
+    // Build a lookup of recommendation per risk_type from the backend risk_items
+    final recByType = <String, String?>{};
+    for (final ri in bundle.riskItems) {
+      final t = ri['riskType']?.toString() ?? '';
+      if (t.isNotEmpty && !recByType.containsKey(t)) {
+        recByType[t] = ri['recommendation']?.toString();
+      }
+    }
+
     var i = 0;
     for (final entry in byCat.entries) {
       final worst = entry.value.map((c) => c.risk).fold(
             AnalysisRiskLevel.low,
             (a, b) => a.index >= b.index ? a : b,
           );
+      final count = entry.value.length;
+      final catKey = entry.key.toLowerCase();
+      final highCount = entry.value
+          .where((c) => c.risk == AnalysisRiskLevel.high)
+          .length;
+      final summaryDesc = _buildCategorySummary(
+        entry.key,
+        count,
+        highCount,
+        worst,
+      );
       categories.add(
         RiskCategory(
           id: 'rc$i',
           title: entry.key,
           level: worst,
-          summary: '${entry.value.length} clause(s) tagged',
+          summary: summaryDesc,
           clauseIds: entry.value.map((c) => c.id).toList(),
+          recommendation: recByType[catKey],
         ),
       );
       i++;
@@ -259,6 +281,32 @@ abstract final class AnalysisMapper {
         value: (m['date'] ?? m['value'] ?? '').toString(),
       );
     }).toList();
+  }
+
+  static String _buildCategorySummary(
+    String category,
+    int count,
+    int highRiskCount,
+    AnalysisRiskLevel worst,
+  ) {
+    final catLabel = category
+        .replaceAll('_', ' ')
+        .split(' ')
+        .map((w) => w.isEmpty ? w : '${w[0].toUpperCase()}${w.substring(1)}')
+        .join(' ');
+    final worstLabel = switch (worst) {
+      AnalysisRiskLevel.high => 'high risk',
+      AnalysisRiskLevel.medium => 'moderate risk',
+      AnalysisRiskLevel.low => 'low risk',
+      AnalysisRiskLevel.missing => 'unknown risk',
+    };
+    if (count == 1) {
+      return '$catLabel: 1 clause at $worstLabel.';
+    }
+    if (highRiskCount > 0) {
+      return '$catLabel: $count clauses, $highRiskCount high-risk. Review carefully.';
+    }
+    return '$catLabel: $count clauses at $worstLabel.';
   }
 
   static List<String> _parseBreaches(dynamic raw) {

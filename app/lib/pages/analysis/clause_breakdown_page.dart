@@ -21,10 +21,13 @@ class ClauseBreakdownPage extends StatefulWidget {
     super.key,
     required this.result,
     this.initialFilter,
+    this.initialCategoryFilter,
   });
 
   final AnalysisResult result;
   final AnalysisRiskLevel? initialFilter;
+  /// When set, only clauses in this risk_category are shown.
+  final String? initialCategoryFilter;
 
   @override
   State<ClauseBreakdownPage> createState() => _ClauseBreakdownPageState();
@@ -38,6 +41,7 @@ class _ClauseBreakdownPageState extends State<ClauseBreakdownPage> {
     AnalysisRiskLevel.missing => _ClauseFilter.missing,
     null => _ClauseFilter.all,
   };
+  late String? _categoryFilter = widget.initialCategoryFilter;
   final _search = TextEditingController();
   final _expanded = <String>{};
 
@@ -58,6 +62,13 @@ class _ClauseBreakdownPageState extends State<ClauseBreakdownPage> {
         _ClauseFilter.missing => c.risk == AnalysisRiskLevel.missing,
       };
       if (!levelOk) return false;
+      // Category filter: only show clauses in the selected category
+      if (_categoryFilter != null && _categoryFilter!.isNotEmpty) {
+        final catOk = c.categories.any(
+          (cat) => cat.toLowerCase() == _categoryFilter!.toLowerCase(),
+        );
+        if (!catOk) return false;
+      }
       if (q.isEmpty) return true;
       return c.title.toLowerCase().contains(q) ||
           c.originalText.toLowerCase().contains(q) ||

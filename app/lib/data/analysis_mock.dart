@@ -62,6 +62,7 @@ class RiskCategory {
     required this.level,
     required this.summary,
     required this.clauseIds,
+    this.recommendation,
   });
 
   final String id;
@@ -69,6 +70,7 @@ class RiskCategory {
   final AnalysisRiskLevel level;
   final String summary;
   final List<String> clauseIds;
+  final String? recommendation;
 }
 
 class AnalysisResult {

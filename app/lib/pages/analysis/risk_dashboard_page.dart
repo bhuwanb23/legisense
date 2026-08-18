@@ -179,7 +179,7 @@ class RiskDashboardPage extends StatelessWidget {
                   clauses: result.clauses
                       .where((c) => cat.clauseIds.contains(c.id))
                       .toList(),
-                  onOpenClauses: () => _openClauses(context, cat.level),
+                  onOpenClauses: () => _openClauses(context, cat.level, category: cat.title),
                 ),
               ),
             ),
@@ -189,12 +189,13 @@ class RiskDashboardPage extends StatelessWidget {
     );
   }
 
-  void _openClauses(BuildContext context, AnalysisRiskLevel level) {
+  void _openClauses(BuildContext context, AnalysisRiskLevel level, {String? category}) {
     Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => ClauseBreakdownPage(
           result: result,
-          initialFilter: level,
+          initialFilter: category == null ? level : null,
+          initialCategoryFilter: category,
         ),
       ),
     );
@@ -311,6 +312,25 @@ class _CategoryCardState extends State<_CategoryCard> {
             ),
           ),
           if (_open) ...[
+            if (cat.recommendation != null && cat.recommendation!.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: AppColors.bg,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  cat.recommendation!,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 12,
+                    height: 1.4,
+                    color: AppColors.inkSoft,
+                  ),
+                ),
+              ),
+            ],
             const SizedBox(height: 8),
             ...widget.clauses.map(
               (c) => Padding(
