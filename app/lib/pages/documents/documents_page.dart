@@ -5,6 +5,7 @@ import 'package:share_plus/share_plus.dart';
 import '../../data/dashboard_mock.dart';
 import '../../mappers/analysis_mapper.dart';
 import '../../repositories/documents_repository.dart';
+import '../../repositories/features_repository.dart';
 import '../../services/api_exception.dart';
 import '../../services/session_prefs.dart';
 import '../../theme/app_insets.dart';
@@ -12,6 +13,7 @@ import '../../theme/app_theme.dart';
 import '../../utils/export_report.dart';
 import '../../widgets/home/app_page_header.dart';
 import '../analysis/analysis_loader_page.dart';
+import 'compare_page.dart';
 
 /// Documents library — live DocumentsRepository feed.
 class DocumentsPage extends StatefulWidget {
@@ -49,6 +51,13 @@ class _DocumentsPageState extends State<DocumentsPage> {
       tint: Color(0xFFFFF3CD),
       fg: Color(0xFFE6A700),
       icon: Icons.folder_rounded,
+    ),
+    (
+      id: 'favorites',
+      label: 'Saved',
+      tint: Color(0xFFFFE8F0),
+      fg: Color(0xFFE91E63),
+      icon: Icons.star_rounded,
     ),
     (
       id: 'nda',
@@ -174,13 +183,15 @@ class _DocumentsPageState extends State<DocumentsPage> {
   List<MockDocument> get _visible {
     var list = _filter == 'all'
         ? List<MockDocument>.from(_docs)
-        : _docs
-            .where(
-              (d) =>
-                  d.typeId.contains(_filter) ||
-                  d.typeLabel.toLowerCase().contains(_filter),
-            )
-            .toList();
+        : _filter == 'favorites'
+            ? _docs.where((d) => d.isFavorite).toList()
+            : _docs
+                .where(
+                  (d) =>
+                      d.typeId.contains(_filter) ||
+                      d.typeLabel.toLowerCase().contains(_filter),
+                )
+                .toList();
     final q = _search.text.trim().toLowerCase();
     if (q.isNotEmpty) {
       list = list
@@ -291,9 +302,29 @@ class _DocumentsPageState extends State<DocumentsPage> {
                 onTap: () => Navigator.pop(context, 'view'),
               ),
               ListTile(
+                leading: Icon(
+                  doc.isFavorite
+                      ? Icons.star_rounded
+                      : Icons.star_border_rounded,
+                  color: doc.isFavorite
+                      ? const Color(0xFFE91E63)
+                      : AppColors.ink,
+                ),
+                title: Text(
+                  doc.isFavorite ? 'Remove from Saved' : 'Save document',
+                ),
+                onTap: () =>
+                    Navigator.pop(context, doc.isFavorite ? 'unfav' : 'fav'),
+              ),
+              ListTile(
                 leading: const Icon(Icons.ios_share_rounded),
-                title: const Text('Share'),
-                onTap: () => Navigator.pop(context, 'share'),
+                title: const Text('Share analysis link'),
+                onTap: () => Navigator.pop(context, 'share_link'),
+              ),
+              ListTile(
+                leading: const Icon(Icons.compare_arrows_rounded),
+                title: const Text('Compare with another document'),
+                onTap: () => Navigator.pop(context, 'compare'),
               ),
               ListTile(
                 leading: Icon(Icons.delete_outline, color: AppColors.error),
@@ -314,9 +345,68 @@ class _DocumentsPageState extends State<DocumentsPage> {
         _openAnalysis(doc);
       case 'share':
         await _share(doc);
+      case 'share_link':
+        await _shareLink(doc);
+      case 'compare':
+        _openCompare();
+      case 'fav':
+        await _setFavorite(doc, true);
+      case 'unfav':
+        await _setFavorite(doc, false);
       case 'delete':
         await _delete(doc);
     }
+  }
+
+  Future<void> _setFavorite(MockDocument doc, bool fav) async {
+    final id = int.tryParse(doc.id);
+    if (id == null) return;
+    try {
+      await FeaturesRepository().setFavorite(id, fav);
+      if (!mounted) return;
+      setState(() {
+        final idx = _docs.indexWhere((d) => d.id == doc.id);
+        if (idx >= 0) {
+          _docs[idx] = _docs[idx].copyWith(isFavorite: fav);
+        }
+      });
+      _toast(fav ? 'Saved to your library.' : 'Removed from Saved.');
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      _toast(e.message);
+    } catch (e) {
+      if (!mounted) return;
+      _toast(e.toString());
+    }
+  }
+
+  Future<void> _shareLink(MockDocument doc) async {
+    final id = int.tryParse(doc.id);
+    if (id == null) return;
+    try {
+      final data = await FeaturesRepository().createShareLink(id);
+      final fullUrl =
+          (data['fullUrl'] ?? data['url'] ?? '').toString();
+      if (fullUrl.isEmpty) {
+        _toast('Could not create a share link.');
+        return;
+      }
+      await SharePlus.instance.share(ShareParams(text: fullUrl));
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      _toast(e.message);
+    } catch (e) {
+      if (!mounted) return;
+      _toast(e.toString());
+    }
+  }
+
+  void _openCompare() {
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => const CompareDocumentsPage(),
+      ),
+    );
   }
 
   Future<void> _share(MockDocument doc) async {

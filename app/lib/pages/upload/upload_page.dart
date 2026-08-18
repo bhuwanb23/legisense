@@ -7,6 +7,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../models/pending_upload.dart';
 import '../../repositories/documents_repository.dart';
+import '../../repositories/features_repository.dart';
 import '../../services/api_exception.dart';
 import '../../services/session_prefs.dart';
 import '../../theme/app_insets.dart';
@@ -15,6 +16,7 @@ import '../../widgets/auth/auth_primary_button.dart';
 import '../../widgets/home/app_page_header.dart';
 import '../processing/processing_page.dart';
 import 'scan_preview_page.dart';
+import 'jurisdiction_picker_sheet.dart';
 
 /// Upload — TripGlide drop-zone hero + secondary methods.
 class UploadPage extends StatefulWidget {
@@ -31,6 +33,11 @@ class _UploadPageState extends State<UploadPage>
   PendingUpload? _pending;
   bool _uploading = false;
   bool _heroPressed = false;
+  String? _typeHint;
+  List<Map<String, dynamic>> _templates = [];
+  String? _country;
+  String? _state;
+  final _featuresRepo = FeaturesRepository();
 
   AnimationController? _enter;
 
@@ -38,6 +45,28 @@ class _UploadPageState extends State<UploadPage>
   void initState() {
     super.initState();
     _ensureEnter();
+    _loadTemplates();
+    _loadJurisdiction();
+  }
+
+  Future<void> _loadTemplates() async {
+    try {
+      final templates = await _featuresRepo.templates();
+      if (!mounted) return;
+      setState(() => _templates = templates);
+    } catch (_) {
+      // Templates are optional — silently ignore failures.
+    }
+  }
+
+  Future<void> _loadJurisdiction() async {
+    final country = await SessionPrefs.countryCode();
+    final state = await SessionPrefs.stateRegion();
+    if (!mounted) return;
+    setState(() {
+      _country = country;
+      _state = state;
+    });
   }
 
   @override
@@ -337,6 +366,7 @@ class _UploadPageState extends State<UploadPage>
                 upload.source == UploadSource.scan ? 'scan' : 'file',
             countryCode: country,
             stateCode: state,
+            typeHint: _typeHint,
           );
         case UploadSource.paste:
           result = await repo.uploadPaste(
@@ -344,6 +374,7 @@ class _UploadPageState extends State<UploadPage>
             title: upload.title,
             countryCode: country,
             stateCode: state,
+            typeHint: _typeHint,
           );
         case UploadSource.url:
           result = await repo.uploadUrl(
@@ -351,6 +382,7 @@ class _UploadPageState extends State<UploadPage>
             title: upload.title,
             countryCode: country,
             stateCode: state,
+            typeHint: _typeHint,
           );
       }
       if (!mounted) return;
@@ -384,6 +416,26 @@ class _UploadPageState extends State<UploadPage>
       return '${(bytes / 1024).toStringAsFixed(1)} KB';
     }
     return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+  }
+
+  Future<void> _pickJurisdiction() async {
+    final picked = await showModalBottomSheet<({String country, String? state})>(
+      context: context,
+      useRootNavigator: true,
+      isScrollControlled: true,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (_) => const JurisdictionPickerSheet(),
+    );
+    if (picked == null || !mounted) return;
+    setState(() {
+      _country = picked.country;
+      _state = picked.state;
+    });
+    await SessionPrefs.setCountryCode(picked.country);
+    await SessionPrefs.setStateRegion(picked.state);
   }
 
   IconData _sourceIcon(UploadSource source) {
@@ -521,6 +573,33 @@ class _UploadPageState extends State<UploadPage>
                           ),
                         ),
                       ),
+              ),
+              if (_templates.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                FadeTransition(
+                  opacity: _fade(0.44, 0.8),
+                  child: SlideTransition(
+                    position: _slide(0.44, 0.8),
+                    child: _TemplateRow(
+                      templates: _templates,
+                      selected: _typeHint,
+                      onSelect: (hint) =>
+                          setState(() => _typeHint = hint),
+                    ),
+                  ),
+                ),
+              ],
+              const SizedBox(height: 16),
+              FadeTransition(
+                opacity: _fade(0.5, 0.9),
+                child: SlideTransition(
+                  position: _slide(0.5, 0.9),
+                  child: _JurisdictionBar(
+                    country: _country,
+                    state: _state,
+                    onTap: _pickJurisdiction,
+                  ),
+                ),
               ),
               const SizedBox(height: 16),
               FadeTransition(
@@ -835,6 +914,173 @@ class _PendingCard extends StatelessWidget {
             color: AppColors.mute,
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _TemplateRow extends StatelessWidget {
+  const _TemplateRow({
+    required this.templates,
+    required this.selected,
+    required this.onSelect,
+  });
+
+  final List<Map<String, dynamic>> templates;
+  final String? selected;
+  final ValueChanged<String?> onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Start from a template',
+          style: GoogleFonts.plusJakartaSans(
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            color: AppColors.ink,
+          ),
+        ),
+        const SizedBox(height: 8),
+        SizedBox(
+          height: 90,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: templates.length,
+            separatorBuilder: (_, __) => const SizedBox(width: 8),
+            itemBuilder: (context, i) {
+              final t = templates[i];
+              final type = (t['type'] ?? '').toString();
+              final label = (t['typeLabel'] ?? type).toString();
+              final sel = selected == type;
+              return GestureDetector(
+                onTap: () => onSelect(sel ? null : type),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  width: 96,
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(AppRadii.md),
+                    border: Border.all(
+                      color: sel ? AppColors.ink : Colors.transparent,
+                      width: 1.6,
+                    ),
+                    boxShadow: AppShadows.soft,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(
+                        sel
+                            ? Icons.check_circle_rounded
+                            : Icons.description_outlined,
+                        size: 20,
+                        color: sel ? AppColors.ink : AppColors.mute,
+                      ),
+                      const Spacer(),
+                      Text(
+                        label,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.plusJakartaSans(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.ink,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _JurisdictionBar extends StatelessWidget {
+  const _JurisdictionBar({
+    required this.country,
+    required this.state,
+    required this.onTap,
+  });
+
+  final String? country;
+  final String? state;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final label = [
+      if (country != null && country!.isNotEmpty) country!,
+      if (state != null && state!.isNotEmpty) state!,
+    ].join(' · ');
+    return Material(
+      color: AppColors.surface,
+      borderRadius: BorderRadius.circular(AppRadii.md),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(AppRadii.md),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppRadii.md),
+            boxShadow: AppShadows.soft,
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: AppColors.chip,
+                  borderRadius: BorderRadius.circular(11),
+                ),
+                child: const Icon(
+                  Icons.public_rounded,
+                  size: 18,
+                  color: AppColors.ink,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Jurisdiction',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.mute,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      label.isEmpty
+                          ? 'Tap to pick country / state'
+                          : label,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.ink,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(
+                Icons.chevron_right_rounded,
+                color: AppColors.mute,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

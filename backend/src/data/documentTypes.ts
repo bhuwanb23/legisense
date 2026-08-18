@@ -27,11 +27,70 @@ export const DOCUMENT_TYPES: DocumentTypeEntry[] = [
 ];
 
 export function getTypeEntry(type: string): DocumentTypeEntry {
+  const key = normalizeTypeKey(type);
   return DOCUMENT_TYPES.find(
-    (t) => t.type === type
+    (t) => t.type === key
   ) ?? DOCUMENT_TYPES.find((t) => t.type === 'unknown')!;
 }
 
 export function getValidTypes(): string[] {
   return [...new Set(DOCUMENT_TYPES.map((t) => t.type))];
+}
+
+/**
+ * Map an arbitrary classifier string (key, label, alias, or LLM free-text like
+ * "Non-Disclosure Agreement") onto a canonical type key. Falls back to the
+ * input normalized, or 'unknown' if nothing matches.
+ */
+export function normalizeTypeKey(raw: string | null | undefined): string {
+  if (!raw) return 'unknown';
+  const input = String(raw).trim();
+  if (!input) return 'unknown';
+
+  const norm = (s: string) =>
+    s.toLowerCase().trim().replace(/[\s\-_/]+/g, '_').replace(/_+/g, '_');
+  const key = norm(input);
+
+  // Exact key match first.
+  if (DOCUMENT_TYPES.some((t) => t.type === key)) return key;
+
+  // Match against typeLabel, aliases, and subtype fragments.
+  for (const t of DOCUMENT_TYPES) {
+    const tLabel = norm(t.typeLabel);
+    if (key === tLabel) return t.type;
+    if (t.subTypes.some((s) => norm(s) === key)) return t.type;
+  }
+
+  // Partial / word-set matching: "non disclosure agreement" → nda,
+  // "rental agreement" → rental_agreement.
+  const words = key.replace(/_/g, ' ').split(' ').filter(Boolean);
+  let best: { type: string; score: number } | null = null;
+  for (const t of DOCUMENT_TYPES) {
+    const tLabelWords = norm(t.typeLabel).replace(/_/g, ' ').split(' ').filter(Boolean);
+    let score = 0;
+    for (const w of words) {
+      if (tLabelWords.includes(w)) score += 1;
+    }
+    if (t.type === 'nda' && (key.includes('nda') || key.includes('non_disclosure') || key.includes('confidential'))) score += 3;
+    if (t.type === 'rental_agreement' && (key.includes('rent') || key.includes('lease'))) score += 3;
+    if (t.type === 'employment_contract' && key.includes('employ')) score += 3;
+    if (t.type === 'loan_agreement' && key.includes('loan')) score += 3;
+    if (t.type === 'sale_deed' && (key.includes('sale') || key.includes('deed'))) score += 3;
+    if (t.type === 'power_of_attorney' && key.includes('attorney')) score += 3;
+    if (t.type === 'partnership_deed' && key.includes('partner')) score += 3;
+    if (t.type === 'court_notice' && (key.includes('court') || key.includes('notice'))) score += 3;
+    if (t.type === 'mou' && (key.includes('mou') || key.includes('memorandum'))) score += 3;
+    if (t.type === 'terms_of_service' && key.includes('terms')) score += 3;
+    if (t.type === 'privacy_policy' && key.includes('privacy')) score += 3;
+    if (t.type === 'service_agreement' && key.includes('service')) score += 3;
+    if (t.type === 'will' || t.type === 'testament') {
+      if (key.includes('will') || key.includes('testament')) score += 3;
+    }
+    if (score > 0 && (!best || score > best.score)) {
+      best = { type: t.type, score };
+    }
+  }
+  if (best) return best.type;
+
+  return 'unknown';
 }

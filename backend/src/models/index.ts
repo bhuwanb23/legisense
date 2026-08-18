@@ -18,3 +18,6 @@ export { riskPatterns, type RiskPattern, type NewRiskPattern } from './riskPatte
 export { clauseRiskFlags, type ClauseRiskFlag, type NewClauseRiskFlag } from './clauseRiskFlag';
 export { communityRiskFeedback, type CommunityRiskFeedback, type NewCommunityRiskFeedback } from './communityRiskFeedback';
 export { requiredClausesTemplates, type RequiredClausesTemplate, type NewRequiredClausesTemplate } from './requiredClausesTemplate';
+export { shareLinks, type ShareLink, type NewShareLink } from './shareLink';
+export { clauseNotes, type ClauseNote, type NewClauseNote } from './clauseNote';
+export { playbookRules, type PlaybookRule, type NewPlaybookRule } from './playbookRule';

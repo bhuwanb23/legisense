@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../data/analysis_mock.dart';
 import '../../repositories/analysis_repository.dart';
+import '../../repositories/features_repository.dart';
 import '../../services/api_exception.dart';
 import '../../theme/app_insets.dart';
 import '../../theme/app_theme.dart';
@@ -71,6 +72,29 @@ class _ClauseBreakdownPageState extends State<ClauseBreakdownPage> {
         backgroundColor: AppColors.primaryNavy,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      ),
+    );
+  }
+
+  Future<void> _openNotes(AnalysisClause c) async {
+    final docId = widget.result.documentId;
+    final clauseId = int.tryParse(c.id);
+    if (docId == null || clauseId == null) {
+      _toast('Notes need a saved analysis.');
+      return;
+    }
+    await showModalBottomSheet<void>(
+      context: context,
+      useRootNavigator: true,
+      isScrollControlled: true,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (_) => _ClauseNotesSheet(
+        documentId: docId,
+        clauseId: clauseId,
+        clauseTitle: 'Clause ${c.number} — ${c.title}',
       ),
     );
   }
@@ -288,6 +312,16 @@ class _ClauseBreakdownPageState extends State<ClauseBreakdownPage> {
                                     ),
                                   ),
                                   TextButton(
+                                    onPressed: () => _openNotes(c),
+                                    child: Text(
+                                      'Note',
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ),
+                                  TextButton(
                                     onPressed: () => _flagClause(c),
                                     child: Text(
                                       'Flag',
@@ -335,4 +369,316 @@ class _ClauseBreakdownPageState extends State<ClauseBreakdownPage> {
         _ClauseFilter.low => 'Low',
         _ClauseFilter.missing => 'Missing',
       };
+}
+
+/// Bottom sheet: view / add / edit / delete notes on one clause.
+class _ClauseNotesSheet extends StatefulWidget {
+  const _ClauseNotesSheet({
+    required this.documentId,
+    required this.clauseId,
+    required this.clauseTitle,
+  });
+
+  final int documentId;
+  final int clauseId;
+  final String clauseTitle;
+
+  @override
+  State<_ClauseNotesSheet> createState() => _ClauseNotesSheetState();
+}
+
+class _ClauseNotesSheetState extends State<_ClauseNotesSheet> {
+  final _repo = FeaturesRepository();
+  List<Map<String, dynamic>> _notes = [];
+  bool _loading = true;
+  String? _error;
+  final _field = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  @override
+  void dispose() {
+    _field.dispose();
+    super.dispose();
+  }
+
+  Future<void> _load() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final notes = await _repo.listNotes(widget.documentId);
+      if (!mounted) return;
+      setState(() {
+        _notes = notes
+            .where((n) => n['clauseId'] == widget.clauseId)
+            .toList();
+        _loading = false;
+      });
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = e.message;
+        _loading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = e.toString();
+        _loading = false;
+      });
+    }
+  }
+
+  Future<void> _add() async {
+    final text = _field.text.trim();
+    if (text.isEmpty) return;
+    try {
+      await _repo.addNote(
+        documentId: widget.documentId,
+        clauseId: widget.clauseId,
+        note: text,
+      );
+      _field.clear();
+      await _load();
+    } on ApiException catch (e) {
+      _toast(e.message);
+    } catch (e) {
+      _toast(e.toString());
+    }
+  }
+
+  Future<void> _edit(Map<String, dynamic> note) async {
+    final controller = TextEditingController(text: (note['note'] ?? '').toString());
+    final text = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        title: const Text('Edit note'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          maxLines: 4,
+          decoration: const InputDecoration(hintText: 'Note…'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, controller.text.trim()),
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+    if (text == null || text.isEmpty || !mounted) return;
+    final noteId = (note['id'] as num).toInt();
+    try {
+      await _repo.updateNote(noteId: noteId, note: text);
+      await _load();
+    } on ApiException catch (e) {
+      _toast(e.message);
+    } catch (e) {
+      _toast(e.toString());
+    }
+  }
+
+  Future<void> _delete(Map<String, dynamic> note) async {
+    final noteId = (note['id'] as num).toInt();
+    try {
+      await _repo.deleteNote(noteId);
+      await _load();
+    } on ApiException catch (e) {
+      _toast(e.message);
+    } catch (e) {
+      _toast(e.toString());
+    }
+  }
+
+  void _toast(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(msg, style: GoogleFonts.plusJakartaSans()),
+        backgroundColor: AppColors.primaryNavy,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        20,
+        16,
+        20,
+        MediaQuery.viewInsetsOf(context).bottom + 16,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.chip,
+                borderRadius: BorderRadius.circular(AppRadii.pill),
+              ),
+            ),
+          ),
+          const SizedBox(height: 14),
+          Text(
+            'Notes',
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              color: AppColors.ink,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            widget.clauseTitle,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.plusJakartaSans(
+              fontSize: 12,
+              color: AppColors.mute,
+            ),
+          ),
+          const SizedBox(height: 12),
+          ConstrainedBox(
+            constraints: const BoxConstraints(maxHeight: 300),
+            child: _loading
+                ? const Padding(
+                    padding: EdgeInsets.all(24),
+                    child: Center(child: CircularProgressIndicator()),
+                  )
+                : _error != null
+                    ? Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Text(
+                          _error!,
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.plusJakartaSans(
+                            color: AppColors.error,
+                          ),
+                        ),
+                      )
+                    : _notes.isEmpty
+                        ? Padding(
+                            padding: const EdgeInsets.all(20),
+                            child: Text(
+                              'No notes yet. Add a reminder or question about this clause.',
+                              textAlign: TextAlign.center,
+                              style: GoogleFonts.plusJakartaSans(
+                                color: AppColors.mute,
+                              ),
+                            ),
+                          )
+                        : ListView.separated(
+                            shrinkWrap: true,
+                            itemCount: _notes.length,
+                            separatorBuilder: (_, __) =>
+                                const SizedBox(height: 8),
+                            itemBuilder: (context, i) {
+                              final n = _notes[i];
+                              return Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: AppColors.bg,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Row(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.start,
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        (n['note'] ?? '').toString(),
+                                        style:
+                                            GoogleFonts.plusJakartaSans(
+                                          fontSize: 13,
+                                          height: 1.4,
+                                          color: AppColors.ink,
+                                        ),
+                                      ),
+                                    ),
+                                    IconButton(
+                                      visualDensity: VisualDensity.compact,
+                                      icon: const Icon(
+                                        Icons.edit_outlined,
+                                        size: 18,
+                                      ),
+                                      color: AppColors.mute,
+                                      onPressed: () => _edit(n),
+                                    ),
+                                    IconButton(
+                                      visualDensity: VisualDensity.compact,
+                                      icon: Icon(
+                                        Icons.delete_outline,
+                                        size: 18,
+                                        color: AppColors.error,
+                                      ),
+                                      onPressed: () => _delete(n),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _field,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 13,
+                    color: AppColors.ink,
+                  ),
+                  decoration: InputDecoration(
+                    hintText: 'Add a note…',
+                    hintStyle:
+                        GoogleFonts.plusJakartaSans(color: AppColors.mute),
+                    filled: true,
+                    fillColor: AppColors.bg,
+                    isDense: true,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                  onSubmitted: (_) => _add(),
+                ),
+              ),
+              const SizedBox(width: 10),
+              FilledButton(
+                onPressed: _add,
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.ink,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 18,
+                    vertical: 12,
+                  ),
+                ),
+                child: const Icon(Icons.send_rounded, size: 18),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 }

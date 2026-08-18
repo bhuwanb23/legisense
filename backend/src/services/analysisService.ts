@@ -7,6 +7,7 @@ import { callWithFallback, selectProviderForTokens } from './ai';
 import { buildAnalysisUserPrompt, parseAiResponse, appendLanguageInstructions } from '../prompts/analysisPrompt';
 import { CLASSIFY_SYSTEM_PROMPT, ClassifyOutputSchema, buildClassifyUserPrompt, parseClassifyResponse, type ClassifyOutput } from '../prompts/classificationPrompt';
 import { getPromptForType } from '../prompts/promptTemplates';
+import { normalizeTypeKey } from '../data/documentTypes';
 import { AnalysisOutputSchema, type AnalysisOutput } from '../schemas/analysisSchemas';
 import { chunkText, estimateTotalRequestTokens, mergeAnalysisResults } from './chunkingService';
 import { createNotification } from './notificationService';
@@ -86,8 +87,10 @@ export async function processDocumentSync(
       WHERE id = ${documentId}`);
 
     // One LLM call — document type comes from the analysis JSON itself.
+    // A template type hint (chosen at upload) steers the prompt when present.
+    const hintKey = normalizeTypeKey(doc.detectedType);
     const selectedPrompt = appendLanguageInstructions(
-      getPromptForType('unknown'),
+      getPromptForType(hintKey === 'unknown' ? 'unknown' : hintKey),
       detectedLang,
       preferredLanguage,
     );
@@ -135,7 +138,7 @@ export async function processDocumentSync(
       totalOutputTokens = singleResult.outputTokens;
     }
 
-    const typeKey = (analysisResult.documentType || 'unknown').toLowerCase().replace(/\s+/g, '_');
+    const typeKey = normalizeTypeKey(analysisResult.documentType || 'unknown');
     db.run(sql`UPDATE ${documents} SET
       detected_type = ${typeKey},
       detected_type_confidence = ${analysisResult.detectedTypeConfidence || 70},

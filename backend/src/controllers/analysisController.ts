@@ -5,7 +5,7 @@ import { sql } from 'drizzle-orm';
 import { analysisQueue } from '../queue';
 import { NotFoundError, BadRequestError } from '../utils/errors';
 import { classifyDocument } from '../services/analysisService';
-import { getTypeEntry, getValidTypes } from '../data/documentTypes';
+import { getTypeEntry, getValidTypes, normalizeTypeKey } from '../data/documentTypes';
 import { getFilteredStateConflicts } from '../services/conflictDetectionService';
 import { parseUserJurisdiction } from '../services/jurisdictionCheckService';
 import { users } from '../models';
@@ -582,13 +582,16 @@ export async function classifyEndpoint(
     }
 
     const classification = await classifyDocument(rawText);
-    const typeEntry = getTypeEntry(classification.type);
+    // Normalize the classifier's free-text type onto a canonical key so labels
+    // like "Non-Disclosure Agreement" map to "nda" instead of "Unknown Document".
+    const typeKey = normalizeTypeKey(classification.type);
+    const typeEntry = getTypeEntry(typeKey);
     const needsConfirmation = classification.confidence < 60;
 
     res.json({
       success: true,
       data: {
-        type: classification.type,
+        type: typeKey,
         typeLabel: typeEntry.typeLabel,
         confidence: classification.confidence,
         subType: classification.sub_type,
@@ -1064,23 +1067,23 @@ export async function rewritePlainEnglish(
     };
 
     const levelLabel = readingLevelMap[readingLevel];
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let aiProvider: any;
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const { getAiProvider } = require('../services/ai/aiProviderService');
-      aiProvider = getAiProvider();
-    } catch (err) {
-      throw new BadRequestError('AI service not configured. Rewrite feature requires AI provider.');
-    }
+
+    const { callWithFallback } = await import('../services/ai');
 
     for (const clause of clauseRows) {
       const levelDesc = readingLevel === 'grade5' ? 'Grade 5 (age 10-11)' : readingLevel === 'grade8' ? 'Grade 8 (age 13-14)' : 'standard college';
       const prompt = `Rewrite the following legal text at a ${levelDesc} reading level. Keep it simple, clear, and use short sentences. Do not lose legal meaning.\n\nOriginal: ${clause.originalText || clause.plainEnglishText}\n\nRewritten:`;
 
       try {
-        const response = await aiProvider.generate(prompt);
-        const plainEnglishText = response.trim();
+        const { response } = await callWithFallback(
+          {
+            systemPrompt: 'You simplify legal text into plain English. Return only the rewritten text with no preamble, quotes, or commentary.',
+            userPrompt: prompt,
+            temperature: 0.3,
+          },
+          { task: 'rewrite' },
+        );
+        const plainEnglishText = (typeof response.text === 'string' ? response.text : JSON.stringify(response.text)).trim();
 
         db.run(
           sql`UPDATE ${clauses} SET plain_english_text = ${plainEnglishText}, reading_level = ${levelLabel} WHERE id = ${clause.id}`

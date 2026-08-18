@@ -14,6 +14,7 @@ import '../../widgets/analysis/risk_style.dart';
 import '../../widgets/home/app_page_header.dart';
 import '../chat/chat_page.dart';
 import '../deadlines/deadlines_page.dart';
+import 'better_version_page.dart';
 import 'clause_breakdown_page.dart';
 import 'counter_clauses_page.dart';
 import 'document_summary_page.dart';
@@ -282,6 +283,13 @@ class _AnalysisResultsPageState extends State<AnalysisResultsPage> {
                           : () => _push(
                                 DeadlinesPage(documentId: r.documentId),
                               ),
+                      onOpenBetterVersion: r.documentId == null
+                          ? null
+                          : () => _push(
+                                BetterVersionPage(
+                                  documentId: r.documentId!,
+                                ),
+                              ),
                       onTranslate:
                           r.documentId == null ? null : _translate,
                     )
@@ -444,6 +452,7 @@ class _OverviewBody extends StatelessWidget {
     this.onOpenMissing,
     this.onOpenCounter,
     this.onOpenDeadlines,
+    this.onOpenBetterVersion,
     this.onTranslate,
   });
 
@@ -464,6 +473,7 @@ class _OverviewBody extends StatelessWidget {
   final VoidCallback? onOpenMissing;
   final VoidCallback? onOpenCounter;
   final VoidCallback? onOpenDeadlines;
+  final VoidCallback? onOpenBetterVersion;
   final VoidCallback? onTranslate;
 
   @override
@@ -873,6 +883,12 @@ class _OverviewBody extends StatelessWidget {
                     icon: Icons.event_outlined,
                     label: 'Deadlines',
                     onTap: onOpenDeadlines!,
+                  ),
+                if (onOpenBetterVersion != null)
+                  _NavTile(
+                    icon: Icons.auto_fix_high_rounded,
+                    label: 'Better version',
+                    onTap: onOpenBetterVersion!,
                   ),
                 if (onTranslate != null)
                   _NavTile(

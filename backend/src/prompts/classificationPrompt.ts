@@ -1,12 +1,26 @@
 import { z } from 'zod';
 import { getValidTypes } from '../data/documentTypes';
 
+const softStr = (fallback = '') =>
+  z.preprocess((v) => {
+    if (v == null) return fallback;
+    const s = String(v).trim();
+    return s.length > 0 ? s : fallback;
+  }, z.string());
+
+const softNum = (fallback = 0, min = 0, max = 100) =>
+  z.preprocess((v) => {
+    const n = typeof v === 'number' ? v : Number(v);
+    if (!Number.isFinite(n)) return fallback;
+    return Math.min(max, Math.max(min, n));
+  }, z.number().min(min).max(max));
+
 export const ClassifyOutputSchema = z.object({
-  type: z.string().min(1),
-  type_label: z.string().min(1),
-  confidence: z.number().min(0).max(100),
-  sub_type: z.string(),
-  icon: z.string(),
+  type: softStr('unknown'),
+  type_label: softStr(''),
+  confidence: softNum(0),
+  sub_type: softStr(''),
+  icon: softStr('help_circle'),
 });
 
 export type ClassifyOutput = z.infer<typeof ClassifyOutputSchema>;

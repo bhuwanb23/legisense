@@ -9,6 +9,7 @@ import { encryptText, isEncryptionConfigured } from '../services/encryptionServi
 import { scrapeUrl, isValidUrl } from '../services/urlScraper';
 import { parseUserJurisdiction } from '../services/jurisdictionCheckService';
 import { processDocumentSync } from '../services/analysisService';
+import { normalizeTypeKey } from '../data/documentTypes';
 
 function nowPlus24Hours(): string {
   return new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
@@ -30,6 +31,14 @@ function resolveJurisdictionFromRequest(req: Request): { countryCode: string | n
     countryCode: countryCode ? String(countryCode).toUpperCase() : null,
     stateCode: stateCode ? String(stateCode).toUpperCase() : null,
   };
+}
+
+/** Template type hint from upload (typeHint / type_hint / documentType). */
+function resolveTypeHintFromRequest(req: Request): string | null {
+  const raw = (req.body?.typeHint || req.body?.type_hint || req.body?.documentType || null) as string | null;
+  if (!raw) return null;
+  const key = normalizeTypeKey(raw);
+  return key === 'unknown' ? null : key;
 }
 
 export async function uploadDocument(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -84,6 +93,7 @@ async function handleFileUpload(req: Request, res: Response, next: NextFunction)
       autoDeleteAt: nowPlus24Hours(),
       countryCode: jur.countryCode,
       stateCode: jur.stateCode,
+      detectedType: resolveTypeHintFromRequest(req),
     }).run();
 
     const doc = db.select().from(documents).where(sql`${documents.storagePath} = ${storagePath}`).all()[0];
@@ -137,6 +147,7 @@ async function handleScanUpload(req: Request, res: Response, next: NextFunction)
       autoDeleteAt: nowPlus24Hours(),
       countryCode: jur.countryCode,
       stateCode: jur.stateCode,
+      detectedType: resolveTypeHintFromRequest(req),
     }).run();
 
     const doc = db.select().from(documents).where(sql`${documents.storagePath} = ${storagePath}`).all()[0];
@@ -194,6 +205,7 @@ async function handlePasteUpload(req: Request, res: Response, next: NextFunction
       processingStatus: 'pending',
       countryCode: jur.countryCode,
       stateCode: jur.stateCode,
+      detectedType: resolveTypeHintFromRequest(req),
     }).run();
 
     const doc = db.select().from(documents).where(sql`${documents.originalName} = ${docTitle} AND ${documents.userId} = ${req.user.id}`).all().pop();
@@ -254,6 +266,7 @@ async function handleUrlUpload(req: Request, res: Response, next: NextFunction):
       processingStatus: 'pending',
       countryCode: jur.countryCode,
       stateCode: jur.stateCode,
+      detectedType: resolveTypeHintFromRequest(req),
     }).run();
 
     const doc = db.select().from(documents).where(sql`${documents.sourceUrl} = ${url} AND ${documents.userId} = ${req.user.id}`).all().pop();
@@ -290,12 +303,16 @@ export async function listDocuments(req: Request, res: Response, next: NextFunct
     const limit = Math.min(Number(req.query.limit) || 20, 100);
     const offset = (page - 1) * limit;
     const status = (req.query.status as string) || 'all';
+    const favoritesOnly = req.query.favorites === '1' || req.query.favorites === 'true';
 
     const db = getDb();
 
     let whereClause = sql`${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = 0`;
     if (status !== 'all') {
       whereClause = sql`${whereClause} AND ${documents.processingStatus} = ${status}`;
+    }
+    if (favoritesOnly) {
+      whereClause = sql`${whereClause} AND ${documents.isFavorite} = 1`;
     }
 
     const countRows = db.all(
@@ -318,6 +335,7 @@ export async function listDocuments(req: Request, res: Response, next: NextFunct
           sourceType: doc.sourceType,
           uploadStatus: doc.uploadStatus,
           processingStatus: doc.processingStatus,
+          isFavorite: doc.isFavorite,
           createdAt: doc.createdAt,
         })),
         pagination: {
@@ -590,12 +608,13 @@ export async function exportDocument(
       return;
     }
 
-    const documentId = Number(req.params.documentId);
+    // Route is GET /api/documents/:id/export — params.id, not params.documentId.
+    const documentId = Number(req.params.id ?? req.params.documentId);
     if (!documentId) throw new BadRequestError('Invalid document ID');
 
     const format = (req.query.format as string) || 'pdf';
-    if (!['pdf', 'docx'].includes(format)) {
-      throw new BadRequestError('Format must be pdf or docx');
+    if (!['pdf', 'docx', 'json', 'csv'].includes(format)) {
+      throw new BadRequestError('Format must be pdf, docx, json, or csv');
     }
 
     const db = getDb();
@@ -639,12 +658,38 @@ export async function exportDocument(
     if (format === 'pdf') {
       buffer = await generatePdfBuffer(exportData);
       contentType = 'application/pdf';
-    } else {
+    } else if (format === 'docx') {
       buffer = await generateDocxBuffer(exportData);
       contentType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+    } else if (format === 'json') {
+      buffer = Buffer.from(JSON.stringify(exportData, null, 2), 'utf-8');
+      contentType = 'application/json';
+    } else {
+      // CSV — flat rows: one row per clause, plus summary header block.
+      const esc = (v: unknown) => {
+        const s = String(v ?? '').replace(/"/g, '""');
+        return s.includes(',') || s.includes('\n') || s.includes('"') ? `"${s}"` : s;
+      };
+      const lines: string[] = [
+        ['document_title', 'risk_score', 'summary'].join(','),
+        [esc(exportData.documentTitle), exportData.riskScore, esc(exportData.summary)].join(','),
+        '',
+        ['clause_title', 'risk_level', 'plain_english'].join(','),
+        ...exportData.clauses.map((c) =>
+          [esc(c.title), esc(c.riskLevel), esc(c.plainEnglish)].join(','),
+        ),
+        '',
+        ['deadline', 'due_date'].join(','),
+        ...exportData.deadlines.map((d) =>
+          [esc(d.description), esc(d.dueDate)].join(','),
+        ),
+      ];
+      buffer = Buffer.from(lines.join('\r\n'), 'utf-8');
+      contentType = 'text/csv';
     }
 
-    res.setHeader('Content-Disposition', `attachment; filename="${filename}.${format}"`);
+    const ext = format === 'json' ? 'json' : format === 'csv' ? 'csv' : format;
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}.${ext}"`);
     res.setHeader('Content-Type', contentType);
     res.end(buffer);
   } catch (err) {

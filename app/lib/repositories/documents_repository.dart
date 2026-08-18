@@ -86,12 +86,14 @@ class DocumentsRepository {
     String? title,
     String? countryCode,
     String? stateCode,
+    String? typeHint,
   }) async {
     final form = FormData.fromMap({
       'sourceType': sourceType,
       if (title != null) 'title': title,
       if (countryCode != null) 'countryCode': countryCode,
       if (stateCode != null) 'stateCode': stateCode,
+      if (typeHint != null) 'typeHint': typeHint,
       'file': MultipartFile.fromBytes(bytes, filename: filename),
     });
     return _api.postMultipart(
@@ -106,6 +108,7 @@ class DocumentsRepository {
     String? title,
     String? countryCode,
     String? stateCode,
+    String? typeHint,
   }) async {
     final form = FormData.fromMap({
       'sourceType': 'paste',
@@ -113,6 +116,7 @@ class DocumentsRepository {
       if (title != null) 'title': title,
       if (countryCode != null) 'countryCode': countryCode,
       if (stateCode != null) 'stateCode': stateCode,
+      if (typeHint != null) 'typeHint': typeHint,
     });
     return _api.postMultipart(
       '/api/documents/upload',
@@ -126,6 +130,7 @@ class DocumentsRepository {
     String? title,
     String? countryCode,
     String? stateCode,
+    String? typeHint,
   }) async {
     final form = FormData.fromMap({
       'sourceType': 'url',
@@ -133,6 +138,7 @@ class DocumentsRepository {
       if (title != null) 'title': title,
       if (countryCode != null) 'countryCode': countryCode,
       if (stateCode != null) 'stateCode': stateCode,
+      if (typeHint != null) 'typeHint': typeHint,
     });
     return _api.postMultipart(
       '/api/documents/upload',

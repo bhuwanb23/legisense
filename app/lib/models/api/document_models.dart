@@ -13,6 +13,7 @@ class ApiDocument {
     this.createdAt,
     this.overallRiskScore,
     this.riskLevel,
+    this.isFavorite = false,
   });
 
   final int id;
@@ -28,6 +29,7 @@ class ApiDocument {
   final String? createdAt;
   final int? overallRiskScore;
   final String? riskLevel;
+  final bool isFavorite;
 
   factory ApiDocument.fromJson(Map<String, dynamic> json) {
     return ApiDocument(
@@ -46,6 +48,7 @@ class ApiDocument {
       createdAt: json['createdAt'] as String?,
       overallRiskScore: (json['overallRiskScore'] as num?)?.toInt(),
       riskLevel: json['riskLevel'] as String?,
+      isFavorite: json['isFavorite'] == true || json['is_favorite'] == true,
     );
   }
 

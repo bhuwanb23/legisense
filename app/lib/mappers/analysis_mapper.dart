@@ -73,6 +73,7 @@ abstract final class AnalysisMapper {
       daysAgo: _daysAgo(doc.createdAt),
       processingStatus: doc.processingStatus,
       fileSize: doc.fileSize,
+      isFavorite: doc.isFavorite,
     );
   }
 

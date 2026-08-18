@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../documents/compare_page.dart';
 import '../../services/session_prefs.dart';
 import '../../theme/app_insets.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/home/app_page_header.dart';
 import 'edit_profile_page.dart';
+import 'playbook_page.dart';
 
 /// App settings — notifications, shortcuts, about.
 class SettingsPage extends StatefulWidget {
@@ -118,6 +120,62 @@ class _SettingsPageState extends State<SettingsPage> {
                           Navigator.of(context).push(
                             MaterialPageRoute<void>(
                               builder: (_) => const EditProfilePage(),
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  const SizedBox(height: 16),
+                  _sectionTitle('Tools'),
+                  _card(
+                    children: [
+                      ListTile(
+                        title: Text(
+                          'My playbook',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                          ),
+                        ),
+                        subtitle: Text(
+                          'Your personal review rules',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 12,
+                            color: AppColors.mute,
+                          ),
+                        ),
+                        trailing: const Icon(Icons.chevron_right_rounded),
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute<void>(
+                              builder: (_) => const PlaybookPage(),
+                            ),
+                          );
+                        },
+                      ),
+                      ListTile(
+                        title: Text(
+                          'Compare documents',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                          ),
+                        ),
+                        subtitle: Text(
+                          'Side-by-side diff of two versions',
+                          style: GoogleFonts.plusJakartaSans(
+                            fontSize: 12,
+                            color: AppColors.mute,
+                          ),
+                        ),
+                        trailing: const Icon(Icons.chevron_right_rounded),
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute<void>(
+                              builder: (_) =>
+                                  const CompareDocumentsPage(),
                             ),
                           );
                         },

@@ -182,6 +182,7 @@ class MockDocument {
     this.daysAgo = 0,
     this.processingStatus,
     this.fileSize,
+    this.isFavorite = false,
   });
 
   final String id;
@@ -194,6 +195,7 @@ class MockDocument {
   final int daysAgo;
   final String? processingStatus;
   final int? fileSize;
+  final bool isFavorite;
 
   bool get isFailed => processingStatus == 'failed';
   bool get isProcessing =>
@@ -201,4 +203,23 @@ class MockDocument {
       processingStatus == 'processing' ||
       processingStatus == 'ocr_processing';
   bool get isAnalyzed => processingStatus == 'analyzed';
+
+  MockDocument copyWith({
+    bool? isFavorite,
+    String? processingStatus,
+  }) {
+    return MockDocument(
+      id: id,
+      title: title,
+      typeId: typeId,
+      typeLabel: typeLabel,
+      risk: risk,
+      relativeDate: relativeDate,
+      riskScore: riskScore,
+      daysAgo: daysAgo,
+      processingStatus: processingStatus ?? this.processingStatus,
+      fileSize: fileSize,
+      isFavorite: isFavorite ?? this.isFavorite,
+    );
+  }
 }

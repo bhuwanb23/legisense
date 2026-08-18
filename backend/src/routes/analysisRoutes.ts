@@ -20,10 +20,15 @@ import {
   markCounterUsed,
   rewritePlainEnglish,
 } from '../controllers/analysisController';
+import { templates } from '../controllers/featureController';
 import { authenticate } from '../middleware/auth';
 import { aiRateLimiter } from '../middleware/rateLimiter';
 
 const router = Router();
+
+// Must be registered before /:documentId routes so "templates" isn't
+// captured as a document id.
+router.get('/templates', templates);
 
 router.post('/start/:documentId', authenticate, aiRateLimiter, startAnalysis);
 router.get('/:documentId', authenticate, getAnalysis);

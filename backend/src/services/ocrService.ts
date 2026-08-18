@@ -17,6 +17,21 @@ export interface OcrResult {
 let worker: Worker | null = null;
 let currentLanguage: string = 'eng';
 
+// Tesseract worker thread failures (e.g. corrupt image) otherwise surface as an
+// uncaught exception inside a MessagePort callback and kill the whole process.
+// Capture them here and reject the calling promise instead.
+let workerError: Error | null = null;
+
+function onWorkerError(err: unknown): void {
+  workerError = err instanceof Error ? err : new Error(String(err));
+  // A failed worker should not be reused — terminate it so the next call
+  // spawns a fresh one.
+  const dead = worker;
+  worker = null;
+  currentLanguage = '';
+  dead?.terminate().catch(() => {});
+}
+
 async function getWorker(language?: string): Promise<Worker> {
   const lang = language || 'eng';
   if (worker && currentLanguage !== lang) {
@@ -30,14 +45,25 @@ async function getWorker(language?: string): Promise<Worker> {
   }
   if (!worker) {
     try {
-      worker = await createWorker(lang, 1);
+      worker = await createWorker(lang, 1, { errorHandler: onWorkerError });
       currentLanguage = lang;
     } catch {
-      worker = await createWorker('eng', 1);
+      worker = await createWorker('eng', 1, { errorHandler: onWorkerError });
       currentLanguage = 'eng';
     }
   }
   return worker;
+}
+
+export function clearWorkerError(): void {
+  workerError = null;
+}
+
+/** Read-and-clear the worker error flag (avoids TS narrowing on the module var). */
+function consumeWorkerError(): Error | null {
+  const err = workerError;
+  workerError = null;
+  return err;
 }
 
 interface TesseractWord {
@@ -51,6 +77,11 @@ export async function ocrImage(
 ): Promise<OcrResult> {
   const lang = options?.language || 'eng';
   const w = await getWorker(lang);
+
+  const preErr = consumeWorkerError();
+  if (preErr) {
+    throw new Error(`OCR worker unavailable: ${preErr.message}`);
+  }
 
   let imageBuffer = buffer;
   const header = buffer.subarray(0, 4).toString('hex').toUpperCase();
@@ -69,19 +100,41 @@ export async function ocrImage(
     recognizeOptions.rotateAuto = true;
   }
 
-  const { data } = await w.recognize(imageBuffer, recognizeOptions);
+  let data: { text: string; confidence: number; blocks?: unknown; rotateRadians?: unknown };
+  try {
+    const result = await w.recognize(imageBuffer, recognizeOptions);
+    data = result.data;
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    // Recover for the next call even if the worker errored mid-job.
+    const dead = worker;
+    worker = null;
+    currentLanguage = '';
+    dead?.terminate().catch(() => {});
+    throw new Error(`OCR failed: ${message}`);
+  }
+
+  const postErr = consumeWorkerError();
+  if (postErr) {
+    const dead = worker;
+    worker = null;
+    currentLanguage = '';
+    dead?.terminate().catch(() => {});
+    throw new Error(`OCR failed: ${postErr.message}`);
+  }
 
   const words: OcrWord[] = [];
-  if (data.blocks) {
-    for (const block of data.blocks) {
-      if (block.paragraphs) {
-        for (const para of block.paragraphs) {
-          if (para.lines) {
-            for (const line of para.lines) {
-              if (line.words) {
-                for (const word of line.words as unknown as TesseractWord[]) {
-                  words.push({ text: word.text, confidence: word.confidence });
-                }
+  const blocks = (data.blocks ?? []) as Array<{
+    paragraphs?: Array<{ lines?: Array<{ words?: unknown }> }>;
+  }>;
+  for (const block of blocks) {
+    if (block.paragraphs) {
+      for (const para of block.paragraphs) {
+        if (para.lines) {
+          for (const line of para.lines) {
+            if (line.words) {
+              for (const word of line.words as unknown as TesseractWord[]) {
+                words.push({ text: word.text, confidence: word.confidence });
               }
             }
           }

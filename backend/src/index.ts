@@ -8,6 +8,7 @@ import {
   notifications, sessions, usageLogs, queueJobs,
   glossary, jurisdictions, legalRules, jurisdictionFlags, jurisdictionConflicts,
   riskPatterns, clauseRiskFlags, communityRiskFeedback, requiredClausesTemplates,
+  shareLinks, clauseNotes, playbookRules,
 } from './models';
 import { legalGlossary } from './data/legalGlossary';
 import { seedJurisdictionsAndRules } from './data/seedJurisdictions';
@@ -302,6 +303,36 @@ async function start() {
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
   )`);
 
+  await db.run(sql`CREATE TABLE IF NOT EXISTS ${shareLinks} (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    document_id INTEGER NOT NULL REFERENCES documents(id),
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    token TEXT NOT NULL UNIQUE,
+    is_active INTEGER NOT NULL DEFAULT 1,
+    views INTEGER NOT NULL DEFAULT 0,
+    expires_at TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  )`);
+
+  await db.run(sql`CREATE TABLE IF NOT EXISTS ${clauseNotes} (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    clause_id INTEGER NOT NULL REFERENCES clauses(id),
+    document_id INTEGER NOT NULL REFERENCES documents(id),
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    note TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+  )`);
+
+  await db.run(sql`CREATE TABLE IF NOT EXISTS ${playbookRules} (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER NOT NULL REFERENCES users(id),
+    rule_text TEXT NOT NULL,
+    category TEXT NOT NULL DEFAULT 'general',
+    is_active INTEGER NOT NULL DEFAULT 1,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  )`);
+
   try { db.run(sql`ALTER TABLE ${clauses} ADD COLUMN reading_level TEXT`); } catch {}
   try { db.run(sql`ALTER TABLE ${clauses} ADD COLUMN key_legal_terms TEXT`); } catch {}
   try { db.run(sql`ALTER TABLE ${clauses} ADD COLUMN negotiation_tips TEXT`); } catch {}
@@ -315,6 +346,7 @@ async function start() {
   try { db.run(sql`ALTER TABLE ${documents} ADD COLUMN detected_type TEXT`); } catch {}
   try { db.run(sql`ALTER TABLE ${documents} ADD COLUMN detected_type_confidence REAL`); } catch {}
   try { db.run(sql`ALTER TABLE ${documents} ADD COLUMN needs_type_confirmation INTEGER NOT NULL DEFAULT 0`); } catch {}
+  try { db.run(sql`ALTER TABLE ${documents} ADD COLUMN is_favorite INTEGER NOT NULL DEFAULT 0`); } catch {}
   try { db.run(sql`ALTER TABLE ${documents} ADD COLUMN country_code TEXT`); } catch {}
   try { db.run(sql`ALTER TABLE ${documents} ADD COLUMN state_code TEXT`); } catch {}
 
@@ -380,6 +412,15 @@ async function start() {
 start().catch((err) => {
   console.error('Failed to start server:', err);
   process.exit(1);
+});
+
+// Safety net: a single bad job (e.g. a corrupt image hitting the Tesseract
+// worker) must never take down the whole API. Log and keep serving.
+process.on('uncaughtException', (err) => {
+  console.error('[uncaughtException]', err);
+});
+process.on('unhandledRejection', (reason) => {
+  console.error('[unhandledRejection]', reason);
 });
 
 process.on('SIGINT', async () => {

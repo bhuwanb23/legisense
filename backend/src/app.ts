@@ -18,6 +18,7 @@ import deadlineRoutes from './routes/deadlineRoutes';
 import notificationRoutes from './routes/notificationRoutes';
 import jurisdictionRoutes from './routes/jurisdictionRoutes';
 import languageRoutes from './routes/languageRoutes';
+import featureRoutes from './routes/featureRoutes';
 import helmet from 'helmet';
 import path from 'path';
 
@@ -55,6 +56,7 @@ app.use('/api/deadlines', deadlineRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/jurisdictions', jurisdictionRoutes);
 app.use('/api/languages', languageRoutes);
+app.use('/api', featureRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

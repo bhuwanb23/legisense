@@ -1,0 +1,417 @@
+import { Request, Response, NextFunction } from 'express';
+import crypto from 'crypto';
+import { getDb, persistNow } from '../config/database';
+import { documents, analysisResults, clauses, shareLinks, clauseNotes, playbookRules } from '../models';
+import { sql } from 'drizzle-orm';
+import { NotFoundError, BadRequestError } from '../utils/errors';
+import { generateBetterVersion, compareDocuments, listTemplates } from '../services/featureService';
+import { getTypeEntry } from '../data/documentTypes';
+
+/* ------------------------------ Favorites ------------------------------ */
+
+export async function toggleFavorite(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    if (!req.user) throw new NotFoundError('User');
+    const documentId = Number(req.params.id);
+    const isFavorite = req.body?.isFavorite ?? req.body?.is_favorite;
+    if (typeof isFavorite !== 'boolean' && isFavorite !== 0 && isFavorite !== 1) {
+      throw new BadRequestError('isFavorite (boolean) is required');
+    }
+    const db = getDb();
+    const rows = db.select().from(documents).where(
+      sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = 0`
+    ).all();
+    if (!rows[0]) throw new NotFoundError('Document');
+
+    db.run(sql`UPDATE ${documents} SET is_favorite = ${isFavorite ? 1 : 0}, updated_at = datetime('now') WHERE id = ${documentId}`);
+    persistNow();
+    res.json({ success: true, data: { documentId, isFavorite: Boolean(isFavorite) } });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/* ----------------------------- Share links ----------------------------- */
+
+export async function createShareLink(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    if (!req.user) throw new NotFoundError('User');
+    const documentId = Number(req.params.id);
+    const db = getDb();
+
+    const docRows = db.select().from(documents).where(
+      sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = 0`
+    ).all();
+    if (!docRows[0]) throw new NotFoundError('Document');
+
+    // Reuse an active link if one exists.
+    const existing = db.select().from(shareLinks).where(
+      sql`${shareLinks.documentId} = ${documentId} AND ${shareLinks.userId} = ${req.user.id} AND ${shareLinks.isActive} = 1`
+    ).all();
+    if (existing[0]) {
+      res.json({ success: true, data: shareLinkPayload(existing[0], docRows[0]) });
+      return;
+    }
+
+    const token = crypto.randomBytes(16).toString('hex');
+    const expiresAt = req.body?.expiresInDays
+      ? new Date(Date.now() + Number(req.body.expiresInDays) * 86400000).toISOString()
+      : new Date(Date.now() + 7 * 86400000).toISOString();
+
+    db.insert(shareLinks).values({
+      documentId,
+      userId: req.user.id,
+      token,
+      isActive: true,
+      views: 0,
+      expiresAt,
+    }).run();
+    persistNow();
+
+    const rows = db.select().from(shareLinks).where(sql`${shareLinks.token} = ${token}`).all();
+    const link = rows[0];
+    if (!link) throw new Error('Failed to create share link');
+
+    res.status(201).json({ success: true, data: shareLinkPayload(link, docRows[0]) });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function revokeShareLink(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    if (!req.user) throw new NotFoundError('User');
+    const documentId = Number(req.params.id);
+    const db = getDb();
+    const rows = db.select().from(shareLinks).where(
+      sql`${shareLinks.documentId} = ${documentId} AND ${shareLinks.userId} = ${req.user.id}`
+    ).all();
+    if (rows.length === 0) throw new NotFoundError('Share link');
+
+    db.run(sql`UPDATE ${shareLinks} SET is_active = 0 WHERE id = ${rows[0].id}`);
+    persistNow();
+    res.json({ success: true, data: { revoked: true, documentId } });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/** Public, unauthenticated view of a shared analysis. */
+export async function getSharedAnalysis(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const token = req.params.token;
+    const db = getDb();
+    const rows = db.select().from(shareLinks).where(sql`${shareLinks.token} = ${token}`).all();
+    const link = rows[0];
+    if (!link || !link.isActive) throw new NotFoundError('Share link');
+
+    if (link.expiresAt && new Date(link.expiresAt) < new Date()) {
+      db.run(sql`UPDATE ${shareLinks} SET is_active = 0 WHERE id = ${link.id}`);
+      persistNow();
+      throw new NotFoundError('Share link has expired');
+    }
+
+    const analysisRows = db.select().from(analysisResults).where(
+      sql`${analysisResults.documentId} = ${link.documentId}`
+    ).all();
+    const analysis = analysisRows[0];
+    const docRows = db.select().from(documents).where(sql`${documents.id} = ${link.documentId}`).all();
+    const doc = docRows[0];
+
+    const clauseRows = analysis
+      ? db.select().from(clauses).where(sql`${clauses.analysisId} = ${analysis.id}`).all()
+      : [];
+
+    db.run(sql`UPDATE ${shareLinks} SET views = views + 1 WHERE id = ${link.id}`);
+    persistNow();
+
+    const parse = (v: string | null) => {
+      if (!v) return [];
+      try { return JSON.parse(v); } catch { return []; }
+    };
+
+    res.json({
+      success: true,
+      data: {
+        documentTitle: doc?.originalName || 'Document',
+        sharedBy: link.userId,
+        createdAt: link.createdAt,
+        analysis: analysis ? {
+          documentType: analysis.documentType,
+          overallRiskScore: analysis.overallRiskScore,
+          riskLevel: analysis.riskLevel,
+          fairnessScore: analysis.fairnessScore,
+          summary: analysis.summary,
+          keyParties: parse(analysis.keyParties),
+          criticalDates: parse(analysis.criticalDates),
+          keyObligations: parse(analysis.keyObligations),
+          missingClauses: parse(analysis.missingClauses),
+        } : null,
+        clauses: clauseRows.map((c) => ({
+          clauseNumber: c.clauseNumber,
+          clauseTitle: c.clauseTitle,
+          originalText: c.originalText,
+          plainEnglishText: c.plainEnglishText,
+          riskLevel: c.riskLevel,
+          riskScore: c.riskScore,
+          riskReason: c.riskReason,
+        })),
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+function shareLinkPayload(
+  link: typeof shareLinks.$inferSelect,
+  doc: typeof documents.$inferSelect,
+) {
+  return {
+    token: link.token,
+    url: `/api/shared/${link.token}`,
+    fullUrl: `${process.env.PUBLIC_BASE_URL || 'http://localhost:3001'}/api/shared/${link.token}`,
+    documentId: link.documentId,
+    documentTitle: doc.originalName,
+    isActive: link.isActive,
+    views: link.views,
+    expiresAt: link.expiresAt,
+    createdAt: link.createdAt,
+  };
+}
+
+/* ---------------------------- Clause notes ----------------------------- */
+
+export async function listNotes(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    if (!req.user) throw new NotFoundError('User');
+    const documentId = Number(req.params.documentId);
+    const db = getDb();
+    const rows = db.select().from(clauseNotes).where(
+      sql`${clauseNotes.documentId} = ${documentId} AND ${clauseNotes.userId} = ${req.user.id}`
+    ).all();
+    res.json({ success: true, data: { notes: rows } });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function addNote(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    if (!req.user) throw new NotFoundError('User');
+    const documentId = Number(req.params.documentId);
+    const clauseId = Number(req.params.clauseId);
+    const note = String(req.body?.note || '').trim();
+    if (!note) throw new BadRequestError('note is required');
+
+    const db = getDb();
+    const clauseRows = db.select().from(clauses).where(
+      sql`${clauses.id} = ${clauseId} AND ${clauses.documentId} = ${documentId}`
+    ).all();
+    if (!clauseRows[0]) throw new NotFoundError('Clause');
+
+    db.insert(clauseNotes).values({
+      clauseId,
+      documentId,
+      userId: req.user.id,
+      note,
+    }).run();
+    persistNow();
+
+    const rows = db.select().from(clauseNotes).where(
+      sql`${clauseNotes.clauseId} = ${clauseId} AND ${clauseNotes.documentId} = ${documentId} AND ${clauseNotes.userId} = ${req.user.id}`
+    ).all();
+    res.status(201).json({ success: true, data: rows[rows.length - 1] });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function updateNote(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    if (!req.user) throw new NotFoundError('User');
+    const noteId = Number(req.params.noteId);
+    const note = String(req.body?.note || '').trim();
+    if (!note) throw new BadRequestError('note is required');
+
+    const db = getDb();
+    const rows = db.select().from(clauseNotes).where(
+      sql`${clauseNotes.id} = ${noteId} AND ${clauseNotes.userId} = ${req.user.id}`
+    ).all();
+    if (!rows[0]) throw new NotFoundError('Note');
+
+    db.run(sql`UPDATE ${clauseNotes} SET note = ${note}, updated_at = datetime('now') WHERE id = ${noteId}`);
+    persistNow();
+    const updated = db.select().from(clauseNotes).where(sql`${clauseNotes.id} = ${noteId}`).all()[0];
+    res.json({ success: true, data: updated });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function deleteNote(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    if (!req.user) throw new NotFoundError('User');
+    const noteId = Number(req.params.noteId);
+    const db = getDb();
+    const rows = db.select().from(clauseNotes).where(
+      sql`${clauseNotes.id} = ${noteId} AND ${clauseNotes.userId} = ${req.user.id}`
+    ).all();
+    if (!rows[0]) throw new NotFoundError('Note');
+    db.run(sql`DELETE FROM ${clauseNotes} WHERE id = ${noteId}`);
+    persistNow();
+    res.json({ success: true, data: { deleted: true, id: noteId } });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/* ---------------------------- Playbook rules ---------------------------- */
+
+export async function listRules(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    if (!req.user) throw new NotFoundError('User');
+    const db = getDb();
+    const rows = db.select().from(playbookRules).where(
+      sql`${playbookRules.userId} = ${req.user.id}`
+    ).orderBy(sql`${playbookRules.createdAt} DESC`).all();
+    res.json({ success: true, data: { rules: rows } });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function addRule(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    if (!req.user) throw new NotFoundError('User');
+    const ruleText = String(req.body?.ruleText ?? req.body?.rule_text ?? '').trim();
+    if (!ruleText) throw new BadRequestError('ruleText is required');
+    const category = String(req.body?.category || 'general').trim() || 'general';
+
+    const db = getDb();
+    db.insert(playbookRules).values({
+      userId: req.user.id,
+      ruleText,
+      category,
+      isActive: true,
+    }).run();
+    persistNow();
+
+    const rows = db.select().from(playbookRules).where(
+      sql`${playbookRules.userId} = ${req.user.id} AND ${playbookRules.ruleText} = ${ruleText}`
+    ).all();
+    res.status(201).json({ success: true, data: rows[rows.length - 1] });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function updateRule(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    if (!req.user) throw new NotFoundError('User');
+    const ruleId = Number(req.params.id);
+    const db = getDb();
+    const rows = db.select().from(playbookRules).where(
+      sql`${playbookRules.id} = ${ruleId} AND ${playbookRules.userId} = ${req.user.id}`
+    ).all();
+    if (!rows[0]) throw new NotFoundError('Rule');
+
+    const ruleText = req.body?.ruleText ?? req.body?.rule_text;
+    const category = req.body?.category;
+    const isActive = req.body?.isActive ?? req.body?.is_active;
+
+    if (ruleText !== undefined) {
+      const t = String(ruleText).trim();
+      if (!t) throw new BadRequestError('ruleText cannot be empty');
+      db.run(sql`UPDATE ${playbookRules} SET rule_text = ${t} WHERE id = ${ruleId}`);
+    }
+    if (category !== undefined) {
+      db.run(sql`UPDATE ${playbookRules} SET category = ${String(category).trim() || 'general'} WHERE id = ${ruleId}`);
+    }
+    if (isActive !== undefined) {
+      db.run(sql`UPDATE ${playbookRules} SET is_active = ${isActive ? 1 : 0} WHERE id = ${ruleId}`);
+    }
+    persistNow();
+    const updated = db.select().from(playbookRules).where(sql`${playbookRules.id} = ${ruleId}`).all()[0];
+    res.json({ success: true, data: updated });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function deleteRule(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    if (!req.user) throw new NotFoundError('User');
+    const ruleId = Number(req.params.id);
+    const db = getDb();
+    const rows = db.select().from(playbookRules).where(
+      sql`${playbookRules.id} = ${ruleId} AND ${playbookRules.userId} = ${req.user.id}`
+    ).all();
+    if (!rows[0]) throw new NotFoundError('Rule');
+    db.run(sql`DELETE FROM ${playbookRules} WHERE id = ${ruleId}`);
+    persistNow();
+    res.json({ success: true, data: { deleted: true, id: ruleId } });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/* --------------------------- Better version ----------------------------- */
+
+export async function betterVersion(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    if (!req.user) throw new NotFoundError('User');
+    const documentId = Number(req.params.documentId);
+    const result = await generateBetterVersion(documentId, req.user.id);
+    res.json({ success: true, data: result });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/* ------------------------------- Compare -------------------------------- */
+
+export async function compare(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    if (!req.user) throw new NotFoundError('User');
+    const documentIdA = Number(req.body?.documentIdA ?? req.body?.document_id_a);
+    const documentIdB = Number(req.body?.documentIdB ?? req.body?.document_id_b);
+    if (!documentIdA || !documentIdB || documentIdA === documentIdB) {
+      throw new BadRequestError('documentIdA and documentIdB are required and must differ');
+    }
+    const result = await compareDocuments(documentIdA, documentIdB, req.user.id);
+    res.json({ success: true, data: result });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/* ------------------------------ Templates ------------------------------- */
+
+export async function templates(_req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    res.json({ success: true, data: { templates: listTemplates() } });
+  } catch (err) {
+    next(err);
+  }
+}
+
+/* ------------------------- Confirm type by key -------------------------- */
+
+export async function resolveType(_req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const type = String(_req.query.type || '');
+    const entry = getTypeEntry(type);
+    res.json({
+      success: true,
+      data: {
+        type: entry.type,
+        typeLabel: entry.typeLabel,
+        icon: entry.icon,
+        subTypes: entry.subTypes,
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+}

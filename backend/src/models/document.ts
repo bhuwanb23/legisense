@@ -22,6 +22,7 @@ export const documents = sqliteTable('documents', {
   uploadStatus: text('upload_status').notNull().default('uploading'),
   processingStatus: text('processing_status').notNull().default('pending'),
   isDeleted: integer('is_deleted', { mode: 'boolean' }).notNull().default(false),
+  isFavorite: integer('is_favorite', { mode: 'boolean' }).notNull().default(false),
   autoDeleteAt: text('auto_delete_at'),
   encryptionIv: text('encryption_iv'),
   createdAt: text('created_at').notNull().default(sql`(datetime('now'))`),
