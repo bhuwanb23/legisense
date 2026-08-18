@@ -48,6 +48,8 @@ const JSON_EXAMPLE = `{
       "riskScore": 85,
       "riskReason": "Two-year multi-country ban after exit is unusually broad for an employee and may be hard to challenge later.",
       "riskCategory": "termination",
+      "pageReference": 2,
+      "partyReferences": ["Jordan Lee"],
       "counterSuggestion": "Limit to 6–12 months and India-only, with a clear competitor definition."
     }
   ],
