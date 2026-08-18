@@ -6,6 +6,7 @@ import {
   deleteAccount,
   uploadAvatar,
 } from '../controllers/userController';
+import { createUserApiKey, listUserApiKeys, revokeUserApiKey } from '../controllers/workspaceController';
 import { authenticate } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 import { uploadFile, handleMulterError } from '../middleware/fileValidator';
@@ -21,5 +22,8 @@ router.put('/profile', authenticate, validate(updateProfileSchema), updateProfil
 router.put('/preferences', authenticate, validate(updatePreferencesSchema), updatePreferences);
 router.post('/avatar', authenticate, uploadFile.single('avatar'), handleMulterError, uploadAvatar);
 router.delete('/account', authenticate, deleteAccount);
+router.post('/api-keys', authenticate, createUserApiKey);
+router.get('/api-keys', authenticate, listUserApiKeys);
+router.delete('/api-keys/:id', authenticate, revokeUserApiKey);
 
 export default router;

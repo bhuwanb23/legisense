@@ -15,6 +15,12 @@ import {
   betterVersion,
   compare,
 } from '../controllers/featureController';
+import {
+  inviteDocumentCollaborator,
+  listDocumentCollaborators,
+  revokeDocumentCollaborator,
+  acceptCollaboratorInvite,
+} from '../controllers/workspaceController';
 import { authenticate } from '../middleware/auth';
 import { aiRateLimiter } from '../middleware/rateLimiter';
 
@@ -42,6 +48,11 @@ router.delete('/playbook/rules/:id', authenticate, deleteRule);
 // Better version + compare
 router.post('/analysis/:documentId/better-version', authenticate, aiRateLimiter, betterVersion);
 router.post('/analysis/compare', authenticate, compare);
+
+router.post('/documents/:id/collaborators', authenticate, inviteDocumentCollaborator);
+router.get('/documents/:id/collaborators', authenticate, listDocumentCollaborators);
+router.delete('/documents/:id/collaborators/:collabId', authenticate, revokeDocumentCollaborator);
+router.post('/collaborators/accept', authenticate, acceptCollaboratorInvite);
 
 // Public shared view (no auth)
 router.get('/shared/:token', getSharedAnalysis);

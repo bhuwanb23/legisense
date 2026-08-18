@@ -20,7 +20,8 @@ import {
   markCounterUsed,
   rewritePlainEnglish,
 } from '../controllers/analysisController';
-import { templates } from '../controllers/featureController';
+import { templates, getTemplateByType, exportTemplateByType, compareTemplate } from '../controllers/featureController';
+import { getPlaybookFlagsForDocument } from '../controllers/workspaceController';
 import { authenticate } from '../middleware/auth';
 import { aiRateLimiter } from '../middleware/rateLimiter';
 
@@ -29,6 +30,9 @@ const router = Router();
 // Must be registered before /:documentId routes so "templates" isn't
 // captured as a document id.
 router.get('/templates', templates);
+router.get('/templates/:type/export', authenticate, exportTemplateByType);
+router.get('/templates/:type', getTemplateByType);
+router.post('/compare-template', authenticate, compareTemplate);
 
 router.post('/start/:documentId', authenticate, aiRateLimiter, startAnalysis);
 router.get('/:documentId', authenticate, getAnalysis);
@@ -51,5 +55,6 @@ router.post('/:documentId/clauses/:clauseId/counter-used', authenticate, aiRateL
 router.get('/:documentId/classify', authenticate, classifyEndpoint);
 router.post('/:documentId/confirm-type', authenticate, confirmDocumentType);
 router.post('/glossary', authenticate, lookupGlossary);
+router.get('/:documentId/playbook-flags', authenticate, getPlaybookFlagsForDocument);
 
 export default router;

@@ -8,9 +8,11 @@ const BASE_RULES = `RULES:
 7. Score one-sided terms honestly: long non-competes, unlimited indemnity, lock-in, deposit forfeiture, acceleration on default → medium/high riskScore (40–95).
 8. For each party include type (individual|company|government|unknown) and obligations_summary (1–2 sentences).
 9. missingClauses: list protections that are truly ABSENT. Do NOT list anything already covered by an extracted clause title.
-10. deadlines and criticalDates: ONLY include items with a real calendar date found in the text (YYYY-MM-DD preferred). If no date exists, omit it — do not invent dates.
+10. deadlines and criticalDates: include real calendar dates (YYYY-MM-DD) AND derived dates you can compute from the text (lock-in end = commencement + lock-in months; notice deadline = expiry minus notice period). Omit only if there is no basis in the text.
 11. riskItems: 3–8 named risks with severity, description, and recommendation. Do NOT invent filler titles like "Legal Risk — N clauses found".
 12. favorsParty: use a real party name from the document, or "Balanced".
+12b. imbalanceReason: 1–2 sentences explaining WHY the score is not 50.
+12c. perCategoryFairness: object of 0–100 scores for categories present (financial, termination, liability, obligation, compliance). 50 = balanced, lower favors the stronger party named in favorsParty.
 13. readingLevel: grade_5 | grade_8 | standard. riskCategory: financial|legal|privacy|termination|obligation|liability|compliance|intellectual_property|operational.
 14. If the text is a resume/CV, syllabus, or invoice with no contract terms, set documentType to "Other", summary explaining it is not a contract, and clauses/riskItems/deadlines to [].`;
 
@@ -21,6 +23,8 @@ const JSON_EXAMPLE = `{
   "riskLevel": "high",
   "fairnessScore": 35,
   "favorsParty": "TechVista Pvt Ltd",
+  "imbalanceReason": "Notice, non-compete, and indemnity all run against the employee while the company keeps short-exit rights.",
+  "perCategoryFairness": {"financial": 45, "termination": 25, "liability": 20, "obligation": 40},
   "summary": "This employment agreement hires Jordan Lee as a senior engineer at TechVista in Bangalore. Pay is INR 24 lakh per year with a six-month probation. After leaving, a 24-month non-compete covers India, Singapore, and the UAE, and confidentiality lasts indefinitely. The company may terminate with only 15 days notice while the employee must give 90 days. Unlimited indemnity and automatic renewal of restrictive covenants make the deal strongly company-friendly.",
   "keyParties": [
     {"name": "TechVista Pvt Ltd", "role": "Employer", "type": "company", "obligations": ["Pay salary"], "obligations_summary": "TechVista must pay the agreed salary monthly and may end employment on short notice."},
