@@ -5,6 +5,7 @@ import '../../data/analysis_mock.dart';
 import '../../theme/app_insets.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/export_report.dart';
+import '../../widgets/analysis/listen_button.dart';
 import '../../widgets/analysis/soft_card.dart';
 import '../chat/chat_page.dart';
 import 'clause_breakdown_page.dart';
@@ -36,13 +37,22 @@ class DocumentSummaryPage extends StatelessWidget {
         children: [
           _SectionLabel('Overview'),
           SoftCard(
-            child: Text(
-              result.overview,
-              style: GoogleFonts.plusJakartaSans(
-                fontSize: 14,
-                height: 1.5,
-                color: AppColors.inkSoft,
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  result.overview,
+                  style: GoogleFonts.plusJakartaSans(
+                    fontSize: 14,
+                    height: 1.5,
+                    color: AppColors.inkSoft,
+                  ),
+                ),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: ListenButton(text: result.overview),
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 20),
