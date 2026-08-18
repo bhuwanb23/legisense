@@ -1,6 +1,7 @@
 import { getDb } from '../config/database';
 import { documents, analysisResults, clauses } from '../models';
 import { sql } from 'drizzle-orm';
+import { BadRequestError } from '../utils/errors';
 import { callWithFallback } from './ai';
 import { parseAiResponse } from '../prompts/analysisPrompt';
 import { decryptText, isEncryptionConfigured } from './encryptionService';
@@ -114,7 +115,7 @@ export async function compareDocuments(
   const docs = db.select().from(documents).where(
     sql`${documents.id} IN (${documentIdA}, ${documentIdB}) AND ${documents.userId} = ${userId} AND ${documents.isDeleted} = 0`
   ).all();
-  if (docs.length !== 2) throw new Error('Both documents must exist and belong to you');
+  if (docs.length !== 2) throw new BadRequestError('Both documents must exist and belong to you');
 
   const byId = new Map(docs.map((d) => [d.id, d]));
   const a = byId.get(documentIdA)!;
@@ -129,7 +130,7 @@ export async function compareDocuments(
 
   const analysisA = getAnalysis(documentIdA);
   const analysisB = getAnalysis(documentIdB);
-  if (!analysisA || !analysisB) throw new Error('Both documents need a completed analysis to compare');
+  if (!analysisA || !analysisB) throw new BadRequestError('Both documents need a completed analysis to compare');
 
   const getClauses = (analysisId: number) => {
     return db.select().from(clauses).where(sql`${clauses.analysisId} = ${analysisId}`).all();
