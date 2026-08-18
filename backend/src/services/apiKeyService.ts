@@ -50,7 +50,10 @@ export function revokeApiKey(userId: number, id: number): void {
   persistNow();
 }
 
-export function authenticateApiKey(raw: string): { id: number; email: string; fullName: string | null; authProvider: string | null; isActive: boolean } {
+export function authenticateApiKey(
+  raw: string,
+  opts: { countUsage?: boolean } = { countUsage: true },
+): { id: number; email: string; fullName: string | null; authProvider: string | null; isActive: boolean } {
   if (!raw.startsWith('ls_')) {
     throw new UnauthorizedError('Invalid API key');
   }
@@ -64,11 +67,13 @@ export function authenticateApiKey(raw: string): { id: number; email: string; fu
     count = 0;
     db.run(sql`UPDATE ${apiKeys} SET daily_count = 0, daily_reset = ${today} WHERE id = ${key.id}`);
   }
-  if (count >= DAILY_LIMIT) {
-    throw new BadRequestError('API key daily limit reached (100/day)');
+  if (opts.countUsage !== false) {
+    if (count >= DAILY_LIMIT) {
+      throw new BadRequestError('API key daily limit reached (100/day)');
+    }
+    db.run(sql`UPDATE ${apiKeys} SET daily_count = ${count + 1}, last_used_at = datetime('now') WHERE id = ${key.id}`);
+    persistNow();
   }
-  db.run(sql`UPDATE ${apiKeys} SET daily_count = ${count + 1}, last_used_at = datetime('now') WHERE id = ${key.id}`);
-  persistNow();
   const user = db.select().from(users).where(sql`${users.id} = ${key.userId}`).all()[0];
   if (!user || !user.isActive) throw new UnauthorizedError('User not found');
   return { id: user.id, email: user.email, fullName: user.fullName, authProvider: user.authProvider, isActive: user.isActive };
