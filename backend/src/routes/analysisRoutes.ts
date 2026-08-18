@@ -35,6 +35,8 @@ router.get('/:documentId', authenticate, getAnalysis);
 router.get('/:documentId/clauses', authenticate, getClauses);
 router.get('/:documentId/risks', authenticate, getRisks);
 router.get('/:documentId/risks/:category', authenticate, getRisksByCategory);
+// Alias: spec requires a clauses-by-category endpoint
+router.get('/:documentId/clauses-by-category/:category', authenticate, getRisksByCategory);
 router.get('/:documentId/summary', authenticate, getSummary);
 router.get('/:documentId/risk-dashboard', authenticate, getRiskDashboard);
 router.get('/:documentId/plain-english', authenticate, getPlainEnglish);
