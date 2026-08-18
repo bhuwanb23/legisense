@@ -1,0 +1,120 @@
+import crypto from 'crypto';
+import { getDb, persistNow } from '../config/database';
+import { documentCollaborators, documents, users } from '../models';
+import { sql } from 'drizzle-orm';
+import { BadRequestError, NotFoundError, ForbiddenError } from '../utils/errors';
+import { createNotification } from './notificationService';
+
+export type CollabRole = 'viewer' | 'commenter';
+
+export function inviteCollaborator(
+  documentId: number,
+  ownerId: number,
+  email: string,
+  role: CollabRole = 'viewer',
+): { token: string; inviteUrl: string; email: string; role: string } {
+  const db = getDb();
+  const doc = db.select().from(documents).where(
+    sql`${documents.id} = ${documentId} AND ${documents.userId} = ${ownerId} AND ${documents.isDeleted} = 0`
+  ).all()[0];
+  if (!doc) throw new NotFoundError('Document');
+  const clean = email.trim().toLowerCase();
+  if (!clean.includes('@')) throw new BadRequestError('Valid email is required');
+  if (!['viewer', 'commenter'].includes(role)) throw new BadRequestError('role must be viewer or commenter');
+
+  const existing = db.select().from(documentCollaborators).where(
+    sql`${documentCollaborators.documentId} = ${documentId} AND ${documentCollaborators.email} = ${clean} AND ${documentCollaborators.status} != 'revoked'`
+  ).all()[0];
+  if (existing) {
+    return {
+      token: existing.token,
+      inviteUrl: `/api/collaborators/accept?token=${existing.token}`,
+      email: clean,
+      role: existing.role,
+    };
+  }
+
+  const token = crypto.randomBytes(16).toString('hex');
+  const invitee = db.select().from(users).where(sql`${users.email} = ${clean}`).all()[0];
+  db.insert(documentCollaborators).values({
+    documentId,
+    invitedBy: ownerId,
+    email: clean,
+    userId: invitee?.id ?? null,
+    role,
+    token,
+    status: 'pending',
+  }).run();
+  persistNow();
+  if (invitee) {
+    createNotification(
+      invitee.id,
+      'workspace_invite',
+      'Document shared with you',
+      `You were invited to "${doc.originalName}" as ${role}.`,
+      documentId,
+    );
+  }
+  return {
+    token,
+    inviteUrl: `/api/collaborators/accept?token=${token}`,
+    email: clean,
+    role,
+  };
+}
+
+export function acceptInvite(token: string, userId: number, email: string): { documentId: number; role: string } {
+  const db = getDb();
+  const row = db.select().from(documentCollaborators).where(
+    sql`${documentCollaborators.token} = ${token}`
+  ).all()[0];
+  if (!row || row.status === 'revoked') throw new NotFoundError('Invite');
+  if (row.email.toLowerCase() !== email.toLowerCase()) {
+    throw new ForbiddenError('Invite email does not match this account');
+  }
+  db.run(sql`UPDATE ${documentCollaborators} SET status = 'accepted', user_id = ${userId} WHERE id = ${row.id}`);
+  persistNow();
+  return { documentId: row.documentId, role: row.role };
+}
+
+export function listCollaborators(documentId: number, ownerId: number) {
+  const db = getDb();
+  const doc = db.select().from(documents).where(
+    sql`${documents.id} = ${documentId} AND ${documents.userId} = ${ownerId}`
+  ).all()[0];
+  if (!doc) throw new NotFoundError('Document');
+  return db.select().from(documentCollaborators).where(
+    sql`${documentCollaborators.documentId} = ${documentId} AND ${documentCollaborators.status} != 'revoked'`
+  ).all();
+}
+
+export function revokeCollaborator(documentId: number, ownerId: number, collabId: number): void {
+  const db = getDb();
+  const doc = db.select().from(documents).where(
+    sql`${documents.id} = ${documentId} AND ${documents.userId} = ${ownerId}`
+  ).all()[0];
+  if (!doc) throw new NotFoundError('Document');
+  const row = db.select().from(documentCollaborators).where(
+    sql`${documentCollaborators.id} = ${collabId} AND ${documentCollaborators.documentId} = ${documentId}`
+  ).all()[0];
+  if (!row) throw new NotFoundError('Collaborator');
+  db.run(sql`UPDATE ${documentCollaborators} SET status = 'revoked' WHERE id = ${collabId}`);
+  persistNow();
+}
+
+export type AccessRole = 'owner' | 'viewer' | 'commenter';
+
+export function getDocumentAccess(userId: number, documentId: number): { role: AccessRole } | null {
+  const db = getDb();
+  const owned = db.select().from(documents).where(
+    sql`${documents.id} = ${documentId} AND ${documents.userId} = ${userId} AND ${documents.isDeleted} = 0`
+  ).all()[0];
+  if (owned) return { role: 'owner' };
+  const collab = db.select().from(documentCollaborators).where(
+    sql`${documentCollaborators.documentId} = ${documentId}
+        AND ${documentCollaborators.userId} = ${userId}
+        AND ${documentCollaborators.status} = 'accepted'`
+  ).all()[0];
+  if (!collab) return null;
+  return { role: collab.role === 'commenter' ? 'commenter' : 'viewer' };
+}
