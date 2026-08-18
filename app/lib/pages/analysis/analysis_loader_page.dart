@@ -5,6 +5,7 @@ import '../../mappers/analysis_mapper.dart';
 import '../../models/api/analysis_models.dart';
 import '../../repositories/documents_repository.dart';
 import '../../services/api_exception.dart';
+import '../../services/offline_cache.dart';
 import '../../theme/app_theme.dart';
 import 'analysis_results_page.dart';
 import 'confirm_type_page.dart';
@@ -56,6 +57,7 @@ class _AnalysisLoaderPageState extends State<AnalysisLoaderPage> {
       }
       final bundle =
           await DocumentsRepository().getAnalysis(widget.documentId);
+      await OfflineCache.saveAnalysis(widget.documentId, bundle);
       if (!bundle.hasAnalysis) {
         if (!mounted) return;
         final confirmed = await Navigator.of(context).push<bool>(
@@ -66,6 +68,7 @@ class _AnalysisLoaderPageState extends State<AnalysisLoaderPage> {
         if (confirmed == true && mounted) {
           final again =
               await DocumentsRepository().getAnalysis(widget.documentId);
+          await OfflineCache.saveAnalysis(widget.documentId, again);
           if (!mounted) return;
           if (again.hasAnalysis) {
             _open(again);
@@ -81,18 +84,34 @@ class _AnalysisLoaderPageState extends State<AnalysisLoaderPage> {
       if (!mounted) return;
       _open(bundle);
     } on ApiException catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _error = e.message;
-        _busy = false;
-      });
+      await _fallbackToCache(e.message);
     } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _error = e.toString();
-        _busy = false;
-      });
+      await _fallbackToCache(e.toString());
     }
+  }
+
+  /// When offline, open the last cached analysis for this document.
+  Future<void> _fallbackToCache(String message) async {
+    final cached = await OfflineCache.cachedAnalysis(widget.documentId);
+    if (!mounted) return;
+    if (cached != null && cached.hasAnalysis) {
+      _open(cached);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Offline — showing the last saved analysis.'),
+          backgroundColor: AppColors.ink,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+        ),
+      );
+      return;
+    }
+    setState(() {
+      _error = message;
+      _busy = false;
+    });
   }
 
   Future<void> _runProcess() async {
@@ -103,6 +122,7 @@ class _AnalysisLoaderPageState extends State<AnalysisLoaderPage> {
     try {
       final bundle =
           await DocumentsRepository().process(widget.documentId);
+      await OfflineCache.saveAnalysis(widget.documentId, bundle);
       if (!mounted) return;
       if (!bundle.hasAnalysis) {
         setState(() {
