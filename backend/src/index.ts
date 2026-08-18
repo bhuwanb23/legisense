@@ -97,6 +97,7 @@ async function start() {
     counter_suggestion TEXT,
     is_flagged INTEGER NOT NULL DEFAULT 0,
     page_number INTEGER,
+    party_references TEXT,
     start_position INTEGER,
     end_position INTEGER,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
@@ -338,6 +339,7 @@ async function start() {
   try { db.run(sql`ALTER TABLE ${clauses} ADD COLUMN negotiation_tips TEXT`); } catch {}
   try { db.run(sql`ALTER TABLE ${clauses} ADD COLUMN used_counter INTEGER NOT NULL DEFAULT 0`); } catch {}
   try { db.run(sql`ALTER TABLE ${clauses} ADD COLUMN copied_at TEXT`); } catch {}
+  try { db.run(sql`ALTER TABLE ${clauses} ADD COLUMN party_references TEXT`); } catch {}
 
   try { db.run(sql`ALTER TABLE ${users} ADD COLUMN nickname TEXT`); } catch {}
   try { db.run(sql`ALTER TABLE ${users} ADD COLUMN preferred_document_types TEXT`); } catch {}
