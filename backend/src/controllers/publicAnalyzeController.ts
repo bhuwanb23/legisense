@@ -2,13 +2,44 @@ import { Request, Response, NextFunction } from 'express';
 import { getDb, persistNow } from '../config/database';
 import { documents, analysisResults, clauses, riskItems, deadlines } from '../models';
 import { sql } from 'drizzle-orm';
-import { BadRequestError } from '../utils/errors';
+import { BadRequestError, NotFoundError } from '../utils/errors';
 import { encryptText, isEncryptionConfigured } from '../services/encryptionService';
 import { scrapeUrl, isValidUrl } from '../services/urlScraper';
-import { processDocumentSync } from '../services/analysisService';
+import { analysisQueue } from '../queue';
 
 function nowPlus24Hours(): string {
   return new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function specPayload(documentId: number) {
+  const db = getDb();
+  const analysis = db.select().from(analysisResults).where(sql`${analysisResults.documentId} = ${documentId}`).all()[0];
+  const clauseRows = analysis
+    ? db.select().from(clauses).where(sql`${clauses.analysisId} = ${analysis.id}`).all()
+    : [];
+  const riskRows = analysis
+    ? db.select().from(riskItems).where(sql`${riskItems.analysisId} = ${analysis.id}`).all()
+    : [];
+  const deadlineRows = db.select().from(deadlines).where(sql`${deadlines.documentId} = ${documentId}`).all();
+  let missing: unknown[] = [];
+  try { missing = JSON.parse(analysis?.missingClauses || '[]'); } catch { missing = []; }
+
+  return {
+    documentId,
+    document_type: analysis?.documentType,
+    risk_score: analysis?.overallRiskScore,
+    risk_level: analysis?.riskLevel,
+    summary: analysis?.summary,
+    clauses: clauseRows,
+    risks: riskRows,
+    missing_clauses: missing,
+    deadlines: deadlineRows,
+    processing_time: analysis?.processingTime,
+  };
 }
 
 export async function publicAnalyze(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -18,7 +49,7 @@ export async function publicAnalyze(req: Request, res: Response, next: NextFunct
     const content = String(req.body?.content || req.body?.text || '').trim();
     const jurisdiction = String(req.body?.jurisdiction || '');
     const language = String(req.body?.language || 'en');
-    const title = String(req.body?.title || 'API analyze');
+    const title = String(req.body?.title || `API analyze ${Date.now()}`);
 
     let text = content;
     let source: 'paste' | 'url' = 'paste';
@@ -56,7 +87,7 @@ export async function publicAnalyze(req: Request, res: Response, next: NextFunct
     db.insert(documents).values({
       userId: req.user.id,
       originalName: title,
-      storagePath: '',
+      storagePath: `api:${Date.now()}`,
       fileFormat: 'txt',
       fileSize: Buffer.byteLength(text, 'utf-8'),
       sourceType: source,
@@ -71,39 +102,72 @@ export async function publicAnalyze(req: Request, res: Response, next: NextFunct
       detectedLanguage: language,
     }).run();
 
-    const doc = db.select().from(documents).where(
-      sql`${documents.originalName} = ${title} AND ${documents.userId} = ${req.user.id}`
-    ).all().pop();
+    const idRows = db.all(sql`SELECT last_insert_rowid() as id`) as { id: number }[];
+    const documentId = Number(idRows[0]?.id);
+    const doc = db.select().from(documents).where(sql`${documents.id} = ${documentId}`).all()[0];
     if (!doc) throw new Error('Failed to create document');
     persistNow();
 
-    await processDocumentSync(doc.id);
+    const job = await analysisQueue.add('analyze', { documentId: doc.id, userId: req.user.id });
 
-    const analysis = db.select().from(analysisResults).where(sql`${analysisResults.documentId} = ${doc.id}`).all()[0];
-    const clauseRows = analysis
-      ? db.select().from(clauses).where(sql`${clauses.analysisId} = ${analysis.id}`).all()
-      : [];
-    const riskRows = analysis
-      ? db.select().from(riskItems).where(sql`${riskItems.analysisId} = ${analysis.id}`).all()
-      : [];
-    const deadlineRows = db.select().from(deadlines).where(sql`${deadlines.documentId} = ${doc.id}`).all();
+    const waitUntil = Date.now() + Number(process.env.V1_ANALYZE_WAIT_MS || 75_000);
+    while (Date.now() < waitUntil) {
+      const latest = db.select().from(documents).where(sql`${documents.id} = ${doc.id}`).all()[0];
+      if (latest?.processingStatus === 'analyzed') {
+        res.status(200).json({ success: true, data: specPayload(doc.id) });
+        return;
+      }
+      if (latest?.processingStatus === 'failed') {
+        res.status(202).json({
+          success: true,
+          data: {
+            documentId: doc.id,
+            jobId: job.id,
+            status: 'failed',
+            message: 'Analysis queued but the current attempt failed. Retry GET /api/v1/analyze/:documentId later.',
+          },
+        });
+        return;
+      }
+      await sleep(1500);
+    }
 
-    let missing: unknown[] = [];
-    try { missing = JSON.parse(analysis?.missingClauses || '[]'); } catch { missing = []; }
-
-    res.status(200).json({
+    const latest = db.select().from(documents).where(sql`${documents.id} = ${doc.id}`).all()[0];
+    res.status(202).json({
       success: true,
       data: {
         documentId: doc.id,
-        document_type: analysis?.documentType,
-        risk_score: analysis?.overallRiskScore,
-        risk_level: analysis?.riskLevel,
-        summary: analysis?.summary,
-        clauses: clauseRows,
-        risks: riskRows,
-        missing_clauses: missing,
-        deadlines: deadlineRows,
-        processing_time: analysis?.processingTime,
+        jobId: job.id,
+        status: latest?.processingStatus || 'pending',
+        message: 'Analysis queued. Poll GET /api/v1/analyze/:documentId',
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function getPublicAnalyze(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    if (!req.user) throw new BadRequestError('Unauthorized');
+    const documentId = Number(req.params.documentId);
+    const db = getDb();
+    const doc = db.select().from(documents).where(
+      sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = 0`
+    ).all()[0];
+    if (!doc) throw new NotFoundError('Document');
+
+    if (doc.processingStatus === 'analyzed') {
+      res.status(200).json({ success: true, data: specPayload(documentId) });
+      return;
+    }
+
+    res.status(202).json({
+      success: true,
+      data: {
+        documentId,
+        status: doc.processingStatus,
+        message: 'Analysis still running',
       },
     });
   } catch (err) {
