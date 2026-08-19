@@ -82,6 +82,8 @@ async function setup() {
     risk_level TEXT,
     fairness_score REAL,
     favors_party TEXT,
+    imbalance_reason TEXT,
+    per_category_fairness TEXT,
     summary TEXT,
     key_parties TEXT,
     critical_dates TEXT,
@@ -93,7 +95,6 @@ async function setup() {
     analysis_language TEXT,
     translations TEXT DEFAULT '{}',
     counter_clauses_status TEXT DEFAULT 'skipped',
-    imbalance_reason TEXT,
     processing_time REAL,
     ai_model_used TEXT,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
