@@ -12,3 +12,9 @@ GeneratedPluginRegistrant.java
 key.properties
 **/*.keystore
 **/*.jks
+
+# Release signing
+key.properties
+release-keystore.jks
+*.jks
+*.keystore

@@ -93,6 +93,7 @@ async function setup() {
     analysis_language TEXT,
     translations TEXT DEFAULT '{}',
     counter_clauses_status TEXT DEFAULT 'skipped',
+    imbalance_reason TEXT,
     processing_time REAL,
     ai_model_used TEXT,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
