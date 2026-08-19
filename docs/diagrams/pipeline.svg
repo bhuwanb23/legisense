@@ -1,0 +1,178 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 520" font-family="'Segoe UI',system-ui,-apple-system,sans-serif">
+  <defs>
+    <linearGradient id="bg2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0f172a"/>
+      <stop offset="100%" style="stop-color:#1e293b"/>
+    </linearGradient>
+    <linearGradient id="stepGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#1e40af"/>
+      <stop offset="100%" style="stop-color:#2563eb"/>
+    </linearGradient>
+    <linearGradient id="aiStepGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#7c3aed"/>
+      <stop offset="100%" style="stop-color:#8b5cf6"/>
+    </linearGradient>
+    <linearGradient id="outputGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#059669"/>
+      <stop offset="100%" style="stop-color:#10b981"/>
+    </linearGradient>
+    <filter id="sh">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#000" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+
+  <rect width="900" height="520" fill="url(#bg2)" rx="16"/>
+
+  <!-- Title -->
+  <text x="450" y="38" text-anchor="middle" fill="#f8fafc" font-size="20" font-weight="700">Analysis Pipeline</text>
+  <text x="450" y="58" text-anchor="middle" fill="#94a3b8" font-size="12">Single document → structured intelligence in one pass</text>
+
+  <!-- Step 1: Upload -->
+  <rect x="30" y="90" width="150" height="70" rx="10" fill="#1e3a5f" stroke="#3b82f6" stroke-width="1.5" filter="url(#sh)"/>
+  <circle cx="55" cy="110" r="10" fill="#3b82f6"/>
+  <text x="55" y="114" text-anchor="middle" fill="#fff" font-size="10" font-weight="700">1</text>
+  <text x="110" y="112" text-anchor="middle" fill="#60a5fa" font-size="11" font-weight="600">Upload</text>
+  <text x="105" y="135" text-anchor="middle" fill="#93c5fd" font-size="8">File · Scan · Paste · URL</text>
+
+  <!-- Arrow 1→2 -->
+  <line x1="180" y1="125" x2="210" y2="125" stroke="#475569" stroke-width="2" marker-end="url(#arr)"/>
+
+  <!-- Step 2: Extract -->
+  <rect x="210" y="90" width="150" height="70" rx="10" fill="#1e3a5f" stroke="#3b82f6" stroke-width="1.5" filter="url(#sh)"/>
+  <circle cx="235" cy="110" r="10" fill="#3b82f6"/>
+  <text x="235" y="114" text-anchor="middle" fill="#fff" font-size="10" font-weight="700">2</text>
+  <text x="290" y="112" text-anchor="middle" fill="#60a5fa" font-size="11" font-weight="600">Extract Text</text>
+  <text x="285" y="135" text-anchor="middle" fill="#93c5fd" font-size="8">PDF · DOCX · OCR · Raw</text>
+
+  <!-- Arrow 2→3 -->
+  <line x1="360" y1="125" x2="390" y2="125" stroke="#475569" stroke-width="2" marker-end="url(#arr)"/>
+
+  <!-- Step 3: Detect -->
+  <rect x="390" y="90" width="150" height="70" rx="10" fill="#1e3a5f" stroke="#3b82f6" stroke-width="1.5" filter="url(#sh)"/>
+  <circle cx="415" cy="110" r="10" fill="#3b82f6"/>
+  <text x="415" y="114" text-anchor="middle" fill="#fff" font-size="10" font-weight="700">3</text>
+  <text x="470" y="112" text-anchor="middle" fill="#60a5fa" font-size="11" font-weight="600">Detect Type</text>
+  <text x="465" y="135" text-anchor="middle" fill="#93c5fd" font-size="8">15 doc types · Confidence</text>
+
+  <!-- Arrow 3→4 -->
+  <line x1="540" y1="125" x2="570" y2="125" stroke="#475569" stroke-width="2" marker-end="url(#arr)"/>
+
+  <!-- Step 4: Select Prompt -->
+  <rect x="570" y="90" width="150" height="70" rx="10" fill="#1e3a5f" stroke="#3b82f6" stroke-width="1.5" filter="url(#sh)"/>
+  <circle cx="595" cy="110" r="10" fill="#3b82f6"/>
+  <text x="595" y="114" text-anchor="middle" fill="#fff" font-size="10" font-weight="700">4</text>
+  <text x="650" y="112" text-anchor="middle" fill="#60a5fa" font-size="11" font-weight="600">Select Prompt</text>
+  <text x="645" y="135" text-anchor="middle" fill="#93c5fd" font-size="8">Type-specific template</text>
+
+  <!-- Arrow 4→5 -->
+  <line x1="720" y1="125" x2="750" y2="125" stroke="#475569" stroke-width="2" marker-end="url(#arr)"/>
+
+  <!-- Step 5: AI Call -->
+  <rect x="750" y="90" width="120" height="70" rx="10" fill="#4c1d95" stroke="#8b5cf6" stroke-width="1.5" filter="url(#sh)"/>
+  <circle cx="775" cy="110" r="10" fill="#8b5cf6"/>
+  <text x="775" y="114" text-anchor="middle" fill="#fff" font-size="10" font-weight="700">5</text>
+  <text x="815" y="112" text-anchor="middle" fill="#c4b5fd" font-size="11" font-weight="600">AI Call</text>
+  <text x="810" y="135" text-anchor="middle" fill="#a78bfa" font-size="8">Fallback chain</text>
+
+  <!-- Down arrow from AI -->
+  <line x1="810" y1="160" x2="810" y2="200" stroke="#8b5cf6" stroke-width="2" marker-end="url(#arrP)"/>
+
+  <!-- Step 6: Parse & Validate -->
+  <rect x="700" y="200" width="180" height="60" rx="10" fill="#4c1d95" stroke="#8b5cf6" stroke-width="1.5" filter="url(#sh)"/>
+  <circle cx="725" cy="220" r="10" fill="#8b5cf6"/>
+  <text x="725" y="224" text-anchor="middle" fill="#fff" font-size="10" font-weight="700">6</text>
+  <text x="810" y="222" text-anchor="middle" fill="#c4b5fd" font-size="11" font-weight="600">Parse + Zod Validate</text>
+
+  <!-- Arrow 6→7 -->
+  <line x1="700" y1="230" x2="660" y2="230" stroke="#8b5cf6" stroke-width="2" marker-end="url(#arrPL)"/>
+
+  <!-- Step 7: Save to DB -->
+  <rect x="470" y="200" width="180" height="60" rx="10" fill="#064e3b" stroke="#10b981" stroke-width="1.5" filter="url(#sh)"/>
+  <circle cx="495" cy="220" r="10" fill="#10b981"/>
+  <text x="495" y="224" text-anchor="middle" fill="#fff" font-size="10" font-weight="700">7</text>
+  <text x="575" y="222" text-anchor="middle" fill="#6ee7b7" font-size="11" font-weight="600">Save Results</text>
+
+  <!-- Arrow 7→8 -->
+  <line x1="470" y1="230" x2="430" y2="230" stroke="#10b981" stroke-width="2" marker-end="url(#arrG)"/>
+
+  <!-- Step 8: Post-processing -->
+  <rect x="240" y="200" width="180" height="60" rx="10" fill="#064e3b" stroke="#10b981" stroke-width="1.5" filter="url(#sh)"/>
+  <circle cx="265" cy="220" r="10" fill="#10b981"/>
+  <text x="265" y="224" text-anchor="middle" fill="#fff" font-size="10" font-weight="700">8</text>
+  <text x="345" y="222" text-anchor="middle" fill="#6ee7b7" font-size="11" font-weight="600">Post-Process</text>
+
+  <!-- Arrow 8→outputs -->
+  <line x1="330" y1="260" x2="330" y2="300" stroke="#10b981" stroke-width="2" marker-end="url(#arrG)"/>
+
+  <!-- Output boxes -->
+  <rect x="40" y="310" width="120" height="50" rx="8" fill="#1a2332" stroke="#334155" stroke-width="1"/>
+  <text x="100" y="332" text-anchor="middle" fill="#94a3b8" font-size="10" font-weight="600">Clauses</text>
+  <text x="100" y="348" text-anchor="middle" fill="#64748b" font-size="8">Risk scores + categories</text>
+
+  <rect x="175" y="310" width="120" height="50" rx="8" fill="#1a2332" stroke="#334155" stroke-width="1"/>
+  <text x="235" y="332" text-anchor="middle" fill="#94a3b8" font-size="10" font-weight="600">Risk Items</text>
+  <text x="235" y="348" text-anchor="middle" fill="#64748b" font-size="8">Severity + mitigation</text>
+
+  <rect x="310" y="310" width="120" height="50" rx="8" fill="#1a2332" stroke="#334155" stroke-width="1"/>
+  <text x="370" y="332" text-anchor="middle" fill="#94a3b8" font-size="10" font-weight="600">Deadlines</text>
+  <text x="370" y="348" text-anchor="middle" fill="#64748b" font-size="8">Dates + urgency</text>
+
+  <rect x="445" y="310" width="120" height="50" rx="8" fill="#1a2332" stroke="#334155" stroke-width="1"/>
+  <text x="505" y="332" text-anchor="middle" fill="#94a3b8" font-size="10" font-weight="600">Summary</text>
+  <text x="505" y="348" text-anchor="middle" fill="#64748b" font-size="8">Parties + obligations</text>
+
+  <rect x="580" y="310" width="120" height="50" rx="8" fill="#1a2332" stroke="#334155" stroke-width="1"/>
+  <text x="640" y="332" text-anchor="middle" fill="#94a3b8" font-size="10" font-weight="600">Plain English</text>
+  <text x="640" y="348" text-anchor="middle" fill="#64748b" font-size="8">Clause translations</text>
+
+  <rect x="715" y="310" width="145" height="50" rx="8" fill="#1a2332" stroke="#334155" stroke-width="1"/>
+  <text x="787" y="332" text-anchor="middle" fill="#94a3b8" font-size="10" font-weight="600">Fairness Score</text>
+  <text x="787" y="348" text-anchor="middle" fill="#64748b" font-size="8">Party bias analysis</text>
+
+  <!-- Post-processing sub-items -->
+  <rect x="40" y="385" width="130" height="40" rx="8" fill="#1a2332" stroke="#d97706" stroke-width="1"/>
+  <text x="105" y="410" text-anchor="middle" fill="#fbbf24" font-size="9" font-weight="600">⚖️ Jurisdiction Check</text>
+
+  <rect x="185" y="385" width="130" height="40" rx="8" fill="#1a2332" stroke="#d97706" stroke-width="1"/>
+  <text x="250" y="410" text-anchor="middle" fill="#fbbf24" font-size="9" font-weight="600">🗺️ State Conflicts</text>
+
+  <rect x="330" y="385" width="130" height="40" rx="8" fill="#1a2332" stroke="#d97706" stroke-width="1"/>
+  <text x="395" y="410" text-anchor="middle" fill="#fbbf24" font-size="9" font-weight="600">🚩 Risk Patterns</text>
+
+  <rect x="475" y="385" width="130" height="40" rx="8" fill="#1a2332" stroke="#d97706" stroke-width="1"/>
+  <text x="540" y="410" text-anchor="middle" fill="#fbbf24" font-size="9" font-weight="600">📋 Playbook Scan</text>
+
+  <rect x="620" y="385" width="130" height="40" rx="8" fill="#1a2332" stroke="#d97706" stroke-width="1"/>
+  <text x="685" y="410" text-anchor="middle" fill="#fbbf24" font-size="9" font-weight="600">🔄 Counter Clauses</text>
+
+  <rect x="765" y="385" width="100" height="40" rx="8" fill="#1a2332" stroke="#d97706" stroke-width="1"/>
+  <text x="815" y="410" text-anchor="middle" fill="#fbbf24" font-size="9" font-weight="600">🔔 Reminders</text>
+
+  <!-- Legend -->
+  <rect x="40" y="460" width="820" height="40" rx="8" fill="#0f172a" stroke="#1e293b" stroke-width="1"/>
+  <circle cx="70" cy="480" r="5" fill="#3b82f6"/>
+  <text x="82" y="484" fill="#64748b" font-size="9">Upload &amp; Extract</text>
+  <circle cx="200" cy="480" r="5" fill="#8b5cf6"/>
+  <text x="212" y="484" fill="#64748b" font-size="9">AI Processing</text>
+  <circle cx="330" cy="480" r="5" fill="#10b981"/>
+  <text x="342" y="484" fill="#64748b" font-size="9">Storage</text>
+  <circle cx="430" cy="480" r="5" fill="#d97706"/>
+  <text x="442" y="484" fill="#64748b" font-size="9">Post-Processing</text>
+  <circle cx="560" cy="480" r="5" fill="#334155"/>
+  <text x="572" y="484" fill="#64748b" font-size="9">Output</text>
+
+  <defs>
+    <marker id="arr" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 Z" fill="#475569"/>
+    </marker>
+    <marker id="arrP" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 Z" fill="#8b5cf6"/>
+    </marker>
+    <marker id="arrPL" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <path d="M8,0 L0,4 L8,8 Z" fill="#8b5cf6"/>
+    </marker>
+    <marker id="arrG" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 Z" fill="#10b981"/>
+    </marker>
+  </defs>
+</svg>

@@ -1,0 +1,146 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 620" font-family="'Segoe UI',system-ui,-apple-system,sans-serif">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0f172a"/>
+      <stop offset="100%" style="stop-color:#1e293b"/>
+    </linearGradient>
+    <linearGradient id="flutterGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#02569B"/>
+      <stop offset="100%" style="stop-color:#0175C2"/>
+    </linearGradient>
+    <linearGradient id="expressGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#333333"/>
+      <stop offset="100%" style="stop-color:#1a1a1a"/>
+    </linearGradient>
+    <linearGradient id="aiGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#7c3aed"/>
+      <stop offset="100%" style="stop-color:#6d28d9"/>
+    </linearGradient>
+    <linearGradient id="dbGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#059669"/>
+      <stop offset="100%" style="stop-color:#047857"/>
+    </linearGradient>
+    <linearGradient id="queueGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#d97706"/>
+      <stop offset="100%" style="stop-color:#b45309"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="shadow">
+      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#000" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="900" height="620" fill="url(#bg)" rx="16"/>
+
+  <!-- Title -->
+  <text x="450" y="42" text-anchor="middle" fill="#f8fafc" font-size="20" font-weight="700">System Architecture</text>
+  <text x="450" y="62" text-anchor="middle" fill="#94a3b8" font-size="12">End-to-end document analysis pipeline</text>
+
+  <!-- Client Layer -->
+  <rect x="40" y="85" width="200" height="90" rx="12" fill="url(#flutterGrad)" filter="url(#shadow)"/>
+  <text x="140" y="118" text-anchor="middle" fill="#fff" font-size="14" font-weight="700">Flutter App</text>
+  <text x="140" y="138" text-anchor="middle" fill="#bfdbfe" font-size="10">Mobile + Web</text>
+  <text x="140" y="155" text-anchor="middle" fill="#93c5fd" font-size="9">Dart · 37 pages · 23 widgets</text>
+
+  <!-- API Layer -->
+  <rect x="310" y="85" width="280" height="90" rx="12" fill="url(#expressGrad)" filter="url(#shadow)"/>
+  <text x="450" y="118" text-anchor="middle" fill="#fff" font-size="14" font-weight="700">Express API</text>
+  <text x="450" y="138" text-anchor="middle" fill="#a1a1aa" font-size="10">Node.js + TypeScript</text>
+  <text x="450" y="155" text-anchor="middle" fill="#a1a1aa" font-size="9">88 endpoints · 12 controllers · Auth + Rate limiting</text>
+
+  <!-- Realtime Layer -->
+  <rect x="660" y="85" width="200" height="90" rx="12" fill="#1e40af" filter="url(#shadow)"/>
+  <text x="760" y="118" text-anchor="middle" fill="#fff" font-size="14" font-weight="700">Socket.IO</text>
+  <text x="760" y="138" text-anchor="middle" fill="#93c5fd" font-size="10">Realtime Events</text>
+  <text x="760" y="155" text-anchor="middle" fill="#93c5fd" font-size="9">Progress · Status · Notifications</text>
+
+  <!-- Arrows: Client → API -->
+  <line x1="240" y1="130" x2="310" y2="130" stroke="#475569" stroke-width="2" marker-end="url(#arrowGray)"/>
+  <text x="275" y="122" text-anchor="middle" fill="#64748b" font-size="9">REST</text>
+
+  <!-- Arrows: API ↔ Socket -->
+  <line x1="590" y1="130" x2="660" y2="130" stroke="#475569" stroke-width="2" marker-end="url(#arrowGray)"/>
+  <text x="625" y="122" text-anchor="middle" fill="#64748b" font-size="9">Events</text>
+
+  <!-- Services Layer -->
+  <rect x="100" y="220" width="160" height="80" rx="10" fill="#1e3a5f" stroke="#2563eb" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="180" y="250" text-anchor="middle" fill="#60a5fa" font-size="12" font-weight="600">OCR Engine</text>
+  <text x="180" y="268" text-anchor="middle" fill="#93c5fd" font-size="9">Tesseract.js + Mistral</text>
+  <text x="180" y="283" text-anchor="middle" fill="#93c5fd" font-size="9">Image → Text extraction</text>
+
+  <rect x="290" y="220" width="160" height="80" rx="10" fill="#1e3a5f" stroke="#2563eb" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="370" y="250" text-anchor="middle" fill="#60a5fa" font-size="12" font-weight="600">Analysis Engine</text>
+  <text x="370" y="268" text-anchor="middle" fill="#93c5fd" font-size="9">Clause splitting · Scoring</text>
+  <text x="370" y="283" text-anchor="middle" fill="#93c5fd" font-size="9">Risk · Fairness · Deadlines</text>
+
+  <rect x="480" y="220" width="160" height="80" rx="10" fill="#1e3a5f" stroke="#2563eb" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="560" y="250" text-anchor="middle" fill="#60a5fa" font-size="12" font-weight="600">Jurisdiction</text>
+  <text x="560" y="268" text-anchor="middle" fill="#93c5fd" font-size="9">Compliance checks</text>
+  <text x="560" y="283" text-anchor="middle" fill="#93c5fd" font-size="9">State conflicts · Rules</text>
+
+  <rect x="670" y="220" width="160" height="80" rx="10" fill="#1e3a5f" stroke="#2563eb" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="750" y="250" text-anchor="middle" fill="#60a5fa" font-size="12" font-weight="600">Chat / RAG</text>
+  <text x="750" y="268" text-anchor="middle" fill="#93c5fd" font-size="9">Clause retrieval · Q&amp;A</text>
+  <text x="750" y="283" text-anchor="middle" fill="#93c5fd" font-size="9">Citations · History</text>
+
+  <!-- Arrow: API → Services -->
+  <line x1="450" y1="175" x2="450" y2="220" stroke="#475569" stroke-width="1.5" marker-end="url(#arrowGray)"/>
+
+  <!-- Queue Layer -->
+  <rect x="180" y="340" width="240" height="70" rx="10" fill="url(#queueGrad)" filter="url(#shadow)"/>
+  <text x="300" y="368" text-anchor="middle" fill="#fff" font-size="12" font-weight="600">Job Queue</text>
+  <text x="300" y="386" text-anchor="middle" fill="#fef3c7" font-size="9">Analysis · OCR · Counter-clauses · Notifications · Reminders</text>
+
+  <!-- Arrows: Services → Queue -->
+  <line x1="370" y1="300" x2="300" y2="340" stroke="#d97706" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arrowAmber)"/>
+
+  <!-- AI Providers Layer -->
+  <rect x="470" y="340" width="380" height="70" rx="10" fill="url(#aiGrad)" filter="url(#shadow)"/>
+  <text x="660" y="365" text-anchor="middle" fill="#fff" font-size="12" font-weight="600">AI Provider Layer</text>
+  <text x="660" y="385" text-anchor="middle" fill="#ddd6fe" font-size="9">Ollama (local) → Gemini → OpenRouter → OpenAI</text>
+  <text x="660" y="400" text-anchor="middle" fill="#c4b5fd" font-size="8">Fallback chain · Timeout · Cost tracking · Token management</text>
+
+  <!-- Arrows: Services → AI -->
+  <line x1="560" y1="300" x2="600" y2="340" stroke="#7c3aed" stroke-width="1.5" marker-end="url(#arrowPurple)"/>
+
+  <!-- Database Layer -->
+  <rect x="100" y="460" width="700" height="80" rx="12" fill="url(#dbGrad)" filter="url(#shadow)"/>
+  <text x="450" y="490" text-anchor="middle" fill="#fff" font-size="14" font-weight="700">SQLite Database</text>
+  <text x="450" y="510" text-anchor="middle" fill="#a7f3d0" font-size="10">26 tables · Drizzle ORM · AES-256 encryption at rest</text>
+  <text x="450" y="528" text-anchor="middle" fill="#6ee7b7" font-size="9">users · documents · analysis_results · clauses · risk_items · deadlines · glossary · jurisdictions · legal_rules · risk_patterns · ...</text>
+
+  <!-- Arrows: Queue → DB -->
+  <line x1="300" y1="410" x2="300" y2="460" stroke="#059669" stroke-width="1.5" marker-end="url(#arrowGreen)"/>
+
+  <!-- Arrows: AI → DB (via services) -->
+  <line x1="660" y1="410" x2="600" y2="460" stroke="#059669" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arrowGreen)"/>
+
+  <!-- Arrow markers -->
+  <defs>
+    <marker id="arrowGray" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 Z" fill="#475569"/>
+    </marker>
+    <marker id="arrowAmber" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 Z" fill="#d97706"/>
+    </marker>
+    <marker id="arrowPurple" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 Z" fill="#7c3aed"/>
+    </marker>
+    <marker id="arrowGreen" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+      <path d="M0,0 L8,4 L0,8 Z" fill="#059669"/>
+    </marker>
+  </defs>
+
+  <!-- Layer labels -->
+  <text x="20" y="135" fill="#475569" font-size="9" font-weight="600" transform="rotate(-90, 20, 135)">CLIENT</text>
+  <text x="20" y="265" fill="#475569" font-size="9" font-weight="600" transform="rotate(-90, 20, 265)">SERVICES</text>
+  <text x="20" y="380" fill="#475569" font-size="9" font-weight="600" transform="rotate(-90, 20, 380)">WORKERS</text>
+  <text x="20" y="505" fill="#475569" font-size="9" font-weight="600" transform="rotate(-90, 20, 505)">STORAGE</text>
+</svg>
