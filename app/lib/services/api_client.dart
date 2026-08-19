@@ -1,3 +1,4 @@
+// ignore_for_file: unawaited_return_in_try_block
 import 'package:dio/dio.dart';
 
 import '../config/api_config.dart';
