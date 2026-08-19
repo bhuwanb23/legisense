@@ -51,7 +51,7 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('Sent to'), findsOneWidget);
+    expect(find.textContaining('sent to'), findsOneWidget);
     expect(find.text('Verify'), findsOneWidget);
   });
 
@@ -112,6 +112,9 @@ void main() {
     expect(find.text('Cancel'), findsOneWidget);
 
     await tester.tap(find.text('Cancel'));
+    await tester.pump();
+    // Dispose the widget tree to cancel pending timers
+    await tester.pumpWidget(const MaterialApp(home: SizedBox()));
     await tester.pump();
   });
 

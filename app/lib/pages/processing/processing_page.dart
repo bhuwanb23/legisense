@@ -34,6 +34,7 @@ class _ProcessingPageState extends State<ProcessingPage> {
   int _ocrFallbackPolls = 0;
   String? _error;
   Timer? _fakeProgress;
+  Timer? _pollTimer;
 
   int? get _docId => widget.upload.documentId;
 
@@ -107,10 +108,9 @@ class _ProcessingPageState extends State<ProcessingPage> {
 
     // Status poll backup — also drives scan → analysis handoff if the socket
     // event was missed.
-    Timer? poll;
-    poll = Timer.periodic(const Duration(seconds: 3), (_) async {
+    _pollTimer = Timer.periodic(const Duration(seconds: 3), (_) async {
       if (!mounted || _cancelled || _finished) {
-        poll?.cancel();
+        _pollTimer?.cancel();
         return;
       }
       try {
@@ -232,6 +232,7 @@ class _ProcessingPageState extends State<ProcessingPage> {
   @override
   void dispose() {
     _fakeProgress?.cancel();
+    _pollTimer?.cancel();
     super.dispose();
   }
 
@@ -240,7 +241,8 @@ class _ProcessingPageState extends State<ProcessingPage> {
     return Scaffold(
       backgroundColor: AppColors.paper,
       body: SafeArea(
-        child: Padding(
+        child: SingleChildScrollView(
+          child: Padding(
           padding: EdgeInsets.fromLTRB(20, 12, 20, AppInsets.shellBottom(context)),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -323,6 +325,7 @@ class _ProcessingPageState extends State<ProcessingPage> {
                 ),
               ],
             ],
+          ),
           ),
         ),
       ),
