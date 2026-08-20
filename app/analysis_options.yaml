@@ -12,7 +12,6 @@ include: package:flutter_lints/flutter.yaml
 analyzer:
   errors:
     # Treat only errors as fatal; warnings and infos are advisory
-    unawaited_return_in_try_block: ignore
     use_build_context_synchronously: ignore
     deprecated_member_use: ignore
 

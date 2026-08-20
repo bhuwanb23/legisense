@@ -24,15 +24,7 @@ jobs:
 
       - name: Analyze
         working-directory: app
-        run: |
-          # Run analyze and fail only on errors, not warnings
-          flutter analyze --no-pub 2>&1 | tee /tmp/analysis.txt
-          ERRORS=$(grep -c '\[error\]' /tmp/analysis.txt || true)
-          if [ "$ERRORS" -gt 0 ]; then
-            echo "Found $ERRORS errors"
-            exit 1
-          fi
-          echo "No errors found (warnings are acceptable)"
+        run: flutter analyze --no-pub 2>&1
 
       - name: Test
         working-directory: app
