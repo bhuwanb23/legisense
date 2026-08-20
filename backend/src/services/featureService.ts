@@ -8,6 +8,7 @@ import { decryptText, isEncryptionConfigured } from './encryptionService';
 import { getPromptForType } from '../prompts/promptTemplates';
 import { appendLanguageInstructions } from '../prompts/analysisPrompt';
 import { CONTRACT_TEMPLATES, findTemplate } from '../data/contractTemplates';
+import { DOCUMENT_TYPES } from '../data/documentTypes';
 
 /**
  * One-click "Better Version": ask the AI to rewrite the whole document into a
@@ -358,7 +359,6 @@ export async function compareDocuments(
 
 /** List the domain templates available for upload pre-selection. */
 export function listTemplates() {
-  const { DOCUMENT_TYPES } = require('../data/documentTypes') as typeof import('../data/documentTypes');
   const bodyTypes = new Set(CONTRACT_TEMPLATES.map((t) => t.type));
   return DOCUMENT_TYPES.filter((t) => t.type !== 'unknown').map((t) => ({
     type: t.type,

@@ -5,6 +5,7 @@ import { UnauthorizedError } from '../utils/errors';
 import { getDb } from '../config/database';
 import { users } from '../models';
 import { sql } from 'drizzle-orm';
+import { authenticateApiKey as lookupApiKey } from '../services/apiKeyService';
 
 function getJwtConfig() {
   const secret = process.env.JWT_SECRET || '';
@@ -87,8 +88,7 @@ function attachApiKeyUser(req: Request, next: NextFunction, countUsage: boolean)
   }
   const token = authHeader.split(' ')[1];
   try {
-    const { authenticateApiKey: lookup } = require('../services/apiKeyService') as typeof import('../services/apiKeyService');
-    const user = lookup(token, { countUsage });
+    const user = lookupApiKey(token, { countUsage });
     req.user = {
       id: user.id,
       email: user.email,
