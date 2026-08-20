@@ -34,16 +34,23 @@ class ClauseBreakdownPage extends StatefulWidget {
 }
 
 class _ClauseBreakdownPageState extends State<ClauseBreakdownPage> {
-  late _ClauseFilter _filter = switch (widget.initialFilter) {
-    AnalysisRiskLevel.high => _ClauseFilter.high,
-    AnalysisRiskLevel.medium => _ClauseFilter.medium,
-    AnalysisRiskLevel.low => _ClauseFilter.low,
-    AnalysisRiskLevel.missing => _ClauseFilter.missing,
-    null => _ClauseFilter.all,
-  };
-  late String? _categoryFilter = widget.initialCategoryFilter;
+  late _ClauseFilter _filter;
+  late String? _categoryFilter;
   final _search = TextEditingController();
   final _expanded = <String>{};
+
+  @override
+  void initState() {
+    super.initState();
+    _filter = switch (widget.initialFilter) {
+      AnalysisRiskLevel.high => _ClauseFilter.high,
+      AnalysisRiskLevel.medium => _ClauseFilter.medium,
+      AnalysisRiskLevel.low => _ClauseFilter.low,
+      AnalysisRiskLevel.missing => _ClauseFilter.missing,
+      null => _ClauseFilter.all,
+    };
+    _categoryFilter = widget.initialCategoryFilter;
+  }
 
   @override
   void dispose() {
