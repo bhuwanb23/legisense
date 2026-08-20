@@ -37,7 +37,7 @@ class AuthSocialRow extends StatelessWidget {
 class _SocialDisc extends StatelessWidget {
   const _SocialDisc({required this.icon, required this.onTap});
 
-  final IconData icon;
+  final FaIconData icon;
   final VoidCallback onTap;
 
   @override
