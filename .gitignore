@@ -24,3 +24,6 @@ Thumbs.db
 
 # database
 *.db
+
+# tools
+.kilo/

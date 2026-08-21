@@ -1,0 +1,12 @@
+# Ignore rendered outputs and raw media binaries
+/hyperframes-product-launch/render/
+/hyperframes-product-launch/assets/*.wav
+/hyperframes-product-launch/assets/*.mp3
+/hyperframes-product-launch/assets/*.png
+/hyperframes-product-launch/assets/*.jpg
+/hyperframes-product-launch/assets/*.mp4
+/hyperframes-product-launch/assets/voiceover.wav
+/hyperframes-product-launch/assets/music_bed.mp3
+*/.DS_Store
+Thumbs.db
+*.log
