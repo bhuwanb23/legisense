@@ -1,27 +1,127 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>Sketch - 01 signature test</title>
-<style>
-  * { margin:0; padding:0; box-sizing:border-box; }
-  html,body { width:1920px; height:1080px; overflow:hidden; background:#000; }
-  body { font-family:'Plus Jakarta Sans', sans-serif; }
-  #root { width:1920px; height:1080px; background:#FFFFFF; color:#1A1A1A; position:relative; }
-</style>
-</head>
-<body>
-<div id="root" data-composition-id="01-signature-test" data-start="0" data-duration="7" data-width="1920" data-height="1080">
-  <div class="clip" data-start="0" data-duration="7" style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:56px;">
-    <p style="font-size:96px; font-weight:700; letter-spacing:-0.02em;">You read every page.</p>
-    <p style="font-size:96px; font-weight:700; letter-spacing:-0.02em; color:#9A9A9A;">All fourteen of them.</p>
-    <p style="font-size:112px; font-weight:800; letter-spacing:-0.02em;">But did you <span style="color:#B42318;">understand</span> it?</p>
+<template>
+  <style>
+    @font-face {
+      font-family: "Plus Jakarta Sans";
+      src: url("assets/fonts/plus-jakarta-sans-latin.woff2") format("woff2");
+      font-weight: 200 800;
+      font-style: normal;
+      font-display: block;
+    }
+    #root {
+      position: relative;
+      width: 1920px;
+      height: 1080px;
+      overflow: hidden;
+      container-type: size;
+      font-family: "Plus Jakarta Sans", sans-serif;
+      color: #1a1a1a;
+    }
+    #root .sig-ground {
+      position: absolute;
+      inset: 0;
+      background: #ffffff;
+    }
+    #root .sig-stage {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 56px;
+    }
+    #root .sig-line {
+      margin: 0;
+      line-height: 1.12;
+      letter-spacing: -0.02em;
+      white-space: nowrap;
+    }
+    #root .sig-line-1 {
+      font-size: 96px;
+      font-weight: 700;
+      color: #1a1a1a;
+    }
+    #root .sig-line-2 {
+      font-size: 96px;
+      font-weight: 700;
+      color: #9a9a9a;
+    }
+    #root .sig-line-3 {
+      font-size: 112px;
+      font-weight: 800;
+      color: #1a1a1a;
+    }
+    #root .sig-word {
+      display: inline-block;
+      color: #1a1a1a;
+    }
+  </style>
+  <div id="root" data-composition-id="01-signature-test" data-start="0" data-duration="4.395" data-width="1920" data-height="1080">
+    <div class="clip sig-ground" data-start="0" data-duration="4.395" data-track-index="0"></div>
+    <div class="clip sig-stage" data-start="0" data-duration="4.395" data-track-index="1">
+      <p class="sig-line sig-line-1" id="01-signature-test-l1">You read every page.</p>
+      <p class="sig-line sig-line-2" id="01-signature-test-l2">All fourteen of them.</p>
+      <p class="sig-line sig-line-3" id="01-signature-test-l3">But did you <span class="sig-word" id="01-signature-test-word">understand</span> it?</p>
+    </div>
   </div>
-</div>
-<script>
-  window.__timelines = window.__timelines || {};
-  window.__timelines["01-signature-test"] = gsap.timeline({ paused:true });
-</script>
-<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
-</body>
-</html>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+  <script>
+    (function () {
+      var DUR = 4.395;
+      var l1 = document.getElementById("01-signature-test-l1");
+      var l2 = document.getElementById("01-signature-test-l2");
+      var l3 = document.getElementById("01-signature-test-l3");
+      var word = document.getElementById("01-signature-test-word");
+
+      var T_L1 = 0.08;
+      var T_L2 = 1.26;
+      var T_L3 = 2.26;
+      var T_FLIP = 2.72;
+      var T_HOLD = 3.77;
+
+      var tl = gsap.timeline({ paused: true });
+
+      tl.fromTo(
+        l1,
+        { scale: 1.5, filter: "blur(16px)", opacity: 0 },
+        { scale: 1, filter: "blur(0px)", opacity: 1, duration: 0.45, ease: "power4.out" },
+        T_L1
+      );
+      tl.fromTo(l1, { y: 20 }, { y: 0, duration: 1.1, ease: "power3.out" }, T_L1);
+
+      tl.fromTo(l2, { opacity: 0 }, { opacity: 1, duration: 0.001, ease: "none" }, T_L2);
+
+      tl.fromTo(
+        l3,
+        { y: 90, rotation: 3, opacity: 0 },
+        { y: 0, rotation: 0, opacity: 1, duration: 0.5, ease: "circ.out" },
+        T_L3
+      );
+      tl.fromTo(word, { color: "#1A1A1A" }, { color: "#B42318", duration: 0.04, ease: "none" }, T_FLIP);
+      tl.to(word, { scale: 1.16, duration: 0.09, ease: "power3.out" }, T_FLIP);
+      tl.to(word, { scale: 1, duration: 0.42, ease: "power2.inOut" }, T_FLIP + 0.09);
+
+      var jit = { p: 0 };
+      var holdDur = DUR - T_HOLD;
+      tl.fromTo(
+        jit,
+        { p: 0 },
+        {
+          p: Math.PI * 2 * holdDur * 2.3,
+          duration: holdDur,
+          ease: "none",
+          onUpdate: function () {
+            gsap.set(l3, {
+              x: Math.sin(jit.p * 3.1) * 0.9,
+              y: Math.sin(jit.p * 4.7 + 1.3) * 0.6,
+            });
+          },
+        },
+        T_HOLD
+      );
+
+      window.__timelines = window.__timelines || {};
+      window.__timelines["01-signature-test"] = tl;
+    })();
+  </script>
+</template>
