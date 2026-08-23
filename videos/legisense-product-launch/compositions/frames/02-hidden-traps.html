@@ -1,39 +1,339 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>Sketch - 02 hidden traps</title>
-<style>
-  * { margin:0; padding:0; box-sizing:border-box; }
-  html,body { width:1920px; height:1080px; overflow:hidden; background:#000; }
-  body { font-family:'Plus Jakarta Sans', sans-serif; }
-  #root { width:1920px; height:1080px; background:#F7F7F7; color:#1A1A1A; position:relative; }
-  .page { position:absolute; width:300px; height:400px; background:#FFFFFF; border:1.5px solid rgba(26,26,26,0.15); border-radius:10px; padding:24px; }
-  .line { height:10px; border-radius:5px; background:rgba(26,26,26,0.12); margin-bottom:14px; }
-  .flag { position:absolute; display:inline-block; padding:10px 20px; border-radius:100px; background:rgba(180,35,24,0.08); border:1.5px solid rgba(180,35,24,0.2); color:#B42318; font-size:22px; font-weight:600; }
-</style>
-</head>
-<body>
-<div id="root" data-composition-id="02-hidden-traps" data-start="0" data-duration="10" data-width="1920" data-height="1080">
-  <div class="clip" data-start="0" data-duration="10" style="position:absolute; inset:0;">
-    <div class="page" style="left:120px; top:90px;"><div class="line"></div><div class="line"></div><div class="line"></div><div class="line" style="width:60%;"></div></div>
-    <div class="page" style="left:470px; top:40px;"><div class="flag" style="top:-18px; right:-30px;">Unlimited liability</div><div class="line"></div><div class="line"></div><div class="line" style="width:75%;"></div><div class="line"></div></div>
-    <div class="page" style="left:830px; top:110px;"><div class="line"></div><div class="line" style="width:80%;"></div><div class="line"></div></div>
-    <div class="page" style="left:1190px; top:50px;"><div class="flag" style="top:-18px; left:-30px;">Auto-renewal trap</div><div class="line"></div><div class="line"></div><div class="line" style="width:55%;"></div></div>
-    <div class="page" style="left:1540px; top:130px;"><div class="line"></div><div class="line" style="width:65%;"></div><div class="line"></div></div>
-    <div class="page" style="left:200px; top:540px;"><div class="line"></div><div class="line" style="width:70%;"></div><div class="line"></div></div>
-    <div class="page" style="left:900px; top:560px;"><div class="flag" style="bottom:-18px; right:-24px;">Forfeiture penalty</div><div class="line"></div><div class="line" style="width:85%;"></div><div class="line"></div></div>
-    <div class="page" style="left:1450px; top:580px;"><div class="line"></div><div class="line"></div><div class="line" style="width:50%;"></div></div>
-    <div style="position:absolute; left:0; right:0; bottom:70px; text-align:center;">
-      <p style="font-size:88px; font-weight:800; letter-spacing:-0.02em;">What are you</p>
-      <p style="font-size:88px; font-weight:800; letter-spacing:-0.02em; color:#B42318;">really agreeing to?</p>
+<template>
+  <style>
+    @font-face {
+      font-family: "Plus Jakarta Sans";
+      src: url("assets/fonts/plus-jakarta-sans-latin.woff2") format("woff2");
+      font-weight: 200 800;
+      font-style: normal;
+      font-display: block;
+    }
+    #root {
+      position: relative;
+      width: 1920px;
+      height: 1080px;
+      overflow: hidden;
+      container-type: size;
+      font-family: "Plus Jakarta Sans", sans-serif;
+      color: #1a1a1a;
+    }
+    #root .ht02-ground {
+      position: absolute;
+      inset: 0;
+      background: #f7f7f7;
+    }
+    #root .ht02-scene {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+    #root .ht02-world {
+      position: absolute;
+      inset: 0;
+      transform-origin: 50% 50%;
+      will-change: transform;
+    }
+    #root .ht02-page {
+      position: absolute;
+      width: 300px;
+      height: 400px;
+      background: #ffffff;
+      border: 1.5px solid rgba(26, 26, 26, 0.15);
+      border-radius: 10px;
+      padding: 24px;
+    }
+    #root .ht02-doc-head {
+      height: 14px;
+      width: 56%;
+      border-radius: 7px;
+      background: rgba(26, 26, 26, 0.3);
+      margin-bottom: 18px;
+    }
+    #root .ht02-ln {
+      display: block;
+      height: 10px;
+      border-radius: 5px;
+      background: rgba(26, 26, 26, 0.12);
+      margin-bottom: 14px;
+    }
+    #root .hw35 { width: 35%; }
+    #root .hw52 { width: 52%; }
+    #root .hw54 { width: 54%; }
+    #root .hw58 { width: 58%; }
+    #root .hw60 { width: 60%; }
+    #root .hw62 { width: 62%; }
+    #root .hw64 { width: 64%; }
+    #root .hw66 { width: 66%; }
+    #root .hw68 { width: 68%; }
+    #root .hw70 { width: 70%; }
+    #root .hw72 { width: 72%; }
+    #root .hw74 { width: 74%; }
+    #root .hw76 { width: 76%; }
+    #root .hw78 { width: 78%; }
+    #root .hw80 { width: 80%; }
+    #root .hw82 { width: 82%; }
+    #root .hw84 { width: 84%; }
+    #root .hw86 { width: 86%; }
+    #root .hw88 { width: 88%; }
+    #root .hw90 { width: 90%; }
+    #root .hw92 { width: 92%; }
+    #root .hw94 { width: 94%; }
+    #root .hw96 { width: 96%; }
+    #root .ht02-clause {
+      position: relative;
+      background: rgba(26, 26, 26, 0.2);
+    }
+    #root .ht02-sweep {
+      position: absolute;
+      inset: 0;
+      border-radius: 5px;
+      background: rgba(180, 35, 24, 0.34);
+    }
+    #root .ht02-flag {
+      position: absolute;
+      padding: 10px 20px;
+      border-radius: 100px;
+      background: rgba(180, 35, 24, 0.08);
+      border: 1.5px solid rgba(180, 35, 24, 0.2);
+      color: #b42318;
+      font-size: 22px;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+      white-space: nowrap;
+    }
+    #root .ht02-qclip {
+      position: absolute;
+      inset: 0;
+    }
+    #root .ht02-question {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 676px;
+      text-align: center;
+    }
+    #root .ht02-qline {
+      margin: 0;
+      font-size: 88px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      line-height: 1.06;
+      color: #1a1a1a;
+      white-space: nowrap;
+    }
+    #root .ht02-qline + .ht02-qline {
+      margin-top: 8px;
+      color: #b42318;
+    }
+    #root .ht02-w {
+      display: inline-block;
+      will-change: transform, filter, opacity;
+    }
+  </style>
+  <div id="root" data-composition-id="02-hidden-traps" data-start="0" data-duration="9.664" data-width="1920" data-height="1080">
+    <div class="clip ht02-ground" data-start="0" data-duration="9.664" data-track-index="0"></div>
+    <div class="clip ht02-scene" data-start="0" data-duration="9.664" data-track-index="1">
+      <div class="ht02-world" id="02-hidden-traps-world">
+        <div class="ht02-page" id="02-hidden-traps-p1" style="left: 120px; top: 90px;">
+          <div class="ht02-doc-head"></div>
+          <i class="ht02-ln"></i><i class="ht02-ln hw92"></i><i class="ht02-ln"></i><i class="ht02-ln hw78"></i><i class="ht02-ln"></i><i class="ht02-ln hw64"></i><i class="ht02-ln"></i><i class="ht02-ln hw88"></i><i class="ht02-ln"></i><i class="ht02-ln hw70"></i><i class="ht02-ln hw52"></i>
+        </div>
+        <div class="ht02-page" id="02-hidden-traps-p2" style="left: 470px; top: 40px;">
+          <div class="ht02-flag" id="02-hidden-traps-flag1" style="top: -18px; right: -30px;">Unlimited liability</div>
+          <div class="ht02-doc-head"></div>
+          <i class="ht02-ln"></i><i class="ht02-ln hw96"></i><i class="ht02-ln"></i><i class="ht02-ln hw84"></i><i class="ht02-ln ht02-clause" id="02-hidden-traps-clause1"><span class="ht02-sweep" id="02-hidden-traps-sweep1"></span></i><i class="ht02-ln"></i><i class="ht02-ln hw72"></i><i class="ht02-ln"></i><i class="ht02-ln hw90"></i><i class="ht02-ln"></i><i class="ht02-ln hw58"></i>
+        </div>
+        <div class="ht02-page" id="02-hidden-traps-p3" style="left: 830px; top: 110px;">
+          <div class="ht02-doc-head"></div>
+          <i class="ht02-ln"></i><i class="ht02-ln"></i><i class="ht02-ln hw86"></i><i class="ht02-ln"></i><i class="ht02-ln hw92"></i><i class="ht02-ln"></i><i class="ht02-ln hw68"></i><i class="ht02-ln"></i><i class="ht02-ln"></i><i class="ht02-ln hw76"></i><i class="ht02-ln hw54"></i>
+        </div>
+        <div class="ht02-page" id="02-hidden-traps-p4" style="left: 1190px; top: 50px;">
+          <div class="ht02-flag" id="02-hidden-traps-flag2" style="top: -18px; left: -30px;">Auto-renewal trap</div>
+          <div class="ht02-doc-head"></div>
+          <i class="ht02-ln"></i><i class="ht02-ln"></i><i class="ht02-ln hw90"></i><i class="ht02-ln"></i><i class="ht02-ln ht02-clause" id="02-hidden-traps-clause2"><span class="ht02-sweep" id="02-hidden-traps-sweep2"></span></i><i class="ht02-ln"></i><i class="ht02-ln hw78"></i><i class="ht02-ln"></i><i class="ht02-ln hw94"></i><i class="ht02-ln"></i><i class="ht02-ln hw62"></i>
+        </div>
+        <div class="ht02-page" id="02-hidden-traps-p5" style="left: 1540px; top: 130px;">
+          <div class="ht02-doc-head"></div>
+          <i class="ht02-ln"></i><i class="ht02-ln hw88"></i><i class="ht02-ln"></i><i class="ht02-ln"></i><i class="ht02-ln hw72"></i><i class="ht02-ln"></i><i class="ht02-ln hw96"></i><i class="ht02-ln"></i><i class="ht02-ln hw80"></i><i class="ht02-ln hw54"></i>
+        </div>
+        <div class="ht02-page" id="02-hidden-traps-p6" style="left: 200px; top: 540px;">
+          <div class="ht02-doc-head"></div>
+          <i class="ht02-ln"></i><i class="ht02-ln hw94"></i><i class="ht02-ln"></i><i class="ht02-ln hw82"></i><i class="ht02-ln"></i><i class="ht02-ln"></i><i class="ht02-ln hw66"></i><i class="ht02-ln"></i><i class="ht02-ln hw90"></i><i class="ht02-ln hw58"></i>
+        </div>
+        <div class="ht02-page" id="02-hidden-traps-p7" style="left: 900px; top: 560px;">
+          <div class="ht02-flag" id="02-hidden-traps-flag3" style="bottom: -18px; right: -24px;">Forfeiture penalty</div>
+          <div class="ht02-doc-head"></div>
+          <i class="ht02-ln"></i><i class="ht02-ln"></i><i class="ht02-ln hw88"></i><i class="ht02-ln"></i><i class="ht02-ln ht02-clause" id="02-hidden-traps-clause3"><span class="ht02-sweep" id="02-hidden-traps-sweep3"></span></i><i class="ht02-ln hw96"></i><i class="ht02-ln"></i><i class="ht02-ln hw74"></i><i class="ht02-ln"></i><i class="ht02-ln hw60"></i>
+        </div>
+        <div class="ht02-page" id="02-hidden-traps-p8" style="left: 1450px; top: 580px;">
+          <div class="ht02-doc-head"></div>
+          <i class="ht02-ln"></i><i class="ht02-ln hw90"></i><i class="ht02-ln"></i><i class="ht02-ln"></i><i class="ht02-ln hw76"></i><i class="ht02-ln"></i><i class="ht02-ln hw98"></i><i class="ht02-ln"></i><i class="ht02-ln hw64"></i><i class="ht02-ln hw35"></i>
+        </div>
+      </div>
+    </div>
+    <div class="clip ht02-qclip" data-start="0" data-duration="9.664" data-track-index="2">
+      <div class="ht02-question">
+        <p class="ht02-qline"><span class="ht02-w" id="02-hidden-traps-qw1">What</span> <span class="ht02-w" id="02-hidden-traps-qw2">are</span> <span class="ht02-w" id="02-hidden-traps-qw3">you</span></p>
+        <p class="ht02-qline"><span class="ht02-w" id="02-hidden-traps-qw4">really</span> <span class="ht02-w" id="02-hidden-traps-qw5">agreeing</span> <span class="ht02-w" id="02-hidden-traps-qw6">to?</span></p>
+      </div>
     </div>
   </div>
-</div>
-<script>
-  window.__timelines = window.__timelines || {};
-  window.__timelines["02-hidden-traps"] = gsap.timeline({ paused:true });
-</script>
-<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
-</body>
-</html>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+  <script>
+    (function () {
+      var ID = "02-hidden-traps";
+      function el(n) {
+        return document.getElementById(ID + "-" + n);
+      }
+      var world = el("world");
+      var LAYER_OP = [0.55, 0.78, 1];
+      var LAYER_SC = [0.94, 0.97, 1];
+      var LAYER_Z = [1, 2, 3];
+      var DIM_OP = [0.46, 0.68, 1];
+      var PAGES = [
+        { n: "p1", rot: -3.5, layer: 0 },
+        { n: "p2", rot: 2.5, layer: 2 },
+        { n: "p3", rot: -1.8, layer: 1 },
+        { n: "p4", rot: 3.0, layer: 2 },
+        { n: "p5", rot: -2.6, layer: 0 },
+        { n: "p6", rot: 2.2, layer: 1 },
+        { n: "p7", rot: -2.4, layer: 2 },
+        { n: "p8", rot: 1.8, layer: 0 },
+      ];
+      PAGES.forEach(function (p) {
+        p.el = el(p.n);
+      });
+      var cam = { scale: 1, x: 0, y: 0 };
+      function applyCamera() {
+        world.style.transform =
+          "translate(" + cam.x + "px," + cam.y + "px) scale(" + cam.scale + ")";
+      }
+      applyCamera();
+      var tl = gsap.timeline({ paused: true });
+      PAGES.forEach(function (p, i) {
+        gsap.set(p.el, {
+          opacity: 0,
+          scale: LAYER_SC[p.layer] - 0.32,
+          y: 52,
+          rotation: p.rot,
+          zIndex: LAYER_Z[p.layer],
+          transformOrigin: "50% 60%",
+        });
+      });
+      var GROUP_A = [0, 1, 2, 3, 4];
+      var GROUP_B = [5, 6, 7];
+      GROUP_A.forEach(function (pi, j) {
+        var p = PAGES[pi];
+        tl.fromTo(
+          p.el,
+          { opacity: 0, scale: LAYER_SC[p.layer] - 0.3, y: 52, rotation: p.rot + (j % 2 === 0 ? -9 : 9) },
+          {
+            opacity: LAYER_OP[p.layer],
+            scale: LAYER_SC[p.layer],
+            y: 0,
+            rotation: p.rot,
+            duration: 0.78,
+            ease: "back.out(1.55)",
+          },
+          0.14 + j * 0.13
+        );
+      });
+      GROUP_B.forEach(function (pi, j) {
+        var p = PAGES[pi];
+        tl.fromTo(
+          p.el,
+          { opacity: 0, scale: LAYER_SC[p.layer] - 0.3, y: 52, rotation: p.rot + (j % 2 === 0 ? 9 : -9) },
+          {
+            opacity: LAYER_OP[p.layer],
+            scale: LAYER_SC[p.layer],
+            y: 0,
+            rotation: p.rot,
+            duration: 0.78,
+            ease: "back.out(1.55)",
+          },
+          1.42 + j * 0.15
+        );
+      });
+      var FLAGS = [
+        { page: "p2", clause: "clause1", sweep: "sweep1", flag: "flag1", at: 3.35, origin: "50% 140%" },
+        { page: "p4", clause: "clause2", sweep: "sweep2", flag: "flag2", at: 4.55, origin: "50% 140%" },
+        { page: "p7", clause: "clause3", sweep: "sweep3", flag: "flag3", at: 5.75, origin: "50% -40%" },
+      ];
+      FLAGS.forEach(function (f) {
+        var page = el(f.page);
+        var lp = PAGES.filter(function (p) { return p.n === f.page; })[0];
+        var baseSc = LAYER_SC[lp.layer];
+        gsap.set(el(f.sweep), { scaleX: 0, transformOrigin: "0% 50%" });
+        gsap.set(el(f.flag), { opacity: 0, scale: 1.9, rotation: 5, transformOrigin: f.origin });
+        tl.to(el(f.clause), { backgroundColor: "rgba(180,35,24,0.32)", duration: 0.3, ease: "power2.out" }, f.at);
+        tl.to(el(f.sweep), { scaleX: 1, duration: 0.34, ease: "power2.out" }, f.at + 0.02);
+        tl.fromTo(
+          el(f.flag),
+          { opacity: 0, scale: 1.9, rotation: 5 },
+          { opacity: 1, scale: 1, rotation: 0, duration: 0.4, ease: "back.out(2.1)" },
+          f.at + 0.2
+        );
+        tl.to(page, { scale: baseSc + 0.02, duration: 0.18, ease: "power2.out" }, f.at + 0.26);
+        tl.to(page, { scale: baseSc, duration: 0.3, ease: "power2.inOut" }, f.at + 0.44);
+      });
+      var BLUR_ORDER = ["p1", "p3", "p5", "p6", "p8"];
+      BLUR_ORDER.forEach(function (n, i) {
+        var lp = PAGES.filter(function (p) { return p.n === n; })[0];
+        tl.to(
+          el(n),
+          {
+            filter: "blur(4px)",
+            opacity: DIM_OP[lp.layer],
+            duration: 0.9,
+            ease: "power2.inOut",
+          },
+          6.3 + i * 0.15
+        );
+      });
+      [el("p2"), el("p4"), el("p7")].forEach(function (pel, i) {
+        tl.to(pel, { scale: 1.03, duration: 0.7, ease: "power2.inOut" }, 6.7 + i * 0.12);
+      });
+      tl.to(
+        cam,
+        { scale: 1.1, x: 8, y: 90, duration: 2.0, ease: "power2.inOut", onUpdate: applyCamera },
+        6.05
+      );
+      var SHOVE = [
+        { n: "p1", dx: -77, dy: -23 },
+        { n: "p2", dx: -128, dy: -18 },
+        { n: "p3", dx: -8, dy: -133 },
+        { n: "p4", dx: 116, dy: -32 },
+        { n: "p5", dx: 89, dy: -14 },
+        { n: "p6", dx: -268, dy: 197 },
+        { n: "p7", dx: 520, dy: -248 },
+        { n: "p8", dx: 216, dy: 155 },
+      ];
+      SHOVE.forEach(function (s) {
+        tl.to(el(s.n), { x: s.dx, y: s.dy, duration: 0.78, ease: "power3.in" }, 8.0);
+      });
+      tl.to(
+        cam,
+        { scale: 1.22, x: 8.5, y: 122, duration: 0.74, ease: "power3.in", onUpdate: applyCamera },
+        8.0
+      );
+      var WORDS = [
+        { n: "qw1", t: 8.28 },
+        { n: "qw2", t: 8.41 },
+        { n: "qw3", t: 8.54 },
+        { n: "qw4", t: 8.82 },
+        { n: "qw5", t: 8.95 },
+        { n: "qw6", t: 9.08 },
+      ];
+      WORDS.forEach(function (w) {
+        gsap.set(el(w.n), { opacity: 0, y: 30, filter: "blur(8px)" });
+        tl.fromTo(
+          el(w.n),
+          { opacity: 0, y: 30, filter: "blur(8px)" },
+          { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.46, ease: "power3.out" },
+          w.t
+        );
+      });
+      window.__timelines = window.__timelines || {};
+      window.__timelines["02-hidden-traps"] = tl;
+    })();
+  </script>
+</template>

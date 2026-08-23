@@ -21,7 +21,7 @@ music: confident minimal tech underscore
 - scene: Kinetic type on clean light canvas. Three escalating beats land solo: "You read every page." / "All fourteen of them." / "But did you understand it?" The word "understand" turns error-red and holds.
 - duration: 4.395s
 - transition_in: cut
-- status: built
+- status: animated
 - voiceover: "You read every page. All fourteen of them. But did you understand it?"
 - src: compositions/frames/01-signature-test.html
 - type: hook
@@ -45,7 +45,7 @@ Scene 4 (6.0-7.0s): hold the read perfectly still; at most subtle low-amplitude 
 - scene: A dense contract wall accumulates (page cards with legalese line textures). Red clause flags flare and pin on traps: "Unlimited liability", "Auto-renewal trap", "Forfeiture penalty". Slow zoom-out, then a push-in shoves pages to the edges as a two-part question builds center: "What are you / really agreeing to?"
 - duration: 9.664s
 - transition_in: crossfade
-- status: built
+- status: animated
 - voiceover: "Rental agreements. NDAs. Loan terms. And hidden inside - unlimited liability, auto-renewal traps, penalties you never saw coming."
 - src: compositions/frames/02-hidden-traps.html
 - type: pain_point
@@ -71,7 +71,7 @@ Scene 4 (8.0-10.0s): velocity-matched shove - virtual camera pushes in while pag
 - scene: Pages clear off all four edges. The LegiSense mark draws itself on center (upload arrow + magnifier glyph), the wordmark cascades beneath, tagline locks up: "Your AI Legal Advisor."
 - duration: 3.712s
 - transition_in: zoom-through
-- status: built
+- status: animated
 - voiceover: "LegiSense reads the fine print for you - before you sign it."
 - src: compositions/frames/03-enter-legisense.html
 - type: product_intro
@@ -96,7 +96,7 @@ Scene 3 (4.2-8.0s): deliberate breather - the 60px accent line draws under the t
 - scene: App-surface card in TripGlide light UI. A file chip drops in, the Analyze button press fires working-state theater: status phrases swap ("Extracting text...", "Classifying type...", "Reading clauses..."), progress rail fills, then a receipt card cascades in with rows arriving and checking off (Extract, Classify, Clauses, Risks).
 - duration: 8.555s
 - transition_in: push-slide LEFT
-- status: built
+- status: animated
 - voiceover: "Upload any document - PDF, scan, paste, or link. It classifies, extracts, and reads every clause in seconds."
 - src: compositions/frames/04-analysis-theater.html
 - type: feature_showcase
@@ -120,7 +120,7 @@ Scene 4 (8.5-10.0s): hold on the fully-checked receipt; subtle jitter nowhere ne
 - scene: Split-stage document view. Left column verbatim legalese excerpts in mono face; right column plain-English twins. Clause rows flip card-style one by one from legalese to plain. Above, a risk gauge counts up 0 to 87 and settles in the HIGH red band; two missing-protection chips spring in ("No dispute resolution", "Data retention vague").
 - duration: 8.213s
 - transition_in: push-slide LEFT
-- status: built
+- status: animated
 - voiceover: "Every clause gets a risk score. Every sentence becomes plain English. And missing protections get flagged - before they cost you."
 - src: compositions/frames/05-plain-english.html
 - type: feature_showcase
@@ -146,7 +146,7 @@ Scene 4 (9.5-12.0s): long settled read of the whole board - columns, gauge, chip
 - scene: Chat surface card. A question types into the composer: "Can my landlord raise the rent by 15%?" Send press, brief thinking state, then an answer streams in with two citation chips pinned to clause numbers ("Clause 4.2", "Clause 9.1").
 - duration: 5.205s
 - transition_in: push-slide LEFT
-- status: built
+- status: animated
 - voiceover: "Have a question? Just ask. You get cited answers, straight from your own document."
 - src: compositions/frames/06-cited-chat.html
 - type: feature_showcase
@@ -170,7 +170,7 @@ Scene 4 (7.5-10.0s): hold the finished exchange; caret blink continues as a fini
 - scene: Vertical benefit list self-assembles one row per second past a focal slot on the app card: "Deadline reminders", "Fairer counter-clauses", "Export reports", "Any jurisdiction". List clears and a payoff line lands: "Everything the fine print touches."
 - duration: 5.312s
 - transition_in: crossfade
-- status: built
+- status: animated
 - voiceover: "Deadlines tracked. Fairer counter-clauses drafted. Full reports, ready to share."
 - src: compositions/frames/07-benefit-list.html
 - type: benefit_highlight
@@ -196,7 +196,7 @@ Scene 4 (7.5-9.0s): hold on the payoff line; still.
 - scene: Stage clears. The LegiSense lockup builds (mark draws on, wordmark cascades), camera pushes through negative space as giant CTA letters streak past and resolve on the held line: "Know what you sign." Sub-line settles beneath: "legisense.app".
 - duration: 2.261s
 - transition_in: zoom-through
-- status: built
+- status: animated
 - voiceover: "LegiSense. Know what you sign."
 - src: compositions/frames/08-know-what-you-sign.html
 - type: cta
