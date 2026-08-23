@@ -13,3 +13,4 @@ Thumbs.db
 *.err
 render/
 renders/
+.thumbnails/
