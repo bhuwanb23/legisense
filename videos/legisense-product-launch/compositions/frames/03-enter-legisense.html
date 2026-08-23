@@ -304,18 +304,9 @@
         cursor += slot;
       });
 
-      // tracking tightens to the final lockup while letters land
-      tl.fromTo(
-        wordmark,
-        { letterSpacing: "0.1em" },
-        {
-          letterSpacing: "-0.02em",
-          duration: S3 - S2 - 0.05,
-          ease: "power2.inOut",
-          immediateRender: true,
-        },
-        S2
-      );
+      // tracking holds the final lockup value statically (layout properties
+      // snap under seek-by-frame capture; transforms only are animated)
+      gsap.set(wordmark, { letterSpacing: "-0.02em" });
 
       // tagline fades up on its spoken cue, smooth settle
       tl.fromTo(
