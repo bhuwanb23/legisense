@@ -64,8 +64,7 @@ void main() {
     await tester.pumpWidget(
       const MaterialApp(home: MainShell()),
     );
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 500));
+    await tester.pumpAndSettle();
 
     expect(find.textContaining('Welcome to Legisense'), findsOneWidget);
     expect(find.text('Quick stats'), findsOneWidget);
