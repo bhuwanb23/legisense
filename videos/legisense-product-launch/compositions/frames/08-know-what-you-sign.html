@@ -1,31 +1,311 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>Sketch - 08 know what you sign</title>
-<style>
-  * { margin:0; padding:0; box-sizing:border-box; }
-  html,body { width:1920px; height:1080px; overflow:hidden; background:#000; }
-  body { font-family:'Plus Jakarta Sans', sans-serif; }
-  #root { width:1920px; height:1080px; background:#FFFFFF; color:#1A1A1A; position:relative; }
-</style>
-</head>
-<body>
-<div id="root" data-composition-id="08-know-what-you-sign" data-start="0" data-duration="9" data-width="1920" data-height="1080">
-  <div class="clip" data-start="0" data-duration="9" style="position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:44px;">
-    <div style="display:flex; align-items:center; gap:28px;">
-      <div style="width:96px; height:96px; border-radius:26px; background:#1A1A1A; display:flex; align-items:center; justify-content:center;"><span style="color:#fff; font-size:44px; font-weight:800;">L</span></div>
-      <span style="font-size:72px; font-weight:800; letter-spacing:-0.03em;">LegiSense</span>
+<template>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    #root {
+      width: 1920px;
+      height: 1080px;
+      position: relative;
+      overflow: hidden;
+      color: #1A1A1A;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .f08kys-ground {
+      position: absolute;
+      inset: 0;
+      background: #FFFFFF;
+    }
+    .f08kys-scene {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+    /* atmosphere: concentric closing rings (closing-frame only) */
+    .f08kys-ring {
+      position: absolute;
+      border-radius: 50%;
+      border: 1.5px solid rgba(180, 35, 24, 0.10);
+      will-change: transform, opacity;
+    }
+    .f08kys-ring2 { border-color: rgba(180, 35, 24, 0.08); }
+    .f08kys-ring3 { border-color: rgba(180, 35, 24, 0.06); }
+
+    /* camera wrapper — carries the push-through */
+    .f08kys-cam {
+      position: absolute;
+      inset: 0;
+      will-change: transform;
+    }
+    /* bounded glow behind the lockup */
+    .f08kys-glow {
+      position: absolute;
+      left: calc(50% - 380px);
+      top: 154px;
+      width: 760px;
+      height: 320px;
+      background: radial-gradient(closest-side, rgba(180, 35, 24, 0.12), rgba(180, 35, 24, 0.0));
+      will-change: transform, opacity;
+    }
+    .f08kys-col {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 44px;
+    }
+    .f08kys-lockup {
+      display: flex;
+      align-items: center;
+      gap: 28px;
+    }
+    .f08kys-marktile {
+      width: 96px;
+      height: 96px;
+      border-radius: 26px;
+      background: #1A1A1A;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      will-change: transform, opacity;
+    }
+    .f08kys-markpath {
+      fill: none;
+      stroke: #FFFFFF;
+      stroke-width: 11;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-dasharray: 100;
+      stroke-dashoffset: 100;
+    }
+    .f08kys-word {
+      font-size: 72px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      color: #1A1A1A;
+      white-space: nowrap;
+    }
+    .f08kys-wl {
+      display: inline-block;
+      will-change: transform, opacity;
+    }
+    .f08kys-h1 {
+      font-size: 150px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.05;
+      color: #1A1A1A;
+      white-space: nowrap;
+      filter: url(#f08kys-fh);
+      will-change: transform, opacity;
+    }
+    .f08kys-you {
+      display: inline-block;
+      color: #1A1A1A;
+      will-change: transform;
+    }
+    .f08kys-sub {
+      font-size: 38px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      color: #9A9A9A;
+      will-change: transform, opacity;
+    }
+    .f08kys-cta {
+      margin-top: 20px;
+      padding: 24px 56px;
+      border-radius: 100px;
+      background: #B42318;
+      color: #FFFFFF;
+      font-size: 34px;
+      font-weight: 700;
+      will-change: transform, opacity;
+    }
+    /* giant CTA letter streakers (push-through debris, above the lens) */
+    .f08kys-streak {
+      position: absolute;
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      line-height: 1;
+      white-space: nowrap;
+      pointer-events: none;
+      will-change: transform, opacity;
+    }
+    .f08kys-s1 {
+      top: 210px;
+      font-size: 560px;
+      color: transparent;
+      -webkit-text-stroke: 3px rgba(180, 35, 24, 0.14);
+      filter: url(#f08kys-f1);
+    }
+    .f08kys-s2 {
+      top: 430px;
+      font-size: 420px;
+      color: rgba(26, 26, 26, 0.07);
+      filter: url(#f08kys-f2);
+    }
+    .f08kys-s3 {
+      top: 90px;
+      font-size: 640px;
+      color: transparent;
+      -webkit-text-stroke: 3px rgba(26, 26, 26, 0.09);
+      filter: url(#f08kys-f3);
+    }
+  </style>
+
+  <div id="root" data-composition-id="08-know-what-you-sign" data-start="0" data-duration="9" data-width="1920" data-height="1080">
+    <!-- directional blur filters -->
+    <svg width="0" height="0" aria-hidden="true" style="position:absolute">
+      <defs>
+        <filter id="f08kys-fh" x="-60%" y="-60%" width="220%" height="220%">
+          <feGaussianBlur id="f08kys-fhb" in="SourceGraphic" stdDeviation="0 0" />
+        </filter>
+        <filter id="f08kys-f1" x="-60%" y="-60%" width="220%" height="220%">
+          <feGaussianBlur id="f08kys-f1b" in="SourceGraphic" stdDeviation="0 0" />
+        </filter>
+        <filter id="f08kys-f2" x="-60%" y="-60%" width="220%" height="220%">
+          <feGaussianBlur id="f08kys-f2b" in="SourceGraphic" stdDeviation="0 0" />
+        </filter>
+        <filter id="f08kys-f3" x="-60%" y="-60%" width="220%" height="220%">
+          <feGaussianBlur id="f08kys-f3b" in="SourceGraphic" stdDeviation="0 0" />
+        </filter>
+      </defs>
+    </svg>
+
+    <!-- full-bleed white ground -->
+    <div class="clip f08kys-ground" data-start="0" data-duration="9" data-track-index="0"></div>
+
+    <!-- content scene -->
+    <div class="clip f08kys-scene" data-start="0" data-duration="9" data-track-index="1">
+      <!-- concentric closing rings (atmosphere) -->
+      <div class="f08kys-ring" style="left: calc(50% - 260px); top: calc(470px - 260px); width: 520px; height: 520px;"></div>
+      <div class="f08kys-ring f08kys-ring2" style="left: calc(50% - 380px); top: calc(470px - 380px); width: 760px; height: 760px;"></div>
+      <div class="f08kys-ring f08kys-ring3" style="left: calc(50% - 510px); top: calc(470px - 510px); width: 1020px; height: 1020px;"></div>
+
+      <!-- camera wrapper: push-through lives here -->
+      <div class="f08kys-cam">
+        <div class="f08kys-glow"></div>
+        <div class="f08kys-col">
+          <!-- brand lockup -->
+          <div class="f08kys-lockup">
+            <div class="f08kys-marktile">
+              <svg width="96" height="96" viewBox="0 0 96 96" aria-hidden="true">
+                <path class="f08kys-markpath" pathLength="100" d="M33 25 L33 63" />
+                <path class="f08kys-markpath" pathLength="100" d="M33 63 L64 63" />
+              </svg>
+            </div>
+            <span class="f08kys-word"><span class="f08kys-wl">L</span><span class="f08kys-wl">e</span><span class="f08kys-wl">g</span><span class="f08kys-wl">i</span><span class="f08kys-wl">S</span><span class="f08kys-wl">e</span><span class="f08kys-wl">n</span><span class="f08kys-wl">s</span><span class="f08kys-wl">e</span></span>
+          </div>
+
+          <!-- held CTA line -->
+          <h1 class="f08kys-h1">Know what <span class="f08kys-you">you</span> sign.</h1>
+
+          <!-- sub-line -->
+          <p class="f08kys-sub">legisense.app</p>
+
+          <!-- the one solid CTA -->
+          <div class="f08kys-cta">Get started free</div>
+        </div>
+      </div>
+
+      <!-- giant CTA letter streaks passing the lens -->
+      <div class="f08kys-streak f08kys-s1">K</div>
+      <div class="f08kys-streak f08kys-s2">w</div>
+      <div class="f08kys-streak f08kys-s3">S</div>
     </div>
-    <h1 style="font-size:150px; font-weight:800; letter-spacing:-0.03em;">Know what <span style="color:#B42318;">you</span> sign.</h1>
-    <p style="font-size:38px; font-weight:600; letter-spacing:0.06em; color:#9A9A9A;">legisense.app</p>
-    <div class="cta" style="margin-top:20px; padding:24px 56px; border-radius:100px; background:#B42318; color:#fff; font-size:34px; font-weight:700;">Get started free</div>
   </div>
-</div>
-<script>
-  window.__timelines = window.__timelines || {};
-  window.__timelines["08-know-what-you-sign"] = gsap.timeline({ paused:true });
-</script>
-<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
-</body>
-</html>
+
+  <script>
+    window.__timelines = window.__timelines || {};
+    (function () {
+      var R = document.querySelector('[data-composition-id="08-know-what-you-sign"]');
+      var tl = gsap.timeline({ paused: true, defaults: { ease: "power3.out" } });
+      window.__timelines["08-know-what-you-sign"] = tl;
+
+      // ---- directional blur proxies (Path A, motion-blur-streak) ----
+      function mkBlur(nodeId) {
+        var node = R.querySelector("#" + nodeId);
+        var proxy = { v: 0 };
+        var write = function () {
+          node.setAttribute("stdDeviation", proxy.v.toFixed(2) + " 0");
+        };
+        write(); // seed: sharp until its move starts
+        return { p: proxy, w: write };
+      }
+      var bH1 = mkBlur("f08kys-fhb");
+      var bS1 = mkBlur("f08kys-f1b");
+      var bS2 = mkBlur("f08kys-f2b");
+      var bS3 = mkBlur("f08kys-f3b");
+
+      // ================= SCENE 1 (0.0-2.5s) — clear / ignite: lockup builds =================
+      // rings breathe in quietly under the cleared stage
+      tl.fromTo(".f08kys-ring", { scale: 0.9, opacity: 0 }, { scale: 1, opacity: 1, duration: 1.6, ease: "power2.out", stagger: 0.12 }, 0.1);
+
+      // mark tile seats ...
+      tl.fromTo(".f08kys-marktile", { scale: 0.6, opacity: 0 }, { scale: 1, opacity: 1, duration: 0.35 }, 0.06);
+      // ... and its glyph self-draws stroke-by-stroke (svg-path-draw)
+      var strokes = R.querySelectorAll(".f08kys-markpath");
+      tl.fromTo(strokes[0], { strokeDashoffset: 100 }, { strokeDashoffset: 0, duration: 0.4, ease: "power2.inOut" }, 0.35);
+      tl.fromTo(strokes[1], { strokeDashoffset: 100 }, { strokeDashoffset: 0, duration: 0.35, ease: "power2.inOut" }, 0.7);
+
+      // wordmark cascades beside it, landing on the spoken "LegiSense."
+      tl.fromTo(".f08kys-wl",
+        { y: 46, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.5, ease: "back.out(1.5)", stagger: 0.075 },
+        0.95
+      );
+
+      // ================= SCENE 2 (2.5-5.2s) — camera push-through, line resolves =================
+      // scripted hard push phase on the camera, decelerating to the held frame
+      tl.fromTo(".f08kys-cam", { scale: 1 }, { scale: 1.22, duration: 0.5, ease: "power2.in" }, 2.5);
+      tl.to(".f08kys-cam", { scale: 1, duration: 1.1, ease: "power3.out" }, 3.0);
+
+      // giant CTA letters streak past the lens (directional blur rides each move's ease)
+      tl.fromTo(".f08kys-s1",
+        { x: 1500, opacity: 0 },
+        { x: 1500, opacity: 1, duration: 0.25 }, 2.55);
+      tl.fromTo(".f08kys-s1", { x: 1500 }, { x: -1600, duration: 0.85, ease: "expo.out" }, 2.55);
+      tl.fromTo(bS1.p, { v: 24 }, { v: 0, duration: 0.85, ease: "expo.out", onUpdate: bS1.w }, 2.55);
+      tl.to(".f08kys-s1", { opacity: 0, duration: 0.28, ease: "power2.in" }, 3.1);
+
+      tl.fromTo(".f08kys-s2",
+        { x: 1300, opacity: 0 },
+        { x: 1300, opacity: 1, duration: 0.25 }, 2.68);
+      tl.fromTo(".f08kys-s2", { x: 1300 }, { x: -1500, duration: 0.8, ease: "expo.out" }, 2.68);
+      tl.fromTo(bS2.p, { v: 20 }, { v: 0, duration: 0.8, ease: "expo.out", onUpdate: bS2.w }, 2.68);
+      tl.to(".f08kys-s2", { opacity: 0, duration: 0.26, ease: "power2.in" }, 3.2);
+
+      tl.fromTo(".f08kys-s3",
+        { x: 1700, opacity: 0 },
+        { x: 1700, opacity: 1, duration: 0.25 }, 2.62);
+      tl.fromTo(".f08kys-s3", { x: 1700 }, { x: -1800, duration: 0.95, ease: "expo.out" }, 2.62);
+      tl.fromTo(bS3.p, { v: 26 }, { v: 0, duration: 0.95, ease: "expo.out", onUpdate: bS3.w }, 2.62);
+      tl.to(".f08kys-s3", { opacity: 0, duration: 0.3, ease: "power2.in" }, 3.25);
+
+      // the held line resolves: streaks in, razor-sharp the instant it stops
+      tl.fromTo(".f08kys-h1",
+        { x: 280, opacity: 0 },
+        { x: 0, opacity: 1, duration: 0.55, ease: "expo.out" }, 2.78);
+      tl.fromTo(bH1.p, { v: 18 }, { v: 0, duration: 0.55, ease: "expo.out", onUpdate: bH1.w }, 2.78);
+
+      // "you" takes the single #B42318 emphasis on its spoken hit (attack-decay)
+      tl.fromTo(".f08kys-you", { scale: 1 }, { scale: 1.05, duration: 0.12, ease: "power2.in" }, 4.5);
+      tl.to(".f08kys-you", { scale: 1, duration: 0.55, ease: "power2.out" }, 4.62);
+      tl.to(".f08kys-you", { color: "#B42318", duration: 0.14, ease: "power2.in" }, 4.5);
+
+      // ================= SCENE 3 (5.2-7.2s) — sub-line + CTA settle, bounded glow blooms =================
+      tl.fromTo(".f08kys-sub", { y: 26, opacity: 0 }, { y: 0, opacity: 1, duration: 0.6 }, 5.3);
+      tl.fromTo(".f08kys-cta",
+        { scale: 0.86, y: 30, opacity: 0 },
+        { scale: 1, y: 0, opacity: 1, duration: 0.65 }, 5.75);
+      // one bounded glow blooms behind the lockup, then rests
+      tl.fromTo(".f08kys-glow",
+        { scale: 0.55, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.9, ease: "power3.out" }, 6.05);
+
+      // ================= SCENE 4 (7.2-9.0s) — perfect stillness (final hold) =================
+      // no tweens beyond ~7.0s: the confidence of a held signature
+    })();
+  </script>
+</template>

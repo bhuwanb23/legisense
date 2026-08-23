@@ -1,40 +1,213 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>Sketch - 07 benefit list</title>
+<template>
 <style>
-  * { margin:0; padding:0; box-sizing:border-box; }
-  html,body { width:1920px; height:1080px; overflow:hidden; background:#000; }
-  body { font-family:'Plus Jakarta Sans', sans-serif; }
-  #root { width:1920px; height:1080px; background:#FFFFFF; color:#1A1A1A; position:relative; }
-  .appcard { position:absolute; left:150px; top:200px; width:640px; height:680px; background:#F7F7F7; border:1.5px solid rgba(26,26,26,0.15); border-radius:14px; padding:40px; }
-  .minirow { height:56px; border-radius:12px; background:rgba(180,35,24,0.04); border:1.5px solid rgba(180,35,24,0.2); margin-bottom:20px; }
-  .benefit { display:flex; align-items:center; gap:24px; margin-bottom:34px; }
-  .bnum { width:56px; height:56px; border-radius:50%; background:#B42318; color:#fff; display:flex; align-items:center; justify-content:center; font-size:26px; font-weight:800; flex:none; }
-  .btext { font-size:44px; font-weight:700; letter-spacing:-0.01em; }
+  @font-face {
+    font-family: "Plus Jakarta Sans";
+    src: url("assets/fonts/plus-jakarta-sans-latin.woff2") format("woff2");
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: block;
+  }
+  #root { position: relative; width: 1920px; height: 1080px; overflow: hidden; }
+  #root, #root * { margin: 0; padding: 0; box-sizing: border-box; }
+  #root {
+    font-family: "Plus Jakarta Sans", sans-serif;
+    color: #1A1A1A;
+  }
+  .f07-ground {
+    position: absolute; inset: 0;
+    background: #FFFFFF;
+  }
+  .f07-stage {
+    position: absolute; inset: 0;
+    container-type: size;
+  }
+
+  /* ---- ghost app-card (static anchor, left 40%) ---- */
+  .f07-card {
+    position: absolute; left: 150px; top: 200px;
+    width: 640px; height: 680px;
+    background: #F7F7F7;
+    border: 1.5px solid rgba(180, 35, 24, 0.2);
+    border-radius: 14px;
+    padding: 40px;
+  }
+  .f07-card-bar {
+    height: 36px; width: 55%;
+    background: rgba(26, 26, 26, 0.15);
+    border-radius: 8px;
+    margin-bottom: 30px;
+  }
+  .f07-minirow {
+    height: 56px;
+    border-radius: 12px;
+    background: rgba(180, 35, 24, 0.04);
+    border: 1.5px solid rgba(180, 35, 24, 0.2);
+    margin-bottom: 20px;
+  }
+
+  /* ---- benefit list (right 60%) ---- */
+  .f07-list {
+    position: absolute; left: 920px; top: 250px;
+  }
+  .f07-benefit {
+    display: flex; align-items: center; gap: 24px;
+    margin-bottom: 34px;
+  }
+  .f07-circ {
+    width: 56px; height: 56px; flex: none;
+    border-radius: 50%;
+    background: #B42318;
+    color: #FFFFFF;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px; font-weight: 800;
+  }
+  .f07-label {
+    display: inline-block;
+    font-size: 44px; font-weight: 700; letter-spacing: -0.01em;
+    color: #1A1A1A;
+  }
+
+  /* ---- payoff (center-right, lands in cleared zone) ---- */
+  .f07-payoff {
+    position: absolute; left: 920px; top: 420px; width: 880px;
+  }
+  .f07-aline {
+    width: 60px; height: 4px; border-radius: 2px;
+    background: #B42318;
+    margin-bottom: 28px;
+  }
+  .f07-payline {
+    font-size: 2.6cqw; font-weight: 600; line-height: 1.18;
+    letter-spacing: -0.02em; color: #1A1A1A;
+  }
+  .f07-wg { display: inline-block; will-change: transform, opacity; }
 </style>
-</head>
-<body>
-<div id="root" data-composition-id="07-benefit-list" data-start="0" data-duration="9" data-width="1920" data-height="1080">
-  <div class="clip" data-start="0" data-duration="9" style="position:absolute; inset:0;">
-    <div class="appcard">
-      <div style="height:36px; width:55%; background:rgba(26,26,26,0.15); border-radius:8px; margin-bottom:30px;"></div>
-      <div class="minirow"></div><div class="minirow"></div><div class="minirow"></div><div class="minirow" style="width:70%;"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+
+<div id="root" data-composition-id="07-benefit-list" data-start="0" data-duration="5.312" data-width="1920" data-height="1080">
+  <div class="clip f07-ground" data-start="0" data-duration="5.312" data-track-index="0"></div>
+
+  <div class="clip f07-stage" data-start="0" data-duration="5.312" data-track-index="1">
+
+    <!-- Scene 1 anchor: ghost app-card -->
+    <div class="f07-card" id="f07-card">
+      <div class="f07-card-bar"></div>
+      <div class="f07-minirow f07-sk"></div>
+      <div class="f07-minirow f07-sk"></div>
+      <div class="f07-minirow f07-sk"></div>
+      <div class="f07-minirow f07-sk" style="width:70%;"></div>
     </div>
-    <div style="position:absolute; left:900px; top:250px;">
-      <div class="benefit"><span class="bnum">1</span><span class="btext">Deadline reminders</span></div>
-      <div class="benefit"><span class="bnum">2</span><span class="btext">Fairer counter-clauses</span></div>
-      <div class="benefit"><span class="bnum">3</span><span class="btext">Export reports</span></div>
-      <div class="benefit"><span class="bnum">4</span><span class="btext">Any jurisdiction</span></div>
+
+    <!-- Scene 2: accumulating numbered benefit rows -->
+    <div class="f07-list" id="f07-list">
+      <div class="f07-benefit f07-row" id="f07-row1">
+        <span class="f07-circ" id="f07-c1"><span id="f07-n1">1</span></span>
+        <span class="f07-label" id="f07-l1">Deadline reminders</span>
+      </div>
+      <div class="f07-benefit f07-row" id="f07-row2">
+        <span class="f07-circ" id="f07-c2" style="opacity:0.85;"><span id="f07-n2">2</span></span>
+        <span class="f07-label" id="f07-l2">Fairer counter-clauses</span>
+      </div>
+      <div class="f07-benefit f07-row" id="f07-row3">
+        <span class="f07-circ" id="f07-c3" style="opacity:0.7;"><span id="f07-n3">3</span></span>
+        <span class="f07-label" id="f07-l3">Export reports</span>
+      </div>
+      <div class="f07-benefit f07-row" id="f07-row4">
+        <span class="f07-circ" id="f07-c4" style="opacity:0.55;"><span id="f07-n4">4</span></span>
+        <span class="f07-label" id="f07-l4">Any jurisdiction</span>
+      </div>
     </div>
-    <p style="position:absolute; left:900px; bottom:120px; font-size:52px; font-weight:800; letter-spacing:-0.02em;">Everything the fine print touches.</p>
+
+    <!-- Scene 3/4: payoff line, word-group build -->
+    <div class="f07-payoff" id="f07-payoff">
+      <div class="f07-aline" id="f07-aline"></div>
+      <p class="f07-payline"><span class="f07-wg" id="f07-g1">Everything</span> <span class="f07-wg" id="f07-g2">the fine print</span> <span class="f07-wg" id="f07-g3">touches.</span></p>
+    </div>
+
   </div>
 </div>
+
 <script>
-  window.__timelines = window.__timelines || {};
-  window.__timelines["07-benefit-list"] = gsap.timeline({ paused:true });
+  (function () {
+    var DUR = 5.312;
+
+    // Scene windows (packet 0-9s) mapped proportionally onto the fixed 5.312s duration:
+    //   S1 open 0-0.885 | S2 rows 0.885-3.247 | S3 clear-to-payoff 3.247-4.427 | S4 hold 4.427-end
+
+    var numEls = [
+      document.getElementById("f07-n1"),
+      document.getElementById("f07-n2"),
+      document.getElementById("f07-n3"),
+      document.getElementById("f07-n4")
+    ];
+
+    var ROW_STARTS = [0.88, 1.52, 2.14, 2.74]; // one per VO phrase, ~1/s compressed
+
+    var tl = gsap.timeline({ paused: true });
+
+    // ---- Scene 1: ghost app-card seats left; right column empty/waiting ----
+    tl.fromTo("#f07-card",
+      { y: 36, autoAlpha: 0 },
+      { y: 0, autoAlpha: 1, duration: 0.55, ease: "power2.out" }, 0);
+    tl.fromTo(".f07-sk",
+      { y: 10, autoAlpha: 0 },
+      { y: 0, autoAlpha: 1, duration: 0.4, ease: "power2.out", stagger: 0.07 }, 0.22);
+
+    // ---- Scene 2: rows arrive one per VO phrase; circle stamps + mini count, label mask-wipe ----
+    ROW_STARTS.forEach(function (t0, i) {
+      var rowSel = "#f07-row" + (i + 1);
+      tl.fromTo(rowSel,
+        { x: 110, autoAlpha: 0 },
+        { x: 0, autoAlpha: 1, duration: 0.6, ease: "power3.out" }, t0);
+
+      tl.fromTo("#f07-c" + (i + 1),
+        { scale: 0 },
+        { scale: 1, duration: 0.45, ease: "back.out(2.4)" }, t0 + 0.05);
+
+      var proxy = { v: 0 };
+      tl.to(proxy, {
+        v: i + 1,
+        duration: 0.32,
+        ease: "none",
+        onUpdate: function () {
+          numEls[i].textContent = String(Math.max(0, Math.round(proxy.v)));
+        }
+      }, t0 + 0.08);
+
+      tl.fromTo("#f07-l" + (i + 1),
+        { clipPath: "inset(0% 100% 0% 0%)" },
+        { clipPath: "inset(0% 0% 0% 0%)", duration: 0.5, ease: "power2.out" }, t0 + 0.12);
+    });
+
+    // ---- Scene 3: velocity-matched clear — list exits upward, payoff builds word-group by word-group ----
+    tl.to("#f07-list", { y: -840, duration: 0.62, ease: "power2.in" }, 3.42);
+
+    tl.fromTo("#f07-aline",
+      { scaleX: 0 },
+      { scaleX: 1, duration: 0.38, ease: "power2.out", transformOrigin: "left center" }, 3.56);
+
+    // dynamic-content-sequencing: per-group dwell derived from content length, reduced once at build
+    var GROUPS = [
+      { id: "#f07-g1", text: "Everything" },
+      { id: "#f07-g2", text: "the fine print" },
+      { id: "#f07-g3", text: "touches." }
+    ];
+    var BASE = 0.155, SEC_PER_CHAR = 0.048, T0 = 3.68, OVERLAP = 0.48;
+    var cumulative = T0;
+    GROUPS.forEach(function (g) {
+      g.dur = BASE + g.text.length * SEC_PER_CHAR;
+      g.start = cumulative;
+      cumulative += g.dur * OVERLAP;
+    });
+    GROUPS.forEach(function (g) {
+      tl.fromTo(g.id,
+        { y: 30, autoAlpha: 0, filter: "blur(5px)" },
+        { y: 0, autoAlpha: 1, filter: "blur(0px)", duration: 0.52, ease: "power3.out" },
+        g.start);
+    });
+
+    // ---- Scene 4: hold on the payoff line; still (no further tweens) ----
+  })();
 </script>
-<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
-</body>
-</html>
+</template>

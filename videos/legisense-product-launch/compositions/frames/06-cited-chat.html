@@ -1,38 +1,378 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>Sketch - 06 cited chat</title>
-<style>
-  * { margin:0; padding:0; box-sizing:border-box; }
-  html,body { width:1920px; height:1080px; overflow:hidden; background:#000; }
-  body { font-family:'Plus Jakarta Sans', sans-serif; }
-  #root { width:1920px; height:1080px; background:#F7F7F7; color:#1A1A1A; position:relative; }
-  .chatcard { position:absolute; left:410px; top:120px; width:1100px; height:840px; background:#FFFFFF; border:1.5px solid rgba(180,35,24,0.2); border-radius:14px; padding:52px; display:flex; flex-direction:column; }
-  .bubble-q { align-self:flex-end; max-width:70%; background:#1A1A1A; color:#fff; border-radius:18px 18px 4px 18px; padding:24px 32px; font-size:30px; font-weight:500; }
-  .bubble-a { align-self:flex-start; max-width:82%; background:rgba(180,35,24,0.04); border:1.5px solid rgba(180,35,24,0.2); border-radius:18px 18px 18px 4px; padding:28px 32px; font-size:29px; line-height:1.55; }
-  .cite { display:inline-block; margin-left:12px; padding:6px 16px; border-radius:100px; border:1.5px solid rgba(180,35,24,0.2); background:rgba(180,35,24,0.08); color:#B42318; font-size:20px; font-weight:700; }
-  .composer { margin-top:auto; display:flex; align-items:center; gap:20px; }
-  .composer .field { flex:1; border:1.5px solid rgba(26,26,26,0.2); border-radius:100px; padding:22px 32px; font-size:27px; color:#9A9A9A; }
-</style>
-</head>
-<body>
-<div id="root" data-composition-id="06-cited-chat" data-start="0" data-duration="10" data-width="1920" data-height="1080">
-  <div class="clip" data-start="0" data-duration="10" style="position:absolute; inset:0;">
-    <div class="chatcard">
-      <div class="bubble-q">Can my landlord raise the rent by 15%?</div>
-      <div class="bubble-a">
-        No - not in a single step. Your agreement caps annual increases at 5%, and any change needs your written consent.
-        <span class="cite">Clause 4.2</span><span class="cite">Clause 9.1</span>
+<template>
+  <style>
+    #root {
+      position: relative;
+      width: 1920px;
+      height: 1080px;
+      overflow: hidden;
+      font-family: sans-serif;
+    }
+    #root .ground {
+      position: absolute;
+      inset: 0;
+      background: #f7f7f7;
+    }
+    #root .stage {
+      position: absolute;
+      inset: 0;
+    }
+    #root .chatcard {
+      position: absolute;
+      left: 410px;
+      top: 96px;
+      width: 1100px;
+      height: 800px;
+      background: #ffffff;
+      border: 1.5px solid rgba(180, 35, 24, 0.2);
+      border-radius: 14px;
+      padding: 46px 52px 44px;
+      display: flex;
+      flex-direction: column;
+      box-sizing: border-box;
+    }
+    #root .thread {
+      display: flex;
+      flex-direction: column;
+      gap: 26px;
+    }
+    #root .bubble-q {
+      align-self: flex-end;
+      max-width: 70%;
+      background: #1a1a1a;
+      color: #ffffff;
+      border-radius: 18px 18px 4px 18px;
+      padding: 24px 32px;
+      font-size: 30px;
+      font-weight: 600;
+      line-height: 1.4;
+      box-sizing: border-box;
+    }
+    #root .bubble-a {
+      position: relative;
+      align-self: flex-start;
+      max-width: 82%;
+      background: rgba(180, 35, 24, 0.04);
+      border: 1.5px solid rgba(180, 35, 24, 0.2);
+      border-radius: 18px 18px 18px 4px;
+      padding: 26px 32px;
+      box-sizing: border-box;
+    }
+    #root .thinking {
+      position: absolute;
+      top: 32px;
+      left: 34px;
+      display: flex;
+      gap: 10px;
+    }
+    #root .tdot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #b42318;
+      opacity: 0.85;
+    }
+    #root .answer {
+      font-size: 29px;
+      line-height: 1.55;
+      color: #1a1a1a;
+      min-height: 140px;
+    }
+    #root .cite {
+      display: inline-block;
+      margin-left: 12px;
+      padding: 6px 16px;
+      border-radius: 100px;
+      border: 1.5px solid rgba(180, 35, 24, 0.2);
+      background: rgba(180, 35, 24, 0.08);
+      color: #b42318;
+      font-size: 20px;
+      font-weight: 700;
+      line-height: 1.3;
+      white-space: nowrap;
+    }
+    #root .composer {
+      margin-top: auto;
+      display: flex;
+      align-items: center;
+      gap: 22px;
+    }
+    #root .fieldwrap {
+      position: relative;
+      flex: 1;
+      display: flex;
+      align-items: center;
+    }
+    #root .field {
+      flex: 1;
+      border: 1.5px solid rgba(26, 26, 26, 0.2);
+      border-radius: 100px;
+      padding: 20px 30px;
+      font-size: 27px;
+      min-height: 78px;
+      background: #ffffff;
+      display: flex;
+      align-items: center;
+      box-sizing: border-box;
+    }
+    #root .ph {
+      color: #9a9a9a;
+    }
+    #root .typed {
+      color: #1a1a1a;
+      font-weight: 500;
+      white-space: pre-wrap;
+    }
+    #root .caret {
+      display: inline-block;
+      width: 4px;
+      height: 30px;
+      margin-left: 6px;
+      background: #b42318;
+      border-radius: 2px;
+    }
+    #root .ring {
+      position: absolute;
+      inset: -7px;
+      border: 2.5px solid #b42318;
+      border-radius: 100px;
+      opacity: 0;
+      pointer-events: none;
+    }
+    #root .sendwrap {
+      position: relative;
+      width: 78px;
+      height: 78px;
+      flex: none;
+    }
+    #root .burst {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 78px;
+      height: 78px;
+      margin: -39px 0 0 -39px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(180, 35, 24, 0.55) 0%, rgba(180, 35, 24, 0) 70%);
+      opacity: 0;
+      z-index: 1;
+      pointer-events: none;
+    }
+    #root .send {
+      position: relative;
+      z-index: 2;
+      width: 78px;
+      height: 78px;
+      border-radius: 50%;
+      background: #b42318;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+  </style>
+  <div id="root" data-composition-id="06-cited-chat" data-start="0" data-duration="10" data-width="1920" data-height="1080">
+    <div class="clip" data-start="0" data-duration="10" data-track-index="0">
+      <div class="ground"></div>
+    </div>
+    <div class="clip" data-start="0" data-duration="10" data-track-index="1">
+      <div class="stage">
+        <div class="chatcard">
+          <div class="thread">
+            <div class="bubble-q" id="06-bubble-q">Can my landlord raise the rent by 15%?</div>
+            <div class="bubble-a" id="06-bubble-a">
+              <div class="thinking" id="06-thinking">
+                <span class="tdot" id="06-dot1"></span><span class="tdot" id="06-dot2"></span><span class="tdot" id="06-dot3"></span>
+              </div>
+              <p class="answer" id="06-answer"><span id="06-chunk1"></span><span id="06-chunk2"></span><span id="06-chunk3"></span><span class="cite" id="06-chip1">Clause 4.2</span><span class="cite" id="06-chip2">Clause 9.1</span></p>
+            </div>
+          </div>
+          <div class="composer">
+            <div class="fieldwrap">
+              <div class="ring" id="06-ring"></div>
+              <div class="field">
+                <span class="ph" id="06-ph">Ask about this document...</span><span class="typed" id="06-typed"></span><span class="caret" id="06-caret"></span>
+              </div>
+            </div>
+            <div class="sendwrap">
+              <div class="burst" id="06-burst"></div>
+              <button class="send" id="06-send" aria-label="Send">
+                <svg width="34" height="34" viewBox="0 0 24 24" fill="none"><path d="M12 19V5M12 5l-6 6M12 5l6 6" stroke="#ffffff" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="composer"><div class="field">Ask about this document...</div></div>
     </div>
   </div>
-</div>
-<script>
-  window.__timelines = window.__timelines || {};
-  window.__timelines["06-cited-chat"] = gsap.timeline({ paused:true });
-</script>
-<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
-</body>
-</html>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+  <script>
+    (function () {
+      var D = 10;
+      var Q_TEXT = "Can my landlord raise the rent by 15%?";
+      var CLEAR_T = 2.96;
+
+      function el(id) {
+        return document.getElementById(id);
+      }
+      var typedEl = el("06-typed");
+      var caretEl = el("06-caret");
+      var phEl = el("06-ph");
+      var ringEl = el("06-ring");
+      var qEl = el("06-bubble-q");
+      var aEl = el("06-bubble-a");
+      var thinkEl = el("06-thinking");
+      var dots = [el("06-dot1"), el("06-dot2"), el("06-dot3")];
+      var chunkEls = [el("06-chunk1"), el("06-chunk2"), el("06-chunk3")];
+      var chip1 = el("06-chip1");
+      var chip2 = el("06-chip2");
+      var sendBtn = el("06-send");
+      var burstEl = el("06-burst");
+
+      var tl = gsap.timeline({ paused: true });
+      window.__timelines = window.__timelines || {};
+      window.__timelines["06-cited-chat"] = tl;
+
+      /* ---- Scene 1 (0.0-2.8): focus ring, discrete-text-sequence typing, square-wave caret ---- */
+      var SEQUENCE = [{ t: 0, text: "" }];
+      (function () {
+        var START = 0.3, STEP = 0.042, WPAUSE = 0.11;
+        var tt = START, acc = "";
+        var words = Q_TEXT.split(" ");
+        for (var w = 0; w < words.length; w++) {
+          var word = words[w];
+          for (var c = 0; c < word.length; c++) {
+            acc += word[c];
+            SEQUENCE.push({ t: tt, text: acc });
+            tt += STEP;
+          }
+          if (w < words.length - 1) {
+            acc += " ";
+            SEQUENCE.push({ t: tt, text: acc });
+            tt += WPAUSE;
+          }
+        }
+      })();
+
+      function textAt(time) {
+        for (var i = SEQUENCE.length - 1; i >= 0; i--) {
+          if (time >= SEQUENCE[i].t) return SEQUENCE[i].text;
+        }
+        return "";
+      }
+
+      var drv = { t: 0 };
+      tl.to(
+        drv,
+        {
+          t: D,
+          duration: D,
+          ease: "none",
+          onUpdate: function () {
+            typedEl.textContent = drv.t >= CLEAR_T ? "" : textAt(drv.t);
+          },
+        },
+        0
+      );
+
+      var CYCLES = 16;
+      var blink = { p: 0 };
+      tl.to(
+        blink,
+        {
+          p: Math.PI * 2 * CYCLES,
+          duration: D,
+          ease: "none",
+          onUpdate: function () {
+            caretEl.style.opacity = Math.sin(blink.p) > 0 ? "1" : "0";
+          },
+        },
+        0
+      );
+
+      tl.fromTo(
+        ringEl,
+        { opacity: 0, scale: 1.06 },
+        { opacity: 1, scale: 1, duration: 0.3, ease: "power2.out" },
+        0.12
+      );
+      tl.set(phEl, { opacity: 0 }, 0.26);
+
+      /* ---- Scene 2 (2.8-4.0): press-release-spring on send, bubble snaps up, three finite dot pulses ---- */
+      tl.set(phEl, { opacity: 1 }, 3.0);
+      tl.fromTo(
+        sendBtn,
+        { scale: 1 },
+        { scale: 0.9, duration: 0.12, ease: "power1.in" },
+        2.84
+      );
+      tl.to(sendBtn, { scale: 1, duration: 0.55, ease: "back.out(2.2)" }, 2.96);
+      tl.fromTo(
+        burstEl,
+        { scale: 1, opacity: 0 },
+        { scale: 3.2, opacity: 0.55, duration: 0.35, ease: "power2.out" },
+        2.96
+      );
+      tl.to(burstEl, { opacity: 0, duration: 0.3, ease: "power2.in" }, 3.28);
+      tl.to(ringEl, { opacity: 0, duration: 0.25, ease: "power2.in" }, 2.88);
+
+      tl.fromTo(
+        qEl,
+        { opacity: 0, y: 26, scale: 0.9 },
+        { opacity: 1, y: 0, scale: 1, duration: 0.5, ease: "back.out(1.7)" },
+        3.02
+      );
+      tl.fromTo(
+        aEl,
+        { opacity: 0, y: 18, scale: 0.94 },
+        { opacity: 1, y: 0, scale: 1, duration: 0.45, ease: "back.out(1.6)" },
+        3.18
+      );
+
+      for (var wv = 0; wv < 3; wv++) {
+        for (var di = 0; di < 3; di++) {
+          var st = 3.3 + wv * 0.22 + di * 0.07;
+          tl.to(dots[di], { scale: 1.45, duration: 0.09, ease: "power2.out" }, st);
+          tl.to(dots[di], { scale: 1, duration: 0.13, ease: "power2.inOut" }, st + 0.09);
+        }
+      }
+
+      /* ---- Scene 3 (4.0-7.5): streamed answer, citation chips spring in ---- */
+      tl.to(thinkEl, { opacity: 0, duration: 0.22, ease: "power2.in" }, 4.02);
+
+      function stream(span, txt, start, dur) {
+        var o = { n: 0 };
+        tl.to(
+          o,
+          {
+            n: txt.length,
+            duration: dur,
+            ease: "none",
+            onUpdate: function () {
+              span.textContent = txt.substring(0, Math.floor(o.n));
+            },
+          },
+          start
+        );
+      }
+      stream(chunkEls[0], "No - not in a single step.", 4.0, 0.8);
+      stream(chunkEls[1], " Your agreement caps annual increases at 5%,", 4.8, 1.05);
+      stream(chunkEls[2], " and any change needs your written consent.", 5.85, 0.9);
+
+      tl.fromTo(
+        chip1,
+        { opacity: 0, scale: 0.4, y: 8 },
+        { opacity: 1, scale: 1, y: 0, duration: 0.45, ease: "back.out(1.9)" },
+        6.55
+      );
+      tl.fromTo(
+        chip2,
+        { opacity: 0, scale: 0.4, y: 8 },
+        { opacity: 1, scale: 1, y: 0, duration: 0.45, ease: "back.out(1.9)" },
+        6.82
+      );
+
+      /* ---- Scene 4 (7.5-10.0): hold; only the caret's finite square-wave blink continues ---- */
+    })();
+  </script>
+</template>
