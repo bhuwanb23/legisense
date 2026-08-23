@@ -484,6 +484,8 @@
 
       window.__timelines = window.__timelines || {};
       window.__timelines["05-plain-english"] = tl;
+  // hold-extend: keep the timeline alive across the full wrapper window
+  window.__timelines["05-plain-english"].set({}, {}, 12.5);
     })();
   </script>
 </template>

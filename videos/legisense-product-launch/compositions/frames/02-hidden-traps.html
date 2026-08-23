@@ -334,6 +334,8 @@
       });
       window.__timelines = window.__timelines || {};
       window.__timelines["02-hidden-traps"] = tl;
+  // hold-extend: keep the timeline alive across the full wrapper window
+  window.__timelines["02-hidden-traps"].set({}, {}, 11.4);
     })();
   </script>
 </template>

@@ -122,6 +122,8 @@
 
       window.__timelines = window.__timelines || {};
       window.__timelines["01-signature-test"] = tl;
+  // hold-extend: keep the timeline alive across the full wrapper window
+  window.__timelines["01-signature-test"].set({}, {}, 7.5);
     })();
   </script>
 </template>

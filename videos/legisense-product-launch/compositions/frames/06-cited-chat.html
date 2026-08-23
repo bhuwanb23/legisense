@@ -232,6 +232,8 @@
       var tl = gsap.timeline({ paused: true });
       window.__timelines = window.__timelines || {};
       window.__timelines["06-cited-chat"] = tl;
+  // hold-extend: keep the timeline alive across the full wrapper window
+  window.__timelines["06-cited-chat"].set({}, {}, 8.5);
 
       /* ---- Scene 1 (0.0-2.8): focus ring, discrete-text-sequence typing, square-wave caret ---- */
       var SEQUENCE = [{ t: 0, text: "" }];
