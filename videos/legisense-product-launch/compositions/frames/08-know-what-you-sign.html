@@ -254,7 +254,7 @@
       // ... and its glyph self-draws stroke-by-stroke (svg-path-draw)
       var strokes = R.querySelectorAll(".f08kys-markpath");
       tl.fromTo(strokes[0], { strokeDashoffset: 100 }, { strokeDashoffset: 0, duration: 0.4, ease: "power2.inOut" }, 0.35);
-      tl.fromTo(strokes[1], { strokeDashoffset: 100 }, { strokeDashoffset: 0, duration: 0.35, ease: "power2.inOut" }, 0.7);
+      tl.fromTo(strokes[1], { strokeDashoffset: 100 }, { strokeDashoffset: 0, duration: 0.35, ease: "power2.inOut" }, 0.76);
 
       // wordmark cascades beside it, landing on the spoken "LegiSense."
       tl.fromTo(".f08kys-wl",
@@ -269,23 +269,17 @@
       tl.to(".f08kys-cam", { scale: 1, duration: 1.1, ease: "power3.out" }, 3.0);
 
       // giant CTA letters streak past the lens (directional blur rides each move's ease)
-      tl.fromTo(".f08kys-s1",
-        { x: 1500, opacity: 0 },
-        { x: 1500, opacity: 1, duration: 0.25 }, 2.55);
+      tl.fromTo(".f08kys-s1", { opacity: 0 }, { opacity: 1, duration: 0.25 }, 2.55);
       tl.fromTo(".f08kys-s1", { x: 1500 }, { x: -1600, duration: 0.85, ease: "expo.out" }, 2.55);
       tl.fromTo(bS1.p, { v: 24 }, { v: 0, duration: 0.85, ease: "expo.out", onUpdate: bS1.w }, 2.55);
       tl.to(".f08kys-s1", { opacity: 0, duration: 0.28, ease: "power2.in" }, 3.1);
 
-      tl.fromTo(".f08kys-s2",
-        { x: 1300, opacity: 0 },
-        { x: 1300, opacity: 1, duration: 0.25 }, 2.68);
+      tl.fromTo(".f08kys-s2", { opacity: 0 }, { opacity: 1, duration: 0.25 }, 2.68);
       tl.fromTo(".f08kys-s2", { x: 1300 }, { x: -1500, duration: 0.8, ease: "expo.out" }, 2.68);
       tl.fromTo(bS2.p, { v: 20 }, { v: 0, duration: 0.8, ease: "expo.out", onUpdate: bS2.w }, 2.68);
       tl.to(".f08kys-s2", { opacity: 0, duration: 0.26, ease: "power2.in" }, 3.2);
 
-      tl.fromTo(".f08kys-s3",
-        { x: 1700, opacity: 0 },
-        { x: 1700, opacity: 1, duration: 0.25 }, 2.62);
+      tl.fromTo(".f08kys-s3", { opacity: 0 }, { opacity: 1, duration: 0.25 }, 2.62);
       tl.fromTo(".f08kys-s3", { x: 1700 }, { x: -1800, duration: 0.95, ease: "expo.out" }, 2.62);
       tl.fromTo(bS3.p, { v: 26 }, { v: 0, duration: 0.95, ease: "expo.out", onUpdate: bS3.w }, 2.62);
       tl.to(".f08kys-s3", { opacity: 0, duration: 0.3, ease: "power2.in" }, 3.25);
