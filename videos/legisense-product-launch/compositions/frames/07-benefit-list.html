@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Sketch - 07 benefit list</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html,body { width:1920px; height:1080px; overflow:hidden; background:#000; }
+  body { font-family:'Plus Jakarta Sans', sans-serif; }
+  #root { width:1920px; height:1080px; background:#FFFFFF; color:#1A1A1A; position:relative; }
+  .appcard { position:absolute; left:150px; top:200px; width:640px; height:680px; background:#F7F7F7; border:1.5px solid rgba(26,26,26,0.15); border-radius:14px; padding:40px; }
+  .minirow { height:56px; border-radius:12px; background:rgba(180,35,24,0.04); border:1.5px solid rgba(180,35,24,0.2); margin-bottom:20px; }
+  .benefit { display:flex; align-items:center; gap:24px; margin-bottom:34px; }
+  .bnum { width:56px; height:56px; border-radius:50%; background:#B42318; color:#fff; display:flex; align-items:center; justify-content:center; font-size:26px; font-weight:800; flex:none; }
+  .btext { font-size:44px; font-weight:700; letter-spacing:-0.01em; }
+</style>
+</head>
+<body>
+<div id="root" data-composition-id="07-benefit-list" data-start="0" data-duration="9" data-width="1920" data-height="1080">
+  <div class="clip" data-start="0" data-duration="9" style="position:absolute; inset:0;">
+    <div class="appcard">
+      <div style="height:36px; width:55%; background:rgba(26,26,26,0.15); border-radius:8px; margin-bottom:30px;"></div>
+      <div class="minirow"></div><div class="minirow"></div><div class="minirow"></div><div class="minirow" style="width:70%;"></div>
+    </div>
+    <div style="position:absolute; left:900px; top:250px;">
+      <div class="benefit"><span class="bnum">1</span><span class="btext">Deadline reminders</span></div>
+      <div class="benefit"><span class="bnum">2</span><span class="btext">Fairer counter-clauses</span></div>
+      <div class="benefit"><span class="bnum">3</span><span class="btext">Export reports</span></div>
+      <div class="benefit"><span class="bnum">4</span><span class="btext">Any jurisdiction</span></div>
+    </div>
+    <p style="position:absolute; left:900px; bottom:120px; font-size:52px; font-weight:800; letter-spacing:-0.02em;">Everything the fine print touches.</p>
+  </div>
+</div>
+<script>
+  window.__timelines = window.__timelines || {};
+  window.__timelines["07-benefit-list"] = gsap.timeline({ paused:true });
+</script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Sketch - 04 analysis theater</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html,body { width:1920px; height:1080px; overflow:hidden; background:#000; }
+  body { font-family:'Plus Jakarta Sans', sans-serif; }
+  #root { width:1920px; height:1080px; background:#F7F7F7; color:#1A1A1A; position:relative; }
+  .appcard { position:absolute; left:520px; top:140px; width:1100px; height:800px; background:#FFFFFF; border:1.5px solid rgba(180,35,24,0.2); border-radius:14px; padding:48px; }
+  .chip { display:inline-block; padding:12px 24px; border-radius:100px; background:rgba(180,35,24,0.08); border:1.5px solid rgba(180,35,24,0.2); font-size:24px; font-weight:600; color:#B42318; }
+  .status { margin-top:56px; font-size:52px; font-weight:700; letter-spacing:-0.02em; }
+  .rail { margin-top:40px; height:28px; width:100%; background:rgba(180,35,24,0.08); border-radius:6px; overflow:hidden; }
+  .rail-fill { height:100%; width:72%; background:#B42318; border-radius:6px; }
+  .receipt { position:absolute; left:220px; top:330px; width:560px; background:#FFFFFF; border:1.5px solid rgba(26,26,26,0.15); border-radius:14px; box-shadow:0 24px 60px rgba(26,26,26,0.10); padding:36px 44px; }
+  .row { display:flex; align-items:center; gap:18px; font-size:30px; font-weight:500; padding:14px 0; }
+  .tick { width:38px; height:38px; border-radius:50%; background:#059669; color:#fff; display:flex; align-items:center; justify-content:center; font-size:22px; font-weight:800; flex:none; }
+</style>
+</head>
+<body>
+<div id="root" data-composition-id="04-analysis-theater" data-start="0" data-duration="10" data-width="1920" data-height="1080">
+  <div class="clip" data-start="0" data-duration="10" style="position:absolute; inset:0;">
+    <div class="appcard">
+      <span class="chip">rent-agreement-2024.pdf</span>
+      <p class="status">Reading clauses...</p>
+      <div class="rail"><div class="rail-fill"></div></div>
+    </div>
+    <div class="receipt">
+      <div class="row"><span class="tick">&#10003;</span> Text extracted</div>
+      <div class="row"><span class="tick">&#10003;</span> Type classified - Rental Agreement</div>
+      <div class="row"><span class="tick">&#10003;</span> 18 clauses read</div>
+      <div class="row"><span class="tick">&#10003;</span> Risks scored</div>
+    </div>
+  </div>
+</div>
+<script>
+  window.__timelines = window.__timelines || {};
+  window.__timelines["04-analysis-theater"] = gsap.timeline({ paused:true });
+</script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+</body>
+</html>

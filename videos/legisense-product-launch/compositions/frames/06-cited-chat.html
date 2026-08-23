@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Sketch - 06 cited chat</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html,body { width:1920px; height:1080px; overflow:hidden; background:#000; }
+  body { font-family:'Plus Jakarta Sans', sans-serif; }
+  #root { width:1920px; height:1080px; background:#F7F7F7; color:#1A1A1A; position:relative; }
+  .chatcard { position:absolute; left:410px; top:120px; width:1100px; height:840px; background:#FFFFFF; border:1.5px solid rgba(180,35,24,0.2); border-radius:14px; padding:52px; display:flex; flex-direction:column; }
+  .bubble-q { align-self:flex-end; max-width:70%; background:#1A1A1A; color:#fff; border-radius:18px 18px 4px 18px; padding:24px 32px; font-size:30px; font-weight:500; }
+  .bubble-a { align-self:flex-start; max-width:82%; background:rgba(180,35,24,0.04); border:1.5px solid rgba(180,35,24,0.2); border-radius:18px 18px 18px 4px; padding:28px 32px; font-size:29px; line-height:1.55; }
+  .cite { display:inline-block; margin-left:12px; padding:6px 16px; border-radius:100px; border:1.5px solid rgba(180,35,24,0.2); background:rgba(180,35,24,0.08); color:#B42318; font-size:20px; font-weight:700; }
+  .composer { margin-top:auto; display:flex; align-items:center; gap:20px; }
+  .composer .field { flex:1; border:1.5px solid rgba(26,26,26,0.2); border-radius:100px; padding:22px 32px; font-size:27px; color:#9A9A9A; }
+</style>
+</head>
+<body>
+<div id="root" data-composition-id="06-cited-chat" data-start="0" data-duration="10" data-width="1920" data-height="1080">
+  <div class="clip" data-start="0" data-duration="10" style="position:absolute; inset:0;">
+    <div class="chatcard">
+      <div class="bubble-q">Can my landlord raise the rent by 15%?</div>
+      <div class="bubble-a">
+        No - not in a single step. Your agreement caps annual increases at 5%, and any change needs your written consent.
+        <span class="cite">Clause 4.2</span><span class="cite">Clause 9.1</span>
+      </div>
+      <div class="composer"><div class="field">Ask about this document...</div></div>
+    </div>
+  </div>
+</div>
+<script>
+  window.__timelines = window.__timelines || {};
+  window.__timelines["06-cited-chat"] = gsap.timeline({ paused:true });
+</script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+</body>
+</html>

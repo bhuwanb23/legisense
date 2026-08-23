@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Sketch - 05 plain english</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html,body { width:1920px; height:1080px; overflow:hidden; background:#000; }
+  body { font-family:'Plus Jakarta Sans', sans-serif; }
+  #root { width:1920px; height:1080px; background:#FFFFFF; color:#1A1A1A; position:relative; }
+  .gauge { position:absolute; right:120px; top:90px; width:260px; text-align:center; }
+  .donut { width:200px; height:200px; margin:0 auto 12px; border-radius:50%; border:22px solid rgba(180,35,24,0.15); border-top-color:#B42318; border-right-color:#B42318; border-bottom-color:#B42318; display:flex; align-items:center; justify-content:center; font-size:56px; font-weight:800; color:#B42318; }
+  .colhead { font-size:24px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:#9A9A9A; margin-bottom:20px; }
+  .clause { width:760px; border-radius:12px; padding:26px 30px; margin-bottom:22px; font-size:27px; line-height:1.45; }
+  .legal { font-family:'JetBrains Mono', monospace; background:rgba(180,35,24,0.04); border:1.5px solid rgba(180,35,24,0.2); color:#1A1A1A; }
+  .plain { background:rgba(5,150,105,0.06); border:1.5px solid rgba(5,150,105,0.25); }
+  .misschip { display:inline-block; padding:14px 26px; border-radius:100px; background:rgba(180,35,24,0.08); border:1.5px solid rgba(180,35,24,0.2); color:#B42318; font-size:25px; font-weight:600; margin-right:18px; }
+</style>
+</head>
+<body>
+<div id="root" data-composition-id="05-plain-english" data-start="0" data-duration="12" data-width="1920" data-height="1080">
+  <div class="clip" data-start="0" data-duration="12" style="position:absolute; inset:0;">
+    <div class="gauge">
+      <div class="donut">87</div>
+      <p style="font-size:26px; font-weight:700; letter-spacing:0.08em; color:#B42318;">HIGH RISK</p>
+    </div>
+    <div style="position:absolute; left:110px; top:110px;">
+      <p class="colhead">The contract says</p>
+      <div class="clause legal">"Notwithstanding any other provision, the Licensor shall bear no liability whatsoever for damages arising from use of the premises..."</div>
+      <div class="clause legal">"...this Agreement shall automatically renew for successive twelve (12) month periods unless notice is given not less than ninety (90) days prior..."</div>
+    </div>
+    <div style="position:absolute; left:1010px; top:110px;">
+      <p class="colhead">What it means</p>
+      <div class="clause plain"><b>They're off the hook.</b> The landlord takes no responsibility for almost anything that goes wrong - even their own negligence.</div>
+      <div class="clause plain" style="outline:3px solid #B42318;"><b>It renews itself.</b> Miss the 90-day window and you are locked in for another full year.</div>
+    </div>
+    <div style="position:absolute; left:110px; bottom:70px;">
+      <span class="misschip">Missing: dispute resolution</span>
+      <span class="misschip">Vague: data retention</span>
+    </div>
+  </div>
+</div>
+<script>
+  window.__timelines = window.__timelines || {};
+  window.__timelines["05-plain-english"] = gsap.timeline({ paused:true });
+</script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+</body>
+</html>

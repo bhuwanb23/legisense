@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Sketch - 02 hidden traps</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html,body { width:1920px; height:1080px; overflow:hidden; background:#000; }
+  body { font-family:'Plus Jakarta Sans', sans-serif; }
+  #root { width:1920px; height:1080px; background:#F7F7F7; color:#1A1A1A; position:relative; }
+  .page { position:absolute; width:300px; height:400px; background:#FFFFFF; border:1.5px solid rgba(26,26,26,0.15); border-radius:10px; padding:24px; }
+  .line { height:10px; border-radius:5px; background:rgba(26,26,26,0.12); margin-bottom:14px; }
+  .flag { position:absolute; display:inline-block; padding:10px 20px; border-radius:100px; background:rgba(180,35,24,0.08); border:1.5px solid rgba(180,35,24,0.2); color:#B42318; font-size:22px; font-weight:600; }
+</style>
+</head>
+<body>
+<div id="root" data-composition-id="02-hidden-traps" data-start="0" data-duration="10" data-width="1920" data-height="1080">
+  <div class="clip" data-start="0" data-duration="10" style="position:absolute; inset:0;">
+    <div class="page" style="left:120px; top:90px;"><div class="line"></div><div class="line"></div><div class="line"></div><div class="line" style="width:60%;"></div></div>
+    <div class="page" style="left:470px; top:40px;"><div class="flag" style="top:-18px; right:-30px;">Unlimited liability</div><div class="line"></div><div class="line"></div><div class="line" style="width:75%;"></div><div class="line"></div></div>
+    <div class="page" style="left:830px; top:110px;"><div class="line"></div><div class="line" style="width:80%;"></div><div class="line"></div></div>
+    <div class="page" style="left:1190px; top:50px;"><div class="flag" style="top:-18px; left:-30px;">Auto-renewal trap</div><div class="line"></div><div class="line"></div><div class="line" style="width:55%;"></div></div>
+    <div class="page" style="left:1540px; top:130px;"><div class="line"></div><div class="line" style="width:65%;"></div><div class="line"></div></div>
+    <div class="page" style="left:200px; top:540px;"><div class="line"></div><div class="line" style="width:70%;"></div><div class="line"></div></div>
+    <div class="page" style="left:900px; top:560px;"><div class="flag" style="bottom:-18px; right:-24px;">Forfeiture penalty</div><div class="line"></div><div class="line" style="width:85%;"></div><div class="line"></div></div>
+    <div class="page" style="left:1450px; top:580px;"><div class="line"></div><div class="line"></div><div class="line" style="width:50%;"></div></div>
+    <div style="position:absolute; left:0; right:0; bottom:70px; text-align:center;">
+      <p style="font-size:88px; font-weight:800; letter-spacing:-0.02em;">What are you</p>
+      <p style="font-size:88px; font-weight:800; letter-spacing:-0.02em; color:#B42318;">really agreeing to?</p>
+    </div>
+  </div>
+</div>
+<script>
+  window.__timelines = window.__timelines || {};
+  window.__timelines["02-hidden-traps"] = gsap.timeline({ paused:true });
+</script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+</body>
+</html>
