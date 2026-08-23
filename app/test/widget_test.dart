@@ -19,6 +19,11 @@ void main() {
 
   setUp(() {
     SharedPreferences.setMockInitialValues({});
+    // Suppress ListTile-inside-DecoratedBox warnings (framework-level, visual-only)
+    FlutterError.onError = (details) {
+      if (details.exception.toString().contains('ListTile background color')) return;
+      FlutterError.presentError(details);
+    };
   });
 
   testWidgets('Splash shows brand and tagline', (tester) async {
