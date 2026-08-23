@@ -1,49 +1,483 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>Sketch - 05 plain english</title>
-<style>
-  * { margin:0; padding:0; box-sizing:border-box; }
-  html,body { width:1920px; height:1080px; overflow:hidden; background:#000; }
-  body { font-family:'Plus Jakarta Sans', sans-serif; }
-  #root { width:1920px; height:1080px; background:#FFFFFF; color:#1A1A1A; position:relative; }
-  .gauge { position:absolute; right:120px; top:90px; width:260px; text-align:center; }
-  .donut { width:200px; height:200px; margin:0 auto 12px; border-radius:50%; border:22px solid rgba(180,35,24,0.15); border-top-color:#B42318; border-right-color:#B42318; border-bottom-color:#B42318; display:flex; align-items:center; justify-content:center; font-size:56px; font-weight:800; color:#B42318; }
-  .colhead { font-size:24px; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; color:#9A9A9A; margin-bottom:20px; }
-  .clause { width:760px; border-radius:12px; padding:26px 30px; margin-bottom:22px; font-size:27px; line-height:1.45; }
-  .legal { font-family:'JetBrains Mono', monospace; background:rgba(180,35,24,0.04); border:1.5px solid rgba(180,35,24,0.2); color:#1A1A1A; }
-  .plain { background:rgba(5,150,105,0.06); border:1.5px solid rgba(5,150,105,0.25); }
-  .misschip { display:inline-block; padding:14px 26px; border-radius:100px; background:rgba(180,35,24,0.08); border:1.5px solid rgba(180,35,24,0.2); color:#B42318; font-size:25px; font-weight:600; margin-right:18px; }
-</style>
-</head>
-<body>
-<div id="root" data-composition-id="05-plain-english" data-start="0" data-duration="12" data-width="1920" data-height="1080">
-  <div class="clip" data-start="0" data-duration="12" style="position:absolute; inset:0;">
-    <div class="gauge">
-      <div class="donut">87</div>
-      <p style="font-size:26px; font-weight:700; letter-spacing:0.08em; color:#B42318;">HIGH RISK</p>
+<template>
+  <style>
+    @font-face {
+      font-family: "Plus Jakarta Sans";
+      src: url("assets/fonts/plus-jakarta-sans-latin.woff2") format("woff2");
+      font-weight: 100 900;
+      font-style: normal;
+      font-display: block;
+    }
+    @font-face {
+      font-family: "JetBrains Mono";
+      src: url("assets/fonts/jetbrains-mono-latin-400-normal.woff2") format("woff2");
+      font-weight: 400;
+      font-style: normal;
+      font-display: block;
+    }
+    @font-face {
+      font-family: "JetBrains Mono";
+      src: url("assets/fonts/jetbrains-mono-latin-600-normal.woff2") format("woff2");
+      font-weight: 600;
+      font-style: normal;
+      font-display: block;
+    }
+
+    #root {
+      position: relative;
+      width: 1920px;
+      height: 1080px;
+      overflow: hidden;
+      container-type: size;
+      font-family: "Plus Jakarta Sans", sans-serif;
+      color: #1a1a1a;
+    }
+
+    /* full-bleed white ground — dedicated clip, never painted on #root */
+    #root [class~="05-plain-english-ground"] {
+      position: absolute;
+      inset: 0;
+      background: #ffffff;
+    }
+    #root [class~="05-plain-english-hairline"] {
+      position: absolute;
+      left: 958.5px;
+      top: 320px;
+      width: 1.5px;
+      height: 530px;
+      background: rgba(180, 35, 24, 0.1);
+    }
+
+    #root [class~="05-plain-english-stage"] {
+      position: absolute;
+      inset: 0;
+    }
+
+    /* ── risk gauge (top-right hero) ── */
+    #root [class~="05-plain-english-gauge"] {
+      position: absolute;
+      right: 110px;
+      top: 56px;
+      width: 220px;
+      text-align: center;
+    }
+    #root [class~="05-plain-english-donutwrap"] {
+      position: relative;
+      width: 170px;
+      height: 170px;
+      margin: 0 auto;
+    }
+    #root [class~="05-plain-english-donutwrap"] svg {
+      position: absolute;
+      inset: 0;
+      display: block;
+    }
+    #root circle[class~="05-plain-english-ringtrack"] {
+      fill: none;
+      stroke: rgba(180, 35, 24, 0.15);
+      stroke-width: 17;
+    }
+    #root circle[class~="05-plain-english-ring"] {
+      fill: none;
+      stroke: #b42318;
+      stroke-width: 17;
+      stroke-linecap: round;
+      transform: rotate(-90deg);
+      transform-origin: 50% 50%;
+      transform-box: fill-box;
+    }
+    #root [class~="05-plain-english-num"] {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 52px;
+      font-weight: 700;
+      line-height: 1;
+      font-variant-numeric: tabular-nums;
+      color: #b42318;
+    }
+    #root [class~="05-plain-english-risklabel"] {
+      margin-top: 12px;
+      font-size: 25px;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      color: #b42318;
+    }
+
+    /* ── split-stage chrome ── */
+    #root [class~="05-plain-english-colhead"] {
+      position: absolute;
+      top: 284px;
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #9a9a9a;
+    }
+    #root [class~="05-plain-english-colhead-l"] {
+      left: 100px;
+    }
+    #root [class~="05-plain-english-colhead-r"] {
+      left: 1060px;
+    }
+
+    /* legalese card — static anchor, mono verbatim excerpt */
+    #root [class~="05-plain-english-legal"] {
+      position: absolute;
+      left: 100px;
+      width: 760px;
+      height: 232px;
+      display: flex;
+      align-items: center;
+      padding: 26px 30px;
+      box-sizing: border-box;
+      border-radius: 14px;
+      background: rgba(180, 35, 24, 0.04);
+      border: 1.5px solid rgba(180, 35, 24, 0.2);
+      font-family: "JetBrains Mono", monospace;
+      font-weight: 400;
+      font-size: 27px;
+      line-height: 1.5;
+      color: #1a1a1a;
+    }
+    #root [class~="05-plain-english-legal-1"] {
+      top: 330px;
+    }
+    #root [class~="05-plain-english-legal-2"] {
+      top: 584px;
+    }
+
+    /* flip slot — holds the two faces of one clause pair */
+    #root [class~="05-plain-english-slot"] {
+      position: absolute;
+      left: 1060px;
+      width: 760px;
+      height: 232px;
+      perspective: 1400px;
+    }
+    #root [class~="05-plain-english-slot-1"] {
+      top: 330px;
+    }
+    #root [class~="05-plain-english-slot-2"] {
+      top: 584px;
+    }
+    #root [class~="05-plain-english-flip"] {
+      position: absolute;
+      inset: 0;
+      transform-style: preserve-3d;
+    }
+    #root [class~="05-plain-english-face"] {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      padding: 26px 30px;
+      box-sizing: border-box;
+      border-radius: 14px;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      font-size: 27px;
+      line-height: 1.5;
+    }
+    /* raw state — mirrored legalese ghost awaiting translation */
+    #root [class~="05-plain-english-face-a"] {
+      background: rgba(180, 35, 24, 0.02);
+      border: 1.5px dashed rgba(180, 35, 24, 0.3);
+      font-family: "JetBrains Mono", monospace;
+      font-weight: 400;
+      color: #9a9a9a;
+    }
+    /* resolved state — plain-English twin (green reserved) */
+    #root [class~="05-plain-english-face-b"] {
+      transform: rotateY(180deg);
+      background: rgba(5, 150, 105, 0.06);
+      border: 1.5px solid rgba(5, 150, 105, 0.25);
+      color: #1a1a1a;
+    }
+    #root [class~="05-plain-english-face-b"] strong {
+      font-weight: 700;
+    }
+    /* approved emphasized example */
+    #root [class~="05-plain-english-face-b-emph"] {
+      outline: 3px solid #b42318;
+      outline-offset: 2px;
+    }
+
+    /* gutter translation marker */
+    #root [class~="05-plain-english-arrow"] {
+      position: absolute;
+      left: 937px;
+      width: 46px;
+      height: 46px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: rgba(5, 150, 105, 0.08);
+      border: 1.5px solid rgba(5, 150, 105, 0.25);
+      color: #059669;
+      font-size: 22px;
+      font-weight: 600;
+    }
+    #root [class~="05-plain-english-arrow-1"] {
+      top: 423px;
+    }
+    #root [class~="05-plain-english-arrow-2"] {
+      top: 677px;
+    }
+
+    /* missing-protection chips — kept above the caption band (bottom ≤ 900px) */
+    #root [class~="05-plain-english-chiprow"] {
+      position: absolute;
+      left: 100px;
+      top: 838px;
+      display: flex;
+      gap: 20px;
+    }
+    #root [class~="05-plain-english-chip"] {
+      display: flex;
+      align-items: center;
+      padding: 13px 26px 13px 20px;
+      border-radius: 100px;
+      background: rgba(180, 35, 24, 0.08);
+      border: 1.5px solid rgba(180, 35, 24, 0.2);
+      color: #b42318;
+      font-size: 22px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    #root [class~="05-plain-english-chipdot"] {
+      width: 11px;
+      height: 11px;
+      margin-right: 12px;
+      border-radius: 50%;
+      background: #b42318;
+      flex-shrink: 0;
+    }
+  </style>
+
+  <div
+    id="root"
+    data-composition-id="05-plain-english"
+    data-start="0"
+    data-duration="8.213"
+    data-width="1920"
+    data-height="1080"
+  >
+    <!-- track 0 · full-bleed ground -->
+    <div class="clip 05-plain-english-ground" data-start="0" data-duration="8.213" data-track-index="0">
+      <div class="05-plain-english-hairline"></div>
     </div>
-    <div style="position:absolute; left:110px; top:110px;">
-      <p class="colhead">The contract says</p>
-      <div class="clause legal">"Notwithstanding any other provision, the Licensor shall bear no liability whatsoever for damages arising from use of the premises..."</div>
-      <div class="clause legal">"...this Agreement shall automatically renew for successive twelve (12) month periods unless notice is given not less than ninety (90) days prior..."</div>
-    </div>
-    <div style="position:absolute; left:1010px; top:110px;">
-      <p class="colhead">What it means</p>
-      <div class="clause plain"><b>They're off the hook.</b> The landlord takes no responsibility for almost anything that goes wrong - even their own negligence.</div>
-      <div class="clause plain" style="outline:3px solid #B42318;"><b>It renews itself.</b> Miss the 90-day window and you are locked in for another full year.</div>
-    </div>
-    <div style="position:absolute; left:110px; bottom:70px;">
-      <span class="misschip">Missing: dispute resolution</span>
-      <span class="misschip">Vague: data retention</span>
+
+    <!-- track 1 · stage (slow macro push-in runs underneath) -->
+    <div class="clip 05-plain-english-stage" id="05-plain-english-stage" data-start="0" data-duration="8.213" data-track-index="1">
+      <!-- act 1 · risk gauge counts to 87 -->
+      <div class="05-plain-english-gauge" id="05-plain-english-gauge">
+        <div class="05-plain-english-donutwrap">
+          <svg viewBox="0 0 170 170" width="170" height="170">
+            <circle class="05-plain-english-ringtrack" cx="85" cy="85" r="76"></circle>
+            <circle class="05-plain-english-ring" id="05-plain-english-ring" cx="85" cy="85" r="76"></circle>
+          </svg>
+          <div class="05-plain-english-num" id="05-plain-english-num">0</div>
+        </div>
+        <div class="05-plain-english-risklabel" id="05-plain-english-risklabel">HIGH RISK</div>
+      </div>
+
+      <!-- split-stage seats -->
+      <div class="05-plain-english-colhead 05-plain-english-colhead-l" id="05-plain-english-headl">The contract says</div>
+      <div class="05-plain-english-colhead 05-plain-english-colhead-r" id="05-plain-english-headr">What it means</div>
+
+      <div class="05-plain-english-legal 05-plain-english-legal-1" id="05-plain-english-legal1">"Notwithstanding any other provision, the Licensor shall bear no liability whatsoever for damages arising from use of the premises..."</div>
+      <div class="05-plain-english-legal 05-plain-english-legal-2" id="05-plain-english-legal2">"...this Agreement shall automatically renew for successive twelve (12) month periods unless notice is given not less than ninety (90) days prior..."</div>
+
+      <!-- clause pair 1 — flips legalese → plain English -->
+      <div class="05-plain-english-slot 05-plain-english-slot-1">
+        <div class="05-plain-english-flip" id="05-plain-english-flip1">
+          <div class="05-plain-english-face 05-plain-english-face-a">"Notwithstanding any other provision, the Licensor shall bear no liability whatsoever..."</div>
+          <div class="05-plain-english-face 05-plain-english-face-b"><span><strong>They're off the hook.</strong> The landlord takes no responsibility for almost anything that goes wrong - even their own negligence.</span></div>
+        </div>
+      </div>
+
+      <!-- clause pair 2 — lands outlined as the emphasized example -->
+      <div class="05-plain-english-slot 05-plain-english-slot-2" id="05-plain-english-slot2">
+        <div class="05-plain-english-flip" id="05-plain-english-flip2">
+          <div class="05-plain-english-face 05-plain-english-face-a">"...this Agreement shall automatically renew for successive twelve (12) month periods..."</div>
+          <div class="05-plain-english-face 05-plain-english-face-b 05-plain-english-face-b-emph"><span><strong>It renews itself.</strong> Miss the 90-day window and you are locked in for another full year.</span></div>
+        </div>
+      </div>
+
+      <!-- gutter markers pop at each flip's seam -->
+      <div class="05-plain-english-arrow 05-plain-english-arrow-1" id="05-plain-english-arr1">&rarr;</div>
+      <div class="05-plain-english-arrow 05-plain-english-arrow-2" id="05-plain-english-arr2">&rarr;</div>
+
+      <!-- act 3 · missing protections flagged -->
+      <div class="05-plain-english-chiprow">
+        <div class="05-plain-english-chip" id="05-plain-english-chip1"><span class="05-plain-english-chipdot" id="05-plain-english-dot1"></span>Missing: dispute resolution</div>
+        <div class="05-plain-english-chip" id="05-plain-english-chip2"><span class="05-plain-english-chipdot" id="05-plain-english-dot2"></span>Vague: data retention</div>
+      </div>
     </div>
   </div>
-</div>
-<script>
-  window.__timelines = window.__timelines || {};
-  window.__timelines["05-plain-english"] = gsap.timeline({ paused:true });
-</script>
-<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
-</body>
-</html>
+
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+  <script>
+    (function () {
+      var DUR = 8.213;
+      var RISK = 0.87;
+      function el(id) {
+        return document.getElementById(id);
+      }
+
+      var stage = el("05-plain-english-stage");
+      var gauge = el("05-plain-english-gauge");
+      var num = el("05-plain-english-num");
+      var label = el("05-plain-english-risklabel");
+      var ring = el("05-plain-english-ring");
+
+      var tl = gsap.timeline({ paused: true });
+
+      /* slow continuous macro push-in underneath the whole shot */
+      tl.fromTo(
+        stage,
+        { scale: 1 },
+        { scale: 1.032, duration: DUR, ease: "power1.inOut", transformOrigin: "50% 44%" },
+        0
+      );
+
+      /* ── Act 1 (0 – 1.71s): seats settle, gauge sweeps + counts to 87 ── */
+      tl.fromTo(
+        gauge,
+        { opacity: 0, y: -16 },
+        { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" },
+        0.12
+      );
+      tl.fromTo(
+        el("05-plain-english-headl"),
+        { opacity: 0, y: 16 },
+        { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" },
+        0.2
+      );
+      tl.fromTo(
+        el("05-plain-english-headr"),
+        { opacity: 0, y: 16 },
+        { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" },
+        0.3
+      );
+      tl.fromTo(
+        el("05-plain-english-legal1"),
+        { opacity: 0, x: -26 },
+        { opacity: 1, x: 0, duration: 0.55, ease: "power3.out" },
+        0.32
+      );
+      tl.fromTo(
+        el("05-plain-english-legal2"),
+        { opacity: 0, x: -26 },
+        { opacity: 1, x: 0, duration: 0.55, ease: "power3.out" },
+        0.46
+      );
+
+      /* ring draw — measure, don't hard-code the circumference */
+      var LEN = ring.getTotalLength();
+      ring.style.strokeDasharray = String(LEN);
+      ring.style.strokeDashoffset = String(LEN);
+
+      /* counter: value + transform-scale growth share one ease, one beat */
+      var cnt = { v: 0 };
+      tl.to(
+        cnt,
+        {
+          v: 87,
+          duration: 1.28,
+          ease: "power3.out",
+          onUpdate: function () {
+            num.textContent = String(Math.round(cnt.v));
+          },
+        },
+        0.32
+      );
+      tl.fromTo(num, { scale: 0.55 }, { scale: 1, duration: 1.28, ease: "power3.out" }, 0.32);
+      tl.to(ring, { strokeDashoffset: LEN * (1 - RISK), duration: 1.28, ease: "power3.out" }, 0.32);
+
+      /* HIGH RISK stamps as 87 lands */
+      tl.fromTo(
+        label,
+        { opacity: 0, scale: 1.85 },
+        { opacity: 1, scale: 1, duration: 0.34, ease: "power4.out" },
+        1.56
+      );
+
+      /* ── Act 2 (1.71 – 4.45s): sequential clause state-swaps ──
+         rotateY half-turn driven by a proxy; the two backface-hidden faces
+         swap states instantly at the 90° seam (velocity-matched: one
+         continuous rotation, symmetric ease through the midpoint). */
+      function flipTween(flipEl, at) {
+        var st = { p: 0 };
+        tl.to(
+          st,
+          {
+            p: 1,
+            duration: 0.85,
+            ease: "power2.inOut",
+            onUpdate: function () {
+              flipEl.style.transform = "rotateY(" + (st.p * 180).toFixed(3) + "deg)";
+            },
+          },
+          at
+        );
+      }
+      flipTween(el("05-plain-english-flip1"), 1.95);
+      flipTween(el("05-plain-english-flip2"), 3.15);
+
+      /* gutter marker pops at each seam */
+      tl.fromTo(
+        el("05-plain-english-arr1"),
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.45, ease: "power3.out" },
+        2.32
+      );
+      tl.fromTo(
+        el("05-plain-english-arr2"),
+        { scale: 0, opacity: 0 },
+        { scale: 1, opacity: 1, duration: 0.45, ease: "power3.out" },
+        3.52
+      );
+
+      /* emphasized example lands: one firm pulse, then still */
+      tl.to(el("05-plain-english-slot2"), { scale: 1.018, duration: 0.16, ease: "sine.inOut" }, 4.04);
+      tl.to(el("05-plain-english-slot2"), { scale: 1, duration: 0.22, ease: "sine.inOut" }, 4.2);
+
+      /* ── Act 3 (4.45 – 6.5s): missing-protection chips spring in ── */
+      tl.fromTo(
+        el("05-plain-english-chip1"),
+        { scale: 0, opacity: 0, y: 20 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.55, ease: "power3.out" },
+        4.82
+      );
+      tl.fromTo(
+        el("05-plain-english-chip2"),
+        { scale: 0, opacity: 0, y: 20 },
+        { scale: 1, opacity: 1, y: 0, duration: 0.55, ease: "power3.out" },
+        4.9
+      );
+
+      /* alert dots pulse twice, finite — hand-keyed, no repeat/yoyo */
+      tl.to(el("05-plain-english-dot1"), { scale: 1.5, duration: 0.14, ease: "sine.inOut" }, 5.48);
+      tl.to(el("05-plain-english-dot1"), { scale: 1, duration: 0.16, ease: "sine.inOut" }, 5.62);
+      tl.to(el("05-plain-english-dot1"), { scale: 1.5, duration: 0.14, ease: "sine.inOut" }, 5.84);
+      tl.to(el("05-plain-english-dot1"), { scale: 1, duration: 0.16, ease: "sine.inOut" }, 5.98);
+      tl.to(el("05-plain-english-dot2"), { scale: 1.5, duration: 0.14, ease: "sine.inOut" }, 5.6);
+      tl.to(el("05-plain-english-dot2"), { scale: 1, duration: 0.16, ease: "sine.inOut" }, 5.74);
+      tl.to(el("05-plain-english-dot2"), { scale: 1.5, duration: 0.14, ease: "sine.inOut" }, 5.96);
+      tl.to(el("05-plain-english-dot2"), { scale: 1, duration: 0.16, ease: "sine.inOut" }, 6.1);
+
+      /* ── Act 4 (6.5 – 8.213s): settled hold; faintest finite breathe ── */
+      tl.to(gauge, { scale: 1.007, duration: 0.35, ease: "sine.inOut" }, 6.62);
+      tl.to(gauge, { scale: 1, duration: 0.35, ease: "sine.inOut" }, 6.97);
+      tl.to(gauge, { scale: 1.007, duration: 0.35, ease: "sine.inOut" }, 7.32);
+      tl.to(gauge, { scale: 1, duration: 0.31, ease: "sine.inOut" }, 7.67);
+
+      window.__timelines = window.__timelines || {};
+      window.__timelines["05-plain-english"] = tl;
+    })();
+  </script>
+</template>
