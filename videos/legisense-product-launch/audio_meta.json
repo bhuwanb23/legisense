@@ -1,0 +1,70 @@
+{
+  "tts_provider": null,
+  "voice_id": null,
+  "bgm": {
+    "path": "assets/bgm/track.wav",
+    "volume": 0.12,
+    "mode": "detached-seed-loop",
+    "duration_s": null
+  },
+  "bgm_pending": true,
+  "bgm_provider": "musicgen",
+  "bgm_pid": 20396,
+  "bgm_log": "D:\\projects\\apps\\legisense\\videos\\legisense-product-launch\\assets\\bgm\\bgm-1787485789978.log",
+  "bgm_mode": "detached-seed-loop",
+  "bgm_target_duration_s": 47.317,
+  "bgm_seed_duration_s": 28,
+  "bgm_loop_count": 2,
+  "voices": [
+    {
+      "frame": 1,
+      "path": "assets/voice/01.wav",
+      "duration_s": 4.395,
+      "words": []
+    },
+    {
+      "frame": 2,
+      "path": "assets/voice/02.wav",
+      "duration_s": 9.664,
+      "words": []
+    },
+    {
+      "frame": 3,
+      "path": "assets/voice/03.wav",
+      "duration_s": 3.712,
+      "words": []
+    },
+    {
+      "frame": 4,
+      "path": "assets/voice/04.wav",
+      "duration_s": 8.555,
+      "words": []
+    },
+    {
+      "frame": 5,
+      "path": "assets/voice/05.wav",
+      "duration_s": 8.213,
+      "words": []
+    },
+    {
+      "frame": 6,
+      "path": "assets/voice/06.wav",
+      "duration_s": 5.205,
+      "words": []
+    },
+    {
+      "frame": 7,
+      "path": "assets/voice/07.wav",
+      "duration_s": 5.312,
+      "words": []
+    },
+    {
+      "frame": 8,
+      "path": "assets/voice/08.wav",
+      "duration_s": 2.261,
+      "words": []
+    }
+  ],
+  "sfx": [],
+  "total_duration_s": 47.317
+}

@@ -1,0 +1,45 @@
+{
+  "provider": "kokoro",
+  "speed": 1,
+  "lines": [
+    {
+      "id": "01",
+      "text": "You read every page. All fourteen of them. But did you understand it?"
+    },
+    {
+      "id": "02",
+      "text": "Rental agreements. NDAs. Loan terms. And hidden inside: unlimited liability, auto-renewal traps, penalties you never saw coming."
+    },
+    {
+      "id": "03",
+      "text": "LegiSense reads the fine print for you, before you sign it."
+    },
+    {
+      "id": "04",
+      "text": "Upload any document. PDF, scan, paste, or link. It classifies, extracts, and reads every clause in seconds."
+    },
+    {
+      "id": "05",
+      "text": "Every clause gets a risk score. Every sentence becomes plain English. And missing protections get flagged, before they cost you."
+    },
+    {
+      "id": "06",
+      "text": "Have a question? Just ask. You get cited answers, straight from your own document."
+    },
+    {
+      "id": "07",
+      "text": "Deadlines tracked. Fairer counter-clauses drafted. Full reports, ready to share."
+    },
+    {
+      "id": "08",
+      "text": "LegiSense. Know what you sign."
+    }
+  ],
+  "bgm": {
+    "mode": "retrieve",
+    "query": "confident minimal tech underscore",
+    "blob": "Know what you sign",
+    "arc": "PAS - hook, pain, agitation, solution tease, product intro, proof/demo, benefits, CTA"
+  },
+  "voice": "am_michael"
+}
