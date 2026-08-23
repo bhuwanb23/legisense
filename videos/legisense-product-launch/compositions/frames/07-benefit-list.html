@@ -144,7 +144,9 @@
 
     var ROW_STARTS = [0.88, 1.52, 2.14, 2.74]; // one per VO phrase, ~1/s compressed
 
+    window.__timelines = window.__timelines || {};
     var tl = gsap.timeline({ paused: true });
+    window.__timelines["07-benefit-list"] = tl;
 
     // ---- Scene 1: ghost app-card seats left; right column empty/waiting ----
     tl.fromTo("#f07-card",
