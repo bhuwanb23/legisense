@@ -1,43 +1,431 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>Sketch - 04 analysis theater</title>
-<style>
-  * { margin:0; padding:0; box-sizing:border-box; }
-  html,body { width:1920px; height:1080px; overflow:hidden; background:#000; }
-  body { font-family:'Plus Jakarta Sans', sans-serif; }
-  #root { width:1920px; height:1080px; background:#F7F7F7; color:#1A1A1A; position:relative; }
-  .appcard { position:absolute; left:520px; top:140px; width:1100px; height:800px; background:#FFFFFF; border:1.5px solid rgba(180,35,24,0.2); border-radius:14px; padding:48px; }
-  .chip { display:inline-block; padding:12px 24px; border-radius:100px; background:rgba(180,35,24,0.08); border:1.5px solid rgba(180,35,24,0.2); font-size:24px; font-weight:600; color:#B42318; }
-  .status { margin-top:56px; font-size:52px; font-weight:700; letter-spacing:-0.02em; }
-  .rail { margin-top:40px; height:28px; width:100%; background:rgba(180,35,24,0.08); border-radius:6px; overflow:hidden; }
-  .rail-fill { height:100%; width:72%; background:#B42318; border-radius:6px; }
-  .receipt { position:absolute; left:220px; top:330px; width:560px; background:#FFFFFF; border:1.5px solid rgba(26,26,26,0.15); border-radius:14px; box-shadow:0 24px 60px rgba(26,26,26,0.10); padding:36px 44px; }
-  .row { display:flex; align-items:center; gap:18px; font-size:30px; font-weight:500; padding:14px 0; }
-  .tick { width:38px; height:38px; border-radius:50%; background:#059669; color:#fff; display:flex; align-items:center; justify-content:center; font-size:22px; font-weight:800; flex:none; }
-</style>
-</head>
-<body>
-<div id="root" data-composition-id="04-analysis-theater" data-start="0" data-duration="10" data-width="1920" data-height="1080">
-  <div class="clip" data-start="0" data-duration="10" style="position:absolute; inset:0;">
-    <div class="appcard">
-      <span class="chip">rent-agreement-2024.pdf</span>
-      <p class="status">Reading clauses...</p>
-      <div class="rail"><div class="rail-fill"></div></div>
-    </div>
-    <div class="receipt">
-      <div class="row"><span class="tick">&#10003;</span> Text extracted</div>
-      <div class="row"><span class="tick">&#10003;</span> Type classified - Rental Agreement</div>
-      <div class="row"><span class="tick">&#10003;</span> 18 clauses read</div>
-      <div class="row"><span class="tick">&#10003;</span> Risks scored</div>
+<template data-composition-id="04-analysis-theater">
+  <style>
+    @font-face {
+      font-family: "Plus Jakarta Sans";
+      src: url("assets/fonts/plus-jakarta-sans-latin.woff2") format("woff2");
+      font-weight: 200 800;
+      font-style: normal;
+      font-display: block;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    #root {
+      position: relative;
+      width: 1920px;
+      height: 1080px;
+      overflow: hidden;
+      container-type: size;
+      font-family: "Plus Jakarta Sans", sans-serif;
+      color: #1a1a1a;
+    }
+
+    /* ---- ground ---- */
+    #f04at-bg {
+      position: absolute;
+      inset: 0;
+      background: #f7f7f7;
+    }
+
+    /* ---- stage ---- */
+    #f04at-stage {
+      position: absolute;
+      inset: 0;
+    }
+
+    /* ---- app surface card (right, asymmetric) ---- */
+    #f04at-appcard {
+      position: absolute;
+      left: 520px;
+      top: 140px;
+      width: 1100px;
+      height: 730px;
+      background: #ffffff;
+      border: 1.5px solid rgba(180, 35, 24, 0.2);
+      border-radius: 14px;
+      padding: 48px;
+    }
+
+    #f04at-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 28px;
+    }
+
+    #f04at-chip {
+      display: inline-block;
+      padding: 12px 24px;
+      border-radius: 100px;
+      background: rgba(180, 35, 24, 0.08);
+      border: 1.5px solid rgba(180, 35, 24, 0.2);
+      font-size: 24px;
+      font-weight: 600;
+      color: #b42318;
+      white-space: nowrap;
+      opacity: 0;
+    }
+
+    #f04at-tags {
+      display: flex;
+      gap: 14px;
+      flex: none;
+    }
+
+    .f04at-tag {
+      padding: 9px 20px;
+      border-radius: 100px;
+      background: rgba(180, 35, 24, 0.08);
+      border: 1.5px solid rgba(180, 35, 24, 0.2);
+      font-size: 19px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: #b42318;
+      white-space: nowrap;
+    }
+
+    /* ---- analyze pill + burst ---- */
+    #f04at-analyze-row {
+      position: relative;
+      margin-top: 38px;
+      display: flex;
+    }
+
+    #f04at-burst {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 340px;
+      height: 110px;
+      margin-left: -170px;
+      margin-top: -55px;
+      border-radius: 50%;
+      background: radial-gradient(closest-side, rgba(143, 27, 19, 0.85), rgba(143, 27, 19, 0) 72%);
+      filter: blur(34px);
+      opacity: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    #f04at-analyze {
+      position: relative;
+      z-index: 1;
+      display: inline-block;
+      padding: 20px 48px;
+      border: none;
+      border-radius: 100px;
+      background: #b42318;
+      color: #ffffff;
+      font-family: "Plus Jakarta Sans", sans-serif;
+      font-size: 26px;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+    }
+
+    /* ---- working theater ---- */
+    #f04at-status {
+      margin-top: 56px;
+      min-height: 70px;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+
+    #f04at-spinner {
+      flex: none;
+      width: 44px;
+      height: 44px;
+      opacity: 0;
+      transform-origin: 50% 50%;
+    }
+
+    #f04at-status-text {
+      font-size: 52px;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: #1a1a1a;
+      white-space: nowrap;
+      min-width: 640px;
+    }
+
+    #f04at-rail {
+      margin-top: 42px;
+      height: 28px;
+      width: 100%;
+      background: rgba(180, 35, 24, 0.08);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    #f04at-rail-fill {
+      display: block;
+      width: 100%;
+      height: 100%;
+      background: #b42318;
+      border-radius: 6px;
+      transform: scaleX(0);
+      transform-origin: left center;
+    }
+
+    #f04at-meta {
+      margin-top: 26px;
+      font-size: 21px;
+      font-weight: 500;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: #9a9a9a;
+      opacity: 0;
+    }
+
+    /* ---- receipt card (overlapping lower-left) ---- */
+    #f04at-receipt {
+      position: absolute;
+      left: 220px;
+      top: 330px;
+      width: 560px;
+      background: #ffffff;
+      border: 1.5px solid rgba(26, 26, 26, 0.15);
+      border-radius: 14px;
+      box-shadow: 0 24px 60px rgba(26, 26, 26, 0.10);
+      padding: 36px 44px;
+      opacity: 0;
+      z-index: 2;
+    }
+
+    .f04at-row {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      font-size: 30px;
+      font-weight: 500;
+      color: #1a1a1a;
+      padding: 14px 0;
+      opacity: 0;
+    }
+
+    .f04at-tick {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: #059669;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      font-weight: 800;
+      flex: none;
+    }
+  </style>
+
+  <div id="root" data-composition-id="04-analysis-theater" data-start="0" data-duration="8.555" data-width="1920" data-height="1080">
+    <!-- full-bleed ground -->
+    <div class="clip" id="f04at-bg" data-start="0" data-duration="8.555" data-track-index="0"></div>
+
+    <!-- content stage -->
+    <div class="clip" id="f04at-stage" data-start="0" data-duration="8.555" data-track-index="1">
+      <!-- app surface card -->
+      <div id="f04at-appcard">
+        <div id="f04at-head">
+          <span id="f04at-chip">rent-agreement-2024.pdf</span>
+          <div id="f04at-tags">
+            <span class="f04at-tag" id="f04at-tag-pdf">PDF</span>
+            <span class="f04at-tag" id="f04at-tag-scan">Scan</span>
+            <span class="f04at-tag" id="f04at-tag-paste">Paste</span>
+            <span class="f04at-tag" id="f04at-tag-link">Link</span>
+          </div>
+        </div>
+
+        <div id="f04at-analyze-row">
+          <div id="f04at-burst"></div>
+          <button id="f04at-analyze" type="button">Analyze document</button>
+        </div>
+
+        <div id="f04at-status">
+          <svg id="f04at-spinner" viewBox="0 0 44 44" aria-hidden="true">
+            <circle cx="22" cy="22" r="17" fill="none" stroke="#b42318" stroke-width="5" stroke-linecap="round" stroke-dasharray="80 27"></circle>
+          </svg>
+          <span id="f04at-status-text"></span>
+        </div>
+
+        <div id="f04at-rail"><div id="f04at-rail-fill"></div></div>
+
+        <p id="f04at-meta">Full-document analysis</p>
+      </div>
+
+      <!-- receipt card -->
+      <div id="f04at-receipt">
+        <div class="f04at-row" id="f04at-row-0"><span class="f04at-tick">&#10003;</span> Text extracted</div>
+        <div class="f04at-row" id="f04at-row-1"><span class="f04at-tick">&#10003;</span> Type classified - Rental Agreement</div>
+        <div class="f04at-row" id="f04at-row-2"><span class="f04at-tick">&#10003;</span> 18 clauses read</div>
+        <div class="f04at-row" id="f04at-row-3"><span class="f04at-tick">&#10003;</span> Risks scored</div>
+      </div>
     </div>
   </div>
-</div>
-<script>
-  window.__timelines = window.__timelines || {};
-  window.__timelines["04-analysis-theater"] = gsap.timeline({ paused:true });
-</script>
-<script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
-</body>
-</html>
+
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+  <script>
+    (function () {
+      var FRAME_ID = "04-analysis-theater";
+      var DURATION = 8.555;
+
+      var statusTextEl = document.getElementById("f04at-status-text");
+
+      window.__timelines = window.__timelines || {};
+      var tl = gsap.timeline({ paused: true });
+      window.__timelines[FRAME_ID] = tl;
+
+      /* ---------------- Scene 1 (0.0 - 2.2) : trigger ---------------- */
+
+      // file chip drops into its header slot - smooth spring-pop settle
+      tl.fromTo(
+        "#f04at-chip",
+        { y: -64, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.55, ease: "back.out(1.7)" },
+        0.15
+      );
+
+      // Analyze pill presses exactly as the VO says "Upload"
+      // Phase 1 - linear compression
+      tl.to("#f04at-analyze", { scale: 0.92, duration: 0.12, ease: "power1.in" }, 0.55);
+      // Phase 2 - spring recovery (adjacent position = state continuity)
+      tl.to("#f04at-analyze", { scale: 1, duration: 0.5, ease: "back.out(2)" }, 0.67);
+      // release burst pops BEHIND the button, then fades
+      tl.fromTo(
+        "#f04at-burst",
+        { scale: 1, opacity: 0 },
+        { scale: 3.2, opacity: 0.55, duration: 0.35, ease: "power2.out" },
+        0.67
+      );
+      tl.to("#f04at-burst", { opacity: 0, duration: 0.45, ease: "power2.in" }, 1.02);
+
+      // machine takes over: thin accent arc spinner fades in and rotates
+      tl.fromTo("#f04at-spinner", { opacity: 0 }, { opacity: 1, duration: 0.25, ease: "power1.out" }, 1.05);
+      tl.fromTo(
+        "#f04at-spinner",
+        { rotation: 0 },
+        { rotation: 1566, duration: 4.35, ease: "none" },
+        1.05
+      );
+
+      /* ---------------- Scene 2 (2.2 - 5.5) : working theater ---------------- */
+
+      // discrete-text-sequence: whole-state swaps at thresholds, reverse-searched
+      var SEQUENCE = [
+        { t: 2.3, text: "Extracting text..." },
+        { t: 3.5, text: "Classifying type..." },
+        { t: 4.7, text: "Reading clauses..." }
+      ];
+      function textAt(time) {
+        for (var i = SEQUENCE.length - 1; i >= 0; i--) {
+          if (time >= SEQUENCE[i].t) return SEQUENCE[i].text;
+        }
+        return "";
+      }
+      var driver = { t: 0 };
+      tl.fromTo(
+        driver,
+        { t: 0 },
+        {
+          t: DURATION,
+          duration: DURATION,
+          ease: "none",
+          onUpdate: function () {
+            statusTextEl.textContent = textAt(driver.t);
+          }
+        },
+        0
+      );
+
+      // quick slide/fade nudge on each swap
+      [2.3, 3.5, 4.7].forEach(function (t) {
+        tl.fromTo(
+          "#f04at-status-text",
+          { y: 10, opacity: 0.35 },
+          { y: 0, opacity: 1, duration: 0.24, ease: "power2.out" },
+          t
+        );
+      });
+
+      // progress rail fills beneath, tinted #B42318
+      tl.fromTo(
+        "#f04at-rail-fill",
+        { scaleX: 0 },
+        { scaleX: 0.72, duration: 3.0, ease: "power1.inOut" },
+        2.3
+      );
+
+      // input-type tokens cycle subtly while the VO lists formats
+      var TAGS = ["pdf", "scan", "paste", "link"];
+      TAGS.forEach(function (name, i) {
+        var sel = "#f04at-tag-" + name;
+        var on = 2.35 + i * 0.62;
+        tl.to(
+          sel,
+          {
+            backgroundColor: "rgba(180,35,24,0.16)",
+            borderColor: "rgba(180,35,24,0.45)",
+            duration: 0.18,
+            ease: "power2.out"
+          },
+          on
+        );
+        tl.to(
+          sel,
+          {
+            backgroundColor: "rgba(180,35,24,0.08)",
+            borderColor: "rgba(180,35,24,0.2)",
+            duration: 0.28,
+            ease: "power2.inOut"
+          },
+          on + 0.42
+        );
+      });
+
+      // meta line settles under the rail mid-work
+      tl.fromTo(
+        "#f04at-meta",
+        { y: 12, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.4, ease: "power2.out" },
+        2.6
+      );
+
+      /* ---------------- Scene 3 (5.5 - 8.5) : receipt cascades in ---------------- */
+
+      // spinner dies the instant the result lands
+      tl.to("#f04at-spinner", { opacity: 0, duration: 0.18, ease: "power1.in" }, 5.42);
+
+      // receipt slides up overlapping the card's lower-left (elevation shadow-stack)
+      tl.fromTo(
+        "#f04at-receipt",
+        { y: 96, opacity: 0, scale: 0.98 },
+        { y: 0, opacity: 1, scale: 1, duration: 0.6, ease: "power3.out" },
+        5.5
+      );
+
+      // four rows arrive one per cue; each green tick pops with a tiny press
+      for (var r = 0; r < 4; r++) {
+        var rowStart = 5.95 + r * 0.55;
+        tl.fromTo(
+          "#f04at-row-" + r,
+          { y: 26, opacity: 0 },
+          { y: 0, opacity: 1, duration: 0.42, ease: "power2.out" },
+          rowStart
+        );
+        tl.fromTo(
+          "#f04at-row-" + r + " .f04at-tick",
+          { scale: 0 },
+          { scale: 1, duration: 0.32, ease: "back.out(2.2)" },
+          rowStart + 0.12
+        );
+        // tiny press: linear compress, spring release
+        tl.to("#f04at-row-" + r + " .f04at-tick", { scale: 0.88, duration: 0.06, ease: "power1.in" }, rowStart + 0.46);
+        tl.to("#f04at-row-" + r + " .f04at-tick", { scale: 1, duration: 0.24, ease: "back.out(2)" }, rowStart + 0.52);
+      }
+
+      /* ---------------- Scene 4 (8.5 - end) : stillness hold ---------------- */
+      // no motion - stillness carries it; driver tween spans the full duration
+    })();
+  </script>
+</template>
