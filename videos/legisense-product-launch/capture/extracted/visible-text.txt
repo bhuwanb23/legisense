@@ -1,0 +1,35 @@
+LegiSense — Your AI Legal Advisor
+AI-Powered Legal Document Intelligence Platform.
+Upload any legal document → know exactly what you're signing in 60 seconds.
+
+THE PROBLEM
+Legal documents are everywhere — rental agreements, employment contracts, NDAs, loan terms, court notices. They're written in dense legalese most people can't understand. People sign contracts without understanding what they agree to. One-sided clauses hide in plain sight — long non-competes, unlimited liability, forfeiture penalties. Critical deadlines get missed. Lawyers charge $200–500/hour just to read a single document.
+
+OUR SOLUTION
+LegiSense makes any legal document understandable by everyone — in 60 seconds.
+
+HOW IT WORKS
+1. Upload any document — PDF, DOCX, scan a photo, paste text, or import from URL.
+2. AI reads the entire document clause-by-clause using 15 type-specific legal prompts.
+3. Get instant results — risk scores, plain-English translations, key dates, missing protections.
+4. Ask questions — chat with your document and get cited answers.
+
+WHAT YOU GET
+- Risk score per clause and document-wide (0–100, none/low/medium/high/critical)
+- Plain English translation of every clause (grade-5/8 reading levels)
+- Risk categories: financial, legal, privacy, termination, obligation, liability, compliance
+- Counter-clauses to negotiate fairer terms
+- Missing clause detection — confidentiality, data protection, dispute resolution
+- Critical date & deadline tracking with urgency levels
+- Chat with cited answers referencing exact clauses and pages
+- Better Version — AI rewrites the whole document into a fairer draft
+- Export reports as PDF/DOCX, calendar exports for deadlines
+- Multi-language analysis and jurisdiction-aware checks
+
+PLATFORM
+Flutter app (Android) + Node.js/TypeScript backend with a 4-provider AI layer
+(OpenRouter / Gemini / OpenAI / Ollama), OCR for scanned documents, Socket.IO realtime
+progress, BullMQ job queues.
+
+TAGLINE
+"Know what you sign."
