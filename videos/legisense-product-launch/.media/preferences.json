@@ -1,0 +1,48 @@
+{
+  "version": 1,
+  "preferences": {
+    "destination": {
+      "value": "youtube",
+      "confirmed_in": [
+        "legisense-product-launch"
+      ],
+      "updated_at": "2026-08-23T11:24:51.630Z"
+    },
+    "aspect": {
+      "value": "1920x1080",
+      "confirmed_in": [
+        "legisense-product-launch"
+      ],
+      "updated_at": "2026-08-23T11:24:51.670Z"
+    },
+    "language": {
+      "value": "en",
+      "confirmed_in": [
+        "legisense-product-launch"
+      ],
+      "updated_at": "2026-08-23T11:24:51.710Z"
+    },
+    "flow": {
+      "value": "automation",
+      "confirmed_in": [
+        "legisense-product-launch"
+      ],
+      "updated_at": "2026-08-23T11:24:51.749Z"
+    },
+    "storyboard": {
+      "value": "yes",
+      "confirmed_in": [
+        "legisense-product-launch"
+      ],
+      "updated_at": "2026-08-23T11:24:51.795Z"
+    },
+    "style_preset.product-launch-video": {
+      "value": "blue-professional",
+      "confirmed_in": [
+        "legisense-product-launch"
+      ],
+      "updated_at": "2026-08-23T11:28:02.695Z"
+    }
+  },
+  "sightings": {}
+}
