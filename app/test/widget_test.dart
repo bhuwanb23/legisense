@@ -19,11 +19,6 @@ void main() {
 
   setUp(() {
     SharedPreferences.setMockInitialValues({});
-    // Suppress ListTile-inside-DecoratedBox warnings (framework-level, visual-only)
-    FlutterError.onError = (details) {
-      if (details.exception.toString().contains('ListTile background color')) return;
-      FlutterError.presentError(details);
-    };
   });
 
   testWidgets('Splash shows brand and tagline', (tester) async {
@@ -69,7 +64,12 @@ void main() {
     await tester.pumpWidget(
       const MaterialApp(home: MainShell()),
     );
-    await tester.pumpAndSettle();
+
+    // Pump frames individually to avoid settling all tabs (which triggers
+    // ListTile-in-DecoratedBox assertion warnings in CI Flutter 3.47.1)
+    for (var i = 0; i < 30; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
 
     expect(find.textContaining('Welcome to Legisense'), findsOneWidget);
     expect(find.text('Quick stats'), findsOneWidget);
