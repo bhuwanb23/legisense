@@ -216,9 +216,15 @@
       border-radius: 50%;
       background: rgba(5, 150, 105, 0.08);
       border: 1.5px solid rgba(5, 150, 105, 0.25);
-      color: #059669;
-      font-size: 22px;
-      font-weight: 600;
+    }
+    /* CSS-drawn chevron — no font dependency */
+    #root [class~="05-plain-english-chev"] {
+      display: block;
+      width: 14px;
+      height: 14px;
+      border-top: 3px solid #059669;
+      border-right: 3px solid #059669;
+      transform: translateX(-3px) rotate(45deg);
     }
     #root [class~="05-plain-english-arrow-1"] {
       top: 423px;
@@ -308,8 +314,8 @@
       </div>
 
       <!-- gutter markers pop at each flip's seam -->
-      <div class="05-plain-english-arrow 05-plain-english-arrow-1" id="05-plain-english-arr1">&rarr;</div>
-      <div class="05-plain-english-arrow 05-plain-english-arrow-2" id="05-plain-english-arr2">&rarr;</div>
+      <div class="05-plain-english-arrow 05-plain-english-arrow-1" id="05-plain-english-arr1"><span class="05-plain-english-chev"></span></div>
+      <div class="05-plain-english-arrow 05-plain-english-arrow-2" id="05-plain-english-arr2"><span class="05-plain-english-chev"></span></div>
 
       <!-- act 3 · missing protections flagged -->
       <div class="05-plain-english-chiprow">
