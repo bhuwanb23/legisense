@@ -3,11 +3,11 @@ name: Release APK
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Release tag (e.g. v1.0.0)'
+        description: "Release tag (e.g. v1.0.0)"
         required: true
 
 permissions:
@@ -36,7 +36,7 @@ jobs:
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: "17"
 
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
@@ -72,15 +72,15 @@ jobs:
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
         run: |
           cat > app/android/key.properties <<PROPS
-storePassword=$STORE_PASSWORD
-keyPassword=$KEY_PASSWORD
-keyAlias=$KEY_ALIAS
-storeFile=release-keystore.jks
-PROPS
+          storePassword=$STORE_PASSWORD
+          keyPassword=$KEY_PASSWORD
+          keyAlias=$KEY_ALIAS
+          storeFile=release-keystore.jks
+          PROPS
 
       - name: Flutter analyze
         working-directory: app
-        run: flutter analyze --no-pub 2>&1
+        run: flutter analyze --no-pub
 
       - name: Flutter test
         working-directory: app
@@ -122,8 +122,8 @@ PROPS
             ## Legisense ${{ steps.tag.outputs.tag }}
 
             ### Downloads
-            - **APK** — Install directly on Android devices
-            - **AAB** — Upload to Google Play Console
+            - **APK** - Install directly on Android devices
+            - **AAB** - Upload to Google Play Console
 
             ### What's Changed
             See commit history for details.
