@@ -64,12 +64,7 @@ void main() {
     await tester.pumpWidget(
       const MaterialApp(home: MainShell()),
     );
-
-    // Pump frames individually to avoid settling all tabs (which triggers
-    // ListTile-in-DecoratedBox assertion warnings in CI Flutter 3.47.1)
-    for (var i = 0; i < 30; i++) {
-      await tester.pump(const Duration(milliseconds: 100));
-    }
+    await tester.pumpAndSettle();
 
     expect(find.textContaining('Welcome to Legisense'), findsOneWidget);
     expect(find.text('Quick stats'), findsOneWidget);

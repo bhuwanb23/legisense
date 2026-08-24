@@ -307,7 +307,10 @@ class _MenuCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadii.md),
         boxShadow: AppShadows.soft,
       ),
-      child: Column(children: children),
+      child: Material(
+        type: MaterialType.transparency,
+        child: Column(children: children),
+      ),
     );
   }
 }
