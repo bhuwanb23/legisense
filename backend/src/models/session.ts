@@ -10,7 +10,7 @@ export const sessions = pgTable('sessions', {
   ipAddress: text('ip_address'),
   expiresAt: text('expires_at').notNull(),
   isRevoked: boolean('is_revoked').notNull().default(false),
-  createdAt: text('created_at').notNull().default(sql`(datetime('now'))`),
+  createdAt: text('created_at').notNull().default(sql`(NOW()::TEXT)`),
 });
 
 export type Session = typeof sessions.$inferSelect;

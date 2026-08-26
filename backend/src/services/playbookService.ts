@@ -13,7 +13,7 @@ function keywordsFromRule(ruleText: string): string[] {
 export async function runPlaybookScan(documentId: number, analysisId: number, userId: number): Promise<number> {
   const db = getDb();
   const rules = await db.select().from(playbookRules).where(
-    sql`${playbookRules.userId} = ${userId} AND ${playbookRules.isActive} = 1`
+    sql`${playbookRules.userId} = ${userId} AND ${playbookRules.isActive} = TRUE`
   );
   if (rules.length === 0) return 0;
 

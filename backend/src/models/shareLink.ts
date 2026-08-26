@@ -11,7 +11,7 @@ export const shareLinks = pgTable('share_links', {
   isActive: boolean('is_active').notNull().default(true),
   views: integer('views').notNull().default(0),
   expiresAt: text('expires_at'),
-  createdAt: text('created_at').notNull().default(sql`(datetime('now'))`),
+  createdAt: text('created_at').notNull().default(sql`(NOW()::TEXT)`),
 });
 
 export type ShareLink = typeof shareLinks.$inferSelect;

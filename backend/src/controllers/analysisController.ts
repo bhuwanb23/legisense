@@ -55,7 +55,7 @@ export async function startAnalysis(
 
     const db = getDb();
     const rows = await db.select().from(documents).where(
-      sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = 0`
+      sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = FALSE`
     );
 
     if (!rows[0]) throw new NotFoundError('Document');
@@ -133,7 +133,7 @@ export async function getAnalysis(
     const db = getDb();
 
     const docRows = await db.select().from(documents).where(
-      sql`${documents.id} = ${documentId} AND ${documents.isDeleted} = 0`
+      sql`${documents.id} = ${documentId} AND ${documents.isDeleted} = FALSE`
     );
 
     if (!docRows[0] || !(await getDocumentAccess(req.user.id, documentId))) throw new NotFoundError('Document');
@@ -193,7 +193,7 @@ export async function getClauses(
     const db = getDb();
 
     const docRows = await db.select().from(documents).where(
-      sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = 0`
+      sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = FALSE`
     );
 
     if (!docRows[0]) throw new NotFoundError('Document');
@@ -232,7 +232,7 @@ export async function getRisks(
     const db = getDb();
 
     const docRows = await db.select().from(documents).where(
-      sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = 0`
+      sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = FALSE`
     );
 
     if (!docRows[0]) throw new NotFoundError('Document');
@@ -287,7 +287,7 @@ export async function getRisksByCategory(
     const db = getDb();
 
     const docRows = await db.select().from(documents).where(
-      sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = 0`
+      sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = FALSE`
     );
 
     if (!docRows[0]) throw new NotFoundError('Document');
@@ -326,7 +326,7 @@ export async function getSummary(
     const db = getDb();
 
     const docRows = await db.select().from(documents).where(
-      sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = 0`
+      sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = FALSE`
     );
 
     if (!docRows[0]) throw new NotFoundError('Document');
@@ -375,7 +375,7 @@ export async function getRiskDashboard(
     const db = getDb();
 
     const docRows = await db.select().from(documents).where(
-      sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = 0`
+      sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = FALSE`
     );
 
     if (!docRows[0]) throw new NotFoundError('Document');
@@ -463,7 +463,7 @@ export async function getPlainEnglish(
     const db = getDb();
 
     const docRows = await db.select().from(documents).where(
-      sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = 0`
+      sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = FALSE`
     );
 
     if (!docRows[0]) throw new NotFoundError('Document');
@@ -581,7 +581,7 @@ export async function classifyEndpoint(
     const db = getDb();
 
     const docRows = await db.select().from(documents).where(
-      sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = 0`
+      sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = FALSE`
     );
 
     if (!docRows[0]) throw new NotFoundError('Document');
@@ -643,7 +643,7 @@ export async function confirmDocumentType(
 
     const db = getDb();
     const docRows = await db.select().from(documents).where(
-      sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = 0`
+      sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = FALSE`
     );
 
     if (!docRows[0]) throw new NotFoundError('Document');
@@ -651,7 +651,7 @@ export async function confirmDocumentType(
     await db.execute(sql`UPDATE ${documents} SET
       detected_type = ${type},
       detected_type_confidence = 100,
-      needs_type_confirmation = 0,
+      needs_type_confirmation = FALSE,
       updated_at = NOW()
       WHERE id = ${documentId}`);
 
@@ -719,7 +719,7 @@ export async function getJurisdictionFlags(
     const db = getDb();
 
     const docRows = await db.select().from(documents).where(
-      sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = 0`
+      sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = FALSE`
     );
     if (!docRows[0]) throw new NotFoundError('Document');
 
@@ -809,7 +809,7 @@ export async function getFlaggedClauses(
     const documentId = Number(req.params.documentId);
     const db = getDb();
     const docRows = await db.select().from(documents).where(
-      sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = 0`
+      sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = FALSE`
     );
     if (!docRows[0]) throw new NotFoundError('Document');
 
@@ -907,7 +907,7 @@ export async function submitRiskFeedback(
     });
 
     if (feedbackType === 'mark_risky') {
-      await db.execute(sql`UPDATE ${clauses} SET is_flagged = 1 WHERE id = ${clauseId}`);
+      await db.execute(sql`UPDATE ${clauses} SET is_flagged = TRUE WHERE id = ${clauseId}`);
     }
 
     persistNow();
@@ -931,7 +931,7 @@ export async function getMissingClausesEndpoint(
     const documentId = Number(req.params.documentId);
     const db = getDb();
     const docRows = await db.select().from(documents).where(
-      sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = 0`
+      sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = FALSE`
     );
     if (!docRows[0]) throw new NotFoundError('Document');
 
@@ -987,7 +987,7 @@ export async function getCounterClauses(
     const documentId = Number(req.params.documentId);
     const db = getDb();
     const docRows = await db.select().from(documents).where(
-      sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = 0`
+      sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = FALSE`
     );
     if (!docRows[0]) throw new NotFoundError('Document');
 
@@ -1064,7 +1064,7 @@ export async function markCounterUsed(
     if (!clauseRows[0]) throw new NotFoundError('Clause');
 
     const now = new Date().toISOString();
-    await db.execute(sql`UPDATE ${clauses} SET used_counter = 1, copied_at = ${now} WHERE id = ${clauseId}`);
+    await db.execute(sql`UPDATE ${clauses} SET used_counter = TRUE, copied_at = ${now} WHERE id = ${clauseId}`);
     persistNow();
 
     res.json({ success: true, data: { clauseId, usedCounter: true, copiedAt: now } });
@@ -1095,7 +1095,7 @@ export async function rewritePlainEnglish(
 
     const db = getDb();
     const docRows = await db.select().from(documents).where(
-      sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = 0`
+      sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = FALSE`
     );
 
     if (!docRows[0]) throw new NotFoundError('Document');

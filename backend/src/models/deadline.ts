@@ -27,7 +27,7 @@ export const deadlines = pgTable('deadlines', {
   isDismissed: boolean('is_dismissed').notNull().default(false),
   calendarExported: boolean('calendar_exported').notNull().default(false),
   exportedAt: text('exported_at'),
-  createdAt: text('created_at').notNull().default(sql`(datetime('now'))`),
+  createdAt: text('created_at').notNull().default(sql`(NOW()::TEXT)`),
 });
 
 export type Deadline = typeof deadlines.$inferSelect;

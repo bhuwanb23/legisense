@@ -9,7 +9,7 @@ export const riskPatterns = pgTable('risk_patterns', {
   triggerKeywords: text('trigger_keywords').notNull().default('[]'),
   explanation: text('explanation').notNull(),
   recommendation: text('recommendation').notNull(),
-  createdAt: text('created_at').notNull().default(sql`(datetime('now'))`),
+  createdAt: text('created_at').notNull().default(sql`(NOW()::TEXT)`),
 });
 
 export type RiskPattern = typeof riskPatterns.$inferSelect;

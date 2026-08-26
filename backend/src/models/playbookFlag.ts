@@ -12,7 +12,7 @@ export const playbookFlags = pgTable('playbook_flags', {
   clauseId: integer('clause_id').notNull().references(() => clauses.id),
   ruleId: integer('rule_id').notNull().references(() => playbookRules.id),
   message: text('message').notNull(),
-  createdAt: text('created_at').notNull().default(sql`(datetime('now'))`),
+  createdAt: text('created_at').notNull().default(sql`(NOW()::TEXT)`),
 });
 
 export type PlaybookFlag = typeof playbookFlags.$inferSelect;

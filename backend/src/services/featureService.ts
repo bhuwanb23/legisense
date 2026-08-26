@@ -21,7 +21,7 @@ export async function generateBetterVersion(
 ): Promise<{ rewrittenText: string; changes: string[]; model: string }> {
   const db = getDb();
   const docRows = await db.select().from(documents).where(
-    sql`${documents.id} = ${documentId} AND ${documents.userId} = ${userId} AND ${documents.isDeleted} = 0`
+    sql`${documents.id} = ${documentId} AND ${documents.userId} = ${userId} AND ${documents.isDeleted} = FALSE`
   );
   const doc = docRows[0];
   if (!doc) throw new Error('Document not found');
@@ -283,7 +283,7 @@ export async function compareDocuments(
 }> {
   const db = getDb();
   const docs = await db.select().from(documents).where(
-    sql`${documents.id} IN (${documentIdA}, ${documentIdB}) AND ${documents.userId} = ${userId} AND ${documents.isDeleted} = 0`
+    sql`${documents.id} IN (${documentIdA}, ${documentIdB}) AND ${documents.userId} = ${userId} AND ${documents.isDeleted} = FALSE`
   );
   if (docs.length !== 2) throw new BadRequestError('Both documents must exist and belong to you');
 
@@ -408,7 +408,7 @@ export async function compareDocumentToTemplate(documentId: number, type: string
   if (!tpl) throw new BadRequestError('Template not found');
   const db = getDb();
   const doc = (await db.select().from(documents).where(
-    sql`${documents.id} = ${documentId} AND ${documents.userId} = ${userId} AND ${documents.isDeleted} = 0`
+    sql`${documents.id} = ${documentId} AND ${documents.userId} = ${userId} AND ${documents.isDeleted} = FALSE`
   ))[0];
   if (!doc) throw new BadRequestError('Document not found');
   const analysis = (await db.select().from(analysisResults).where(sql`${analysisResults.documentId} = ${documentId}`))[0];

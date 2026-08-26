@@ -14,7 +14,7 @@ export const clauseRiskFlags = pgTable('clause_risk_flags', {
   matchType: text('match_type').notNull(),
   matchConfidence: doublePrecision('match_confidence').notNull().default(80),
   flaggedTextSnippet: text('flagged_text_snippet'),
-  createdAt: text('created_at').notNull().default(sql`(datetime('now'))`),
+  createdAt: text('created_at').notNull().default(sql`(NOW()::TEXT)`),
 });
 
 export type ClauseRiskFlag = typeof clauseRiskFlags.$inferSelect;

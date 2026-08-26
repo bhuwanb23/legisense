@@ -46,7 +46,7 @@ export async function revokeApiKey(userId: number, id: number): Promise<void> {
   const db = getDb();
   const row = (await db.select().from(apiKeys).where(sql`${apiKeys.id} = ${id} AND ${apiKeys.userId} = ${userId}`))[0];
   if (!row) throw new NotFoundError('API key');
-  await db.execute(sql`UPDATE ${apiKeys} SET is_active = 0 WHERE id = ${id}`);
+  await db.execute(sql`UPDATE ${apiKeys} SET is_active = FALSE WHERE id = ${id}`);
   persistNow();
 }
 

@@ -13,7 +13,7 @@ export const communityRiskFeedback = pgTable('community_risk_feedback', {
   patternId: integer('pattern_id').references(() => riskPatterns.id),
   feedbackType: text('feedback_type').notNull(),
   note: text('note'),
-  createdAt: text('created_at').notNull().default(sql`(datetime('now'))`),
+  createdAt: text('created_at').notNull().default(sql`(NOW()::TEXT)`),
 });
 
 export type CommunityRiskFeedback = typeof communityRiskFeedback.$inferSelect;

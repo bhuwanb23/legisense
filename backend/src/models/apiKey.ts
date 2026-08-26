@@ -12,7 +12,7 @@ export const apiKeys = pgTable('api_keys', {
   dailyCount: integer('daily_count').notNull().default(0),
   dailyReset: text('daily_reset'),
   lastUsedAt: text('last_used_at'),
-  createdAt: text('created_at').notNull().default(sql`(datetime('now'))`),
+  createdAt: text('created_at').notNull().default(sql`(NOW()::TEXT)`),
 });
 
 export type ApiKey = typeof apiKeys.$inferSelect;

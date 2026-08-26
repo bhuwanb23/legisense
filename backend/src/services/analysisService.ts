@@ -73,7 +73,7 @@ export async function processDocumentSync(
     return getAnalysisBundleForDocument(documentId);
   }
 
-  updateDocumentStatus(documentId, 'processing');
+  await updateDocumentStatus(documentId, 'processing');
 
   try {
     const rawText = await resolveDocumentText(doc as unknown as Record<string, unknown>, documentId);
@@ -147,7 +147,7 @@ export async function processDocumentSync(
     await db.execute(sql`UPDATE ${documents} SET
       detected_type = ${typeKey},
       detected_type_confidence = ${analysisResult.detectedTypeConfidence || 70},
-      needs_type_confirmation = 0,
+      needs_type_confirmation = FALSE,
       updated_at = NOW()
       WHERE id = ${documentId}`);
 
@@ -218,7 +218,7 @@ export async function processDocumentSync(
       }
     }
 
-    updateDocumentStatus(documentId, 'analyzed');
+    await updateDocumentStatus(documentId, 'analyzed');
     createNotification(
       doc.userId,
       'analysis_complete',
@@ -240,7 +240,7 @@ export async function processDocumentSync(
       processingTime: (Date.now() - startTime) / 1000,
     });
 
-    updateDocumentStatus(documentId, 'failed');
+    await updateDocumentStatus(documentId, 'failed');
     createNotification(
       doc.userId,
       'analysis_failed',

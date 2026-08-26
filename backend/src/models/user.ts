@@ -17,8 +17,8 @@ export const users = pgTable('users', {
   oauthSubject: text('oauth_subject'),
   isVerified: boolean('is_verified').notNull().default(false),
   isActive: boolean('is_active').notNull().default(true),
-  createdAt: text('created_at').notNull().default(sql`(datetime('now'))`),
-  updatedAt: text('updated_at').notNull().default(sql`(datetime('now'))`),
+  createdAt: text('created_at').notNull().default(sql`(NOW()::TEXT)`),
+  updatedAt: text('updated_at').notNull().default(sql`(NOW()::TEXT)`),
   lastLoginAt: text('last_login_at'),
 });
 

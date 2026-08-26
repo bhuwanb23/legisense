@@ -13,7 +13,7 @@ export const legalRules = pgTable('legal_rules', {
   legalReference: text('legal_reference'),
   severity: text('severity').notNull().default('warning'),
   conflictingJurisdictions: text('conflicting_jurisdictions').notNull().default('[]'),
-  createdAt: text('created_at').notNull().default(sql`(datetime('now'))`),
+  createdAt: text('created_at').notNull().default(sql`(NOW()::TEXT)`),
 });
 
 export type LegalRule = typeof legalRules.$inferSelect;

@@ -28,7 +28,7 @@ export const analysisResults = pgTable('analysis_results', {
   analysisLanguage: text('analysis_language'),
   translations: text('translations').default('{}'),
   counterClausesStatus: text('counter_clauses_status').default('skipped'),
-  createdAt: text('created_at').notNull().default(sql`(datetime('now'))`),
+  createdAt: text('created_at').notNull().default(sql`(NOW()::TEXT)`),
 });
 
 export type AnalysisResult = typeof analysisResults.$inferSelect;

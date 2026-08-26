@@ -14,7 +14,7 @@ export const chatMessages = pgTable('chat_messages', {
   citedPages: text('cited_pages'),
   tokensUsed: integer('tokens_used'),
   responseTime: doublePrecision('response_time'),
-  createdAt: text('created_at').notNull().default(sql`(datetime('now'))`),
+  createdAt: text('created_at').notNull().default(sql`(NOW()::TEXT)`),
 });
 
 export type ChatMessage = typeof chatMessages.$inferSelect;

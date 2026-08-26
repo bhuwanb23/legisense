@@ -15,7 +15,7 @@ export const jurisdictionFlags = pgTable('jurisdiction_flags', {
   message: text('message').notNull(),
   legalReference: text('legal_reference'),
   severity: text('severity').notNull(),
-  createdAt: text('created_at').notNull().default(sql`(datetime('now'))`),
+  createdAt: text('created_at').notNull().default(sql`(NOW()::TEXT)`),
 });
 
 export type JurisdictionFlag = typeof jurisdictionFlags.$inferSelect;

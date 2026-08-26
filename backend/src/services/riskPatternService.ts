@@ -116,7 +116,7 @@ Only include genuine matches (confidence >= 70). Use pattern names exactly from 
   }
 
   for (const clauseId of flaggedClauseIds) {
-    await db.execute(sql`UPDATE ${clauses} SET is_flagged = 1 WHERE id = ${clauseId}`);
+    await db.execute(sql`UPDATE ${clauses} SET is_flagged = TRUE WHERE id = ${clauseId}`);
   }
 
   persistNow();

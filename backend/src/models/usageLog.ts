@@ -15,7 +15,7 @@ export const usageLogs = pgTable('usage_logs', {
   cost: doublePrecision('cost'),
   inputTokens: integer('input_tokens'),
   outputTokens: integer('output_tokens'),
-  createdAt: text('created_at').notNull().default(sql`(datetime('now'))`),
+  createdAt: text('created_at').notNull().default(sql`(NOW()::TEXT)`),
 });
 
 export type UsageLog = typeof usageLogs.$inferSelect;

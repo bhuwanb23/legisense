@@ -12,7 +12,7 @@ export const notifications = pgTable('notifications', {
   documentId: integer('document_id').references(() => documents.id),
   isRead: boolean('is_read').notNull().default(false),
   actionUrl: text('action_url'),
-  createdAt: text('created_at').notNull().default(sql`(datetime('now'))`),
+  createdAt: text('created_at').notNull().default(sql`(NOW()::TEXT)`),
 });
 
 export type Notification = typeof notifications.$inferSelect;

@@ -180,11 +180,11 @@ export async function logout(
 
     if (refreshToken) {
       await db.execute(
-        sql`UPDATE ${sessions} SET is_revoked = 1 WHERE refresh_token = ${refreshToken} AND user_id = ${req.user.id}`
+        sql`UPDATE ${sessions} SET is_revoked = TRUE WHERE refresh_token = ${refreshToken} AND user_id = ${req.user.id}`
       );
     } else {
       await db.execute(
-        sql`UPDATE ${sessions} SET is_revoked = 1 WHERE user_id = ${req.user.id}`
+        sql`UPDATE ${sessions} SET is_revoked = TRUE WHERE user_id = ${req.user.id}`
       );
     }
 
@@ -217,7 +217,7 @@ export async function refreshToken(
       .select()
       .from(sessions)
       .where(
-        sql`${sessions.refreshToken} = ${token} AND ${sessions.isRevoked} = 0`
+        sql`${sessions.refreshToken} = ${token} AND ${sessions.isRevoked} = FALSE`
       );
 
     const session = sessionRows[0];
@@ -230,7 +230,7 @@ export async function refreshToken(
     }
 
     await db.execute(
-      sql`UPDATE ${sessions} SET is_revoked = 1 WHERE id = ${session.id}`
+      sql`UPDATE ${sessions} SET is_revoked = TRUE WHERE id = ${session.id}`
     );
 
     const userRows = await db
@@ -346,7 +346,7 @@ export async function resetPassword(
     );
 
     await db.execute(
-      sql`UPDATE ${sessions} SET is_revoked = 1 WHERE user_id = ${decoded.userId}`
+      sql`UPDATE ${sessions} SET is_revoked = TRUE WHERE user_id = ${decoded.userId}`
     );
 
     persistNow();

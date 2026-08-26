@@ -252,7 +252,7 @@ export async function deleteAccount(
       .where(eq(users.id, req.user.id));
 
     await db.execute(
-      sql`UPDATE ${sessions} SET is_revoked = 1 WHERE user_id = ${req.user.id}`
+      sql`UPDATE ${sessions} SET is_revoked = TRUE WHERE user_id = ${req.user.id}`
     );
 
     persistNow();

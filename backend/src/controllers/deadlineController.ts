@@ -131,7 +131,7 @@ export async function listDocumentDeadlines(
     const db = getDb();
 
     const docRows = await db.select().from(documents).where(
-      sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = 0`
+      sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = FALSE`
     );
     if (!docRows[0]) throw new NotFoundError('Document');
 
@@ -241,7 +241,7 @@ export async function completeDeadline(
 
     if (!rows[0]) throw new NotFoundError('Deadline');
 
-    await db.execute(sql`UPDATE ${deadlines} SET is_completed = 1 WHERE id = ${deadlineId}`);
+    await db.execute(sql`UPDATE ${deadlines} SET is_completed = TRUE WHERE id = ${deadlineId}`);
     persistNow();
 
     res.json({ success: true, data: { message: 'Deadline marked as completed', id: deadlineId } });
@@ -270,7 +270,7 @@ export async function dismissDeadline(
 
     if (!rows[0]) throw new NotFoundError('Deadline');
 
-    await db.execute(sql`UPDATE ${deadlines} SET is_dismissed = 1 WHERE id = ${deadlineId}`);
+    await db.execute(sql`UPDATE ${deadlines} SET is_dismissed = TRUE WHERE id = ${deadlineId}`);
     persistNow();
 
     res.json({ success: true, data: { message: 'Deadline dismissed', id: deadlineId } });
@@ -329,7 +329,7 @@ export async function exportDeadlinesIcs(
 
     const now = new Date().toISOString();
     for (const d of rows) {
-      await db.execute(sql`UPDATE ${deadlines} SET calendar_exported = 1, exported_at = ${now} WHERE id = ${d.id}`);
+      await db.execute(sql`UPDATE ${deadlines} SET calendar_exported = TRUE, exported_at = ${now} WHERE id = ${d.id}`);
     }
     persistNow();
 
@@ -378,7 +378,7 @@ export async function updateDeadlineReminders(
     const channels = req.body?.reminderChannels ?? req.body?.reminder_channels;
 
     if (enabled !== undefined) {
-      await db.execute(sql`UPDATE ${deadlines} SET reminder_enabled = ${enabled ? 1 : 0} WHERE id = ${deadlineId}`);
+      await db.execute(sql`UPDATE ${deadlines} SET reminder_enabled = ${enabled} WHERE id = ${deadlineId}`);
     }
     if (Array.isArray(times)) {
       const cleaned = times.map(Number).filter((n) => Number.isFinite(n) && n >= 0);

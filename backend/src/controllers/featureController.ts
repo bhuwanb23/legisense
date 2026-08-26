@@ -20,11 +20,11 @@ export async function toggleFavorite(req: Request, res: Response, next: NextFunc
     }
     const db = getDb();
     const rows = await db.select().from(documents).where(
-      sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = 0`
+      sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = FALSE`
     );
     if (!rows[0]) throw new NotFoundError('Document');
 
-    await db.execute(sql`UPDATE ${documents} SET is_favorite = ${isFavorite ? 1 : 0}, updated_at = NOW() WHERE id = ${documentId}`);
+    await db.execute(sql`UPDATE ${documents} SET is_favorite = ${isFavorite}, updated_at = NOW() WHERE id = ${documentId}`);
     persistNow();
     res.json({ success: true, data: { documentId, isFavorite: Boolean(isFavorite) } });
   } catch (err) {
@@ -41,13 +41,13 @@ export async function createShareLink(req: Request, res: Response, next: NextFun
     const db = getDb();
 
     const docRows = await db.select().from(documents).where(
-      sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = 0`
+      sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = FALSE`
     );
     if (!docRows[0]) throw new NotFoundError('Document');
 
     // Reuse an active link if one exists.
     const existing = await db.select().from(shareLinks).where(
-      sql`${shareLinks.documentId} = ${documentId} AND ${shareLinks.userId} = ${req.user.id} AND ${shareLinks.isActive} = 1`
+      sql`${shareLinks.documentId} = ${documentId} AND ${shareLinks.userId} = ${req.user.id} AND ${shareLinks.isActive} = TRUE`
     );
     if (existing[0]) {
       res.json({ success: true, data: shareLinkPayload(existing[0], docRows[0]) });
@@ -89,7 +89,7 @@ export async function revokeShareLink(req: Request, res: Response, next: NextFun
     );
     if (rows.length === 0) throw new NotFoundError('Share link');
 
-    await db.execute(sql`UPDATE ${shareLinks} SET is_active = 0 WHERE id = ${rows[0].id}`);
+    await db.execute(sql`UPDATE ${shareLinks} SET is_active = FALSE WHERE id = ${rows[0].id}`);
     persistNow();
     res.json({ success: true, data: { revoked: true, documentId } });
   } catch (err) {
@@ -107,7 +107,7 @@ export async function getSharedAnalysis(req: Request, res: Response, next: NextF
     if (!link || !link.isActive) throw new NotFoundError('Share link');
 
     if (link.expiresAt && new Date(link.expiresAt) < new Date()) {
-      await db.execute(sql`UPDATE ${shareLinks} SET is_active = 0 WHERE id = ${link.id}`);
+      await db.execute(sql`UPDATE ${shareLinks} SET is_active = FALSE WHERE id = ${link.id}`);
       persistNow();
       throw new NotFoundError('Share link has expired');
     }
@@ -334,7 +334,7 @@ export async function updateRule(req: Request, res: Response, next: NextFunction
       await db.execute(sql`UPDATE ${playbookRules} SET category = ${String(category).trim() || 'general'} WHERE id = ${ruleId}`);
     }
     if (isActive !== undefined) {
-      await db.execute(sql`UPDATE ${playbookRules} SET is_active = ${isActive ? 1 : 0} WHERE id = ${ruleId}`);
+      await db.execute(sql`UPDATE ${playbookRules} SET is_active = ${isActive} WHERE id = ${ruleId}`);
     }
     persistNow();
     const updated = (await db.select().from(playbookRules).where(sql`${playbookRules.id} = ${ruleId}`))[0];

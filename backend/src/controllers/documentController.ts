@@ -324,16 +324,16 @@ export async function listDocuments(req: Request, res: Response, next: NextFunct
 
     const db = getDb();
 
-    let whereClause = sql`${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = 0`;
+    let whereClause = sql`${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = FALSE`;
     if (status !== 'all') {
       whereClause = sql`${whereClause} AND ${documents.processingStatus} = ${status}`;
     }
     if (favoritesOnly) {
-      whereClause = sql`${whereClause} AND ${documents.isFavorite} = 1`;
+      whereClause = sql`${whereClause} AND ${documents.isFavorite} = TRUE`;
     }
 
     const countRows = (await db.execute(
-      sql`SELECT COUNT(*) as total FROM documents WHERE user_id = ${req.user.id} AND is_deleted = 0`
+      sql`SELECT COUNT(*) as total FROM documents WHERE user_id = ${req.user.id} AND is_deleted = FALSE`
     )).rows as Array<{ total: number }>;
     const total = countRows[0]?.total || 0;
 
@@ -380,7 +380,7 @@ export async function getDocument(req: Request, res: Response, next: NextFunctio
     const db = getDb();
 
     const rows = await db.select().from(documents).where(
-      sql`${documents.id} = ${documentId} AND ${documents.isDeleted} = 0`
+      sql`${documents.id} = ${documentId} AND ${documents.isDeleted} = FALSE`
     );
 
     const doc = rows[0];
@@ -424,7 +424,7 @@ export async function deleteDocument(req: Request, res: Response, next: NextFunc
     const db = getDb();
 
     const rows = await db.select().from(documents).where(
-      sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = 0`
+      sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = FALSE`
     );
 
     const doc = rows[0];
@@ -437,7 +437,7 @@ export async function deleteDocument(req: Request, res: Response, next: NextFunc
     }
 
     await db.execute(
-      sql`UPDATE ${documents} SET is_deleted = 1, raw_text = NULL, encryption_iv = NULL, updated_at = NOW() WHERE id = ${documentId}`
+      sql`UPDATE ${documents} SET is_deleted = TRUE, raw_text = NULL, encryption_iv = NULL, updated_at = NOW() WHERE id = ${documentId}`
     );
 
     persistNow();
@@ -501,7 +501,7 @@ export async function processDocument(req: Request, res: Response, next: NextFun
 
     const db = getDb();
     const rows = await db.select().from(documents).where(
-      sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = 0`
+      sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = FALSE`
     );
 
     if (!rows[0]) throw new NotFoundError('Document');
@@ -533,7 +533,7 @@ export async function getDocumentAnalysis(req: Request, res: Response, next: Nex
     const db = getDb();
 
     const docRows = await db.select().from(documents).where(
-      sql`${documents.id} = ${documentId} AND ${documents.isDeleted} = 0`
+      sql`${documents.id} = ${documentId} AND ${documents.isDeleted} = FALSE`
     );
 
     if (!docRows[0] || !(await getDocumentAccess(req.user.id, documentId))) {
@@ -660,7 +660,7 @@ export async function exportDocument(
 
     const db = getDb();
     const docRows = await db.select().from(documents).where(
-      sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = 0`
+      sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = FALSE`
     );
 
     if (!docRows[0]) throw new NotFoundError('Document');

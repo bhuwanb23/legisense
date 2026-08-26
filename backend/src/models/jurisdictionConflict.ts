@@ -11,7 +11,7 @@ export const jurisdictionConflicts = pgTable('jurisdiction_conflicts', {
   clauseId: integer('clause_id').references(() => clauses.id),
   clauseTitle: text('clause_title'),
   conflictData: text('conflict_data').notNull().default('[]'),
-  createdAt: text('created_at').notNull().default(sql`(datetime('now'))`),
+  createdAt: text('created_at').notNull().default(sql`(NOW()::TEXT)`),
 });
 
 export type JurisdictionConflict = typeof jurisdictionConflicts.$inferSelect;

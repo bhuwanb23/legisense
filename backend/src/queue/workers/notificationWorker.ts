@@ -11,7 +11,7 @@ export function createNotificationWorker(): Worker {
       documentId?: number;
     };
 
-    createNotification(userId, type, title, body, documentId);
+    await createNotification(userId, type, title, body, documentId);
   }, { concurrency: 3 });
 
   return worker;

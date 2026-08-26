@@ -7,7 +7,7 @@ export const jurisdictions = pgTable('jurisdictions', {
   countryName: text('country_name').notNull(),
   stateCode: text('state_code'),
   stateName: text('state_name'),
-  createdAt: text('created_at').notNull().default(sql`(datetime('now'))`),
+  createdAt: text('created_at').notNull().default(sql`(NOW()::TEXT)`),
 }, (table) => ({
   countryStateIdx: uniqueIndex('idx_jurisdictions_country_state').on(table.countryCode, table.stateCode),
 }));

@@ -31,7 +31,7 @@ async function runAutoDeleteCheck(): Promise<void> {
       .where(
         sql`${documents.autoDeleteAt} IS NOT NULL
             AND ${documents.autoDeleteAt}::timestamptz < NOW()
-            AND ${documents.isDeleted} = 0`
+            AND ${documents.isDeleted} = FALSE`
       );
 
     if (expired.length === 0) return;
@@ -44,7 +44,7 @@ async function runAutoDeleteCheck(): Promise<void> {
       }
 
       await db.execute(sql`UPDATE ${documents}
-        SET is_deleted = 1,
+        SET is_deleted = TRUE,
             raw_text = NULL,
             encryption_iv = NULL,
             updated_at = NOW()

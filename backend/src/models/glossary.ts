@@ -6,7 +6,7 @@ export const glossary = pgTable('glossary', {
   term: text('term').notNull().unique(),
   definition: text('definition').notNull(),
   category: text('category'),
-  createdAt: text('created_at').notNull().default(sql`(datetime('now'))`),
+  createdAt: text('created_at').notNull().default(sql`(NOW()::TEXT)`),
 });
 
 export type Glossary = typeof glossary.$inferSelect;

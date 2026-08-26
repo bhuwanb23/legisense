@@ -118,7 +118,7 @@ export async function translateAnalysisResults(
 
   const db = getDb();
   const docRows = await db.select().from(documents).where(
-    sql`${documents.id} = ${documentId} AND ${documents.userId} = ${userId} AND ${documents.isDeleted} = 0`
+    sql`${documents.id} = ${documentId} AND ${documents.userId} = ${userId} AND ${documents.isDeleted} = FALSE`
   );
   if (!docRows[0]) throw new NotFoundError('Document');
 

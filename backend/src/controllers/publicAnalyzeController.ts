@@ -153,7 +153,7 @@ export async function getPublicAnalyze(req: Request, res: Response, next: NextFu
     const documentId = Number(req.params.documentId);
     const db = getDb();
     const doc = (await db.select().from(documents).where(
-      sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = 0`
+      sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = FALSE`
     ))[0];
     if (!doc) throw new NotFoundError('Document');
 

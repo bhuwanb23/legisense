@@ -15,7 +15,7 @@ export async function inviteCollaborator(
 ): Promise<{ token: string; inviteUrl: string; email: string; role: string }> {
   const db = getDb();
   const doc = (await db.select().from(documents).where(
-    sql`${documents.id} = ${documentId} AND ${documents.userId} = ${ownerId} AND ${documents.isDeleted} = 0`
+    sql`${documents.id} = ${documentId} AND ${documents.userId} = ${ownerId} AND ${documents.isDeleted} = FALSE`
   ))[0];
   if (!doc) throw new NotFoundError('Document');
   const clean = email.trim().toLowerCase();
@@ -107,7 +107,7 @@ export type AccessRole = 'owner' | 'viewer' | 'commenter';
 export async function getDocumentAccess(userId: number, documentId: number): Promise<{ role: AccessRole } | null> {
   const db = getDb();
   const owned = (await db.select().from(documents).where(
-    sql`${documents.id} = ${documentId} AND ${documents.userId} = ${userId} AND ${documents.isDeleted} = 0`
+    sql`${documents.id} = ${documentId} AND ${documents.userId} = ${userId} AND ${documents.isDeleted} = FALSE`
   ))[0];
   if (owned) return { role: 'owner' };
   const collab = (await db.select().from(documentCollaborators).where(

@@ -20,7 +20,7 @@ export function errorHandler(
   res: Response,
   _next: NextFunction
 ): void {
-  const isDev = process.env.NODE_ENV !== 'production';
+  const isDev = process.env.NODE_ENV !== 'production' || process.env.EXPOSE_ERRORS === 'true';
 
   if (err instanceof AppError) {
     const response: ErrorResponse = {

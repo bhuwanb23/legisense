@@ -16,7 +16,7 @@ export async function deleteExpiredDocuments(): Promise<void> {
       .where(
         sql`${documents.autoDeleteAt} IS NOT NULL
             AND ${documents.autoDeleteAt}::timestamptz < NOW()
-            AND ${documents.isDeleted} = 0`
+            AND ${documents.isDeleted} = FALSE`
       );
 
     if (expired.length === 0) return;
@@ -29,7 +29,7 @@ export async function deleteExpiredDocuments(): Promise<void> {
       }
 
       await db.execute(sql`UPDATE ${documents}
-        SET is_deleted = 1,
+        SET is_deleted = TRUE,
             raw_text = NULL,
             encryption_iv = NULL,
             updated_at = NOW()
@@ -63,8 +63,8 @@ export async function checkDeadlineReminders(): Promise<void> {
     const db = getDb();
 
     const active = await db.select().from(deadlines).where(
-      sql`${deadlines.isCompleted} = 0
-          AND ${deadlines.isDismissed} = 0`
+      sql`${deadlines.isCompleted} = FALSE
+          AND ${deadlines.isDismissed} = FALSE`
     );
 
     for (const deadline of active) {
@@ -128,7 +128,7 @@ export async function checkDeadlineReminders(): Promise<void> {
 
       sentDays.push(daysUntil);
       await db.execute(sql`UPDATE ${deadlines} SET
-        reminder_sent = 1,
+        reminder_sent = TRUE,
         reminder_sent_days = ${JSON.stringify(sentDays)},
         reminder_date = NOW()
         WHERE id = ${deadline.id}`);

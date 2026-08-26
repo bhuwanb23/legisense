@@ -9,7 +9,7 @@ export const requiredClausesTemplates = pgTable('required_clauses_templates', {
   whyNeeded: text('why_needed').notNull(),
   exampleText: text('example_text'),
   detectionKeywords: text('detection_keywords').notNull().default('[]'),
-  createdAt: text('created_at').notNull().default(sql`(datetime('now'))`),
+  createdAt: text('created_at').notNull().default(sql`(NOW()::TEXT)`),
 });
 
 export type RequiredClausesTemplate = typeof requiredClausesTemplates.$inferSelect;

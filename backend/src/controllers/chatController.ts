@@ -27,7 +27,7 @@ export async function createChatSession(
     const documentId = Number(req.params.documentId);
     const db = getDb();
     const docRows = await db.select().from(documents).where(
-      sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = 0`
+      sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = FALSE`
     );
     if (!docRows[0]) throw new NotFoundError('Document');
 
@@ -62,7 +62,7 @@ export async function sendMessage(
     const db = getDb();
 
     const docRows = await db.select().from(documents).where(
-      sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = 0`
+      sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = FALSE`
     );
 
     if (!docRows[0]) throw new NotFoundError('Document');
@@ -232,7 +232,7 @@ export async function getHistory(
     const db = getDb();
 
     const docRows = await db.select().from(documents).where(
-      sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = 0`
+      sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = FALSE`
     );
 
     if (!docRows[0]) throw new NotFoundError('Document');

@@ -10,8 +10,8 @@ export const clauseNotes = pgTable('clause_notes', {
   documentId: integer('document_id').notNull().references(() => documents.id),
   userId: integer('user_id').notNull().references(() => users.id),
   note: text('note').notNull(),
-  createdAt: text('created_at').notNull().default(sql`(datetime('now'))`),
-  updatedAt: text('updated_at').notNull().default(sql`(datetime('now'))`),
+  createdAt: text('created_at').notNull().default(sql`(NOW()::TEXT)`),
+  updatedAt: text('updated_at').notNull().default(sql`(NOW()::TEXT)`),
 });
 
 export type ClauseNote = typeof clauseNotes.$inferSelect;

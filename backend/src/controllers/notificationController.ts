@@ -73,7 +73,7 @@ export async function markRead(
     if (!rows[0]) throw new NotFoundError('Notification');
 
     await db.execute(
-      sql`UPDATE ${notifications} SET is_read = 1 WHERE id = ${notificationId}`
+      sql`UPDATE ${notifications} SET is_read = TRUE WHERE id = ${notificationId}`
     );
 
     persistNow();
@@ -98,7 +98,7 @@ export async function markAllRead(
     const db = getDb();
 
     await db.execute(
-      sql`UPDATE ${notifications} SET is_read = 1 WHERE user_id = ${req.user.id} AND is_read = 0`
+      sql`UPDATE ${notifications} SET is_read = TRUE WHERE user_id = ${req.user.id} AND is_read = FALSE`
     );
 
     persistNow();

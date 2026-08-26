@@ -11,7 +11,7 @@ export const queueJobs = pgTable('queue_jobs', {
   maxRetries: integer('max_retries').notNull().default(3),
   timeoutMs: integer('timeout_ms').notNull().default(300000),
   error: text('error'),
-  createdAt: text('created_at').notNull().default(sql`(datetime('now'))`),
+  createdAt: text('created_at').notNull().default(sql`(NOW()::TEXT)`),
   startedAt: text('started_at'),
   completedAt: text('completed_at'),
 });

@@ -26,7 +26,7 @@ export const clauses = pgTable('clauses', {
   partyReferences: text('party_references'),
   startPosition: integer('start_position'),
   endPosition: integer('end_position'),
-  createdAt: text('created_at').notNull().default(sql`(datetime('now'))`),
+  createdAt: text('created_at').notNull().default(sql`(NOW()::TEXT)`),
 });
 
 export type Clause = typeof clauses.$inferSelect;

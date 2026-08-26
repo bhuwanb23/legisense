@@ -25,8 +25,8 @@ export const documents = pgTable('documents', {
   isFavorite: boolean('is_favorite').notNull().default(false),
   autoDeleteAt: text('auto_delete_at'),
   encryptionIv: text('encryption_iv'),
-  createdAt: text('created_at').notNull().default(sql`(datetime('now'))`),
-  updatedAt: text('updated_at').notNull().default(sql`(datetime('now'))`),
+  createdAt: text('created_at').notNull().default(sql`(NOW()::TEXT)`),
+  updatedAt: text('updated_at').notNull().default(sql`(NOW()::TEXT)`),
 });
 
 export type Document = typeof documents.$inferSelect;
