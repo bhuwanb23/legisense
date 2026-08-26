@@ -12,11 +12,11 @@ import { users } from '../models';
 import { persistNow } from '../config/database';
 import { getDocumentAccess } from '../services/collaboratorService';
 
-function applyJurisdictionToDocument(
+async function applyJurisdictionToDocument(
   documentId: number,
   userId: number,
   body: Record<string, unknown>,
-): void {
+): Promise<void> {
   const db = getDb();
   let countryCode = (body.country_code || body.countryCode || null) as string | null;
   let stateCode = (body.state_code || body.stateCode || null) as string | null;
@@ -96,7 +96,7 @@ export async function startAnalysis(
       return;
     }
 
-    applyJurisdictionToDocument(documentId, req.user.id, req.body || {});
+    await applyJurisdictionToDocument(documentId, req.user.id, req.body || {});
 
     await db.execute(
       sql`UPDATE ${documents} SET processing_status = 'pending', updated_at = NOW() WHERE id = ${documentId}`
@@ -136,7 +136,7 @@ export async function getAnalysis(
       sql`${documents.id} = ${documentId} AND ${documents.isDeleted} = 0`
     );
 
-    if (!docRows[0] || !getDocumentAccess(req.user.id, documentId)) throw new NotFoundError('Document');
+    if (!docRows[0] || !(await getDocumentAccess(req.user.id, documentId))) throw new NotFoundError('Document');
 
     const analysisRows = await db.select().from(analysisResults).where(
       sql`${analysisResults.documentId} = ${documentId}`
@@ -779,7 +779,7 @@ export async function getStateConflicts(
     }
 
     const documentId = Number(req.params.documentId);
-    const conflicts = getFilteredStateConflicts(documentId, req.user.id);
+    const conflicts = await getFilteredStateConflicts(documentId, req.user.id);
     if (conflicts === null) throw new NotFoundError('Document');
 
     res.json({

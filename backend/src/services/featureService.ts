@@ -298,8 +298,8 @@ export async function compareDocuments(
     return rows[0] || null;
   };
 
-  const analysisA = getAnalysis(documentIdA);
-  const analysisB = getAnalysis(documentIdB);
+  const analysisA = await getAnalysis(documentIdA);
+  const analysisB = await getAnalysis(documentIdB);
   if (!analysisA || !analysisB) throw new BadRequestError('Both documents need a completed analysis to compare');
 
   const clausesA = (await db.select().from(clauses).where(sql`${clauses.analysisId} = ${analysisA.id}`))

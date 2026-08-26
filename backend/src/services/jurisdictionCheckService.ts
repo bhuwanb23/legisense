@@ -177,7 +177,7 @@ export async function runJurisdictionCheck(
   }
 
   try {
-    const jurisdictionIds = resolveJurisdictionIds(countryCode, stateCode);
+    const jurisdictionIds = await resolveJurisdictionIds(countryCode, stateCode);
     if (jurisdictionIds.length === 0) {
       await db.execute(sql`UPDATE ${analysisResults} SET jurisdiction_check_status = 'skipped' WHERE id = ${analysisId}`);
       persistNow();

@@ -17,7 +17,7 @@ function nowPlus24Hours(): string {
   return new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
 }
 
-function resolveJurisdictionFromRequest(req: Request): { countryCode: string | null; stateCode: string | null } {
+async function resolveJurisdictionFromRequest(req: Request): Promise<{ countryCode: string | null; stateCode: string | null }> {
   let countryCode = (req.body?.country_code || req.body?.countryCode || null) as string | null;
   let stateCode = (req.body?.state_code || req.body?.stateCode || null) as string | null;
 
@@ -81,7 +81,7 @@ async function handleFileUpload(req: Request, res: Response, next: NextFunction)
     const format = originalname.split('.').pop()?.toLowerCase() || 'unknown';
     const storagePath = await saveFile(buffer, originalname, format);
     const db = getDb();
-    const jur = resolveJurisdictionFromRequest(req);
+    const jur = await resolveJurisdictionFromRequest(req);
 
     await db.insert(documents).values({
       userId: req.user.id,
@@ -135,7 +135,7 @@ async function handleScanUpload(req: Request, res: Response, next: NextFunction)
     const format = originalname.split('.').pop()?.toLowerCase() || 'unknown';
     const storagePath = await saveFile(buffer, originalname, format);
     const db = getDb();
-    const jur = resolveJurisdictionFromRequest(req);
+    const jur = await resolveJurisdictionFromRequest(req);
 
     await db.insert(documents).values({
       userId: req.user.id,
@@ -206,7 +206,7 @@ async function handlePasteUpload(req: Request, res: Response, next: NextFunction
     }
 
     const db = getDb();
-    const jur = resolveJurisdictionFromRequest(req);
+    const jur = await resolveJurisdictionFromRequest(req);
 
     await db.insert(documents).values({
       userId: req.user.id,
@@ -266,7 +266,7 @@ async function handleUrlUpload(req: Request, res: Response, next: NextFunction):
     }
 
     const db = getDb();
-    const jur = resolveJurisdictionFromRequest(req);
+    const jur = await resolveJurisdictionFromRequest(req);
 
     await db.insert(documents).values({
       userId: req.user.id,
@@ -384,7 +384,7 @@ export async function getDocument(req: Request, res: Response, next: NextFunctio
     );
 
     const doc = rows[0];
-    if (!doc || !getDocumentAccess(req.user.id, documentId)) {
+    if (!doc || !(await getDocumentAccess(req.user.id, documentId))) {
       throw new NotFoundError('Document');
     }
 
@@ -536,7 +536,7 @@ export async function getDocumentAnalysis(req: Request, res: Response, next: Nex
       sql`${documents.id} = ${documentId} AND ${documents.isDeleted} = 0`
     );
 
-    if (!docRows[0] || !getDocumentAccess(req.user.id, documentId)) {
+    if (!docRows[0] || !(await getDocumentAccess(req.user.id, documentId))) {
       throw new NotFoundError('Document');
     }
 

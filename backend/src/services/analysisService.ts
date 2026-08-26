@@ -173,7 +173,7 @@ export async function processDocumentSync(
     }
     await db.execute(sql`DELETE FROM deadlines WHERE document_id = ${documentId}`);
 
-    const analysisId = saveAnalysisResults(
+    const analysisId = await saveAnalysisResults(
       documentId,
       doc.userId,
       analysisResult,

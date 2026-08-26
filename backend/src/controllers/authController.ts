@@ -366,7 +366,7 @@ async function verifyGoogleToken(idToken: string): Promise<{ email: string; name
     if (!response.ok) {
       throw new Error('Invalid token');
     }
-    const data = (await response.json()).rows as { email?: string; name?: string; sub?: string };
+    const data = (await response.json()) as { email?: string; name?: string; sub?: string };
     if (!data.email) throw new Error('No email in token');
     return {
       email: data.email,
@@ -384,7 +384,7 @@ async function verifyFacebookToken(accessToken: string): Promise<{ email: string
     if (!response.ok) {
       throw new Error('Invalid token');
     }
-    const data = (await response.json()).rows as { id?: string; name?: string; email?: string };
+    const data = (await response.json()) as { id?: string; name?: string; email?: string };
     if (!data.email) throw new Error('No email in response');
     return {
       email: data.email,

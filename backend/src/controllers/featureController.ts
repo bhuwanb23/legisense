@@ -187,7 +187,7 @@ export async function listNotes(req: Request, res: Response, next: NextFunction)
   try {
     if (!req.user) throw new NotFoundError('User');
     const documentId = Number(req.params.documentId);
-    if (!getDocumentAccess(req.user.id, documentId)) throw new NotFoundError('Document');
+    if (!(await getDocumentAccess(req.user.id, documentId))) throw new NotFoundError('Document');
     const db = getDb();
     const rows = await db.select().from(clauseNotes).where(
       sql`${clauseNotes.documentId} = ${documentId}`
@@ -205,7 +205,7 @@ export async function addNote(req: Request, res: Response, next: NextFunction): 
     const clauseId = Number(req.params.clauseId);
     const note = String(req.body?.note || '').trim();
     if (!note) throw new BadRequestError('note is required');
-    const access = getDocumentAccess(req.user.id, documentId);
+    const access = await getDocumentAccess(req.user.id, documentId);
     if (!access) throw new NotFoundError('Document');
     if (access.role === 'viewer') throw new ForbiddenError('Commenter role required to add notes');
 

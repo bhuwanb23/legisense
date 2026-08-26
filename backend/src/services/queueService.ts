@@ -43,8 +43,8 @@ class QueueService extends EventEmitter {
     this.worker = worker;
   }
 
-  enqueue(documentId: number, userId: number): Job {
-    return this.enqueueWithOptions(documentId, userId);
+  async enqueue(documentId: number, userId: number): Promise<Job> {
+    return await this.enqueueWithOptions(documentId, userId);
   }
 
   async enqueueWithOptions(
@@ -147,7 +147,7 @@ class QueueService extends EventEmitter {
           error: errorMessage,
         });
 
-        setTimeout(() => {
+        setTimeout(async () => {
           await db.execute(sql`UPDATE ${queueJobs} SET status = 'pending' WHERE id = ${nextJob.id}`);
           persistNow();
           this.processNext();
@@ -230,7 +230,7 @@ class QueueService extends EventEmitter {
         }
       }, 200);
 
-      setTimeout(() => {
+      setTimeout(async () => {
         clearInterval(interval);
         const db = getDb();
         await db.execute(sql`UPDATE ${queueJobs} SET status = 'failed', error = 'Shutdown timeout' WHERE status = 'processing'`);
