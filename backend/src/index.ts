@@ -2,7 +2,7 @@ import http from 'http';
 import fs from 'fs';
 import path from 'path';
 import app from './app';
-import { initDatabase, closeDatabase, getDb } from './config/database';
+import { initDatabase, getPool, closeDatabase, getDb } from './config/database';
 import { sql } from 'drizzle-orm';
 import {
   users, documents, analysisResults,
@@ -32,13 +32,8 @@ async function runSchema(pool: Pool): Promise<void> {
 async function start() {
   const db = await initDatabase();
 
-  // Run schema SQL via raw pg pool (Drizzle doesn't have a push API at runtime)
-  // We access the pool through the database module's internal state
-  const connectionString = process.env.DATABASE_URL;
-  if (!connectionString) throw new Error('DATABASE_URL is required');
-  const pool = new Pool({ connectionString });
-  await runSchema(pool);
-  await pool.end();
+  // Run schema SQL via the shared raw pg pool (Drizzle doesn't have a push API at runtime)
+  await runSchema(getPool());
 
   // Seed legal glossary
   const existingTerms = await db.select({ count: sql<number>`count(*)` }).from(glossary);

@@ -21,6 +21,8 @@ export class Worker {
   private running = false;
   private pollTimer: ReturnType<typeof setTimeout> | null = null;
   private shutDown = false;
+  private lastPollFoundJob = false;
+  private consecutiveErrors = 0;
 
   constructor(queueName: string, processor: Processor, opts?: WorkerOpts) {
     this.queueName = queueName;
@@ -54,9 +56,25 @@ export class Worker {
   private poll(): void {
     if (this.shutDown || !this.running) return;
 
-    this.processNext();
+    void this.processNext()
+      .catch((err) => {
+        this.consecutiveErrors++;
+        console.error(`[${this.queueName}] worker poll error:`, err instanceof Error ? err.message : err);
+      });
 
-    this.pollTimer = setTimeout(() => this.poll(), 200);
+    this.pollTimer = setTimeout(() => this.poll(), this.pollIntervalMs());
+  }
+
+  /**
+   * Adaptive polling: fast right after processing a job (likely more work),
+   * slow when idle, and backed off after DB errors to avoid exhausting the
+   * connection pool on managed Postgres (Render).
+   */
+  private pollIntervalMs(): number {
+    if (this.consecutiveErrors > 0) {
+      return Math.min(15000 * this.consecutiveErrors, 60000);
+    }
+    return this.lastPollFoundJob ? 500 : 5000;
   }
 
   private async processNext(): Promise<void> {
@@ -72,6 +90,9 @@ export class Worker {
       ORDER BY priority ASC, created_at ASC
       LIMIT ${this.concurrency - this.activeJobs.size}
     `)).rows as Record<string, unknown>[];
+
+    this.consecutiveErrors = 0;
+    this.lastPollFoundJob = pending.length > 0;
 
     for (const row of pending) {
       const job: JobData = this.mapRow(row);

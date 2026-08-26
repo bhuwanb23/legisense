@@ -18,11 +18,29 @@ function getConnectionString(): string {
 export async function initDatabase(): Promise<NodePgDatabase<typeof schema>> {
   if (db) return db;
 
+  // Render PostgreSQL requires SSL; local dev databases usually do not use it.
+  const needsSsl =
+    process.env.DATABASE_SSL === 'true' ||
+    (getConnectionString().includes('render.com') && process.env.DATABASE_SSL !== 'false');
+
   pool = new Pool({
     connectionString: getConnectionString(),
-    max: 10,
+    ssl: needsSsl ? { rejectUnauthorized: false } : undefined,
+    // Keep the pool small: Render Postgres has tight connection limits and
+    // the queue workers share this pool with the HTTP server.
+    max: 5,
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 10000,
+    // Render fronts Postgres with pgbouncer, which drops idle connections.
+    // Keep-alive prevents stale sockets that fail on next use.
+    keepAlive: true,
+    keepAliveInitialDelayMillis: 10000,
+  });
+
+  // Prevent idle client errors (e.g. pgbouncer disconnects) from crashing
+  // the process; the pool will simply reconnect on next use.
+  pool.on('error', (err) => {
+    console.error('Unexpected pool error:', err.message);
   });
 
   // Test the connection
@@ -36,6 +54,11 @@ export async function initDatabase(): Promise<NodePgDatabase<typeof schema>> {
 
   db = drizzle(pool, { schema });
   return db;
+}
+
+export function getPool(): Pool {
+  if (!pool) throw new Error('Database not initialized. Call initDatabase() first.');
+  return pool;
 }
 
 export function getDb(): NodePgDatabase<typeof schema> {
