@@ -12,17 +12,16 @@ export async function createNotification(
 ): Promise<number> {
   const db = getDb();
 
-  await db.insert(notifications).values({
+  const inserted = await db.insert(notifications).values({
     userId,
     type,
     title,
     body,
     documentId,
     isRead: false,
-  });
+  }).returning({ id: notifications.id });
 
-  const rows = (await db.execute(sql`SELECT id as id`)).rows as { id: number }[];
-  const id = Number(rows[0]?.id ?? 0);
+  const id = Number(inserted[0]?.id ?? 0);
 
   emitToUser(userId, 'notification:new', { id, type, title, body, documentId });
 

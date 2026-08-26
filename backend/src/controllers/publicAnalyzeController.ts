@@ -84,7 +84,7 @@ export async function publicAnalyze(req: Request, res: Response, next: NextFunct
     const stateCode = (parts[0]?.length > 2 ? parts[0] : parts[0] || '').toUpperCase() || null;
 
     const db = getDb();
-    await db.insert(documents).values({
+    const inserted = await db.insert(documents).values({
       userId: req.user.id,
       originalName: title,
       storagePath: `api:${Date.now()}`,
@@ -100,10 +100,9 @@ export async function publicAnalyze(req: Request, res: Response, next: NextFunct
       countryCode,
       stateCode,
       detectedLanguage: language,
-    });
+    }).returning({ id: documents.id });
 
-    const idRows = (await db.execute(sql`SELECT id as id`)).rows as { id: number }[];
-    const documentId = Number(idRows[0]?.id);
+    const documentId = Number(inserted[0]?.id);
     const doc = (await db.select().from(documents).where(sql`${documents.id} = ${documentId}`))[0];
     if (!doc) throw new Error('Failed to create document');
     persistNow();

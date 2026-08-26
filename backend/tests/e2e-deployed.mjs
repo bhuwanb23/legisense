@@ -260,7 +260,8 @@ async function main() {
   {
     const body = documentId ? { documentId } : { deadlineIds: [] };
     const r = await req('POST', '/api/deadlines/export/ics', { token: accessToken, body });
-    rec('POST /api/deadlines/export/ics', r.status, r.status === 200, snippet(r.text).slice(0, 80));
+    // 200 = exported; 404 = no deadlines for that document yet (expected without AI analysis)
+    rec('POST /api/deadlines/export/ics', r.status, r.status === 200 || r.status === 404, snippet(r.text).slice(0, 80));
   }
 
   // ---------- 9. Notifications ----------
