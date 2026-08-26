@@ -71,7 +71,7 @@ export class Worker {
         AND (delay_until IS NULL OR delay_until <= NOW())
       ORDER BY priority ASC, created_at ASC
       LIMIT ${this.concurrency - this.activeJobs.size}
-    `) as Record<string, unknown>[];
+    `)).rows as Record<string, unknown>[];
 
     for (const row of pending) {
       const job: JobData = this.mapRow(row);

@@ -52,7 +52,7 @@ export class Scheduler {
 
     const stuck = (await db.execute(sql`
       SELECT id FROM jobs WHERE status = 'processing'
-    `) as { id: string }[];
+    `)).rows as { id: string }[];
 
     for (const row of stuck) {
       await db.execute(sql`UPDATE jobs SET status = 'pending' WHERE id = ${row.id}`);

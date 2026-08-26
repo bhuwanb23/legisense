@@ -44,7 +44,7 @@ export class Queue {
     Queue.ensureTable();
   }
 
-  static ensureTable(): void {
+  static async ensureTable(): Promise<void> {
     if (Queue.initialized) return;
     Queue.initialized = true;
 
@@ -105,7 +105,7 @@ export class Queue {
 
     const existing = (await db.execute(sql`
       SELECT id FROM jobs WHERE repeat_job_key = ${repeatKey} AND status NOT IN ('completed', 'failed')
-    `) as { id: string }[];
+    `)).rows as { id: string }[];
 
     if (existing.length > 0) return;
 
@@ -118,7 +118,7 @@ export class Queue {
 
   async getJob(jobId: string): Promise<JobData | undefined> {
     const db = getDb();
-    const rows = (await db.execute(sql`SELECT * FROM jobs WHERE id = ${jobId}`) as Record<string, unknown>[];
+    const rows = (await db.execute(sql`SELECT * FROM jobs WHERE id = ${jobId}`)).rows as Record<string, unknown>[];
     return rows.length > 0 ? this.mapRow(rows[0]) : undefined;
   }
 
@@ -127,7 +127,7 @@ export class Queue {
     const rows = (await db.execute(sql`
       SELECT * FROM jobs WHERE queue_name = ${this.name}
       ORDER BY priority ASC, created_at ASC
-    `) as Record<string, unknown>[];
+    `)).rows as Record<string, unknown>[];
     let result = rows.map(r => this.mapRow(r));
     if (statuses && statuses.length > 0) {
       result = result.filter(j => statuses.includes(j.status));
@@ -139,7 +139,7 @@ export class Queue {
     const db = getDb();
     const rows = (await db.execute(sql`
       SELECT COUNT(*) as count FROM jobs WHERE queue_name = ${this.name} AND status = 'processing'
-    `) as { count: number }[];
+    `)).rows as { count: number }[];
     return Number(rows[0]?.count ?? 0);
   }
 
@@ -147,7 +147,7 @@ export class Queue {
     const db = getDb();
     const rows = (await db.execute(sql`
       SELECT COUNT(*) as count FROM jobs WHERE queue_name = ${this.name} AND status = 'pending' AND (delay_until IS NULL OR delay_until <= NOW())
-    `) as { count: number }[];
+    `)).rows as { count: number }[];
     return Number(rows[0]?.count ?? 0);
   }
 

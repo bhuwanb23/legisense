@@ -18,7 +18,7 @@ export function createOcrWorker(): Worker {
     const { documentId, userId } = job.data as { documentId: number; userId: number };
     const db = getDb();
 
-    const docRows = db
+    const docRows = await db
       .select()
       .from(documents)
       .where(sql`${documents.id} = ${documentId} AND ${documents.userId} = ${userId}`);
@@ -72,7 +72,7 @@ export function createOcrWorker(): Worker {
 
     let languageString = 'eng';
     try {
-      const userRecords = db
+      const userRecords = await db
         .select()
         .from(users)
         .where(sql`${users.id} = ${userId}`);
@@ -161,7 +161,7 @@ export function createOcrWorker(): Worker {
   return worker;
 }
 
-function failOcr(db: ReturnType<typeof getDb>, documentId: number, userId: number, error: string): void {
+async function failOcr(db: ReturnType<typeof getDb>, documentId: number, userId: number, error: string): Promise<void> {
   await db.execute(
     sql`UPDATE ${documents} SET processing_status = 'failed', updated_at = NOW() WHERE id = ${documentId}`
   );

@@ -33,7 +33,7 @@ let ocrWorker: Worker;
 let counterClausesWorker: Worker;
 let scheduler: Scheduler;
 
-export function ensureJobsTable(): void {
+export async function ensureJobsTable(): Promise<void> {
   const db = getDb();
   await db.execute(sql`
     CREATE TABLE IF NOT EXISTS jobs (

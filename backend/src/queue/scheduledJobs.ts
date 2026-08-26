@@ -9,7 +9,7 @@ export async function deleteExpiredDocuments(): Promise<void> {
   try {
     const db = getDb();
 
-    const expired = db.select({
+    const expired = await db.select({
       id: documents.id,
       storagePath: documents.storagePath,
     }).from(documents)
@@ -62,7 +62,7 @@ export async function checkDeadlineReminders(): Promise<void> {
   try {
     const db = getDb();
 
-    const active = db.select().from(deadlines).where(
+    const active = await db.select().from(deadlines).where(
       sql`${deadlines.isCompleted} = 0
           AND ${deadlines.isDismissed} = 0`
     );
@@ -92,7 +92,7 @@ export async function checkDeadlineReminders(): Promise<void> {
       const daysUntil = daysUntilDue(deadline.dueDate);
       if (!shouldSendReminder(daysUntil, times, sentDays)) continue;
 
-      const docRows = db.select().from(documents).where(sql`${documents.id} = ${deadline.documentId}`);
+      const docRows = await db.select().from(documents).where(sql`${documents.id} = ${deadline.documentId}`);
       const docName = docRows[0]?.originalName || 'Document';
 
       const whenLabel = daysUntil === 0
@@ -112,7 +112,7 @@ export async function checkDeadlineReminders(): Promise<void> {
       }
 
       if (channels.includes('email') && isSmtpConfigured()) {
-        const userRows = db.select().from(users).where(sql`${users.id} = ${deadline.userId}`);
+        const userRows = await db.select().from(users).where(sql`${users.id} = ${deadline.userId}`);
         const email = userRows[0]?.email;
         if (email) {
           await sendReminderEmail({
