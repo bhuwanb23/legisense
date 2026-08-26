@@ -19,7 +19,7 @@ export async function toggleFavorite(req: Request, res: Response, next: NextFunc
       throw new BadRequestError('isFavorite (boolean) is required');
     }
     const db = getDb();
-    const rows = db.select().from(documents).where(
+    const rows = await db.select().from(documents).where(
       sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = 0`
     );
     if (!rows[0]) throw new NotFoundError('Document');
@@ -40,13 +40,13 @@ export async function createShareLink(req: Request, res: Response, next: NextFun
     const documentId = Number(req.params.id);
     const db = getDb();
 
-    const docRows = db.select().from(documents).where(
+    const docRows = await db.select().from(documents).where(
       sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = 0`
     );
     if (!docRows[0]) throw new NotFoundError('Document');
 
     // Reuse an active link if one exists.
-    const existing = db.select().from(shareLinks).where(
+    const existing = await db.select().from(shareLinks).where(
       sql`${shareLinks.documentId} = ${documentId} AND ${shareLinks.userId} = ${req.user.id} AND ${shareLinks.isActive} = 1`
     );
     if (existing[0]) {
@@ -59,7 +59,7 @@ export async function createShareLink(req: Request, res: Response, next: NextFun
       ? new Date(Date.now() + Number(req.body.expiresInDays) * 86400000).toISOString()
       : new Date(Date.now() + 7 * 86400000).toISOString();
 
-    db.insert(shareLinks).values({
+    await db.insert(shareLinks).values({
       documentId,
       userId: req.user.id,
       token,
@@ -69,7 +69,7 @@ export async function createShareLink(req: Request, res: Response, next: NextFun
     });
     persistNow();
 
-    const rows = db.select().from(shareLinks).where(sql`${shareLinks.token} = ${token}`);
+    const rows = await db.select().from(shareLinks).where(sql`${shareLinks.token} = ${token}`);
     const link = rows[0];
     if (!link) throw new Error('Failed to create share link');
 
@@ -84,7 +84,7 @@ export async function revokeShareLink(req: Request, res: Response, next: NextFun
     if (!req.user) throw new NotFoundError('User');
     const documentId = Number(req.params.id);
     const db = getDb();
-    const rows = db.select().from(shareLinks).where(
+    const rows = await db.select().from(shareLinks).where(
       sql`${shareLinks.documentId} = ${documentId} AND ${shareLinks.userId} = ${req.user.id}`
     );
     if (rows.length === 0) throw new NotFoundError('Share link');
@@ -102,7 +102,7 @@ export async function getSharedAnalysis(req: Request, res: Response, next: NextF
   try {
     const token = req.params.token;
     const db = getDb();
-    const rows = db.select().from(shareLinks).where(sql`${shareLinks.token} = ${token}`);
+    const rows = await db.select().from(shareLinks).where(sql`${shareLinks.token} = ${token}`);
     const link = rows[0];
     if (!link || !link.isActive) throw new NotFoundError('Share link');
 
@@ -112,15 +112,15 @@ export async function getSharedAnalysis(req: Request, res: Response, next: NextF
       throw new NotFoundError('Share link has expired');
     }
 
-    const analysisRows = db.select().from(analysisResults).where(
+    const analysisRows = await db.select().from(analysisResults).where(
       sql`${analysisResults.documentId} = ${link.documentId}`
     );
     const analysis = analysisRows[0];
-    const docRows = db.select().from(documents).where(sql`${documents.id} = ${link.documentId}`);
+    const docRows = await db.select().from(documents).where(sql`${documents.id} = ${link.documentId}`);
     const doc = docRows[0];
 
     const clauseRows = analysis
-      ? db.select().from(clauses).where(sql`${clauses.analysisId} = ${analysis.id}`)
+      ? await db.select().from(clauses).where(sql`${clauses.analysisId} = ${analysis.id}`)
       : [];
 
     await db.execute(sql`UPDATE ${shareLinks} SET views = views + 1 WHERE id = ${link.id}`);
@@ -189,7 +189,7 @@ export async function listNotes(req: Request, res: Response, next: NextFunction)
     const documentId = Number(req.params.documentId);
     if (!getDocumentAccess(req.user.id, documentId)) throw new NotFoundError('Document');
     const db = getDb();
-    const rows = db.select().from(clauseNotes).where(
+    const rows = await db.select().from(clauseNotes).where(
       sql`${clauseNotes.documentId} = ${documentId}`
     );
     res.json({ success: true, data: { notes: rows } });
@@ -210,12 +210,12 @@ export async function addNote(req: Request, res: Response, next: NextFunction): 
     if (access.role === 'viewer') throw new ForbiddenError('Commenter role required to add notes');
 
     const db = getDb();
-    const clauseRows = db.select().from(clauses).where(
+    const clauseRows = await db.select().from(clauses).where(
       sql`${clauses.id} = ${clauseId} AND ${clauses.documentId} = ${documentId}`
     );
     if (!clauseRows[0]) throw new NotFoundError('Clause');
 
-    db.insert(clauseNotes).values({
+    await db.insert(clauseNotes).values({
       clauseId,
       documentId,
       userId: req.user.id,
@@ -223,7 +223,7 @@ export async function addNote(req: Request, res: Response, next: NextFunction): 
     });
     persistNow();
 
-    const rows = db.select().from(clauseNotes).where(
+    const rows = await db.select().from(clauseNotes).where(
       sql`${clauseNotes.clauseId} = ${clauseId} AND ${clauseNotes.documentId} = ${documentId} AND ${clauseNotes.userId} = ${req.user.id}`
     );
     res.status(201).json({ success: true, data: rows[rows.length - 1] });
@@ -240,14 +240,14 @@ export async function updateNote(req: Request, res: Response, next: NextFunction
     if (!note) throw new BadRequestError('note is required');
 
     const db = getDb();
-    const rows = db.select().from(clauseNotes).where(
+    const rows = await db.select().from(clauseNotes).where(
       sql`${clauseNotes.id} = ${noteId} AND ${clauseNotes.userId} = ${req.user.id}`
     );
     if (!rows[0]) throw new NotFoundError('Note');
 
     await db.execute(sql`UPDATE ${clauseNotes} SET note = ${note}, updated_at = NOW() WHERE id = ${noteId}`);
     persistNow();
-    const updated = db.select().from(clauseNotes).where(sql`${clauseNotes.id} = ${noteId}`)[0];
+    const updated = await db.select().from(clauseNotes).where(sql`${clauseNotes.id} = ${noteId}`)[0];
     res.json({ success: true, data: updated });
   } catch (err) {
     next(err);
@@ -259,7 +259,7 @@ export async function deleteNote(req: Request, res: Response, next: NextFunction
     if (!req.user) throw new NotFoundError('User');
     const noteId = Number(req.params.noteId);
     const db = getDb();
-    const rows = db.select().from(clauseNotes).where(
+    const rows = await db.select().from(clauseNotes).where(
       sql`${clauseNotes.id} = ${noteId} AND ${clauseNotes.userId} = ${req.user.id}`
     );
     if (!rows[0]) throw new NotFoundError('Note');
@@ -277,7 +277,7 @@ export async function listRules(req: Request, res: Response, next: NextFunction)
   try {
     if (!req.user) throw new NotFoundError('User');
     const db = getDb();
-    const rows = db.select().from(playbookRules).where(
+    const rows = await db.select().from(playbookRules).where(
       sql`${playbookRules.userId} = ${req.user.id}`
     ).orderBy(sql`${playbookRules.createdAt} DESC`);
     res.json({ success: true, data: { rules: rows } });
@@ -294,7 +294,7 @@ export async function addRule(req: Request, res: Response, next: NextFunction): 
     const category = String(req.body?.category || 'general').trim() || 'general';
 
     const db = getDb();
-    db.insert(playbookRules).values({
+    await db.insert(playbookRules).values({
       userId: req.user.id,
       ruleText,
       category,
@@ -302,7 +302,7 @@ export async function addRule(req: Request, res: Response, next: NextFunction): 
     });
     persistNow();
 
-    const rows = db.select().from(playbookRules).where(
+    const rows = await db.select().from(playbookRules).where(
       sql`${playbookRules.userId} = ${req.user.id} AND ${playbookRules.ruleText} = ${ruleText}`
     );
     res.status(201).json({ success: true, data: rows[rows.length - 1] });
@@ -316,7 +316,7 @@ export async function updateRule(req: Request, res: Response, next: NextFunction
     if (!req.user) throw new NotFoundError('User');
     const ruleId = Number(req.params.id);
     const db = getDb();
-    const rows = db.select().from(playbookRules).where(
+    const rows = await db.select().from(playbookRules).where(
       sql`${playbookRules.id} = ${ruleId} AND ${playbookRules.userId} = ${req.user.id}`
     );
     if (!rows[0]) throw new NotFoundError('Rule');
@@ -337,7 +337,7 @@ export async function updateRule(req: Request, res: Response, next: NextFunction
       await db.execute(sql`UPDATE ${playbookRules} SET is_active = ${isActive ? 1 : 0} WHERE id = ${ruleId}`);
     }
     persistNow();
-    const updated = db.select().from(playbookRules).where(sql`${playbookRules.id} = ${ruleId}`)[0];
+    const updated = await db.select().from(playbookRules).where(sql`${playbookRules.id} = ${ruleId}`)[0];
     res.json({ success: true, data: updated });
   } catch (err) {
     next(err);
@@ -349,7 +349,7 @@ export async function deleteRule(req: Request, res: Response, next: NextFunction
     if (!req.user) throw new NotFoundError('User');
     const ruleId = Number(req.params.id);
     const db = getDb();
-    const rows = db.select().from(playbookRules).where(
+    const rows = await db.select().from(playbookRules).where(
       sql`${playbookRules.id} = ${ruleId} AND ${playbookRules.userId} = ${req.user.id}`
     );
     if (!rows[0]) throw new NotFoundError('Rule');

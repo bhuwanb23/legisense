@@ -15,16 +15,16 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-function specPayload(documentId: number) {
+async function specPayload(documentId: number) {
   const db = getDb();
-  const analysis = db.select().from(analysisResults).where(sql`${analysisResults.documentId} = ${documentId}`)[0];
+  const analysis = await db.select().from(analysisResults).where(sql`${analysisResults.documentId} = ${documentId}`)[0];
   const clauseRows = analysis
-    ? db.select().from(clauses).where(sql`${clauses.analysisId} = ${analysis.id}`)
+    ? await db.select().from(clauses).where(sql`${clauses.analysisId} = ${analysis.id}`)
     : [];
   const riskRows = analysis
-    ? db.select().from(riskItems).where(sql`${riskItems.analysisId} = ${analysis.id}`)
+    ? await db.select().from(riskItems).where(sql`${riskItems.analysisId} = ${analysis.id}`)
     : [];
-  const deadlineRows = db.select().from(deadlines).where(sql`${deadlines.documentId} = ${documentId}`);
+  const deadlineRows = await db.select().from(deadlines).where(sql`${deadlines.documentId} = ${documentId}`);
   let missing: unknown[] = [];
   try { missing = JSON.parse(analysis?.missingClauses || '[]'); } catch { missing = []; }
 
@@ -84,7 +84,7 @@ export async function publicAnalyze(req: Request, res: Response, next: NextFunct
     const stateCode = (parts[0]?.length > 2 ? parts[0] : parts[0] || '').toUpperCase() || null;
 
     const db = getDb();
-    db.insert(documents).values({
+    await db.insert(documents).values({
       userId: req.user.id,
       originalName: title,
       storagePath: `api:${Date.now()}`,
@@ -102,9 +102,9 @@ export async function publicAnalyze(req: Request, res: Response, next: NextFunct
       detectedLanguage: language,
     });
 
-    const idRows = (await db.execute(sql`SELECT last_insert_rowid() as id`) as { id: number }[];
+    const idRows = (await db.execute(sql`SELECT id as id`)).rows as { id: number }[];
     const documentId = Number(idRows[0]?.id);
-    const doc = db.select().from(documents).where(sql`${documents.id} = ${documentId}`)[0];
+    const doc = await db.select().from(documents).where(sql`${documents.id} = ${documentId}`)[0];
     if (!doc) throw new Error('Failed to create document');
     persistNow();
 
@@ -112,7 +112,7 @@ export async function publicAnalyze(req: Request, res: Response, next: NextFunct
 
     const waitUntil = Date.now() + Number(process.env.V1_ANALYZE_WAIT_MS || 75_000);
     while (Date.now() < waitUntil) {
-      const latest = db.select().from(documents).where(sql`${documents.id} = ${doc.id}`)[0];
+      const latest = await db.select().from(documents).where(sql`${documents.id} = ${doc.id}`)[0];
       if (latest?.processingStatus === 'analyzed') {
         res.status(200).json({ success: true, data: specPayload(doc.id) });
         return;
@@ -132,7 +132,7 @@ export async function publicAnalyze(req: Request, res: Response, next: NextFunct
       await sleep(1500);
     }
 
-    const latest = db.select().from(documents).where(sql`${documents.id} = ${doc.id}`)[0];
+    const latest = await db.select().from(documents).where(sql`${documents.id} = ${doc.id}`)[0];
     res.status(202).json({
       success: true,
       data: {
@@ -152,7 +152,7 @@ export async function getPublicAnalyze(req: Request, res: Response, next: NextFu
     if (!req.user) throw new BadRequestError('Unauthorized');
     const documentId = Number(req.params.documentId);
     const db = getDb();
-    const doc = db.select().from(documents).where(
+    const doc = await db.select().from(documents).where(
       sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = 0`
     )[0];
     if (!doc) throw new NotFoundError('Document');

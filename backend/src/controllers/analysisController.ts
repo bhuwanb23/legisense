@@ -22,7 +22,7 @@ function applyJurisdictionToDocument(
   let stateCode = (body.state_code || body.stateCode || null) as string | null;
 
   if (!countryCode) {
-    const userRows = db.select().from(users).where(sql`${users.id} = ${userId}`);
+    const userRows = await db.select().from(users).where(sql`${users.id} = ${userId}`);
     const parsed = parseUserJurisdiction(userRows[0]?.defaultJurisdiction);
     countryCode = parsed.countryCode;
     stateCode = stateCode || parsed.stateCode;
@@ -54,7 +54,7 @@ export async function startAnalysis(
     if (!documentId) throw new BadRequestError('Invalid document ID');
 
     const db = getDb();
-    const rows = db.select().from(documents).where(
+    const rows = await db.select().from(documents).where(
       sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = 0`
     );
 
@@ -84,7 +84,7 @@ export async function startAnalysis(
         WHERE id = ${documentId}`);
     }
 
-    const existingAnalysis = db.select().from(analysisResults).where(
+    const existingAnalysis = await db.select().from(analysisResults).where(
       sql`${analysisResults.documentId} = ${documentId}`
     );
 
@@ -132,13 +132,13 @@ export async function getAnalysis(
     const documentId = Number(req.params.documentId);
     const db = getDb();
 
-    const docRows = db.select().from(documents).where(
+    const docRows = await db.select().from(documents).where(
       sql`${documents.id} = ${documentId} AND ${documents.isDeleted} = 0`
     );
 
     if (!docRows[0] || !getDocumentAccess(req.user.id, documentId)) throw new NotFoundError('Document');
 
-    const analysisRows = db.select().from(analysisResults).where(
+    const analysisRows = await db.select().from(analysisResults).where(
       sql`${analysisResults.documentId} = ${documentId}`
     );
 
@@ -154,7 +154,7 @@ export async function getAnalysis(
       return;
     }
 
-    const clauseRows = db.select().from(clauses).where(sql`${clauses.analysisId} = ${analysis.id}`);
+    const clauseRows = await db.select().from(clauses).where(sql`${clauses.analysisId} = ${analysis.id}`);
     const fairness = fillFairness(analysis, clauseRows);
 
     res.json({
@@ -192,13 +192,13 @@ export async function getClauses(
     const documentId = Number(req.params.documentId);
     const db = getDb();
 
-    const docRows = db.select().from(documents).where(
+    const docRows = await db.select().from(documents).where(
       sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = 0`
     );
 
     if (!docRows[0]) throw new NotFoundError('Document');
 
-    const analysisRows = db.select().from(analysisResults).where(
+    const analysisRows = await db.select().from(analysisResults).where(
       sql`${analysisResults.documentId} = ${documentId}`
     );
 
@@ -207,7 +207,7 @@ export async function getClauses(
       return;
     }
 
-    const clauseRows = db.select().from(clauses).where(
+    const clauseRows = await db.select().from(clauses).where(
       sql`${clauses.analysisId} = ${analysisRows[0].id}`
     );
 
@@ -231,13 +231,13 @@ export async function getRisks(
     const documentId = Number(req.params.documentId);
     const db = getDb();
 
-    const docRows = db.select().from(documents).where(
+    const docRows = await db.select().from(documents).where(
       sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = 0`
     );
 
     if (!docRows[0]) throw new NotFoundError('Document');
 
-    const analysisRows = db.select().from(analysisResults).where(
+    const analysisRows = await db.select().from(analysisResults).where(
       sql`${analysisResults.documentId} = ${documentId}`
     );
 
@@ -246,7 +246,7 @@ export async function getRisks(
       return;
     }
 
-    const riskRows = db.select().from(riskItems).where(
+    const riskRows = await db.select().from(riskItems).where(
       sql`${riskItems.analysisId} = ${analysisRows[0].id}`
     );
 
@@ -286,13 +286,13 @@ export async function getRisksByCategory(
     const category = req.params.category;
     const db = getDb();
 
-    const docRows = db.select().from(documents).where(
+    const docRows = await db.select().from(documents).where(
       sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = 0`
     );
 
     if (!docRows[0]) throw new NotFoundError('Document');
 
-    const analysisRows = db.select().from(analysisResults).where(
+    const analysisRows = await db.select().from(analysisResults).where(
       sql`${analysisResults.documentId} = ${documentId}`
     );
 
@@ -301,7 +301,7 @@ export async function getRisksByCategory(
       return;
     }
 
-    const clauseRows = db.select().from(clauses).where(
+    const clauseRows = await db.select().from(clauses).where(
       sql`${clauses.analysisId} = ${analysisRows[0].id} AND ${clauses.riskCategory} = ${category}`
     );
 
@@ -325,19 +325,19 @@ export async function getSummary(
     const documentId = Number(req.params.documentId);
     const db = getDb();
 
-    const docRows = db.select().from(documents).where(
+    const docRows = await db.select().from(documents).where(
       sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = 0`
     );
 
     if (!docRows[0]) throw new NotFoundError('Document');
 
-    const analysisRows = db.select().from(analysisResults).where(
+    const analysisRows = await db.select().from(analysisResults).where(
       sql`${analysisResults.documentId} = ${documentId}`
     );
 
     const analysis = analysisRows[0];
     const clauseRows = analysis
-      ? db.select().from(clauses).where(sql`${clauses.analysisId} = ${analysis.id}`)
+      ? await db.select().from(clauses).where(sql`${clauses.analysisId} = ${analysis.id}`)
       : [];
     const fairness = analysis ? fillFairness(analysis, clauseRows) : { imbalanceReason: null, perCategoryFairness: {} };
 
@@ -374,13 +374,13 @@ export async function getRiskDashboard(
     const documentId = Number(req.params.documentId);
     const db = getDb();
 
-    const docRows = db.select().from(documents).where(
+    const docRows = await db.select().from(documents).where(
       sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = 0`
     );
 
     if (!docRows[0]) throw new NotFoundError('Document');
 
-    const analysisRows = db.select().from(analysisResults).where(
+    const analysisRows = await db.select().from(analysisResults).where(
       sql`${analysisResults.documentId} = ${documentId}`
     );
 
@@ -390,7 +390,7 @@ export async function getRiskDashboard(
       return;
     }
 
-    const clauseRows = db.select().from(clauses).where(
+    const clauseRows = await db.select().from(clauses).where(
       sql`${clauses.analysisId} = ${analysis.id}`
     );
 
@@ -415,7 +415,7 @@ export async function getRiskDashboard(
       }
     }
 
-    const pastAnalyses = db.select({
+    const pastAnalyses = await db.select({
       documentId: analysisResults.documentId,
       overallRiskScore: analysisResults.overallRiskScore,
       riskLevel: analysisResults.riskLevel,
@@ -462,13 +462,13 @@ export async function getPlainEnglish(
     const documentId = Number(req.params.documentId);
     const db = getDb();
 
-    const docRows = db.select().from(documents).where(
+    const docRows = await db.select().from(documents).where(
       sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = 0`
     );
 
     if (!docRows[0]) throw new NotFoundError('Document');
 
-    const analysisRows = db.select().from(analysisResults).where(
+    const analysisRows = await db.select().from(analysisResults).where(
       sql`${analysisResults.documentId} = ${documentId}`
     );
 
@@ -477,7 +477,7 @@ export async function getPlainEnglish(
       return;
     }
 
-    const clauseRows = db.select({
+    const clauseRows = await db.select({
       id: clauses.id,
       clauseNumber: clauses.clauseNumber,
       clauseTitle: clauses.clauseTitle,
@@ -517,7 +517,7 @@ export async function lookupGlossary(
     const db = getDb();
     const trimmed = term.trim();
 
-    const rows = db.select().from(glossary).where(
+    const rows = await db.select().from(glossary).where(
       sql`LOWER(${glossary.term}) = LOWER(${trimmed})`
     );
 
@@ -534,7 +534,7 @@ export async function lookupGlossary(
       return;
     }
 
-    const fuzzyRows = db.select().from(glossary).where(
+    const fuzzyRows = await db.select().from(glossary).where(
       sql`LOWER(${glossary.term}) LIKE LOWER(${'%' + trimmed + '%'})`
     );
 
@@ -580,7 +580,7 @@ export async function classifyEndpoint(
     const documentId = Number(req.params.documentId);
     const db = getDb();
 
-    const docRows = db.select().from(documents).where(
+    const docRows = await db.select().from(documents).where(
       sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = 0`
     );
 
@@ -642,7 +642,7 @@ export async function confirmDocumentType(
     }
 
     const db = getDb();
-    const docRows = db.select().from(documents).where(
+    const docRows = await db.select().from(documents).where(
       sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = 0`
     );
 
@@ -718,12 +718,12 @@ export async function getJurisdictionFlags(
     const documentId = Number(req.params.documentId);
     const db = getDb();
 
-    const docRows = db.select().from(documents).where(
+    const docRows = await db.select().from(documents).where(
       sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = 0`
     );
     if (!docRows[0]) throw new NotFoundError('Document');
 
-    const analysisRows = db.select().from(analysisResults).where(
+    const analysisRows = await db.select().from(analysisResults).where(
       sql`${analysisResults.documentId} = ${documentId}`
     );
     const analysis = analysisRows[0];
@@ -741,7 +741,7 @@ export async function getJurisdictionFlags(
       return;
     }
 
-    const flags = db.select().from(jurisdictionFlags).where(
+    const flags = await db.select().from(jurisdictionFlags).where(
       sql`${jurisdictionFlags.documentId} = ${documentId}`
     );
 
@@ -808,17 +808,17 @@ export async function getFlaggedClauses(
 
     const documentId = Number(req.params.documentId);
     const db = getDb();
-    const docRows = db.select().from(documents).where(
+    const docRows = await db.select().from(documents).where(
       sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = 0`
     );
     if (!docRows[0]) throw new NotFoundError('Document');
 
-    const flags = db.select().from(clauseRiskFlags).where(
+    const flags = await db.select().from(clauseRiskFlags).where(
       sql`${clauseRiskFlags.documentId} = ${documentId}`
     );
-    const patterns = db.select().from(riskPatterns);
+    const patterns = await db.select().from(riskPatterns);
     const patternById = new Map(patterns.map((p) => [p.id, p]));
-    const clauseRows = db.select().from(clauses).where(sql`${clauses.documentId} = ${documentId}`);
+    const clauseRows = await db.select().from(clauses).where(sql`${clauses.documentId} = ${documentId}`);
     const clauseById = new Map(clauseRows.map((c) => [c.id, c]));
 
     const byClause = new Map<number, {
@@ -887,17 +887,17 @@ export async function submitRiskFeedback(
     }
 
     const db = getDb();
-    const docRows = db.select().from(documents).where(
+    const docRows = await db.select().from(documents).where(
       sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id}`
     );
     if (!docRows[0]) throw new NotFoundError('Document');
 
-    const clauseRows = db.select().from(clauses).where(
+    const clauseRows = await db.select().from(clauses).where(
       sql`${clauses.id} = ${clauseId} AND ${clauses.documentId} = ${documentId}`
     );
     if (!clauseRows[0]) throw new NotFoundError('Clause');
 
-    db.insert(communityRiskFeedback).values({
+    await db.insert(communityRiskFeedback).values({
       userId: req.user.id,
       documentId,
       clauseId,
@@ -930,12 +930,12 @@ export async function getMissingClausesEndpoint(
 
     const documentId = Number(req.params.documentId);
     const db = getDb();
-    const docRows = db.select().from(documents).where(
+    const docRows = await db.select().from(documents).where(
       sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = 0`
     );
     if (!docRows[0]) throw new NotFoundError('Document');
 
-    const analysisRows = db.select().from(analysisResults).where(
+    const analysisRows = await db.select().from(analysisResults).where(
       sql`${analysisResults.documentId} = ${documentId}`
     );
     if (!analysisRows[0]) {
@@ -986,15 +986,15 @@ export async function getCounterClauses(
 
     const documentId = Number(req.params.documentId);
     const db = getDb();
-    const docRows = db.select().from(documents).where(
+    const docRows = await db.select().from(documents).where(
       sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = 0`
     );
     if (!docRows[0]) throw new NotFoundError('Document');
 
-    const analysisRows = db.select().from(analysisResults).where(
+    const analysisRows = await db.select().from(analysisResults).where(
       sql`${analysisResults.documentId} = ${documentId}`
     );
-    const clauseRows = db.select().from(clauses).where(sql`${clauses.documentId} = ${documentId}`)
+    const clauseRows = await db.select().from(clauses).where(sql`${clauses.documentId} = ${documentId}`)
       .filter((c) => {
         const score = c.riskScore ?? 0;
         const level = (c.riskLevel || '').toLowerCase();
@@ -1053,12 +1053,12 @@ export async function markCounterUsed(
     const clauseId = Number(req.params.clauseId);
     const db = getDb();
 
-    const docRows = db.select().from(documents).where(
+    const docRows = await db.select().from(documents).where(
       sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id}`
     );
     if (!docRows[0]) throw new NotFoundError('Document');
 
-    const clauseRows = db.select().from(clauses).where(
+    const clauseRows = await db.select().from(clauses).where(
       sql`${clauses.id} = ${clauseId} AND ${clauses.documentId} = ${documentId}`
     );
     if (!clauseRows[0]) throw new NotFoundError('Clause');
@@ -1094,19 +1094,19 @@ export async function rewritePlainEnglish(
     }
 
     const db = getDb();
-    const docRows = db.select().from(documents).where(
+    const docRows = await db.select().from(documents).where(
       sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = 0`
     );
 
     if (!docRows[0]) throw new NotFoundError('Document');
 
-    const analysisRows = db.select().from(analysisResults).where(
+    const analysisRows = await db.select().from(analysisResults).where(
       sql`${analysisResults.documentId} = ${documentId}`
     );
 
     if (!analysisRows[0]) throw new NotFoundError('Analysis not found for this document');
 
-    const clauseRows = db.select().from(clauses).where(
+    const clauseRows = await db.select().from(clauses).where(
       sql`${clauses.analysisId} = ${analysisRows[0].id}`
     );
 
@@ -1145,7 +1145,7 @@ export async function rewritePlainEnglish(
 
     persistNow();
 
-    const updatedClauseRows = db.select().from(clauses).where(
+    const updatedClauseRows = await db.select().from(clauses).where(
       sql`${clauses.analysisId} = ${analysisRows[0].id}`
     );
 

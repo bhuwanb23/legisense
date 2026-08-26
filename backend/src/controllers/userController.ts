@@ -23,7 +23,7 @@ export async function getProfile(
     }
 
     const db = getDb();
-    const rows = db
+    const rows = await db
       .select({
         id: users.id,
         fullName: users.fullName,
@@ -85,13 +85,13 @@ export async function updateProfile(
     }
 
     const db = getDb();
-    db.update(users)
+    await db.update(users)
       .set(updates)
       .where(eq(users.id, req.user.id));
 
     persistNow();
 
-    const rows = db
+    const rows = await db
       .select({
         id: users.id,
         fullName: users.fullName,
@@ -138,13 +138,13 @@ export async function updatePreferences(
     }
 
     const db = getDb();
-    db.update(users)
+    await db.update(users)
       .set(updates)
       .where(eq(users.id, req.user.id));
 
     persistNow();
 
-    const rows = db
+    const rows = await db
       .select({
         id: users.id,
         preferredLanguage: users.preferredLanguage,
@@ -201,13 +201,13 @@ export async function uploadAvatar(
     await fs.writeFile(filePath, file.buffer);
 
     const db = getDb();
-    db.update(users)
+    await db.update(users)
       .set({ profilePhotoUrl: relativeUrl })
       .where(eq(users.id, req.user.id));
 
     persistNow();
 
-    const rows = db
+    const rows = await db
       .select({
         id: users.id,
         fullName: users.fullName,
@@ -247,7 +247,7 @@ export async function deleteAccount(
 
     const db = getDb();
 
-    db.update(users)
+    await db.update(users)
       .set({ isActive: false })
       .where(eq(users.id, req.user.id));
 

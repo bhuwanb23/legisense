@@ -26,7 +26,7 @@ export async function createChatSession(
 
     const documentId = Number(req.params.documentId);
     const db = getDb();
-    const docRows = db.select().from(documents).where(
+    const docRows = await db.select().from(documents).where(
       sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = 0`
     );
     if (!docRows[0]) throw new NotFoundError('Document');
@@ -61,7 +61,7 @@ export async function sendMessage(
 
     const db = getDb();
 
-    const docRows = db.select().from(documents).where(
+    const docRows = await db.select().from(documents).where(
       sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = 0`
     );
 
@@ -70,7 +70,7 @@ export async function sendMessage(
     const sessionIdFinal = sessionId || uuidv4();
     const userMessage = message.trim();
 
-    db.insert(chatMessages).values({
+    await db.insert(chatMessages).values({
       documentId,
       userId: req.user.id,
       sessionId: sessionIdFinal,
@@ -78,7 +78,7 @@ export async function sendMessage(
       message: userMessage,
     });
 
-    const historyRows = db.select().from(chatMessages).where(
+    const historyRows = await db.select().from(chatMessages).where(
       sql`${chatMessages.documentId} = ${documentId} AND ${chatMessages.sessionId} = ${sessionIdFinal}`
     );
 
@@ -86,7 +86,7 @@ export async function sendMessage(
       .sort((a, b) => a.createdAt.localeCompare(b.createdAt))
       .map((m) => ({ role: m.role, message: m.message }));
 
-    const clauseRows = db.select().from(clauses).where(
+    const clauseRows = await db.select().from(clauses).where(
       sql`${clauses.documentId} = ${documentId}`
     );
 
@@ -165,7 +165,7 @@ export async function sendMessage(
     } finally {
       responseTime = (Date.now() - startTime) / 1000;
       try {
-        db.insert(chatMessages).values({
+        await db.insert(chatMessages).values({
           documentId,
           userId: req.user.id,
           sessionId: sessionIdFinal,
@@ -231,7 +231,7 @@ export async function getHistory(
 
     const db = getDb();
 
-    const docRows = db.select().from(documents).where(
+    const docRows = await db.select().from(documents).where(
       sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = 0`
     );
 
@@ -242,8 +242,8 @@ export async function getHistory(
       whereClause = sql`${whereClause} AND ${chatMessages.sessionId} = ${sessionId}`;
     }
 
-    const messages = db.select().from(chatMessages).where(whereClause);
-    const clauseRows = db.select().from(clauses).where(sql`${clauses.documentId} = ${documentId}`);
+    const messages = await db.select().from(chatMessages).where(whereClause);
+    const clauseRows = await db.select().from(clauses).where(sql`${clauses.documentId} = ${documentId}`);
     const clauseById = new Map(clauseRows.map((c) => [c.id, c]));
 
     const sorted = messages.sort((a, b) => a.createdAt.localeCompare(b.createdAt));

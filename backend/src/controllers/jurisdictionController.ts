@@ -6,7 +6,7 @@ import { sql } from 'drizzle-orm';
 export async function listCountries(_req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const db = getDb();
-    const rows = db.select().from(jurisdictions).where(
+    const rows = await db.select().from(jurisdictions).where(
       sql`${jurisdictions.stateCode} IS NULL`
     );
 
@@ -27,7 +27,7 @@ export async function listStates(req: Request, res: Response, next: NextFunction
   try {
     const country = String(req.params.country || '').toUpperCase();
     const db = getDb();
-    const rows = db.select().from(jurisdictions).where(
+    const rows = await db.select().from(jurisdictions).where(
       sql`${jurisdictions.countryCode} = ${country} AND ${jurisdictions.stateCode} IS NOT NULL`
     );
 

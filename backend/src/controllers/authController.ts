@@ -28,7 +28,7 @@ export async function register(
 
     const db = getDb();
 
-    const existing = db
+    const existing = await db
       .select({ id: users.id })
       .from(users)
       .where(sql`${users.email} = ${email}`);
@@ -39,7 +39,7 @@ export async function register(
 
     const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
 
-    db.insert(users)
+    await db.insert(users)
       .values({
         fullName,
         email,
@@ -51,7 +51,7 @@ export async function register(
         isActive: true,
       });
 
-    const userRows = db
+    const userRows = await db
       .select({ id: users.id, email: users.email })
       .from(users)
       .where(sql`${users.email} = ${email}`);
@@ -64,7 +64,7 @@ export async function register(
     const refreshToken = generateRefreshToken(tokenPayload);
 
     const thirtyDays = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-    db.insert(sessions)
+    await db.insert(sessions)
       .values({
         userId: user.id,
         refreshToken,
@@ -103,7 +103,7 @@ export async function login(
 
     const db = getDb();
 
-    const userRows = db
+    const userRows = await db
       .select()
       .from(users)
       .where(sql`${users.email} = ${email}`);
@@ -128,7 +128,7 @@ export async function login(
     const refreshToken = generateRefreshToken(tokenPayload);
 
     const thirtyDays = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-    db.insert(sessions)
+    await db.insert(sessions)
       .values({
         userId: user.id,
         refreshToken,
@@ -213,7 +213,7 @@ export async function refreshToken(
 
     const db = getDb();
 
-    const sessionRows = db
+    const sessionRows = await db
       .select()
       .from(sessions)
       .where(
@@ -233,7 +233,7 @@ export async function refreshToken(
       sql`UPDATE ${sessions} SET is_revoked = 1 WHERE id = ${session.id}`
     );
 
-    const userRows = db
+    const userRows = await db
       .select({ id: users.id, email: users.email, isActive: users.isActive })
       .from(users)
       .where(sql`${users.id} = ${decoded.userId}`);
@@ -248,7 +248,7 @@ export async function refreshToken(
     const newRefreshToken = generateRefreshToken(tokenPayload);
 
     const thirtyDays = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-    db.insert(sessions)
+    await db.insert(sessions)
       .values({
         userId: user.id,
         refreshToken: newRefreshToken,
@@ -281,7 +281,7 @@ export async function forgotPassword(
     const { email } = req.body;
 
     const db = getDb();
-    const userRows = db
+    const userRows = await db
       .select({ id: users.id })
       .from(users)
       .where(sql`${users.email} = ${email}`);
@@ -330,7 +330,7 @@ export async function resetPassword(
 
     const db = getDb();
 
-    const userRows = db
+    const userRows = await db
       .select({ id: users.id })
       .from(users)
       .where(sql`${users.id} = ${decoded.userId}`);
@@ -366,7 +366,7 @@ async function verifyGoogleToken(idToken: string): Promise<{ email: string; name
     if (!response.ok) {
       throw new Error('Invalid token');
     }
-    const data = (await response.json()) as { email?: string; name?: string; sub?: string };
+    const data = (await response.json()).rows as { email?: string; name?: string; sub?: string };
     if (!data.email) throw new Error('No email in token');
     return {
       email: data.email,
@@ -384,7 +384,7 @@ async function verifyFacebookToken(accessToken: string): Promise<{ email: string
     if (!response.ok) {
       throw new Error('Invalid token');
     }
-    const data = (await response.json()) as { id?: string; name?: string; email?: string };
+    const data = (await response.json()).rows as { id?: string; name?: string; email?: string };
     if (!data.email) throw new Error('No email in response');
     return {
       email: data.email,
@@ -411,7 +411,7 @@ export async function oauthGoogle(
     const googleUser = await verifyGoogleToken(idToken);
     const db = getDb();
 
-    let userRows = db
+    let userRows = await db
       .select()
       .from(users)
       .where(sql`${users.email} = ${googleUser.email}`);
@@ -419,7 +419,7 @@ export async function oauthGoogle(
     let user = userRows[0];
 
     if (!user) {
-      db.insert(users)
+      await db.insert(users)
         .values({
           email: googleUser.email,
           fullName: googleUser.name,
@@ -430,7 +430,7 @@ export async function oauthGoogle(
           isActive: true,
         });
 
-      userRows = db
+      userRows = await db
         .select()
         .from(users)
         .where(sql`${users.email} = ${googleUser.email}`);
@@ -446,7 +446,7 @@ export async function oauthGoogle(
     const refreshToken = generateRefreshToken(tokenPayload);
 
     const thirtyDays = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-    db.insert(sessions)
+    await db.insert(sessions)
       .values({
         userId: user.id,
         refreshToken,
@@ -488,7 +488,7 @@ export async function oauthFacebook(
     const fbUser = await verifyFacebookToken(accessToken);
     const db = getDb();
 
-    let userRows = db
+    let userRows = await db
       .select()
       .from(users)
       .where(sql`${users.email} = ${fbUser.email}`);
@@ -496,7 +496,7 @@ export async function oauthFacebook(
     let user = userRows[0];
 
     if (!user) {
-      db.insert(users)
+      await db.insert(users)
         .values({
           email: fbUser.email,
           fullName: fbUser.name,
@@ -507,7 +507,7 @@ export async function oauthFacebook(
           isActive: true,
         });
 
-      userRows = db
+      userRows = await db
         .select()
         .from(users)
         .where(sql`${users.email} = ${fbUser.email}`);
@@ -523,7 +523,7 @@ export async function oauthFacebook(
     const refreshToken = generateRefreshToken(tokenPayload);
 
     const thirtyDays = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-    db.insert(sessions)
+    await db.insert(sessions)
       .values({
         userId: user.id,
         refreshToken,
@@ -597,7 +597,7 @@ export async function verifyOtpCode(
 
     const db = getDb();
 
-    let userRows = db
+    let userRows = await db
       .select()
       .from(users)
       .where(sql`${users.email} = ${email}`);
@@ -606,7 +606,7 @@ export async function verifyOtpCode(
 
     if (!user) {
       const namePart = email.split('@')[0];
-      db.insert(users)
+      await db.insert(users)
         .values({
           email,
           fullName: namePart,
@@ -616,7 +616,7 @@ export async function verifyOtpCode(
           isActive: true,
         });
 
-      userRows = db
+      userRows = await db
         .select()
         .from(users)
         .where(sql`${users.email} = ${email}`);
@@ -630,7 +630,7 @@ export async function verifyOtpCode(
     const refreshToken = generateRefreshToken(tokenPayload);
 
     const thirtyDays = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-    db.insert(sessions)
+    await db.insert(sessions)
       .values({
         userId: user.id,
         refreshToken,

@@ -17,7 +17,7 @@ export async function listNotifications(
     }
 
     const db = getDb();
-    const rows = db.select().from(notifications).where(
+    const rows = await db.select().from(notifications).where(
       sql`${notifications.userId} = ${req.user.id}`
     );
 
@@ -66,7 +66,7 @@ export async function markRead(
     const notificationId = Number(req.params.id);
     const db = getDb();
 
-    const rows = db.select().from(notifications).where(
+    const rows = await db.select().from(notifications).where(
       sql`${notifications.id} = ${notificationId} AND ${notifications.userId} = ${req.user.id}`
     );
 
