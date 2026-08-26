@@ -15,7 +15,7 @@ export async function deleteExpiredDocuments(): Promise<void> {
     }).from(documents)
       .where(
         sql`${documents.autoDeleteAt} IS NOT NULL
-            AND ${documents.autoDeleteAt} < NOW()
+            AND ${documents.autoDeleteAt}::timestamptz < NOW()
             AND ${documents.isDeleted} = 0`
       );
 

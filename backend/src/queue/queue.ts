@@ -146,7 +146,7 @@ export class Queue {
   async getPendingCount(): Promise<number> {
     const db = getDb();
     const rows = (await db.execute(sql`
-      SELECT COUNT(*) as count FROM jobs WHERE queue_name = ${this.name} AND status = 'pending' AND (delay_until IS NULL OR delay_until <= NOW())
+      SELECT COUNT(*) as count FROM jobs WHERE queue_name = ${this.name} AND status = 'pending' AND (delay_until IS NULL OR delay_until::timestamptz <= NOW())
     `)).rows as { count: number }[];
     return Number(rows[0]?.count ?? 0);
   }

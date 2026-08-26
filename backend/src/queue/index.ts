@@ -63,7 +63,7 @@ export async function ensureJobsTable(): Promise<void> {
 }
 
 export async function startQueueSystem(): Promise<void> {
-  ensureJobsTable();
+  await ensureJobsTable();
 
   analysisWorker = createAnalysisWorker();
   notificationWorker = createNotificationWorker();

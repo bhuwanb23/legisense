@@ -57,9 +57,10 @@ export class Worker {
     if (this.shutDown || !this.running) return;
 
     void this.processNext()
-      .catch((err) => {
+      .catch((err: any) => {
         this.consecutiveErrors++;
-        console.error(`[${this.queueName}] worker poll error:`, err instanceof Error ? err.message : err);
+        const root = err?.cause instanceof Error ? err.cause.message : (err?.cause ? String(err.cause) : '');
+        console.error(`[${this.queueName}] worker poll error:`, err instanceof Error ? err.message : err, root ? `| cause: ${root}` : '');
       });
 
     this.pollTimer = setTimeout(() => this.poll(), this.pollIntervalMs());
@@ -86,7 +87,7 @@ export class Worker {
       SELECT * FROM jobs
       WHERE queue_name = ${this.queueName}
         AND status = 'pending'
-        AND (delay_until IS NULL OR delay_until <= NOW())
+        AND (delay_until IS NULL OR delay_until::timestamptz <= NOW())
       ORDER BY priority ASC, created_at ASC
       LIMIT ${this.concurrency - this.activeJobs.size}
     `)).rows as Record<string, unknown>[];
