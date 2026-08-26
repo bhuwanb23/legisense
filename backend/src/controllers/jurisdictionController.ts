@@ -8,7 +8,7 @@ export async function listCountries(_req: Request, res: Response, next: NextFunc
     const db = getDb();
     const rows = db.select().from(jurisdictions).where(
       sql`${jurisdictions.stateCode} IS NULL`
-    ).all();
+    );
 
     const countries = rows
       .map((r) => ({
@@ -29,7 +29,7 @@ export async function listStates(req: Request, res: Response, next: NextFunction
     const db = getDb();
     const rows = db.select().from(jurisdictions).where(
       sql`${jurisdictions.countryCode} = ${country} AND ${jurisdictions.stateCode} IS NOT NULL`
-    ).all();
+    );
 
     const states = rows
       .map((r) => ({

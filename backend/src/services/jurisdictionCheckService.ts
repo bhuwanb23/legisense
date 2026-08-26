@@ -80,13 +80,13 @@ export function resolveJurisdictionIds(countryCode: string, stateCode: string | 
 
   const countryLevel = db.select().from(jurisdictions).where(
     sql`${jurisdictions.countryCode} = ${countryCode} AND ${jurisdictions.stateCode} IS NULL`
-  ).all();
+  );
   if (countryLevel[0]) ids.push(countryLevel[0].id);
 
   if (stateCode) {
     const stateLevel = db.select().from(jurisdictions).where(
       sql`${jurisdictions.countryCode} = ${countryCode} AND ${jurisdictions.stateCode} = ${stateCode}`
-    ).all();
+    );
     if (stateLevel[0]) ids.push(stateLevel[0].id);
   }
 
@@ -127,7 +127,7 @@ export function updateUserJurisdictionHistory(
   stateCode: string | null,
 ): void {
   const db = getDb();
-  const rows = db.select().from(users).where(sql`${users.id} = ${userId}`).all();
+  const rows = db.select().from(users).where(sql`${users.id} = ${userId}`);
   if (!rows[0]) return;
 
   const current = parseUserJurisdiction(rows[0].defaultJurisdiction);
@@ -143,7 +143,7 @@ export function updateUserJurisdictionHistory(
     state: stateCode,
     history: trimmed.map((h) => ({ country: h.countryCode, state: h.stateCode })),
   });
-  db.run(sql`UPDATE ${users} SET default_jurisdiction = ${payload}, updated_at = datetime('now') WHERE id = ${userId}`);
+  await db.execute(sql`UPDATE ${users} SET default_jurisdiction = ${payload}, updated_at = NOW() WHERE id = ${userId}`);
 }
 
 export async function runJurisdictionCheck(
@@ -153,10 +153,10 @@ export async function runJurisdictionCheck(
 ): Promise<CreatedFlag[]> {
   const db = getDb();
 
-  const docRows = db.select().from(documents).where(sql`${documents.id} = ${documentId}`).all();
+  const docRows = db.select().from(documents).where(sql`${documents.id} = ${documentId}`);
   const doc = docRows[0];
   if (!doc) {
-    db.run(sql`UPDATE ${analysisResults} SET jurisdiction_check_status = 'skipped' WHERE id = ${analysisId}`);
+    await db.execute(sql`UPDATE ${analysisResults} SET jurisdiction_check_status = 'skipped' WHERE id = ${analysisId}`);
     return [];
   }
 
@@ -164,14 +164,14 @@ export async function runJurisdictionCheck(
   let stateCode = doc.stateCode;
 
   if (!countryCode) {
-    const userRows = db.select().from(users).where(sql`${users.id} = ${doc.userId}`).all();
+    const userRows = db.select().from(users).where(sql`${users.id} = ${doc.userId}`);
     const parsed = parseUserJurisdiction(userRows[0]?.defaultJurisdiction);
     countryCode = parsed.countryCode;
     stateCode = stateCode || parsed.stateCode;
   }
 
   if (!countryCode) {
-    db.run(sql`UPDATE ${analysisResults} SET jurisdiction_check_status = 'skipped' WHERE id = ${analysisId}`);
+    await db.execute(sql`UPDATE ${analysisResults} SET jurisdiction_check_status = 'skipped' WHERE id = ${analysisId}`);
     persistNow();
     return [];
   }
@@ -179,7 +179,7 @@ export async function runJurisdictionCheck(
   try {
     const jurisdictionIds = resolveJurisdictionIds(countryCode, stateCode);
     if (jurisdictionIds.length === 0) {
-      db.run(sql`UPDATE ${analysisResults} SET jurisdiction_check_status = 'skipped' WHERE id = ${analysisId}`);
+      await db.execute(sql`UPDATE ${analysisResults} SET jurisdiction_check_status = 'skipped' WHERE id = ${analysisId}`);
       persistNow();
       return [];
     }
@@ -187,12 +187,12 @@ export async function runJurisdictionCheck(
     const normalizedType = normalizeDocType(documentType);
     const typeVariants = DOC_TYPE_ALIASES[normalizedType] || [normalizedType];
 
-    const allRules = db.select().from(legalRules).all().filter((r) => {
+    const allRules = db.select().from(legalRules).filter((r) => {
       if (!jurisdictionIds.includes(r.jurisdictionId)) return false;
       return typeVariants.includes(r.documentType) || r.documentType === normalizedType;
     });
 
-    const clauseRows = db.select().from(clauses).where(sql`${clauses.analysisId} = ${analysisId}`).all();
+    const clauseRows = db.select().from(clauses).where(sql`${clauses.analysisId} = ${analysisId}`);
     const created: CreatedFlag[] = [];
     const stateLabel = stateCode || countryCode;
 
@@ -214,7 +214,7 @@ export async function runJurisdictionCheck(
             message: `Required under ${stateLabel} law but not clearly found: ${rule.ruleTitle}. ${rule.ruleDescription}`,
             legalReference: rule.legalReference,
             severity: rule.severity,
-          }).run();
+          });
           created.push({
             id: 0,
             analysisId,
@@ -250,7 +250,7 @@ export async function runJurisdictionCheck(
           message,
           legalReference: rule.legalReference,
           severity: rule.severity,
-        }).run();
+        });
 
         created.push({
           id: 0,
@@ -270,7 +270,7 @@ export async function runJurisdictionCheck(
 
     const flagRows = db.select().from(jurisdictionFlags).where(
       sql`${jurisdictionFlags.analysisId} = ${analysisId}`
-    ).all();
+    );
 
     const summary = flagRows.map((f) => ({
       clause_id: f.clauseId,
@@ -281,7 +281,7 @@ export async function runJurisdictionCheck(
       severity: f.severity,
     }));
 
-    db.run(sql`UPDATE ${analysisResults} SET
+    await db.execute(sql`UPDATE ${analysisResults} SET
       jurisdiction_flags = ${JSON.stringify(summary)},
       jurisdiction_check_status = 'completed'
       WHERE id = ${analysisId}`);
@@ -308,7 +308,7 @@ export async function runJurisdictionCheck(
     });
   } catch (err) {
     console.error('Jurisdiction check failed:', err);
-    db.run(sql`UPDATE ${analysisResults} SET jurisdiction_check_status = 'failed' WHERE id = ${analysisId}`);
+    await db.execute(sql`UPDATE ${analysisResults} SET jurisdiction_check_status = 'failed' WHERE id = ${analysisId}`);
     persistNow();
     return [];
   }

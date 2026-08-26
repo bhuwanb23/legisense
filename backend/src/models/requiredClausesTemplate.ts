@@ -1,8 +1,8 @@
-import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
+import { text, integer, pgTable, serial } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 
-export const requiredClausesTemplates = sqliteTable('required_clauses_templates', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+export const requiredClausesTemplates = pgTable('required_clauses_templates', {
+  id: serial('id').primaryKey(),
   documentType: text('document_type').notNull(),
   clauseName: text('clause_name').notNull(),
   importance: text('importance').notNull(),

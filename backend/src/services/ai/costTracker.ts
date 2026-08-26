@@ -47,7 +47,7 @@ export async function logAiUsage(
     cost,
     inputTokens: usage.inputTokens,
     outputTokens: usage.outputTokens,
-  }).run();
+  });
 
   persistNow();
 }

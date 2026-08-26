@@ -1,10 +1,10 @@
-import { sqliteTable, text, integer, real } from 'drizzle-orm/sqlite-core';
+import { text, integer, pgTable, serial, boolean, doublePrecision } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 import { documents } from './document';
 import { analysisResults } from './analysisResult';
 
-export const clauses = sqliteTable('clauses', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+export const clauses = pgTable('clauses', {
+  id: serial('id').primaryKey(),
   documentId: integer('document_id').notNull().references(() => documents.id),
   analysisId: integer('analysis_id').notNull().references(() => analysisResults.id),
   clauseNumber: integer('clause_number'),
@@ -14,14 +14,14 @@ export const clauses = sqliteTable('clauses', {
   readingLevel: text('reading_level'),
   keyLegalTerms: text('key_legal_terms'),
   riskLevel: text('risk_level'),
-  riskScore: real('risk_score'),
+  riskScore: doublePrecision('risk_score'),
   riskReason: text('risk_reason'),
   riskCategory: text('risk_category'),
   counterSuggestion: text('counter_suggestion'),
   negotiationTips: text('negotiation_tips'),
-  usedCounter: integer('used_counter', { mode: 'boolean' }).notNull().default(false),
+  usedCounter: boolean('used_counter').notNull().default(false),
   copiedAt: text('copied_at'),
-  isFlagged: integer('is_flagged', { mode: 'boolean' }).notNull().default(false),
+  isFlagged: boolean('is_flagged').notNull().default(false),
   pageNumber: integer('page_number'),
   partyReferences: text('party_references'),
   startPosition: integer('start_position'),

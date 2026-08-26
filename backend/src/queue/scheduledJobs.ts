@@ -15,9 +15,9 @@ export async function deleteExpiredDocuments(): Promise<void> {
     }).from(documents)
       .where(
         sql`${documents.autoDeleteAt} IS NOT NULL
-            AND ${documents.autoDeleteAt} < datetime('now')
+            AND ${documents.autoDeleteAt} < NOW()
             AND ${documents.isDeleted} = 0`
-      ).all();
+      );
 
     if (expired.length === 0) return;
 
@@ -28,11 +28,11 @@ export async function deleteExpiredDocuments(): Promise<void> {
         // File may already be gone
       }
 
-      db.run(sql`UPDATE ${documents}
+      await db.execute(sql`UPDATE ${documents}
         SET is_deleted = 1,
             raw_text = NULL,
             encryption_iv = NULL,
-            updated_at = datetime('now')
+            updated_at = NOW()
         WHERE id = ${doc.id}`);
     }
 
@@ -65,7 +65,7 @@ export async function checkDeadlineReminders(): Promise<void> {
     const active = db.select().from(deadlines).where(
       sql`${deadlines.isCompleted} = 0
           AND ${deadlines.isDismissed} = 0`
-    ).all();
+    );
 
     for (const deadline of active) {
       const enabled = deadline.reminderEnabled !== false;
@@ -92,7 +92,7 @@ export async function checkDeadlineReminders(): Promise<void> {
       const daysUntil = daysUntilDue(deadline.dueDate);
       if (!shouldSendReminder(daysUntil, times, sentDays)) continue;
 
-      const docRows = db.select().from(documents).where(sql`${documents.id} = ${deadline.documentId}`).all();
+      const docRows = db.select().from(documents).where(sql`${documents.id} = ${deadline.documentId}`);
       const docName = docRows[0]?.originalName || 'Document';
 
       const whenLabel = daysUntil === 0
@@ -112,7 +112,7 @@ export async function checkDeadlineReminders(): Promise<void> {
       }
 
       if (channels.includes('email') && isSmtpConfigured()) {
-        const userRows = db.select().from(users).where(sql`${users.id} = ${deadline.userId}`).all();
+        const userRows = db.select().from(users).where(sql`${users.id} = ${deadline.userId}`);
         const email = userRows[0]?.email;
         if (email) {
           await sendReminderEmail({
@@ -127,10 +127,10 @@ export async function checkDeadlineReminders(): Promise<void> {
       }
 
       sentDays.push(daysUntil);
-      db.run(sql`UPDATE ${deadlines} SET
+      await db.execute(sql`UPDATE ${deadlines} SET
         reminder_sent = 1,
         reminder_sent_days = ${JSON.stringify(sentDays)},
-        reminder_date = datetime('now')
+        reminder_date = NOW()
         WHERE id = ${deadline.id}`);
     }
 

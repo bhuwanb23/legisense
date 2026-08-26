@@ -63,12 +63,12 @@ export async function processDocumentSync(
   const db = getDb();
   const startTime = Date.now();
 
-  const rows = db.select().from(documents).where(sql`${documents.id} = ${documentId}`).all();
+  const rows = db.select().from(documents).where(sql`${documents.id} = ${documentId}`);
   const doc = rows[0];
   if (!doc) throw new Error(`Document ${documentId} not found`);
 
   // Already analyzed — return existing bundle unless force refresh
-  const existing = db.select().from(analysisResults).where(sql`${analysisResults.documentId} = ${documentId}`).all();
+  const existing = db.select().from(analysisResults).where(sql`${analysisResults.documentId} = ${documentId}`);
   if (!options?.force && existing[0] && doc.processingStatus === 'analyzed') {
     return getAnalysisBundleForDocument(documentId);
   }
@@ -79,14 +79,14 @@ export async function processDocumentSync(
     const rawText = await resolveDocumentText(doc as unknown as Record<string, unknown>, documentId);
     const llmText = truncateForLlm(rawText);
 
-    const userRows = db.select().from(users).where(sql`${users.id} = ${doc.userId}`).all();
+    const userRows = db.select().from(users).where(sql`${users.id} = ${doc.userId}`);
     const preferredLanguage = toIso6391(userRows[0]?.preferredLanguage || 'en');
     const detected = detectLanguage(rawText);
     const detectedLang = detected.language;
 
-    db.run(sql`UPDATE ${documents} SET
+    await db.execute(sql`UPDATE ${documents} SET
       detected_language = ${detectedLang},
-      updated_at = datetime('now')
+      updated_at = NOW()
       WHERE id = ${documentId}`);
 
     // One LLM call — document type comes from the analysis JSON itself.
@@ -144,11 +144,11 @@ export async function processDocumentSync(
     }
 
     const typeKey = normalizeTypeKey(analysisResult.documentType || 'unknown');
-    db.run(sql`UPDATE ${documents} SET
+    await db.execute(sql`UPDATE ${documents} SET
       detected_type = ${typeKey},
       detected_type_confidence = ${analysisResult.detectedTypeConfidence || 70},
       needs_type_confirmation = 0,
-      updated_at = datetime('now')
+      updated_at = NOW()
       WHERE id = ${documentId}`);
 
     const totalTime = (Date.now() - startTime) / 1000;
@@ -163,15 +163,15 @@ export async function processDocumentSync(
       model: modelUsed,
       inputTokens: totalInputTokens,
       outputTokens: totalOutputTokens,
-    }).run();
+    });
 
     // Clear prior partial analysis if any
     if (existing[0]) {
-      db.run(sql`DELETE FROM clauses WHERE analysis_id = ${existing[0].id}`);
-      db.run(sql`DELETE FROM risk_items WHERE analysis_id = ${existing[0].id}`);
-      db.run(sql`DELETE FROM analysis_results WHERE id = ${existing[0].id}`);
+      await db.execute(sql`DELETE FROM clauses WHERE analysis_id = ${existing[0].id}`);
+      await db.execute(sql`DELETE FROM risk_items WHERE analysis_id = ${existing[0].id}`);
+      await db.execute(sql`DELETE FROM analysis_results WHERE id = ${existing[0].id}`);
     }
-    db.run(sql`DELETE FROM deadlines WHERE document_id = ${documentId}`);
+    await db.execute(sql`DELETE FROM deadlines WHERE document_id = ${documentId}`);
 
     const analysisId = saveAnalysisResults(
       documentId,
@@ -211,10 +211,10 @@ export async function processDocumentSync(
       }
 
       if (counterClausesEnabled()) {
-        db.run(sql`UPDATE ${analysisResults} SET counter_clauses_status = 'pending' WHERE id = ${analysisId}`);
+        await db.execute(sql`UPDATE ${analysisResults} SET counter_clauses_status = 'pending' WHERE id = ${analysisId}`);
         await counterClausesQueue.add('generate-counters', { documentId, userId: doc.userId });
       } else {
-        db.run(sql`UPDATE ${analysisResults} SET counter_clauses_status = 'skipped' WHERE id = ${analysisId}`);
+        await db.execute(sql`UPDATE ${analysisResults} SET counter_clauses_status = 'skipped' WHERE id = ${analysisId}`);
       }
     }
 
@@ -238,7 +238,7 @@ export async function processDocumentSync(
       action: 'analysis:failed',
       documentId,
       processingTime: (Date.now() - startTime) / 1000,
-    }).run();
+    });
 
     updateDocumentStatus(documentId, 'failed');
     createNotification(
@@ -262,8 +262,8 @@ export function getAnalysisBundleForDocument(documentId: number): {
   deadlines: unknown[];
 } {
   const db = getDb();
-  const docRows = db.select().from(documents).where(sql`${documents.id} = ${documentId}`).all();
-  const analysisRows = db.select().from(analysisResults).where(sql`${analysisResults.documentId} = ${documentId}`).all();
+  const docRows = db.select().from(documents).where(sql`${documents.id} = ${documentId}`);
+  const analysisRows = db.select().from(analysisResults).where(sql`${analysisResults.documentId} = ${documentId}`);
   const analysis = analysisRows[0];
 
   if (!analysis) {
@@ -276,9 +276,9 @@ export function getAnalysisBundleForDocument(documentId: number): {
     };
   }
 
-  const clauseRows = db.select().from(clauses).where(sql`${clauses.analysisId} = ${analysis.id}`).all();
-  const riskRows = db.select().from(riskItems).where(sql`${riskItems.analysisId} = ${analysis.id}`).all();
-  const deadlineRows = db.select().from(deadlines).where(sql`${deadlines.documentId} = ${documentId}`).all();
+  const clauseRows = db.select().from(clauses).where(sql`${clauses.analysisId} = ${analysis.id}`);
+  const riskRows = db.select().from(riskItems).where(sql`${riskItems.analysisId} = ${analysis.id}`);
+  const deadlineRows = db.select().from(deadlines).where(sql`${deadlines.documentId} = ${documentId}`);
 
   const parse = (v: string | null) => {
     if (!v) return [];
@@ -303,7 +303,7 @@ export function getAnalysisBundleForDocument(documentId: number): {
 
 function updateDocumentStatus(documentId: number, status: string): void {
   const db = getDb();
-  db.run(sql`UPDATE ${documents} SET processing_status = ${status}, updated_at = datetime('now') WHERE id = ${documentId}`);
+  await db.execute(sql`UPDATE ${documents} SET processing_status = ${status}, updated_at = NOW() WHERE id = ${documentId}`);
 }
 
 function decryptDocumentText(doc: { rawText: string | null; encryptionIv: string | null }): string | null {
@@ -339,9 +339,9 @@ async function resolveDocumentText(doc: Record<string, unknown>, documentId: num
   }
 
   if (storedIv) {
-    db.run(sql`UPDATE ${documents} SET raw_text = ${storedText}, encryption_iv = ${storedIv}, updated_at = datetime('now') WHERE id = ${documentId}`);
+    await db.execute(sql`UPDATE ${documents} SET raw_text = ${storedText}, encryption_iv = ${storedIv}, updated_at = NOW() WHERE id = ${documentId}`);
   } else {
-    db.run(sql`UPDATE ${documents} SET raw_text = ${storedText}, updated_at = datetime('now') WHERE id = ${documentId}`);
+    await db.execute(sql`UPDATE ${documents} SET raw_text = ${storedText}, updated_at = NOW() WHERE id = ${documentId}`);
   }
 
   return text;
@@ -555,9 +555,9 @@ function saveAnalysisResults(
     analysisLanguage,
     translations: '{}',
     counterClausesStatus: counterClausesEnabled() ? 'pending' : 'skipped',
-  }).run();
+  });
 
-  const analysisRows = db.select().from(analysisResults).where(sql`${analysisResults.documentId} = ${documentId}`).all();
+  const analysisRows = db.select().from(analysisResults).where(sql`${analysisResults.documentId} = ${documentId}`);
   const analysisId = analysisRows[0]?.id;
 
   if (analysisId) {
@@ -580,7 +580,7 @@ function saveAnalysisResults(
           ? JSON.stringify(clause.partyReferences)
           : null,
         counterSuggestion: clause.counterSuggestion,
-      }).run();
+      });
     }
 
     for (const risk of ai.riskItems) {
@@ -593,7 +593,7 @@ function saveAnalysisResults(
         severityScore: risk.severityScore,
         recommendation: risk.recommendation,
         legalReference: risk.legalReference,
-      }).run();
+      });
     }
 
     generateRiskItemsFromClauses(analysisId);
@@ -614,7 +614,7 @@ function generateRiskItemsFromClauses(analysisId: number): void {
 
   const clauseRows = db.select().from(clauses).where(
     sql`${clauses.analysisId} = ${analysisId}`
-  ).all();
+  );
 
   for (const c of clauseRows) {
     const score = c.riskScore ?? 0;
@@ -633,6 +633,6 @@ function generateRiskItemsFromClauses(analysisId: number): void {
       severityScore: score,
       recommendation: c.counterSuggestion || 'Negotiate clearer, fairer wording before you sign.',
       legalReference: '',
-    }).run();
+    });
   }
 }

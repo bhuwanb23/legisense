@@ -41,8 +41,7 @@ export async function getProfile(
         lastLoginAt: users.lastLoginAt,
       })
       .from(users)
-      .where(sql`${users.id} = ${req.user.id}`)
-      .all();
+      .where(sql`${users.id} = ${req.user.id}`);
 
     const user = rows[0];
     if (!user) throw new NotFoundError('User');
@@ -88,8 +87,7 @@ export async function updateProfile(
     const db = getDb();
     db.update(users)
       .set(updates)
-      .where(eq(users.id, req.user.id))
-      .run();
+      .where(eq(users.id, req.user.id));
 
     persistNow();
 
@@ -104,8 +102,7 @@ export async function updateProfile(
         updatedAt: users.updatedAt,
       })
       .from(users)
-      .where(sql`${users.id} = ${req.user.id}`)
-      .all();
+      .where(sql`${users.id} = ${req.user.id}`);
 
     res.json({ success: true, data: rows[0] });
   } catch (err) {
@@ -143,8 +140,7 @@ export async function updatePreferences(
     const db = getDb();
     db.update(users)
       .set(updates)
-      .where(eq(users.id, req.user.id))
-      .run();
+      .where(eq(users.id, req.user.id));
 
     persistNow();
 
@@ -157,8 +153,7 @@ export async function updatePreferences(
         preferredDocumentTypes: users.preferredDocumentTypes,
       })
       .from(users)
-      .where(sql`${users.id} = ${req.user.id}`)
-      .all();
+      .where(sql`${users.id} = ${req.user.id}`);
 
     const result = rows[0];
     const data = {
@@ -208,8 +203,7 @@ export async function uploadAvatar(
     const db = getDb();
     db.update(users)
       .set({ profilePhotoUrl: relativeUrl })
-      .where(eq(users.id, req.user.id))
-      .run();
+      .where(eq(users.id, req.user.id));
 
     persistNow();
 
@@ -223,8 +217,7 @@ export async function uploadAvatar(
         preferredDocumentTypes: users.preferredDocumentTypes,
       })
       .from(users)
-      .where(sql`${users.id} = ${req.user.id}`)
-      .all();
+      .where(sql`${users.id} = ${req.user.id}`);
 
     const userData = rows[0];
     const data = {
@@ -256,10 +249,9 @@ export async function deleteAccount(
 
     db.update(users)
       .set({ isActive: false })
-      .where(eq(users.id, req.user.id))
-      .run();
+      .where(eq(users.id, req.user.id));
 
-    db.run(
+    await db.execute(
       sql`UPDATE ${sessions} SET is_revoked = 1 WHERE user_id = ${req.user.id}`
     );
 

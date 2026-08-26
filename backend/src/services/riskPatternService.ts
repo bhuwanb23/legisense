@@ -25,8 +25,8 @@ function findSnippet(text: string, keyword: string): string {
 
 export async function runRiskPatternScan(documentId: number, analysisId: number): Promise<number> {
   const db = getDb();
-  const patterns = db.select().from(riskPatterns).all();
-  const clauseRows = db.select().from(clauses).where(sql`${clauses.analysisId} = ${analysisId}`).all();
+  const patterns = db.select().from(riskPatterns);
+  const clauseRows = db.select().from(clauses).where(sql`${clauses.analysisId} = ${analysisId}`);
   if (patterns.length === 0 || clauseRows.length === 0) return 0;
 
   const flaggedClauseIds = new Set<number>();
@@ -50,7 +50,7 @@ export async function runRiskPatternScan(documentId: number, analysisId: number)
         matchType: 'keyword',
         matchConfidence: 90,
         flaggedTextSnippet: findSnippet(clause.originalText, hit),
-      }).run();
+      });
       flaggedClauseIds.add(clause.id);
     }
   }
@@ -106,7 +106,7 @@ Only include genuine matches (confidence >= 70). Use pattern names exactly from 
             matchType: 'semantic',
             matchConfidence: Math.min(100, Number(m.confidence) || 75),
             flaggedTextSnippet: m.snippet || (clause.originalText || '').slice(0, 160),
-          }).run();
+          });
           flaggedClauseIds.add(clause.id);
         }
       } catch (err) {
@@ -116,7 +116,7 @@ Only include genuine matches (confidence >= 70). Use pattern names exactly from 
   }
 
   for (const clauseId of flaggedClauseIds) {
-    db.run(sql`UPDATE ${clauses} SET is_flagged = 1 WHERE id = ${clauseId}`);
+    await db.execute(sql`UPDATE ${clauses} SET is_flagged = 1 WHERE id = ${clauseId}`);
   }
 
   persistNow();

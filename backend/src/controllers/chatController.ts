@@ -28,7 +28,7 @@ export async function createChatSession(
     const db = getDb();
     const docRows = db.select().from(documents).where(
       sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = 0`
-    ).all();
+    );
     if (!docRows[0]) throw new NotFoundError('Document');
 
     const sessionId = uuidv4();
@@ -63,7 +63,7 @@ export async function sendMessage(
 
     const docRows = db.select().from(documents).where(
       sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = 0`
-    ).all();
+    );
 
     if (!docRows[0]) throw new NotFoundError('Document');
 
@@ -76,11 +76,11 @@ export async function sendMessage(
       sessionId: sessionIdFinal,
       role: 'user',
       message: userMessage,
-    }).run();
+    });
 
     const historyRows = db.select().from(chatMessages).where(
       sql`${chatMessages.documentId} = ${documentId} AND ${chatMessages.sessionId} = ${sessionIdFinal}`
-    ).all();
+    );
 
     const conversationHistory = historyRows
       .sort((a, b) => a.createdAt.localeCompare(b.createdAt))
@@ -88,7 +88,7 @@ export async function sendMessage(
 
     const clauseRows = db.select().from(clauses).where(
       sql`${clauses.documentId} = ${documentId}`
-    ).all();
+    );
 
     let retrieved = retrieveRelevantClauses(userMessage, clauseRows, 5, 0.15);
 
@@ -175,7 +175,7 @@ export async function sendMessage(
           citedPages: JSON.stringify(citedPages),
           tokensUsed,
           responseTime,
-        }).run();
+        });
         persistNow();
       } catch (persistErr) {
         console.error('Failed to persist assistant chat row:', persistErr);
@@ -233,7 +233,7 @@ export async function getHistory(
 
     const docRows = db.select().from(documents).where(
       sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = 0`
-    ).all();
+    );
 
     if (!docRows[0]) throw new NotFoundError('Document');
 
@@ -242,8 +242,8 @@ export async function getHistory(
       whereClause = sql`${whereClause} AND ${chatMessages.sessionId} = ${sessionId}`;
     }
 
-    const messages = db.select().from(chatMessages).where(whereClause).all();
-    const clauseRows = db.select().from(clauses).where(sql`${clauses.documentId} = ${documentId}`).all();
+    const messages = db.select().from(chatMessages).where(whereClause);
+    const clauseRows = db.select().from(clauses).where(sql`${clauses.documentId} = ${documentId}`);
     const clauseById = new Map(clauseRows.map((c) => [c.id, c]));
 
     const sorted = messages.sort((a, b) => a.createdAt.localeCompare(b.createdAt));

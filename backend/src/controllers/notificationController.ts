@@ -19,7 +19,7 @@ export async function listNotifications(
     const db = getDb();
     const rows = db.select().from(notifications).where(
       sql`${notifications.userId} = ${req.user.id}`
-    ).all();
+    );
 
     // Sort by createdAt descending (newest first)
     rows.sort((a, b) => {
@@ -68,11 +68,11 @@ export async function markRead(
 
     const rows = db.select().from(notifications).where(
       sql`${notifications.id} = ${notificationId} AND ${notifications.userId} = ${req.user.id}`
-    ).all();
+    );
 
     if (!rows[0]) throw new NotFoundError('Notification');
 
-    db.run(
+    await db.execute(
       sql`UPDATE ${notifications} SET is_read = 1 WHERE id = ${notificationId}`
     );
 
@@ -97,7 +97,7 @@ export async function markAllRead(
 
     const db = getDb();
 
-    db.run(
+    await db.execute(
       sql`UPDATE ${notifications} SET is_read = 1 WHERE user_id = ${req.user.id} AND is_read = 0`
     );
 

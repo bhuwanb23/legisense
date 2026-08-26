@@ -1,8 +1,8 @@
-import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
+import { text, integer, pgTable, serial } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 
-export const glossary = sqliteTable('glossary', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+export const glossary = pgTable('glossary', {
+  id: serial('id').primaryKey(),
   term: text('term').notNull().unique(),
   definition: text('definition').notNull(),
   category: text('category'),

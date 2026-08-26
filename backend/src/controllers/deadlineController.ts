@@ -51,7 +51,7 @@ export async function listDeadlines(
     const db = getDb();
     const rows = db.select().from(deadlines).where(
       sql`${deadlines.userId} = ${req.user.id}`
-    ).all();
+    );
 
     const completed = req.query.completed as string | undefined;
     let filtered = rows;
@@ -89,7 +89,7 @@ export async function listUpcomingDeadlines(
     const db = getDb();
     const rows = db.select().from(deadlines).where(
       sql`${deadlines.userId} = ${req.user.id}`
-    ).all()
+    )
       .filter((d) => !d.isCompleted && !d.isDismissed);
 
     const urgencyRank: Record<string, number> = {
@@ -132,18 +132,18 @@ export async function listDocumentDeadlines(
 
     const docRows = db.select().from(documents).where(
       sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = 0`
-    ).all();
+    );
     if (!docRows[0]) throw new NotFoundError('Document');
 
     let rows = db.select().from(deadlines).where(
       sql`${deadlines.documentId} = ${documentId} AND ${deadlines.userId} = ${req.user.id}`
-    ).all();
+    );
 
-    const analysis = db.select().from(analysisResults).where(sql`${analysisResults.documentId} = ${documentId}`).all()[0];
+    const analysis = db.select().from(analysisResults).where(sql`${analysisResults.documentId} = ${documentId}`)[0];
     if (analysis) {
       let missing: unknown = [];
       try { missing = JSON.parse(analysis.missingClauses || '[]'); } catch { missing = []; }
-      const clauseRows = db.select().from(clauses).where(sql`${clauses.analysisId} = ${analysis.id}`).all();
+      const clauseRows = db.select().from(clauses).where(sql`${clauses.analysisId} = ${analysis.id}`);
       const extras = buildDeadlineInputsFromAnalysis({
         documentType: analysis.documentType || 'Other',
         detectedTypeConfidence: analysis.detectedTypeConfidence || 0,
@@ -192,7 +192,7 @@ export async function listDocumentDeadlines(
         saveDeadlinesForDocument(documentId, req.user.id, toAdd);
         rows = db.select().from(deadlines).where(
           sql`${deadlines.documentId} = ${documentId} AND ${deadlines.userId} = ${req.user.id}`
-        ).all();
+        );
       }
     }
 
@@ -237,11 +237,11 @@ export async function completeDeadline(
 
     const rows = db.select().from(deadlines).where(
       sql`${deadlines.id} = ${deadlineId} AND ${deadlines.userId} = ${req.user.id}`
-    ).all();
+    );
 
     if (!rows[0]) throw new NotFoundError('Deadline');
 
-    db.run(sql`UPDATE ${deadlines} SET is_completed = 1 WHERE id = ${deadlineId}`);
+    await db.execute(sql`UPDATE ${deadlines} SET is_completed = 1 WHERE id = ${deadlineId}`);
     persistNow();
 
     res.json({ success: true, data: { message: 'Deadline marked as completed', id: deadlineId } });
@@ -266,11 +266,11 @@ export async function dismissDeadline(
 
     const rows = db.select().from(deadlines).where(
       sql`${deadlines.id} = ${deadlineId} AND ${deadlines.userId} = ${req.user.id}`
-    ).all();
+    );
 
     if (!rows[0]) throw new NotFoundError('Deadline');
 
-    db.run(sql`UPDATE ${deadlines} SET is_dismissed = 1 WHERE id = ${deadlineId}`);
+    await db.execute(sql`UPDATE ${deadlines} SET is_dismissed = 1 WHERE id = ${deadlineId}`);
     persistNow();
 
     res.json({ success: true, data: { message: 'Deadline dismissed', id: deadlineId } });
@@ -300,7 +300,7 @@ export async function exportDeadlinesIcs(
     const db = getDb();
     let rows = db.select().from(deadlines).where(
       sql`${deadlines.userId} = ${req.user.id}`
-    ).all();
+    );
 
     if (deadlineIds.length > 0) {
       rows = rows.filter((d) => deadlineIds.includes(d.id));
@@ -314,7 +314,7 @@ export async function exportDeadlinesIcs(
 
     const docs = db.select().from(documents).where(
       sql`${documents.userId} = ${req.user.id}`
-    ).all();
+    );
     const docName = new Map(docs.map((d) => [d.id, d.originalName]));
 
     const alreadyExported = rows.filter((d) => d.calendarExported).length;
@@ -329,7 +329,7 @@ export async function exportDeadlinesIcs(
 
     const now = new Date().toISOString();
     for (const d of rows) {
-      db.run(sql`UPDATE ${deadlines} SET calendar_exported = 1, exported_at = ${now} WHERE id = ${d.id}`);
+      await db.execute(sql`UPDATE ${deadlines} SET calendar_exported = 1, exported_at = ${now} WHERE id = ${d.id}`);
     }
     persistNow();
 
@@ -370,7 +370,7 @@ export async function updateDeadlineReminders(
     const db = getDb();
     const rows = db.select().from(deadlines).where(
       sql`${deadlines.id} = ${deadlineId} AND ${deadlines.userId} = ${req.user.id}`
-    ).all();
+    );
     if (!rows[0]) throw new NotFoundError('Deadline');
 
     const enabled = req.body?.reminderEnabled ?? req.body?.reminder_enabled;
@@ -378,20 +378,20 @@ export async function updateDeadlineReminders(
     const channels = req.body?.reminderChannels ?? req.body?.reminder_channels;
 
     if (enabled !== undefined) {
-      db.run(sql`UPDATE ${deadlines} SET reminder_enabled = ${enabled ? 1 : 0} WHERE id = ${deadlineId}`);
+      await db.execute(sql`UPDATE ${deadlines} SET reminder_enabled = ${enabled ? 1 : 0} WHERE id = ${deadlineId}`);
     }
     if (Array.isArray(times)) {
       const cleaned = times.map(Number).filter((n) => Number.isFinite(n) && n >= 0);
-      db.run(sql`UPDATE ${deadlines} SET reminder_times = ${JSON.stringify(cleaned)} WHERE id = ${deadlineId}`);
+      await db.execute(sql`UPDATE ${deadlines} SET reminder_times = ${JSON.stringify(cleaned)} WHERE id = ${deadlineId}`);
     }
     if (Array.isArray(channels)) {
       const cleaned = channels.map(String).filter((c) => c === 'push' || c === 'email');
       if (cleaned.length === 0) throw new BadRequestError('reminderChannels must include push and/or email');
-      db.run(sql`UPDATE ${deadlines} SET reminder_channels = ${JSON.stringify(cleaned)} WHERE id = ${deadlineId}`);
+      await db.execute(sql`UPDATE ${deadlines} SET reminder_channels = ${JSON.stringify(cleaned)} WHERE id = ${deadlineId}`);
     }
 
     persistNow();
-    const updated = db.select().from(deadlines).where(sql`${deadlines.id} = ${deadlineId}`).all()[0];
+    const updated = db.select().from(deadlines).where(sql`${deadlines.id} = ${deadlineId}`)[0];
     res.json({ success: true, data: mapDeadline(updated) });
   } catch (err) {
     next(err);

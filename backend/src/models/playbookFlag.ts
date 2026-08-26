@@ -1,12 +1,12 @@
-import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
+import { text, integer, pgTable, serial } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 import { documents } from './document';
 import { analysisResults } from './analysisResult';
 import { clauses } from './clause';
 import { playbookRules } from './playbookRule';
 
-export const playbookFlags = sqliteTable('playbook_flags', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+export const playbookFlags = pgTable('playbook_flags', {
+  id: serial('id').primaryKey(),
   documentId: integer('document_id').notNull().references(() => documents.id),
   analysisId: integer('analysis_id').notNull().references(() => analysisResults.id),
   clauseId: integer('clause_id').notNull().references(() => clauses.id),

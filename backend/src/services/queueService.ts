@@ -64,7 +64,7 @@ class QueueService extends EventEmitter {
       retryCount: 0,
       maxRetries: options?.maxRetries ?? this.defaultMaxRetries,
       timeoutMs: options?.timeoutMs ?? this.defaultTimeoutMs,
-    }).run();
+    });
 
     persistNow();
 
@@ -92,7 +92,7 @@ class QueueService extends EventEmitter {
 
     const pendingRows = db.select().from(queueJobs).where(
       sql`${queueJobs.status} = 'pending'`
-    ).all();
+    );
 
     if (pendingRows.length === 0) return;
 
@@ -105,7 +105,7 @@ class QueueService extends EventEmitter {
 
     this.activeJobs++;
 
-    db.run(sql`UPDATE ${queueJobs} SET status = 'processing', started_at = datetime('now') WHERE id = ${nextJob.id}`);
+    await db.execute(sql`UPDATE ${queueJobs} SET status = 'processing', started_at = NOW() WHERE id = ${nextJob.id}`);
     persistNow();
 
     this.emit('job:started', {
@@ -123,7 +123,7 @@ class QueueService extends EventEmitter {
       clearTimeout(timer);
       this.timers.delete(nextJob.id);
 
-      db.run(sql`UPDATE ${queueJobs} SET status = 'completed', completed_at = datetime('now') WHERE id = ${nextJob.id}`);
+      await db.execute(sql`UPDATE ${queueJobs} SET status = 'completed', completed_at = NOW() WHERE id = ${nextJob.id}`);
       persistNow();
 
       this.emit('job:completed', { id: nextJob.id, documentId: nextJob.documentId });
@@ -137,7 +137,7 @@ class QueueService extends EventEmitter {
         const newRetryCount = nextJob.retryCount + 1;
         const backoffMs = Math.min(1000 * Math.pow(2, newRetryCount), 30000);
 
-        db.run(sql`UPDATE ${queueJobs} SET status = 'retrying', retry_count = ${newRetryCount}, error = ${errorMessage} WHERE id = ${nextJob.id}`);
+        await db.execute(sql`UPDATE ${queueJobs} SET status = 'retrying', retry_count = ${newRetryCount}, error = ${errorMessage} WHERE id = ${nextJob.id}`);
         persistNow();
 
         this.emit('job:retrying', {
@@ -148,12 +148,12 @@ class QueueService extends EventEmitter {
         });
 
         setTimeout(() => {
-          db.run(sql`UPDATE ${queueJobs} SET status = 'pending' WHERE id = ${nextJob.id}`);
+          await db.execute(sql`UPDATE ${queueJobs} SET status = 'pending' WHERE id = ${nextJob.id}`);
           persistNow();
           this.processNext();
         }, backoffMs);
       } else {
-        db.run(sql`UPDATE ${queueJobs} SET status = 'failed', error = ${errorMessage}, completed_at = datetime('now') WHERE id = ${nextJob.id}`);
+        await db.execute(sql`UPDATE ${queueJobs} SET status = 'failed', error = ${errorMessage}, completed_at = NOW() WHERE id = ${nextJob.id}`);
         persistNow();
 
         this.emit('job:failed', { id: nextJob.id, documentId: nextJob.documentId, error: errorMessage });
@@ -168,10 +168,10 @@ class QueueService extends EventEmitter {
     const db = getDb();
     const rows = db.select().from(queueJobs).where(
       sql`${queueJobs.id} = ${jobId} AND ${queueJobs.status} = 'processing'`
-    ).all();
+    );
 
     if (rows.length > 0) {
-      db.run(sql`UPDATE ${queueJobs} SET status = 'failed', error = 'Job timed out', completed_at = datetime('now') WHERE id = ${jobId}`);
+      await db.execute(sql`UPDATE ${queueJobs} SET status = 'failed', error = 'Job timed out', completed_at = NOW() WHERE id = ${jobId}`);
       persistNow();
       this.emit('job:failed', { id: jobId, error: 'Job timed out' });
     }
@@ -179,13 +179,13 @@ class QueueService extends EventEmitter {
 
   getJob(jobId: string): Job | undefined {
     const db = getDb();
-    const rows = db.select().from(queueJobs).where(sql`${queueJobs.id} = ${jobId}`).all();
+    const rows = db.select().from(queueJobs).where(sql`${queueJobs.id} = ${jobId}`);
     return rows.length > 0 ? this.mapJob(rows[0]) : undefined;
   }
 
   getJobsByDocument(documentId: number): Job[] {
     const db = getDb();
-    const rows = db.select().from(queueJobs).where(sql`${queueJobs.documentId} = ${documentId}`).all();
+    const rows = db.select().from(queueJobs).where(sql`${queueJobs.documentId} = ${documentId}`);
     return rows.map((r) => this.mapJob(r));
   }
 
@@ -193,13 +193,13 @@ class QueueService extends EventEmitter {
     const db = getDb();
     const rows = db.select().from(queueJobs).where(
       sql`${queueJobs.status} IN ('pending', 'retrying')`
-    ).all();
+    );
     return rows.map((r) => this.mapJob(r));
   }
 
   getStats(): { total: number; pending: number; processing: number; completed: number; failed: number; retrying: number } {
     const db = getDb();
-    const result = db.all(sql`
+    const result = (await db.execute(sql`
       SELECT
         COUNT(*) as total,
         SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending,
@@ -233,7 +233,7 @@ class QueueService extends EventEmitter {
       setTimeout(() => {
         clearInterval(interval);
         const db = getDb();
-        db.run(sql`UPDATE ${queueJobs} SET status = 'failed', error = 'Shutdown timeout' WHERE status = 'processing'`);
+        await db.execute(sql`UPDATE ${queueJobs} SET status = 'failed', error = 'Shutdown timeout' WHERE status = 'processing'`);
         persistNow();
         this.activeJobs = 0;
         resolve();

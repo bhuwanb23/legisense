@@ -14,11 +14,11 @@ export function runPlaybookScan(documentId: number, analysisId: number, userId: 
   const db = getDb();
   const rules = db.select().from(playbookRules).where(
     sql`${playbookRules.userId} = ${userId} AND ${playbookRules.isActive} = 1`
-  ).all();
+  );
   if (rules.length === 0) return 0;
 
-  const clauseRows = db.select().from(clauses).where(sql`${clauses.analysisId} = ${analysisId}`).all();
-  db.run(sql`DELETE FROM ${playbookFlags} WHERE ${playbookFlags.analysisId} = ${analysisId}`);
+  const clauseRows = db.select().from(clauses).where(sql`${clauses.analysisId} = ${analysisId}`);
+  await db.execute(sql`DELETE FROM ${playbookFlags} WHERE ${playbookFlags.analysisId} = ${analysisId}`);
 
   let count = 0;
   for (const rule of rules) {
@@ -39,7 +39,7 @@ export function runPlaybookScan(documentId: number, analysisId: number, userId: 
         clauseId: clause.id,
         ruleId: rule.id,
         message: `Your Rule: ${rule.ruleText.slice(0, 180)}`,
-      }).run();
+      });
       count++;
     }
   }
@@ -49,12 +49,12 @@ export function runPlaybookScan(documentId: number, analysisId: number, userId: 
 
 export function listPlaybookFlags(documentId: number) {
   const db = getDb();
-  let rows = db.select().from(playbookFlags).where(sql`${playbookFlags.documentId} = ${documentId}`).all();
+  let rows = db.select().from(playbookFlags).where(sql`${playbookFlags.documentId} = ${documentId}`);
   if (rows.length === 0) {
-    const analysis = db.select().from(analysisResults).where(sql`${analysisResults.documentId} = ${documentId}`).all()[0];
+    const analysis = db.select().from(analysisResults).where(sql`${analysisResults.documentId} = ${documentId}`)[0];
     if (analysis) {
       runPlaybookScan(documentId, analysis.id, analysis.userId);
-      rows = db.select().from(playbookFlags).where(sql`${playbookFlags.documentId} = ${documentId}`).all();
+      rows = db.select().from(playbookFlags).where(sql`${playbookFlags.documentId} = ${documentId}`);
     }
   }
   return rows;

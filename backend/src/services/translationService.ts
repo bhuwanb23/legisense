@@ -119,12 +119,12 @@ export async function translateAnalysisResults(
   const db = getDb();
   const docRows = db.select().from(documents).where(
     sql`${documents.id} = ${documentId} AND ${documents.userId} = ${userId} AND ${documents.isDeleted} = 0`
-  ).all();
+  );
   if (!docRows[0]) throw new NotFoundError('Document');
 
   const analysisRows = db.select().from(analysisResults).where(
     sql`${analysisResults.documentId} = ${documentId}`
-  ).all();
+  );
   const analysis = analysisRows[0];
   if (!analysis) throw new BadRequestError('No analysis to translate. Analyze the document first.');
 
@@ -139,10 +139,10 @@ export async function translateAnalysisResults(
     return existing[targetLanguage];
   }
 
-  const clauseRows = db.select().from(clauses).where(sql`${clauses.analysisId} = ${analysis.id}`).all();
+  const clauseRows = db.select().from(clauses).where(sql`${clauses.analysisId} = ${analysis.id}`);
   const flagRows = db.select().from(jurisdictionFlags).where(
     sql`${jurisdictionFlags.analysisId} = ${analysis.id}`
-  ).all();
+  );
 
   const fallbackClauses = clauseRows.map((c) => ({
     id: c.id,
@@ -212,7 +212,7 @@ Keep ids unchanged. No markdown fences. No extra keys. No commentary.`;
   };
 
   existing[targetLanguage] = snapshot;
-  db.run(sql`UPDATE ${analysisResults} SET translations = ${JSON.stringify(existing)} WHERE id = ${analysis.id}`);
+  await db.execute(sql`UPDATE ${analysisResults} SET translations = ${JSON.stringify(existing)} WHERE id = ${analysis.id}`);
   persistNow();
 
   return snapshot;

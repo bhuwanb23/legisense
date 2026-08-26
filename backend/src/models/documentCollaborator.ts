@@ -1,10 +1,10 @@
-import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
+import { text, integer, pgTable, serial } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 import { documents } from './document';
 import { users } from './user';
 
-export const documentCollaborators = sqliteTable('document_collaborators', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+export const documentCollaborators = pgTable('document_collaborators', {
+  id: serial('id').primaryKey(),
   documentId: integer('document_id').notNull().references(() => documents.id),
   invitedBy: integer('invited_by').notNull().references(() => users.id),
   email: text('email').notNull(),

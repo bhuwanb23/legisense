@@ -50,12 +50,12 @@ export class Scheduler {
   private async resumeProcessingJobs(): Promise<void> {
     const db = getDb();
 
-    const stuck = db.all(sql`
+    const stuck = (await db.execute(sql`
       SELECT id FROM jobs WHERE status = 'processing'
     `) as { id: string }[];
 
     for (const row of stuck) {
-      db.run(sql`UPDATE jobs SET status = 'pending' WHERE id = ${row.id}`);
+      await db.execute(sql`UPDATE jobs SET status = 'pending' WHERE id = ${row.id}`);
     }
 
     if (stuck.length > 0) {

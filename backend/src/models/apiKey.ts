@@ -1,14 +1,14 @@
-import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
+import { text, integer, pgTable, serial, boolean } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 import { users } from './user';
 
-export const apiKeys = sqliteTable('api_keys', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+export const apiKeys = pgTable('api_keys', {
+  id: serial('id').primaryKey(),
   userId: integer('user_id').notNull().references(() => users.id),
   name: text('name').notNull().default('default'),
   keyPrefix: text('key_prefix').notNull(),
   keyHash: text('key_hash').notNull().unique(),
-  isActive: integer('is_active', { mode: 'boolean' }).notNull().default(true),
+  isActive: boolean('is_active').notNull().default(true),
   dailyCount: integer('daily_count').notNull().default(0),
   dailyReset: text('daily_reset'),
   lastUsedAt: text('last_used_at'),

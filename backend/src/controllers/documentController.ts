@@ -23,7 +23,7 @@ function resolveJurisdictionFromRequest(req: Request): { countryCode: string | n
 
   if (!countryCode && req.user) {
     const db = getDb();
-    const userRows = db.select().from(users).where(sql`${users.id} = ${req.user.id}`).all();
+    const userRows = db.select().from(users).where(sql`${users.id} = ${req.user.id}`);
     const parsed = parseUserJurisdiction(userRows[0]?.defaultJurisdiction);
     countryCode = parsed.countryCode;
     stateCode = stateCode || parsed.stateCode;
@@ -96,9 +96,9 @@ async function handleFileUpload(req: Request, res: Response, next: NextFunction)
       countryCode: jur.countryCode,
       stateCode: jur.stateCode,
       detectedType: resolveTypeHintFromRequest(req),
-    }).run();
+    });
 
-    const doc = db.select().from(documents).where(sql`${documents.storagePath} = ${storagePath}`).all()[0];
+    const doc = db.select().from(documents).where(sql`${documents.storagePath} = ${storagePath}`)[0];
     if (!doc) throw new Error('Failed to create document record');
     persistNow();
 
@@ -150,9 +150,9 @@ async function handleScanUpload(req: Request, res: Response, next: NextFunction)
       countryCode: jur.countryCode,
       stateCode: jur.stateCode,
       detectedType: resolveTypeHintFromRequest(req),
-    }).run();
+    });
 
-    const doc = db.select().from(documents).where(sql`${documents.storagePath} = ${storagePath}`).all()[0];
+    const doc = db.select().from(documents).where(sql`${documents.storagePath} = ${storagePath}`)[0];
     if (!doc) throw new Error('Failed to create document record');
     persistNow();
 
@@ -223,9 +223,9 @@ async function handlePasteUpload(req: Request, res: Response, next: NextFunction
       countryCode: jur.countryCode,
       stateCode: jur.stateCode,
       detectedType: resolveTypeHintFromRequest(req),
-    }).run();
+    });
 
-    const doc = db.select().from(documents).where(sql`${documents.originalName} = ${docTitle} AND ${documents.userId} = ${req.user.id}`).all().pop();
+    const doc = db.select().from(documents).where(sql`${documents.originalName} = ${docTitle} AND ${documents.userId} = ${req.user.id}`).pop();
     if (!doc) throw new Error('Failed to create document record');
     persistNow();
 
@@ -284,9 +284,9 @@ async function handleUrlUpload(req: Request, res: Response, next: NextFunction):
       countryCode: jur.countryCode,
       stateCode: jur.stateCode,
       detectedType: resolveTypeHintFromRequest(req),
-    }).run();
+    });
 
-    const doc = db.select().from(documents).where(sql`${documents.sourceUrl} = ${url} AND ${documents.userId} = ${req.user.id}`).all().pop();
+    const doc = db.select().from(documents).where(sql`${documents.sourceUrl} = ${url} AND ${documents.userId} = ${req.user.id}`).pop();
     if (!doc) throw new Error('Failed to create document record');
     persistNow();
 
@@ -332,12 +332,12 @@ export async function listDocuments(req: Request, res: Response, next: NextFunct
       whereClause = sql`${whereClause} AND ${documents.isFavorite} = 1`;
     }
 
-    const countRows = db.all(
+    const countRows = (await db.execute(
       sql`SELECT COUNT(*) as total FROM documents WHERE user_id = ${req.user.id} AND is_deleted = 0`
     ) as Array<{ total: number }>;
     const total = countRows[0]?.total || 0;
 
-    const rows = db.select().from(documents).where(whereClause).all();
+    const rows = db.select().from(documents).where(whereClause);
 
     const paginated = rows.slice(offset, offset + limit);
 
@@ -381,7 +381,7 @@ export async function getDocument(req: Request, res: Response, next: NextFunctio
 
     const rows = db.select().from(documents).where(
       sql`${documents.id} = ${documentId} AND ${documents.isDeleted} = 0`
-    ).all();
+    );
 
     const doc = rows[0];
     if (!doc || !getDocumentAccess(req.user.id, documentId)) {
@@ -425,7 +425,7 @@ export async function deleteDocument(req: Request, res: Response, next: NextFunc
 
     const rows = db.select().from(documents).where(
       sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = 0`
-    ).all();
+    );
 
     const doc = rows[0];
     if (!doc) {
@@ -436,8 +436,8 @@ export async function deleteDocument(req: Request, res: Response, next: NextFunc
       await deleteFile(doc.storagePath);
     }
 
-    db.run(
-      sql`UPDATE ${documents} SET is_deleted = 1, raw_text = NULL, encryption_iv = NULL, updated_at = datetime('now') WHERE id = ${documentId}`
+    await db.execute(
+      sql`UPDATE ${documents} SET is_deleted = 1, raw_text = NULL, encryption_iv = NULL, updated_at = NOW() WHERE id = ${documentId}`
     );
 
     persistNow();
@@ -463,7 +463,7 @@ export async function getDocumentStatus(req: Request, res: Response, next: NextF
 
     const rows = db.select().from(documents).where(
       sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id}`
-    ).all();
+    );
 
     const doc = rows[0];
     if (!doc) {
@@ -502,7 +502,7 @@ export async function processDocument(req: Request, res: Response, next: NextFun
     const db = getDb();
     const rows = db.select().from(documents).where(
       sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = 0`
-    ).all();
+    );
 
     if (!rows[0]) throw new NotFoundError('Document');
 
@@ -534,7 +534,7 @@ export async function getDocumentAnalysis(req: Request, res: Response, next: Nex
 
     const docRows = db.select().from(documents).where(
       sql`${documents.id} = ${documentId} AND ${documents.isDeleted} = 0`
-    ).all();
+    );
 
     if (!docRows[0] || !getDocumentAccess(req.user.id, documentId)) {
       throw new NotFoundError('Document');
@@ -542,7 +542,7 @@ export async function getDocumentAnalysis(req: Request, res: Response, next: Nex
 
     const analysisRows = db.select().from(analysisResults).where(
       sql`${analysisResults.documentId} = ${documentId}`
-    ).all();
+    );
 
     const analysis = analysisRows[0];
 
@@ -557,9 +557,9 @@ export async function getDocumentAnalysis(req: Request, res: Response, next: Nex
       return;
     }
 
-    const clauseRows = db.select().from(clauses).where(sql`${clauses.analysisId} = ${analysis.id}`).all();
-    const riskRows = db.select().from(riskItems).where(sql`${riskItems.analysisId} = ${analysis.id}`).all();
-    const deadlineRows = db.select().from(deadlines).where(sql`${deadlines.documentId} = ${documentId}`).all();
+    const clauseRows = db.select().from(clauses).where(sql`${clauses.analysisId} = ${analysis.id}`);
+    const riskRows = db.select().from(riskItems).where(sql`${riskItems.analysisId} = ${analysis.id}`);
+    const deadlineRows = db.select().from(deadlines).where(sql`${deadlines.documentId} = ${documentId}`);
     const cat = analysis.perCategoryFairness;
     let per: unknown = [];
     try { per = cat ? JSON.parse(cat) : {}; } catch { per = {}; }
@@ -661,19 +661,19 @@ export async function exportDocument(
     const db = getDb();
     const docRows = db.select().from(documents).where(
       sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = 0`
-    ).all();
+    );
 
     if (!docRows[0]) throw new NotFoundError('Document');
 
     const analysisRows = db.select().from(analysisResults).where(
       sql`${analysisResults.documentId} = ${documentId}`
-    ).all();
+    );
 
     const analysis = analysisRows[0];
     if (!analysis) throw new NotFoundError('Analysis not found for this document');
 
-    const clauseRows = db.select().from(clauses).where(sql`${clauses.analysisId} = ${analysis.id}`).all();
-    const deadlineRows = db.select().from(deadlines).where(sql`${deadlines.documentId} = ${documentId}`).all();
+    const clauseRows = db.select().from(clauses).where(sql`${clauses.analysisId} = ${analysis.id}`);
+    const deadlineRows = db.select().from(deadlines).where(sql`${deadlines.documentId} = ${documentId}`);
 
     const { generatePdfBuffer, generateDocxBuffer } = await import('../services/exportReportService');
 

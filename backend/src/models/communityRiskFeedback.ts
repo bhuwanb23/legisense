@@ -1,12 +1,12 @@
-import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
+import { text, integer, pgTable, serial } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 import { users } from './user';
 import { documents } from './document';
 import { clauses } from './clause';
 import { riskPatterns } from './riskPattern';
 
-export const communityRiskFeedback = sqliteTable('community_risk_feedback', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+export const communityRiskFeedback = pgTable('community_risk_feedback', {
+  id: serial('id').primaryKey(),
   userId: integer('user_id').notNull().references(() => users.id),
   documentId: integer('document_id').notNull().references(() => documents.id),
   clauseId: integer('clause_id').notNull().references(() => clauses.id),

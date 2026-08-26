@@ -1,8 +1,8 @@
-import { sqliteTable, text, integer, uniqueIndex } from 'drizzle-orm/sqlite-core';
+import { text, integer, uniqueIndex, pgTable, serial } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 
-export const jurisdictions = sqliteTable('jurisdictions', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+export const jurisdictions = pgTable('jurisdictions', {
+  id: serial('id').primaryKey(),
   countryCode: text('country_code').notNull(),
   countryName: text('country_name').notNull(),
   stateCode: text('state_code'),

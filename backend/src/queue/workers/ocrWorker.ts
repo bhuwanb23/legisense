@@ -21,8 +21,7 @@ export function createOcrWorker(): Worker {
     const docRows = db
       .select()
       .from(documents)
-      .where(sql`${documents.id} = ${documentId} AND ${documents.userId} = ${userId}`)
-      .all();
+      .where(sql`${documents.id} = ${documentId} AND ${documents.userId} = ${userId}`);
 
     if (docRows.length === 0) {
       emitToUser(userId, 'ocr:failed', { documentId, error: 'Document not found' });
@@ -31,8 +30,8 @@ export function createOcrWorker(): Worker {
 
     const doc = docRows[0];
 
-    db.run(
-      sql`UPDATE ${documents} SET processing_status = 'ocr_processing', updated_at = datetime('now') WHERE id = ${documentId}`
+    await db.execute(
+      sql`UPDATE ${documents} SET processing_status = 'ocr_processing', updated_at = NOW() WHERE id = ${documentId}`
     );
     persistNow();
     emitToUser(userId, 'ocr:started', { documentId });
@@ -76,8 +75,7 @@ export function createOcrWorker(): Worker {
       const userRecords = db
         .select()
         .from(users)
-        .where(sql`${users.id} = ${userId}`)
-        .all();
+        .where(sql`${users.id} = ${userId}`);
 
       if (userRecords.length > 0) {
         const prefLang = (userRecords[0] as Record<string, unknown>).preferredLanguage as string | undefined;
@@ -136,13 +134,13 @@ export function createOcrWorker(): Worker {
       storedIv = iv;
     }
 
-    db.run(
+    await db.execute(
       sql`UPDATE ${documents} SET
         raw_text = ${storedText},
         encryption_iv = ${storedIv},
         processing_status = 'text_extracted',
         detected_language = ${ocrResult.languageUsed},
-        updated_at = datetime('now')
+        updated_at = NOW()
       WHERE id = ${documentId}`
     );
     persistNow();
@@ -164,8 +162,8 @@ export function createOcrWorker(): Worker {
 }
 
 function failOcr(db: ReturnType<typeof getDb>, documentId: number, userId: number, error: string): void {
-  db.run(
-    sql`UPDATE ${documents} SET processing_status = 'failed', updated_at = datetime('now') WHERE id = ${documentId}`
+  await db.execute(
+    sql`UPDATE ${documents} SET processing_status = 'failed', updated_at = NOW() WHERE id = ${documentId}`
   );
   persistNow();
   emitToUser(userId, 'ocr:failed', { documentId, error });

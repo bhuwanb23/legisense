@@ -7,7 +7,7 @@ import { legalRuleSeeds } from './legalRules';
 export function seedJurisdictionsAndRules(): void {
   const db = getDb();
 
-  const existing = db.select({ count: sql<number>`count(*)` }).from(jurisdictions).all();
+  const existing = db.select({ count: sql<number>`count(*)` }).from(jurisdictions);
   if (Number(existing[0]?.count ?? 0) === 0) {
     let seeded = 0;
     for (const row of jurisdictionSeeds) {
@@ -17,7 +17,7 @@ export function seedJurisdictionsAndRules(): void {
           countryName: row.countryName,
           stateCode: row.stateCode,
           stateName: row.stateName,
-        }).run();
+        });
         seeded++;
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err);
@@ -27,9 +27,9 @@ export function seedJurisdictionsAndRules(): void {
     console.log(`Seeded ${seeded} jurisdictions.`);
   }
 
-  const existingRules = db.select({ count: sql<number>`count(*)` }).from(legalRules).all();
+  const existingRules = db.select({ count: sql<number>`count(*)` }).from(legalRules);
   if (Number(existingRules[0]?.count ?? 0) === 0) {
-    const allJurisdictions = db.select().from(jurisdictions).all();
+    const allJurisdictions = db.select().from(jurisdictions);
     const byKey = new Map<string, number>();
     for (const j of allJurisdictions) {
       byKey.set(`${j.countryCode}|${j.stateCode ?? ''}`, j.id);
@@ -50,7 +50,7 @@ export function seedJurisdictionsAndRules(): void {
           legalReference: rule.legalReference,
           severity: rule.severity,
           conflictingJurisdictions: JSON.stringify(rule.conflictingJurisdictions ?? []),
-        }).run();
+        });
         seeded++;
       } catch {
         // skip duplicates on re-seed races

@@ -45,11 +45,11 @@ export async function runMissingClauseCheck(
   const type = normalizeDocType(documentType);
   const typeVariants = type === 'nda' ? ['nda', 'non_disclosure'] : [type];
 
-  const templates = db.select().from(requiredClausesTemplates).all().filter((t) =>
+  const templates = db.select().from(requiredClausesTemplates).filter((t) =>
     typeVariants.includes(t.documentType),
   );
 
-  const clauseRows = db.select().from(clauses).where(sql`${clauses.analysisId} = ${analysisId}`).all();
+  const clauseRows = db.select().from(clauses).where(sql`${clauses.analysisId} = ${analysisId}`);
   const corpus = clauseRows.map((c) => `${c.clauseTitle || ''} ${c.originalText || ''}`).join('\n').toLowerCase();
 
   const likelyMissing: typeof templates = [];
@@ -156,7 +156,7 @@ Use the required list as the source of truth. Mark incomplete when a topic is me
     console.error('Missing clause AI check failed:', err instanceof Error ? err.message : err);
   }
 
-  db.run(sql`UPDATE ${analysisResults} SET missing_clauses = ${JSON.stringify(structured)} WHERE id = ${analysisId}`);
+  await db.execute(sql`UPDATE ${analysisResults} SET missing_clauses = ${JSON.stringify(structured)} WHERE id = ${analysisId}`);
   persistNow();
   return structured;
 }

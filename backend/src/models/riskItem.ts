@@ -1,17 +1,17 @@
-import { sqliteTable, text, integer, real } from 'drizzle-orm/sqlite-core';
+import { text, integer, pgTable, serial, doublePrecision } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 import { analysisResults } from './analysisResult';
 import { clauses } from './clause';
 
-export const riskItems = sqliteTable('risk_items', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+export const riskItems = pgTable('risk_items', {
+  id: serial('id').primaryKey(),
   analysisId: integer('analysis_id').notNull().references(() => analysisResults.id),
   clauseId: integer('clause_id').references(() => clauses.id),
   riskType: text('risk_type').notNull(),
   title: text('title').notNull(),
   description: text('description'),
   severity: text('severity').notNull(),
-  severityScore: real('severity_score'),
+  severityScore: doublePrecision('severity_score'),
   recommendation: text('recommendation'),
   legalReference: text('legal_reference'),
   jurisdiction: text('jurisdiction'),

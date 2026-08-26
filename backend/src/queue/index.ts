@@ -35,7 +35,7 @@ let scheduler: Scheduler;
 
 export function ensureJobsTable(): void {
   const db = getDb();
-  db.run(sql`
+  await db.execute(sql`
     CREATE TABLE IF NOT EXISTS jobs (
       id TEXT PRIMARY KEY,
       queue_name TEXT NOT NULL,
@@ -50,15 +50,15 @@ export function ensureJobsTable(): void {
       error TEXT,
       delay_until TEXT,
       repeat_job_key TEXT,
-      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      created_at TEXT NOT NULL DEFAULT (NOW()),
       started_at TEXT,
       completed_at TEXT,
       failed_at TEXT,
       returnvalue TEXT
     )
   `);
-  db.run(sql`CREATE INDEX IF NOT EXISTS idx_jobs_queue_status ON jobs(queue_name, status, priority)`);
-  db.run(sql`CREATE INDEX IF NOT EXISTS idx_jobs_repeat_key ON jobs(repeat_job_key)`);
+  await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_jobs_queue_status ON jobs(queue_name, status, priority)`);
+  await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_jobs_repeat_key ON jobs(repeat_job_key)`);
   console.log('Jobs table created/verified.');
 }
 

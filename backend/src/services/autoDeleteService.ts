@@ -30,9 +30,9 @@ async function runAutoDeleteCheck(): Promise<void> {
     }).from(documents)
       .where(
         sql`${documents.autoDeleteAt} IS NOT NULL
-            AND ${documents.autoDeleteAt} < datetime('now')
+            AND ${documents.autoDeleteAt} < NOW()
             AND ${documents.isDeleted} = 0`
-      ).all();
+      );
 
     if (expired.length === 0) return;
 
@@ -43,11 +43,11 @@ async function runAutoDeleteCheck(): Promise<void> {
         // File may already be gone — continue
       }
 
-      db.run(sql`UPDATE ${documents}
+      await db.execute(sql`UPDATE ${documents}
         SET is_deleted = 1,
             raw_text = NULL,
             encryption_iv = NULL,
-            updated_at = datetime('now')
+            updated_at = NOW()
         WHERE id = ${doc.id}`);
 
       console.log(`Auto-deleted document ${doc.id} (file: ${doc.storagePath})`);

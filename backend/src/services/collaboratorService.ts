@@ -16,7 +16,7 @@ export function inviteCollaborator(
   const db = getDb();
   const doc = db.select().from(documents).where(
     sql`${documents.id} = ${documentId} AND ${documents.userId} = ${ownerId} AND ${documents.isDeleted} = 0`
-  ).all()[0];
+  )[0];
   if (!doc) throw new NotFoundError('Document');
   const clean = email.trim().toLowerCase();
   if (!clean.includes('@')) throw new BadRequestError('Valid email is required');
@@ -24,7 +24,7 @@ export function inviteCollaborator(
 
   const existing = db.select().from(documentCollaborators).where(
     sql`${documentCollaborators.documentId} = ${documentId} AND ${documentCollaborators.email} = ${clean} AND ${documentCollaborators.status} != 'revoked'`
-  ).all()[0];
+  )[0];
   if (existing) {
     return {
       token: existing.token,
@@ -35,7 +35,7 @@ export function inviteCollaborator(
   }
 
   const token = crypto.randomBytes(16).toString('hex');
-  const invitee = db.select().from(users).where(sql`${users.email} = ${clean}`).all()[0];
+  const invitee = db.select().from(users).where(sql`${users.email} = ${clean}`)[0];
   db.insert(documentCollaborators).values({
     documentId,
     invitedBy: ownerId,
@@ -44,7 +44,7 @@ export function inviteCollaborator(
     role,
     token,
     status: 'pending',
-  }).run();
+  });
   persistNow();
   if (invitee) {
     createNotification(
@@ -67,12 +67,12 @@ export function acceptInvite(token: string, userId: number, email: string): { do
   const db = getDb();
   const row = db.select().from(documentCollaborators).where(
     sql`${documentCollaborators.token} = ${token}`
-  ).all()[0];
+  )[0];
   if (!row || row.status === 'revoked') throw new NotFoundError('Invite');
   if (row.email.toLowerCase() !== email.toLowerCase()) {
     throw new ForbiddenError('Invite email does not match this account');
   }
-  db.run(sql`UPDATE ${documentCollaborators} SET status = 'accepted', user_id = ${userId} WHERE id = ${row.id}`);
+  await db.execute(sql`UPDATE ${documentCollaborators} SET status = 'accepted', user_id = ${userId} WHERE id = ${row.id}`);
   persistNow();
   return { documentId: row.documentId, role: row.role };
 }
@@ -81,24 +81,24 @@ export function listCollaborators(documentId: number, ownerId: number) {
   const db = getDb();
   const doc = db.select().from(documents).where(
     sql`${documents.id} = ${documentId} AND ${documents.userId} = ${ownerId}`
-  ).all()[0];
+  )[0];
   if (!doc) throw new NotFoundError('Document');
   return db.select().from(documentCollaborators).where(
     sql`${documentCollaborators.documentId} = ${documentId} AND ${documentCollaborators.status} != 'revoked'`
-  ).all();
+  );
 }
 
 export function revokeCollaborator(documentId: number, ownerId: number, collabId: number): void {
   const db = getDb();
   const doc = db.select().from(documents).where(
     sql`${documents.id} = ${documentId} AND ${documents.userId} = ${ownerId}`
-  ).all()[0];
+  )[0];
   if (!doc) throw new NotFoundError('Document');
   const row = db.select().from(documentCollaborators).where(
     sql`${documentCollaborators.id} = ${collabId} AND ${documentCollaborators.documentId} = ${documentId}`
-  ).all()[0];
+  )[0];
   if (!row) throw new NotFoundError('Collaborator');
-  db.run(sql`UPDATE ${documentCollaborators} SET status = 'revoked' WHERE id = ${collabId}`);
+  await db.execute(sql`UPDATE ${documentCollaborators} SET status = 'revoked' WHERE id = ${collabId}`);
   persistNow();
 }
 
@@ -108,13 +108,13 @@ export function getDocumentAccess(userId: number, documentId: number): { role: A
   const db = getDb();
   const owned = db.select().from(documents).where(
     sql`${documents.id} = ${documentId} AND ${documents.userId} = ${userId} AND ${documents.isDeleted} = 0`
-  ).all()[0];
+  )[0];
   if (owned) return { role: 'owner' };
   const collab = db.select().from(documentCollaborators).where(
     sql`${documentCollaborators.documentId} = ${documentId}
         AND ${documentCollaborators.userId} = ${userId}
         AND ${documentCollaborators.status} = 'accepted'`
-  ).all()[0];
+  )[0];
   if (!collab) return null;
   return { role: collab.role === 'commenter' ? 'commenter' : 'viewer' };
 }

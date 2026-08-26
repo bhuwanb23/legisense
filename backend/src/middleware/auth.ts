@@ -48,8 +48,7 @@ export function authenticate(req: Request, _res: Response, next: NextFunction): 
         isActive: users.isActive,
       })
       .from(users)
-      .where(sql`${users.id} = ${decoded.userId}`)
-      .all();
+      .where(sql`${users.id} = ${decoded.userId}`);
 
     const user = rows[0];
 
@@ -133,8 +132,7 @@ export function optionalAuth(req: Request, _res: Response, next: NextFunction): 
         isActive: users.isActive,
       })
       .from(users)
-      .where(sql`${users.id} = ${decoded.userId}`)
-      .all();
+      .where(sql`${users.id} = ${decoded.userId}`);
 
     const user = rows[0];
 

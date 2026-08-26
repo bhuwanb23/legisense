@@ -1,15 +1,15 @@
-import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
+import { text, integer, pgTable, serial, boolean } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 import { users } from './user';
 
-export const sessions = sqliteTable('sessions', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+export const sessions = pgTable('sessions', {
+  id: serial('id').primaryKey(),
   userId: integer('user_id').notNull().references(() => users.id),
   refreshToken: text('refresh_token').notNull().unique(),
   deviceInfo: text('device_info'),
   ipAddress: text('ip_address'),
   expiresAt: text('expires_at').notNull(),
-  isRevoked: integer('is_revoked', { mode: 'boolean' }).notNull().default(false),
+  isRevoked: boolean('is_revoked').notNull().default(false),
   createdAt: text('created_at').notNull().default(sql`(datetime('now'))`),
 });
 

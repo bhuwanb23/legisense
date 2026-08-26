@@ -1,8 +1,8 @@
-import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
+import { text, integer, pgTable, serial, boolean } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 
-export const users = sqliteTable('users', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+export const users = pgTable('users', {
+  id: serial('id').primaryKey(),
   fullName: text('full_name').notNull(),
   email: text('email').notNull().unique(),
   phoneNumber: text('phone_number'),
@@ -15,8 +15,8 @@ export const users = sqliteTable('users', {
   nickname: text('nickname'),
   preferredDocumentTypes: text('preferred_document_types'),
   oauthSubject: text('oauth_subject'),
-  isVerified: integer('is_verified', { mode: 'boolean' }).notNull().default(false),
-  isActive: integer('is_active', { mode: 'boolean' }).notNull().default(true),
+  isVerified: boolean('is_verified').notNull().default(false),
+  isActive: boolean('is_active').notNull().default(true),
   createdAt: text('created_at').notNull().default(sql`(datetime('now'))`),
   updatedAt: text('updated_at').notNull().default(sql`(datetime('now'))`),
   lastLoginAt: text('last_login_at'),

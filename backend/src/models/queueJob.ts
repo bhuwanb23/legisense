@@ -1,7 +1,7 @@
-import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
+import { text, integer, pgTable } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 
-export const queueJobs = sqliteTable('queue_jobs', {
+export const queueJobs = pgTable('queue_jobs', {
   id: text('id').primaryKey(),
   documentId: integer('document_id').notNull(),
   userId: integer('user_id').notNull(),

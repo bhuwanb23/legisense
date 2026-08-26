@@ -1,10 +1,10 @@
-import { sqliteTable, text, integer, real } from 'drizzle-orm/sqlite-core';
+import { text, integer, pgTable, serial, doublePrecision } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 import { documents } from './document';
 import { users } from './user';
 
-export const chatMessages = sqliteTable('chat_messages', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+export const chatMessages = pgTable('chat_messages', {
+  id: serial('id').primaryKey(),
   documentId: integer('document_id').notNull().references(() => documents.id),
   userId: integer('user_id').notNull().references(() => users.id),
   sessionId: text('session_id').notNull(),
@@ -13,7 +13,7 @@ export const chatMessages = sqliteTable('chat_messages', {
   citedClauseIds: text('cited_clause_ids'),
   citedPages: text('cited_pages'),
   tokensUsed: integer('tokens_used'),
-  responseTime: real('response_time'),
+  responseTime: doublePrecision('response_time'),
   createdAt: text('created_at').notNull().default(sql`(datetime('now'))`),
 });
 

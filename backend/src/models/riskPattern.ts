@@ -1,8 +1,8 @@
-import { sqliteTable, text, integer, real } from 'drizzle-orm/sqlite-core';
+import { text, integer, real, pgTable, serial } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 
-export const riskPatterns = sqliteTable('risk_patterns', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+export const riskPatterns = pgTable('risk_patterns', {
+  id: serial('id').primaryKey(),
   patternName: text('pattern_name').notNull(),
   patternCategory: text('pattern_category').notNull(),
   severity: text('severity').notNull(),

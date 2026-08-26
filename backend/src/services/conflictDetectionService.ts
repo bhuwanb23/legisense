@@ -36,11 +36,11 @@ export async function runConflictDetection(
   flags: CreatedFlag[],
 ): Promise<void> {
   const db = getDb();
-  const docRows = db.select().from(documents).where(sql`${documents.id} = ${documentId}`).all();
+  const docRows = db.select().from(documents).where(sql`${documents.id} = ${documentId}`);
   const doc = docRows[0];
   if (!doc?.countryCode) return;
 
-  const userRows = db.select().from(users).where(sql`${users.id} = ${doc.userId}`).all();
+  const userRows = db.select().from(users).where(sql`${users.id} = ${doc.userId}`);
   const parsed = parseUserJurisdiction(userRows[0]?.defaultJurisdiction);
   const allowed = allowedStateCodes(doc.countryCode, doc.stateCode || parsed.stateCode, parsed.history);
 
@@ -62,7 +62,7 @@ export async function runConflictDetection(
 
     if (filtered.length === 0) continue;
 
-    const clauseRows = db.select().from(clauses).where(sql`${clauses.id} = ${flag.clauseId}`).all();
+    const clauseRows = db.select().from(clauses).where(sql`${clauses.id} = ${flag.clauseId}`);
     const title = clauseRows[0]?.clauseTitle || flag.ruleTitle || 'Clause';
 
     const existing = byClause.get(flag.clauseId) || { clauseTitle: title, conflicts: [] };
@@ -103,7 +103,7 @@ export async function runConflictDetection(
       clauseId,
       clauseTitle: data.clauseTitle,
       conflictData: JSON.stringify(conflictData),
-    }).run();
+    });
   }
 
   persistNow();
@@ -113,12 +113,12 @@ export function getFilteredStateConflicts(documentId: number, userId: number) {
   const db = getDb();
   const docRows = db.select().from(documents).where(
     sql`${documents.id} = ${documentId} AND ${documents.userId} = ${userId}`
-  ).all();
+  );
   if (!docRows[0]) return null;
 
   const rows = db.select().from(jurisdictionConflicts).where(
     sql`${jurisdictionConflicts.documentId} = ${documentId}`
-  ).all();
+  );
 
   return rows.map((r) => ({
     id: r.id,

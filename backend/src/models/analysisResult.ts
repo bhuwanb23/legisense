@@ -1,17 +1,17 @@
-import { sqliteTable, text, integer, real } from 'drizzle-orm/sqlite-core';
+import { text, integer, pgTable, serial, doublePrecision } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 import { users } from './user';
 import { documents } from './document';
 
-export const analysisResults = sqliteTable('analysis_results', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+export const analysisResults = pgTable('analysis_results', {
+  id: serial('id').primaryKey(),
   documentId: integer('document_id').notNull().unique().references(() => documents.id),
   userId: integer('user_id').notNull().references(() => users.id),
   documentType: text('document_type'),
-  detectedTypeConfidence: real('detected_type_confidence'),
-  overallRiskScore: real('overall_risk_score'),
+  detectedTypeConfidence: doublePrecision('detected_type_confidence'),
+  overallRiskScore: doublePrecision('overall_risk_score'),
   riskLevel: text('risk_level'),
-  fairnessScore: real('fairness_score'),
+  fairnessScore: doublePrecision('fairness_score'),
   favorsParty: text('favors_party'),
   imbalanceReason: text('imbalance_reason'),
   perCategoryFairness: text('per_category_fairness'),
@@ -23,7 +23,7 @@ export const analysisResults = sqliteTable('analysis_results', {
   jurisdictionFlags: text('jurisdiction_flags'),
   jurisdictionCheckStatus: text('jurisdiction_check_status').default('pending'),
   breachScenarios: text('breach_scenarios'),
-  processingTime: real('processing_time'),
+  processingTime: doublePrecision('processing_time'),
   aiModelUsed: text('ai_model_used'),
   analysisLanguage: text('analysis_language'),
   translations: text('translations').default('{}'),

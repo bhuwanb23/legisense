@@ -1,63 +1,61 @@
-import initSqlJs, { type Database } from 'sql.js';
-import { drizzle, type SQLJsDatabase } from 'drizzle-orm/sql-js';
-import path from 'path';
-import fs from 'fs';
+import { Pool } from 'pg';
+import { drizzle, type NodePgDatabase } from 'drizzle-orm/node-postgres';
+import * as schema from '../models';
 
-const DB_DIR = path.resolve(__dirname, '../../data');
-const DB_PATH = path.join(DB_DIR, 'legisense.db');
+let pool: Pool | null = null;
+let db: NodePgDatabase<typeof schema> | null = null;
 
-let sqlClient: Database | null = null;
-let db: SQLJsDatabase | null = null;
+function getConnectionString(): string {
+  const url = process.env.DATABASE_URL;
+  if (!url) {
+    throw new Error(
+      'DATABASE_URL is not set. For Render PostgreSQL, set DATABASE_URL in your environment variables.',
+    );
+  }
+  return url;
+}
 
-export async function initDatabase(): Promise<SQLJsDatabase> {
+export async function initDatabase(): Promise<NodePgDatabase<typeof schema>> {
   if (db) return db;
 
-  if (!fs.existsSync(DB_DIR)) {
-    fs.mkdirSync(DB_DIR, { recursive: true });
+  pool = new Pool({
+    connectionString: getConnectionString(),
+    max: 10,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 10000,
+  });
+
+  // Test the connection
+  const client = await pool.connect();
+  try {
+    const result = await client.query('SELECT NOW()');
+    console.log(`Database connected: ${result.rows[0].now}`);
+  } finally {
+    client.release();
   }
 
-  const SQL = await initSqlJs();
-
-  if (fs.existsSync(DB_PATH)) {
-    const buffer = fs.readFileSync(DB_PATH);
-    sqlClient = new SQL.Database(buffer);
-  } else {
-    sqlClient = new SQL.Database();
-  }
-
-  sqlClient.run('PRAGMA foreign_keys = ON');
-
-  db = drizzle(sqlClient);
-
-  persistDatabase();
-
-  console.log(`Database connected: ${DB_PATH}`);
+  db = drizzle(pool, { schema });
   return db;
 }
 
-function persistDatabase(): void {
-  if (!sqlClient) return;
-
-  const data = sqlClient.export();
-  const buffer = Buffer.from(data);
-  fs.writeFileSync(DB_PATH, buffer);
-}
-
-export function getDb(): SQLJsDatabase {
+export function getDb(): NodePgDatabase<typeof schema> {
   if (!db) throw new Error('Database not initialized. Call initDatabase() first.');
   return db;
 }
 
+/**
+ * No-op in PostgreSQL — data is persisted by the managed database.
+ * Kept for call-site compatibility.
+ */
 export function persistNow(): void {
-  persistDatabase();
+  // PostgreSQL handles persistence automatically.
 }
 
-export function closeDatabase(): void {
-  if (sqlClient) {
-    persistDatabase();
-    sqlClient.close();
-    sqlClient = null;
+export async function closeDatabase(): Promise<void> {
+  if (pool) {
+    await pool.end();
+    pool = null;
     db = null;
-    console.log('Database closed.');
+    console.log('Database connection pool closed.');
   }
 }

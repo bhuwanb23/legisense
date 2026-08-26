@@ -1,9 +1,9 @@
-import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
+import { text, integer, pgTable, serial } from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 import { jurisdictions } from './jurisdiction';
 
-export const legalRules = sqliteTable('legal_rules', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+export const legalRules = pgTable('legal_rules', {
+  id: serial('id').primaryKey(),
   jurisdictionId: integer('jurisdiction_id').notNull().references(() => jurisdictions.id),
   documentType: text('document_type').notNull(),
   ruleTitle: text('rule_title').notNull(),

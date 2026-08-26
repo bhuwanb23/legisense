@@ -31,8 +31,7 @@ export async function register(
     const existing = db
       .select({ id: users.id })
       .from(users)
-      .where(sql`${users.email} = ${email}`)
-      .all();
+      .where(sql`${users.email} = ${email}`);
 
     if (existing.length > 0) {
       throw new ConflictError('Email already registered');
@@ -50,14 +49,12 @@ export async function register(
         authProvider: 'email',
         isVerified: false,
         isActive: true,
-      })
-      .run();
+      });
 
     const userRows = db
       .select({ id: users.id, email: users.email })
       .from(users)
-      .where(sql`${users.email} = ${email}`)
-      .all();
+      .where(sql`${users.email} = ${email}`);
 
     const user = userRows[0];
     if (!user) throw new Error('Failed to create user');
@@ -75,11 +72,10 @@ export async function register(
         ipAddress: req.ip || null,
         expiresAt: thirtyDays.toISOString(),
         isRevoked: false,
-      })
-      .run();
+      });
 
-    db.run(
-      sql`UPDATE ${users} SET last_login_at = datetime('now') WHERE id = ${user.id}`
+    await db.execute(
+      sql`UPDATE ${users} SET last_login_at = NOW() WHERE id = ${user.id}`
     );
 
     persistNow();
@@ -110,8 +106,7 @@ export async function login(
     const userRows = db
       .select()
       .from(users)
-      .where(sql`${users.email} = ${email}`)
-      .all();
+      .where(sql`${users.email} = ${email}`);
 
     const user = userRows[0];
 
@@ -141,11 +136,10 @@ export async function login(
         ipAddress: req.ip || null,
         expiresAt: thirtyDays.toISOString(),
         isRevoked: false,
-      })
-      .run();
+      });
 
-    db.run(
-      sql`UPDATE ${users} SET last_login_at = datetime('now') WHERE id = ${user.id}`
+    await db.execute(
+      sql`UPDATE ${users} SET last_login_at = NOW() WHERE id = ${user.id}`
     );
 
     persistNow();
@@ -185,11 +179,11 @@ export async function logout(
     const db = getDb();
 
     if (refreshToken) {
-      db.run(
+      await db.execute(
         sql`UPDATE ${sessions} SET is_revoked = 1 WHERE refresh_token = ${refreshToken} AND user_id = ${req.user.id}`
       );
     } else {
-      db.run(
+      await db.execute(
         sql`UPDATE ${sessions} SET is_revoked = 1 WHERE user_id = ${req.user.id}`
       );
     }
@@ -224,8 +218,7 @@ export async function refreshToken(
       .from(sessions)
       .where(
         sql`${sessions.refreshToken} = ${token} AND ${sessions.isRevoked} = 0`
-      )
-      .all();
+      );
 
     const session = sessionRows[0];
     if (!session) {
@@ -236,15 +229,14 @@ export async function refreshToken(
       throw new UnauthorizedError('Refresh token has expired');
     }
 
-    db.run(
+    await db.execute(
       sql`UPDATE ${sessions} SET is_revoked = 1 WHERE id = ${session.id}`
     );
 
     const userRows = db
       .select({ id: users.id, email: users.email, isActive: users.isActive })
       .from(users)
-      .where(sql`${users.id} = ${decoded.userId}`)
-      .all();
+      .where(sql`${users.id} = ${decoded.userId}`);
 
     const user = userRows[0];
     if (!user || !user.isActive) {
@@ -264,8 +256,7 @@ export async function refreshToken(
         ipAddress: req.ip || null,
         expiresAt: thirtyDays.toISOString(),
         isRevoked: false,
-      })
-      .run();
+      });
 
     persistNow();
 
@@ -293,8 +284,7 @@ export async function forgotPassword(
     const userRows = db
       .select({ id: users.id })
       .from(users)
-      .where(sql`${users.email} = ${email}`)
-      .all();
+      .where(sql`${users.email} = ${email}`);
 
     if (userRows.length === 0) {
       res.json({
@@ -343,8 +333,7 @@ export async function resetPassword(
     const userRows = db
       .select({ id: users.id })
       .from(users)
-      .where(sql`${users.id} = ${decoded.userId}`)
-      .all();
+      .where(sql`${users.id} = ${decoded.userId}`);
 
     if (userRows.length === 0) {
       throw new NotFoundError('User');
@@ -352,11 +341,11 @@ export async function resetPassword(
 
     const passwordHash = await bcrypt.hash(newPassword, BCRYPT_ROUNDS);
 
-    db.run(
-      sql`UPDATE ${users} SET password_hash = ${passwordHash}, updated_at = datetime('now') WHERE id = ${decoded.userId}`
+    await db.execute(
+      sql`UPDATE ${users} SET password_hash = ${passwordHash}, updated_at = NOW() WHERE id = ${decoded.userId}`
     );
 
-    db.run(
+    await db.execute(
       sql`UPDATE ${sessions} SET is_revoked = 1 WHERE user_id = ${decoded.userId}`
     );
 
@@ -425,8 +414,7 @@ export async function oauthGoogle(
     let userRows = db
       .select()
       .from(users)
-      .where(sql`${users.email} = ${googleUser.email}`)
-      .all();
+      .where(sql`${users.email} = ${googleUser.email}`);
 
     let user = userRows[0];
 
@@ -440,19 +428,17 @@ export async function oauthGoogle(
           passwordHash: null,
           isVerified: true,
           isActive: true,
-        })
-        .run();
+        });
 
       userRows = db
         .select()
         .from(users)
-        .where(sql`${users.email} = ${googleUser.email}`)
-        .all();
+        .where(sql`${users.email} = ${googleUser.email}`);
 
       user = userRows[0];
       if (!user) throw new Error('Failed to create user');
     } else if (user.authProvider === 'email') {
-      db.run(sql`UPDATE ${users} SET oauth_subject = ${googleUser.sub}, auth_provider = 'google' WHERE id = ${user.id}`);
+      await db.execute(sql`UPDATE ${users} SET oauth_subject = ${googleUser.sub}, auth_provider = 'google' WHERE id = ${user.id}`);
     }
 
     const tokenPayload = { userId: user.id, email: user.email };
@@ -468,10 +454,9 @@ export async function oauthGoogle(
         ipAddress: req.ip || null,
         expiresAt: thirtyDays.toISOString(),
         isRevoked: false,
-      })
-      .run();
+      });
 
-    db.run(sql`UPDATE ${users} SET last_login_at = datetime('now') WHERE id = ${user.id}`);
+    await db.execute(sql`UPDATE ${users} SET last_login_at = NOW() WHERE id = ${user.id}`);
 
     persistNow();
 
@@ -506,8 +491,7 @@ export async function oauthFacebook(
     let userRows = db
       .select()
       .from(users)
-      .where(sql`${users.email} = ${fbUser.email}`)
-      .all();
+      .where(sql`${users.email} = ${fbUser.email}`);
 
     let user = userRows[0];
 
@@ -521,19 +505,17 @@ export async function oauthFacebook(
           passwordHash: null,
           isVerified: true,
           isActive: true,
-        })
-        .run();
+        });
 
       userRows = db
         .select()
         .from(users)
-        .where(sql`${users.email} = ${fbUser.email}`)
-        .all();
+        .where(sql`${users.email} = ${fbUser.email}`);
 
       user = userRows[0];
       if (!user) throw new Error('Failed to create user');
     } else if (user.authProvider === 'email') {
-      db.run(sql`UPDATE ${users} SET oauth_subject = ${fbUser.id}, auth_provider = 'facebook' WHERE id = ${user.id}`);
+      await db.execute(sql`UPDATE ${users} SET oauth_subject = ${fbUser.id}, auth_provider = 'facebook' WHERE id = ${user.id}`);
     }
 
     const tokenPayload = { userId: user.id, email: user.email };
@@ -549,10 +531,9 @@ export async function oauthFacebook(
         ipAddress: req.ip || null,
         expiresAt: thirtyDays.toISOString(),
         isRevoked: false,
-      })
-      .run();
+      });
 
-    db.run(sql`UPDATE ${users} SET last_login_at = datetime('now') WHERE id = ${user.id}`);
+    await db.execute(sql`UPDATE ${users} SET last_login_at = NOW() WHERE id = ${user.id}`);
 
     persistNow();
 
@@ -619,8 +600,7 @@ export async function verifyOtpCode(
     let userRows = db
       .select()
       .from(users)
-      .where(sql`${users.email} = ${email}`)
-      .all();
+      .where(sql`${users.email} = ${email}`);
 
     let user = userRows[0];
 
@@ -634,14 +614,12 @@ export async function verifyOtpCode(
           passwordHash: null,
           isVerified: true,
           isActive: true,
-        })
-        .run();
+        });
 
       userRows = db
         .select()
         .from(users)
-        .where(sql`${users.email} = ${email}`)
-        .all();
+        .where(sql`${users.email} = ${email}`);
 
       user = userRows[0];
       if (!user) throw new Error('Failed to create user');
@@ -660,10 +638,9 @@ export async function verifyOtpCode(
         ipAddress: req.ip || null,
         expiresAt: thirtyDays.toISOString(),
         isRevoked: false,
-      })
-      .run();
+      });
 
-    db.run(sql`UPDATE ${users} SET last_login_at = datetime('now') WHERE id = ${user.id}`);
+    await db.execute(sql`UPDATE ${users} SET last_login_at = NOW() WHERE id = ${user.id}`);
 
     persistNow();
     clearOtp(email);

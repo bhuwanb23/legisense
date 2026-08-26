@@ -7,7 +7,7 @@ import { requiredClauseSeeds } from './requiredClauses';
 export function seedRiskAndRequiredLibraries(): void {
   const db = getDb();
 
-  const existingPatterns = db.select({ count: sql<number>`count(*)` }).from(riskPatterns).all();
+  const existingPatterns = db.select({ count: sql<number>`count(*)` }).from(riskPatterns);
   if (Number(existingPatterns[0]?.count ?? 0) === 0) {
     let seeded = 0;
     for (const p of riskPatternSeeds) {
@@ -19,7 +19,7 @@ export function seedRiskAndRequiredLibraries(): void {
           triggerKeywords: JSON.stringify(p.triggerKeywords),
           explanation: p.explanation,
           recommendation: p.recommendation,
-        }).run();
+        });
         seeded++;
       } catch {
         // skip
@@ -28,7 +28,7 @@ export function seedRiskAndRequiredLibraries(): void {
     console.log(`Seeded ${seeded} risk patterns.`);
   }
 
-  const existingTemplates = db.select({ count: sql<number>`count(*)` }).from(requiredClausesTemplates).all();
+  const existingTemplates = db.select({ count: sql<number>`count(*)` }).from(requiredClausesTemplates);
   if (Number(existingTemplates[0]?.count ?? 0) === 0) {
     let seeded = 0;
     for (const t of requiredClauseSeeds) {
@@ -40,7 +40,7 @@ export function seedRiskAndRequiredLibraries(): void {
           whyNeeded: t.whyNeeded,
           exampleText: t.exampleText,
           detectionKeywords: JSON.stringify(t.detectionKeywords),
-        }).run();
+        });
         seeded++;
       } catch {
         // skip

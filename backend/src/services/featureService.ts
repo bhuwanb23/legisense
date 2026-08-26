@@ -22,7 +22,7 @@ export async function generateBetterVersion(
   const db = getDb();
   const docRows = db.select().from(documents).where(
     sql`${documents.id} = ${documentId} AND ${documents.userId} = ${userId} AND ${documents.isDeleted} = 0`
-  ).all();
+  );
   const doc = docRows[0];
   if (!doc) throw new Error('Document not found');
 
@@ -40,9 +40,9 @@ export async function generateBetterVersion(
 
   const analysis = db.select().from(analysisResults).where(
     sql`${analysisResults.documentId} = ${documentId}`
-  ).all()[0];
+  )[0];
   const clauseRows = analysis
-    ? db.select().from(clauses).where(sql`${clauses.analysisId} = ${analysis.id}`).all()
+    ? db.select().from(clauses).where(sql`${clauses.analysisId} = ${analysis.id}`)
     : [];
   const counters = clauseRows
     .filter((c) => (c.counterSuggestion || '').trim())
@@ -284,7 +284,7 @@ export async function compareDocuments(
   const db = getDb();
   const docs = db.select().from(documents).where(
     sql`${documents.id} IN (${documentIdA}, ${documentIdB}) AND ${documents.userId} = ${userId} AND ${documents.isDeleted} = 0`
-  ).all();
+  );
   if (docs.length !== 2) throw new BadRequestError('Both documents must exist and belong to you');
 
   const byId = new Map(docs.map((d) => [d.id, d]));
@@ -294,7 +294,7 @@ export async function compareDocuments(
   const getAnalysis = (docId: number) => {
     const rows = db.select().from(analysisResults).where(
       sql`${analysisResults.documentId} = ${docId}`
-    ).all();
+    );
     return rows[0] || null;
   };
 
@@ -302,9 +302,9 @@ export async function compareDocuments(
   const analysisB = getAnalysis(documentIdB);
   if (!analysisA || !analysisB) throw new BadRequestError('Both documents need a completed analysis to compare');
 
-  const clausesA = db.select().from(clauses).where(sql`${clauses.analysisId} = ${analysisA.id}`).all()
+  const clausesA = db.select().from(clauses).where(sql`${clauses.analysisId} = ${analysisA.id}`)
     .sort((x, y) => (x.clauseNumber || 0) - (y.clauseNumber || 0));
-  const clausesB = db.select().from(clauses).where(sql`${clauses.analysisId} = ${analysisB.id}`).all()
+  const clausesB = db.select().from(clauses).where(sql`${clauses.analysisId} = ${analysisB.id}`)
     .sort((x, y) => (x.clauseNumber || 0) - (y.clauseNumber || 0));
 
   const strip = (s: string | null | undefined) => (s || '').toLowerCase().replace(/\s+/g, ' ').trim();
@@ -409,11 +409,11 @@ export async function compareDocumentToTemplate(documentId: number, type: string
   const db = getDb();
   const doc = db.select().from(documents).where(
     sql`${documents.id} = ${documentId} AND ${documents.userId} = ${userId} AND ${documents.isDeleted} = 0`
-  ).all()[0];
+  )[0];
   if (!doc) throw new BadRequestError('Document not found');
-  const analysis = db.select().from(analysisResults).where(sql`${analysisResults.documentId} = ${documentId}`).all()[0];
+  const analysis = db.select().from(analysisResults).where(sql`${analysisResults.documentId} = ${documentId}`)[0];
   if (!analysis) throw new BadRequestError('Analyze the document first');
-  const clauseRows = db.select().from(clauses).where(sql`${clauses.analysisId} = ${analysis.id}`).all();
+  const clauseRows = db.select().from(clauses).where(sql`${clauses.analysisId} = ${analysis.id}`);
   const tplSections = tpl.body.split(/\n\n+/).filter(Boolean);
   const changed: Array<{ title: string; documentText: string; templateText: string; word_diff: WordDiff[] }> = [];
   for (const c of clauseRows) {

@@ -93,7 +93,7 @@ export function saveDeadlinesForDocument(
       consequenceIfMissed: item.consequenceIfMissed || null,
       isRecurring,
       parentId: null,
-    }).run();
+    });
 
     if (!isRecurring) continue;
 
@@ -105,7 +105,7 @@ export function saveDeadlinesForDocument(
 
     const parentRows = db.select().from(deadlines).where(
       sql`${deadlines.documentId} = ${documentId} AND ${deadlines.userId} = ${userId} AND ${deadlines.title} = ${item.title} AND ${deadlines.dueDate} = ${item.dueDate}`
-    ).all();
+    );
     const parent = parentRows[parentRows.length - 1];
     if (!parent) continue;
 
@@ -124,7 +124,7 @@ export function saveDeadlinesForDocument(
         consequenceIfMissed: item.consequenceIfMissed || null,
         isRecurring: true,
         parentId: parent.id,
-      }).run();
+      });
     }
   }
 

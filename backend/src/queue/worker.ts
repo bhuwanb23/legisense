@@ -64,11 +64,11 @@ export class Worker {
 
     const db = getDb();
 
-    const pending = db.all(sql`
+    const pending = (await db.execute(sql`
       SELECT * FROM jobs
       WHERE queue_name = ${this.queueName}
         AND status = 'pending'
-        AND (delay_until IS NULL OR delay_until <= datetime('now'))
+        AND (delay_until IS NULL OR delay_until <= NOW())
       ORDER BY priority ASC, created_at ASC
       LIMIT ${this.concurrency - this.activeJobs.size}
     `) as Record<string, unknown>[];
@@ -88,8 +88,8 @@ export class Worker {
     const opts = job.opts as JobOpts;
     const maxAttempts = opts?.attempts || 3;
 
-    db.run(sql`
-      UPDATE jobs SET status = 'processing', started_at = datetime('now'), attempt = ${job.retryCount + 1}
+    await db.execute(sql`
+      UPDATE jobs SET status = 'processing', started_at = NOW(), attempt = ${job.retryCount + 1}
       WHERE id = ${job.id}
     `);
     persistNow();
@@ -97,8 +97,8 @@ export class Worker {
     try {
       await this.processor(job);
 
-      db.run(sql`
-        UPDATE jobs SET status = 'completed', completed_at = datetime('now')
+      await db.execute(sql`
+        UPDATE jobs SET status = 'completed', completed_at = NOW()
         WHERE id = ${job.id}
       `);
       persistNow();
@@ -113,12 +113,12 @@ export class Worker {
 
         if (backoff > 0) {
           const delayUntil = new Date(Date.now() + backoff).toISOString().slice(0, 19).replace('T', ' ');
-          db.run(sql`
+          await db.execute(sql`
             UPDATE jobs SET status = 'pending', delay_until = ${delayUntil}, retry_count = ${newRetryCount}, error = ${errorMessage}
             WHERE id = ${job.id}
           `);
         } else {
-          db.run(sql`
+          await db.execute(sql`
             UPDATE jobs SET status = 'pending', retry_count = ${newRetryCount}, error = ${errorMessage}
             WHERE id = ${job.id}
           `);
@@ -126,8 +126,8 @@ export class Worker {
         persistNow();
         this.emit('retrying', { job, error: errorMessage, attempt: newRetryCount });
       } else {
-        db.run(sql`
-          UPDATE jobs SET status = 'failed', failed_at = datetime('now'), error = ${errorMessage}
+        await db.execute(sql`
+          UPDATE jobs SET status = 'failed', failed_at = NOW(), error = ${errorMessage}
           WHERE id = ${job.id}
         `);
         persistNow();

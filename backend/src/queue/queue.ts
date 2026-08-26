@@ -50,7 +50,7 @@ export class Queue {
 
     try {
       const db = getDb();
-      db.run(sql`
+      await db.execute(sql`
         CREATE TABLE IF NOT EXISTS jobs (
           id TEXT PRIMARY KEY,
           queue_name TEXT NOT NULL,
@@ -65,15 +65,15 @@ export class Queue {
           error TEXT,
           delay_until TEXT,
           repeat_job_key TEXT,
-          created_at TEXT NOT NULL DEFAULT (datetime('now')),
+          created_at TEXT NOT NULL DEFAULT (NOW()),
           started_at TEXT,
           completed_at TEXT,
           failed_at TEXT,
           returnvalue TEXT
         )
       `);
-      db.run(sql`CREATE INDEX IF NOT EXISTS idx_jobs_queue_status ON jobs(queue_name, status, priority)`);
-      db.run(sql`CREATE INDEX IF NOT EXISTS idx_jobs_repeat_key ON jobs(repeat_job_key)`);
+      await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_jobs_queue_status ON jobs(queue_name, status, priority)`);
+      await db.execute(sql`CREATE INDEX IF NOT EXISTS idx_jobs_repeat_key ON jobs(repeat_job_key)`);
     } catch {
       // Table may already exist or db not initialized yet
     }
@@ -89,7 +89,7 @@ export class Queue {
       ? new Date(Date.now() + delay).toISOString().slice(0, 19).replace('T', ' ')
       : null;
 
-    db.run(sql`
+    await db.execute(sql`
       INSERT INTO jobs (id, queue_name, name, data, opts, status, priority, max_attempts, delay_until)
       VALUES (${id}, ${this.name}, ${jobName}, ${JSON.stringify(data)}, ${JSON.stringify(mergedOpts)}, 'pending', ${mergedOpts.priority || 0}, ${mergedOpts.attempts || 3}, ${delayUntil})
     `);
@@ -103,14 +103,14 @@ export class Queue {
     const repeatKey = `${this.name}:${jobName}:${pattern}`;
     const db = getDb();
 
-    const existing = db.all(sql`
+    const existing = (await db.execute(sql`
       SELECT id FROM jobs WHERE repeat_job_key = ${repeatKey} AND status NOT IN ('completed', 'failed')
     `) as { id: string }[];
 
     if (existing.length > 0) return;
 
     const id = `${this.name}_repeat_${Date.now()}`;
-    db.run(sql`
+    await db.execute(sql`
       INSERT INTO jobs (id, queue_name, name, data, opts, status, priority, max_attempts, repeat_job_key)
       VALUES (${id}, ${this.name}, ${jobName}, ${JSON.stringify(data)}, ${JSON.stringify({ repeat: { pattern }, priority: 3 })}, 'pending', 3, 3, ${repeatKey})
     `);
@@ -118,13 +118,13 @@ export class Queue {
 
   async getJob(jobId: string): Promise<JobData | undefined> {
     const db = getDb();
-    const rows = db.all(sql`SELECT * FROM jobs WHERE id = ${jobId}`) as Record<string, unknown>[];
+    const rows = (await db.execute(sql`SELECT * FROM jobs WHERE id = ${jobId}`) as Record<string, unknown>[];
     return rows.length > 0 ? this.mapRow(rows[0]) : undefined;
   }
 
   async getJobs(statuses?: string[]): Promise<JobData[]> {
     const db = getDb();
-    const rows = db.all(sql`
+    const rows = (await db.execute(sql`
       SELECT * FROM jobs WHERE queue_name = ${this.name}
       ORDER BY priority ASC, created_at ASC
     `) as Record<string, unknown>[];
@@ -137,7 +137,7 @@ export class Queue {
 
   async getActiveCount(): Promise<number> {
     const db = getDb();
-    const rows = db.all(sql`
+    const rows = (await db.execute(sql`
       SELECT COUNT(*) as count FROM jobs WHERE queue_name = ${this.name} AND status = 'processing'
     `) as { count: number }[];
     return Number(rows[0]?.count ?? 0);
@@ -145,8 +145,8 @@ export class Queue {
 
   async getPendingCount(): Promise<number> {
     const db = getDb();
-    const rows = db.all(sql`
-      SELECT COUNT(*) as count FROM jobs WHERE queue_name = ${this.name} AND status = 'pending' AND (delay_until IS NULL OR delay_until <= datetime('now'))
+    const rows = (await db.execute(sql`
+      SELECT COUNT(*) as count FROM jobs WHERE queue_name = ${this.name} AND status = 'pending' AND (delay_until IS NULL OR delay_until <= NOW())
     `) as { count: number }[];
     return Number(rows[0]?.count ?? 0);
   }
@@ -157,7 +157,7 @@ export class Queue {
 
   async obliterate(): Promise<void> {
     const db = getDb();
-    db.run(sql`DELETE FROM jobs WHERE queue_name = ${this.name}`);
+    await db.execute(sql`DELETE FROM jobs WHERE queue_name = ${this.name}`);
   }
 
   private mapRow(row: Record<string, unknown>): JobData {
