@@ -24,7 +24,7 @@ async function runAutoDeleteCheck(): Promise<void> {
   try {
     const db = getDb();
 
-    const expired = db.select({
+    const expired = await db.select({
       id: documents.id,
       storagePath: documents.storagePath,
     }).from(documents)

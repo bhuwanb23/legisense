@@ -63,12 +63,12 @@ export async function processDocumentSync(
   const db = getDb();
   const startTime = Date.now();
 
-  const rows = db.select().from(documents).where(sql`${documents.id} = ${documentId}`);
+  const rows = await db.select().from(documents).where(sql`${documents.id} = ${documentId}`);
   const doc = rows[0];
   if (!doc) throw new Error(`Document ${documentId} not found`);
 
   // Already analyzed — return existing bundle unless force refresh
-  const existing = db.select().from(analysisResults).where(sql`${analysisResults.documentId} = ${documentId}`);
+  const existing = await db.select().from(analysisResults).where(sql`${analysisResults.documentId} = ${documentId}`);
   if (!options?.force && existing[0] && doc.processingStatus === 'analyzed') {
     return getAnalysisBundleForDocument(documentId);
   }
@@ -79,7 +79,7 @@ export async function processDocumentSync(
     const rawText = await resolveDocumentText(doc as unknown as Record<string, unknown>, documentId);
     const llmText = truncateForLlm(rawText);
 
-    const userRows = db.select().from(users).where(sql`${users.id} = ${doc.userId}`);
+    const userRows = await db.select().from(users).where(sql`${users.id} = ${doc.userId}`);
     const preferredLanguage = toIso6391(userRows[0]?.preferredLanguage || 'en');
     const detected = detectLanguage(rawText);
     const detectedLang = detected.language;
@@ -153,7 +153,7 @@ export async function processDocumentSync(
 
     const totalTime = (Date.now() - startTime) / 1000;
 
-    db.insert(usageLogs).values({
+    await db.insert(usageLogs).values({
       userId: doc.userId,
       action: 'analysis:completed',
       documentId,
@@ -233,7 +233,7 @@ export async function processDocumentSync(
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
 
-    db.insert(usageLogs).values({
+    await db.insert(usageLogs).values({
       userId: doc.userId,
       action: 'analysis:failed',
       documentId,
@@ -254,16 +254,16 @@ export async function processDocumentSync(
   }
 }
 
-export function getAnalysisBundleForDocument(documentId: number): {
+export async function getAnalysisBundleForDocument(documentId: number): Promise<{
   status: string;
   analysis: Record<string, unknown> | null;
   clauses: unknown[];
   riskItems: unknown[];
   deadlines: unknown[];
-} {
+}> {
   const db = getDb();
-  const docRows = db.select().from(documents).where(sql`${documents.id} = ${documentId}`);
-  const analysisRows = db.select().from(analysisResults).where(sql`${analysisResults.documentId} = ${documentId}`);
+  const docRows = await db.select().from(documents).where(sql`${documents.id} = ${documentId}`);
+  const analysisRows = await db.select().from(analysisResults).where(sql`${analysisResults.documentId} = ${documentId}`);
   const analysis = analysisRows[0];
 
   if (!analysis) {
@@ -276,9 +276,9 @@ export function getAnalysisBundleForDocument(documentId: number): {
     };
   }
 
-  const clauseRows = db.select().from(clauses).where(sql`${clauses.analysisId} = ${analysis.id}`);
-  const riskRows = db.select().from(riskItems).where(sql`${riskItems.analysisId} = ${analysis.id}`);
-  const deadlineRows = db.select().from(deadlines).where(sql`${deadlines.documentId} = ${documentId}`);
+  const clauseRows = await db.select().from(clauses).where(sql`${clauses.analysisId} = ${analysis.id}`);
+  const riskRows = await db.select().from(riskItems).where(sql`${riskItems.analysisId} = ${analysis.id}`);
+  const deadlineRows = await db.select().from(deadlines).where(sql`${deadlines.documentId} = ${documentId}`);
 
   const parse = (v: string | null) => {
     if (!v) return [];
@@ -301,7 +301,7 @@ export function getAnalysisBundleForDocument(documentId: number): {
   };
 }
 
-function updateDocumentStatus(documentId: number, status: string): void {
+async function updateDocumentStatus(documentId: number, status: string): Promise<void> {
   const db = getDb();
   await db.execute(sql`UPDATE ${documents} SET processing_status = ${status}, updated_at = NOW() WHERE id = ${documentId}`);
 }
@@ -512,14 +512,14 @@ function deriveImbalanceReason(ai: AnalysisOutput): string {
   return `This contract favors ${ai.favorsParty || 'one party'} because of one-sided terms in ${titles}.`;
 }
 
-function saveAnalysisResults(
+async function saveAnalysisResults(
   documentId: number,
   userId: number,
   ai: AnalysisOutput,
   processingTime: number,
   modelUsed?: string,
   analysisLanguage = 'en',
-): number | null {
+): Promise<number | null> {
   const db = getDb();
 
   const computed = calculateOverallRiskScore(ai.clauses);
@@ -531,7 +531,7 @@ function saveAnalysisResults(
       ? ai.perCategoryFairness
       : derivePerCategoryFairness(ai.clauses);
 
-  db.insert(analysisResults).values({
+  await db.insert(analysisResults).values({
     documentId,
     userId,
     documentType: ai.documentType,
@@ -557,12 +557,12 @@ function saveAnalysisResults(
     counterClausesStatus: counterClausesEnabled() ? 'pending' : 'skipped',
   });
 
-  const analysisRows = db.select().from(analysisResults).where(sql`${analysisResults.documentId} = ${documentId}`);
+  const analysisRows = await db.select().from(analysisResults).where(sql`${analysisResults.documentId} = ${documentId}`);
   const analysisId = analysisRows[0]?.id;
 
   if (analysisId) {
     for (const clause of ai.clauses) {
-      db.insert(clauses).values({
+      await db.insert(clauses).values({
         documentId,
         analysisId,
         clauseNumber: clause.clauseNumber,
@@ -584,7 +584,7 @@ function saveAnalysisResults(
     }
 
     for (const risk of ai.riskItems) {
-      db.insert(riskItems).values({
+      await db.insert(riskItems).values({
         analysisId,
         riskType: risk.riskType,
         title: risk.title,
@@ -609,10 +609,10 @@ function severityFromScore(score: number): string {
   return 'low';
 }
 
-function generateRiskItemsFromClauses(analysisId: number): void {
+async function generateRiskItemsFromClauses(analysisId: number): Promise<void> {
   const db = getDb();
 
-  const clauseRows = db.select().from(clauses).where(
+  const clauseRows = await db.select().from(clauses).where(
     sql`${clauses.analysisId} = ${analysisId}`
   );
 
@@ -623,7 +623,7 @@ function generateRiskItemsFromClauses(analysisId: number): void {
     const severity = severityFromScore(score);
     const title = (c.clauseTitle || 'Clause').trim();
 
-    db.insert(riskItems).values({
+    await db.insert(riskItems).values({
       analysisId,
       clauseId: c.id,
       riskType: c.riskCategory || 'legal',

@@ -20,7 +20,7 @@ export async function generateBetterVersion(
   userId: number,
 ): Promise<{ rewrittenText: string; changes: string[]; model: string }> {
   const db = getDb();
-  const docRows = db.select().from(documents).where(
+  const docRows = await db.select().from(documents).where(
     sql`${documents.id} = ${documentId} AND ${documents.userId} = ${userId} AND ${documents.isDeleted} = 0`
   );
   const doc = docRows[0];
@@ -38,11 +38,11 @@ export async function generateBetterVersion(
     throw new Error('Document text not available. Extract text and analyze first.');
   }
 
-  const analysis = db.select().from(analysisResults).where(
+  const analysis = (await db.select().from(analysisResults).where(
     sql`${analysisResults.documentId} = ${documentId}`
-  )[0];
+  ))[0];
   const clauseRows = analysis
-    ? db.select().from(clauses).where(sql`${clauses.analysisId} = ${analysis.id}`)
+    ? await db.select().from(clauses).where(sql`${clauses.analysisId} = ${analysis.id}`)
     : [];
   const counters = clauseRows
     .filter((c) => (c.counterSuggestion || '').trim())
@@ -282,7 +282,7 @@ export async function compareDocuments(
   summary: { changes: number; newRisks: number };
 }> {
   const db = getDb();
-  const docs = db.select().from(documents).where(
+  const docs = await db.select().from(documents).where(
     sql`${documents.id} IN (${documentIdA}, ${documentIdB}) AND ${documents.userId} = ${userId} AND ${documents.isDeleted} = 0`
   );
   if (docs.length !== 2) throw new BadRequestError('Both documents must exist and belong to you');
@@ -291,8 +291,8 @@ export async function compareDocuments(
   const a = byId.get(documentIdA)!;
   const b = byId.get(documentIdB)!;
 
-  const getAnalysis = (docId: number) => {
-    const rows = db.select().from(analysisResults).where(
+  const getAnalysis = async (docId: number) => {
+    const rows = await db.select().from(analysisResults).where(
       sql`${analysisResults.documentId} = ${docId}`
     );
     return rows[0] || null;
@@ -302,9 +302,9 @@ export async function compareDocuments(
   const analysisB = getAnalysis(documentIdB);
   if (!analysisA || !analysisB) throw new BadRequestError('Both documents need a completed analysis to compare');
 
-  const clausesA = db.select().from(clauses).where(sql`${clauses.analysisId} = ${analysisA.id}`)
+  const clausesA = (await db.select().from(clauses).where(sql`${clauses.analysisId} = ${analysisA.id}`))
     .sort((x, y) => (x.clauseNumber || 0) - (y.clauseNumber || 0));
-  const clausesB = db.select().from(clauses).where(sql`${clauses.analysisId} = ${analysisB.id}`)
+  const clausesB = (await db.select().from(clauses).where(sql`${clauses.analysisId} = ${analysisB.id}`))
     .sort((x, y) => (x.clauseNumber || 0) - (y.clauseNumber || 0));
 
   const strip = (s: string | null | undefined) => (s || '').toLowerCase().replace(/\s+/g, ' ').trim();
@@ -407,13 +407,13 @@ export async function compareDocumentToTemplate(documentId: number, type: string
   const tpl = getTemplate(type, jurisdiction);
   if (!tpl) throw new BadRequestError('Template not found');
   const db = getDb();
-  const doc = db.select().from(documents).where(
+  const doc = (await db.select().from(documents).where(
     sql`${documents.id} = ${documentId} AND ${documents.userId} = ${userId} AND ${documents.isDeleted} = 0`
-  )[0];
+  ))[0];
   if (!doc) throw new BadRequestError('Document not found');
-  const analysis = db.select().from(analysisResults).where(sql`${analysisResults.documentId} = ${documentId}`)[0];
+  const analysis = (await db.select().from(analysisResults).where(sql`${analysisResults.documentId} = ${documentId}`))[0];
   if (!analysis) throw new BadRequestError('Analyze the document first');
-  const clauseRows = db.select().from(clauses).where(sql`${clauses.analysisId} = ${analysis.id}`);
+  const clauseRows = await db.select().from(clauses).where(sql`${clauses.analysisId} = ${analysis.id}`);
   const tplSections = tpl.body.split(/\n\n+/).filter(Boolean);
   const changed: Array<{ title: string; documentText: string; templateText: string; word_diff: WordDiff[] }> = [];
   for (const c of clauseRows) {

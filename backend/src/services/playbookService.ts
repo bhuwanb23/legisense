@@ -10,14 +10,14 @@ function keywordsFromRule(ruleText: string): string[] {
     .filter((w) => w.length >= 5 && !['clause', 'should', 'shall', 'never', 'always', 'without'].includes(w));
 }
 
-export function runPlaybookScan(documentId: number, analysisId: number, userId: number): number {
+export async function runPlaybookScan(documentId: number, analysisId: number, userId: number): Promise<number> {
   const db = getDb();
-  const rules = db.select().from(playbookRules).where(
+  const rules = await db.select().from(playbookRules).where(
     sql`${playbookRules.userId} = ${userId} AND ${playbookRules.isActive} = 1`
   );
   if (rules.length === 0) return 0;
 
-  const clauseRows = db.select().from(clauses).where(sql`${clauses.analysisId} = ${analysisId}`);
+  const clauseRows = await db.select().from(clauses).where(sql`${clauses.analysisId} = ${analysisId}`);
   await db.execute(sql`DELETE FROM ${playbookFlags} WHERE ${playbookFlags.analysisId} = ${analysisId}`);
 
   let count = 0;
@@ -33,7 +33,7 @@ export function runPlaybookScan(documentId: number, analysisId: number, userId: 
         || words.filter((w) => text.includes(w)).length >= Math.min(3, Math.max(1, words.length))
       );
       if (!hit) continue;
-      db.insert(playbookFlags).values({
+      await db.insert(playbookFlags).values({
         documentId,
         analysisId,
         clauseId: clause.id,
@@ -47,14 +47,14 @@ export function runPlaybookScan(documentId: number, analysisId: number, userId: 
   return count;
 }
 
-export function listPlaybookFlags(documentId: number) {
+export async function listPlaybookFlags(documentId: number) {
   const db = getDb();
-  let rows = db.select().from(playbookFlags).where(sql`${playbookFlags.documentId} = ${documentId}`);
+  let rows = await db.select().from(playbookFlags).where(sql`${playbookFlags.documentId} = ${documentId}`);
   if (rows.length === 0) {
-    const analysis = db.select().from(analysisResults).where(sql`${analysisResults.documentId} = ${documentId}`)[0];
+    const analysis = (await db.select().from(analysisResults).where(sql`${analysisResults.documentId} = ${documentId}`))[0];
     if (analysis) {
       runPlaybookScan(documentId, analysis.id, analysis.userId);
-      rows = db.select().from(playbookFlags).where(sql`${playbookFlags.documentId} = ${documentId}`);
+      rows = await db.select().from(playbookFlags).where(sql`${playbookFlags.documentId} = ${documentId}`);
     }
   }
   return rows;

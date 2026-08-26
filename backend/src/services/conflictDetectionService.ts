@@ -36,11 +36,11 @@ export async function runConflictDetection(
   flags: CreatedFlag[],
 ): Promise<void> {
   const db = getDb();
-  const docRows = db.select().from(documents).where(sql`${documents.id} = ${documentId}`);
+  const docRows = await db.select().from(documents).where(sql`${documents.id} = ${documentId}`);
   const doc = docRows[0];
   if (!doc?.countryCode) return;
 
-  const userRows = db.select().from(users).where(sql`${users.id} = ${doc.userId}`);
+  const userRows = await db.select().from(users).where(sql`${users.id} = ${doc.userId}`);
   const parsed = parseUserJurisdiction(userRows[0]?.defaultJurisdiction);
   const allowed = allowedStateCodes(doc.countryCode, doc.stateCode || parsed.stateCode, parsed.history);
 
@@ -62,7 +62,7 @@ export async function runConflictDetection(
 
     if (filtered.length === 0) continue;
 
-    const clauseRows = db.select().from(clauses).where(sql`${clauses.id} = ${flag.clauseId}`);
+    const clauseRows = await db.select().from(clauses).where(sql`${clauses.id} = ${flag.clauseId}`);
     const title = clauseRows[0]?.clauseTitle || flag.ruleTitle || 'Clause';
 
     const existing = byClause.get(flag.clauseId) || { clauseTitle: title, conflicts: [] };
@@ -97,7 +97,7 @@ export async function runConflictDetection(
       });
     }
 
-    db.insert(jurisdictionConflicts).values({
+    await db.insert(jurisdictionConflicts).values({
       analysisId,
       documentId,
       clauseId,
@@ -109,14 +109,14 @@ export async function runConflictDetection(
   persistNow();
 }
 
-export function getFilteredStateConflicts(documentId: number, userId: number) {
+export async function getFilteredStateConflicts(documentId: number, userId: number) {
   const db = getDb();
-  const docRows = db.select().from(documents).where(
+  const docRows = await db.select().from(documents).where(
     sql`${documents.id} = ${documentId} AND ${documents.userId} = ${userId}`
   );
   if (!docRows[0]) return null;
 
-  const rows = db.select().from(jurisdictionConflicts).where(
+  const rows = await db.select().from(jurisdictionConflicts).where(
     sql`${jurisdictionConflicts.documentId} = ${documentId}`
   );
 

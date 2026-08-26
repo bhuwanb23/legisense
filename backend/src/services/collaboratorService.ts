@@ -7,24 +7,24 @@ import { createNotification } from './notificationService';
 
 export type CollabRole = 'viewer' | 'commenter';
 
-export function inviteCollaborator(
+export async function inviteCollaborator(
   documentId: number,
   ownerId: number,
   email: string,
   role: CollabRole = 'viewer',
-): { token: string; inviteUrl: string; email: string; role: string } {
+): Promise<{ token: string; inviteUrl: string; email: string; role: string }> {
   const db = getDb();
-  const doc = db.select().from(documents).where(
+  const doc = (await db.select().from(documents).where(
     sql`${documents.id} = ${documentId} AND ${documents.userId} = ${ownerId} AND ${documents.isDeleted} = 0`
-  )[0];
+  ))[0];
   if (!doc) throw new NotFoundError('Document');
   const clean = email.trim().toLowerCase();
   if (!clean.includes('@')) throw new BadRequestError('Valid email is required');
   if (!['viewer', 'commenter'].includes(role)) throw new BadRequestError('role must be viewer or commenter');
 
-  const existing = db.select().from(documentCollaborators).where(
+  const existing = (await db.select().from(documentCollaborators).where(
     sql`${documentCollaborators.documentId} = ${documentId} AND ${documentCollaborators.email} = ${clean} AND ${documentCollaborators.status} != 'revoked'`
-  )[0];
+  ))[0];
   if (existing) {
     return {
       token: existing.token,
@@ -35,8 +35,8 @@ export function inviteCollaborator(
   }
 
   const token = crypto.randomBytes(16).toString('hex');
-  const invitee = db.select().from(users).where(sql`${users.email} = ${clean}`)[0];
-  db.insert(documentCollaborators).values({
+  const invitee = (await db.select().from(users).where(sql`${users.email} = ${clean}`))[0];
+  await db.insert(documentCollaborators).values({
     documentId,
     invitedBy: ownerId,
     email: clean,
@@ -63,11 +63,11 @@ export function inviteCollaborator(
   };
 }
 
-export function acceptInvite(token: string, userId: number, email: string): { documentId: number; role: string } {
+export async function acceptInvite(token: string, userId: number, email: string): Promise<{ documentId: number; role: string }> {
   const db = getDb();
-  const row = db.select().from(documentCollaborators).where(
+  const row = (await db.select().from(documentCollaborators).where(
     sql`${documentCollaborators.token} = ${token}`
-  )[0];
+  ))[0];
   if (!row || row.status === 'revoked') throw new NotFoundError('Invite');
   if (row.email.toLowerCase() !== email.toLowerCase()) {
     throw new ForbiddenError('Invite email does not match this account');
@@ -77,26 +77,26 @@ export function acceptInvite(token: string, userId: number, email: string): { do
   return { documentId: row.documentId, role: row.role };
 }
 
-export function listCollaborators(documentId: number, ownerId: number) {
+export async function listCollaborators(documentId: number, ownerId: number) {
   const db = getDb();
-  const doc = db.select().from(documents).where(
+  const doc = (await db.select().from(documents).where(
     sql`${documents.id} = ${documentId} AND ${documents.userId} = ${ownerId}`
-  )[0];
+  ))[0];
   if (!doc) throw new NotFoundError('Document');
-  return db.select().from(documentCollaborators).where(
+  return await db.select().from(documentCollaborators).where(
     sql`${documentCollaborators.documentId} = ${documentId} AND ${documentCollaborators.status} != 'revoked'`
   );
 }
 
-export function revokeCollaborator(documentId: number, ownerId: number, collabId: number): void {
+export async function revokeCollaborator(documentId: number, ownerId: number, collabId: number): Promise<void> {
   const db = getDb();
-  const doc = db.select().from(documents).where(
+  const doc = (await db.select().from(documents).where(
     sql`${documents.id} = ${documentId} AND ${documents.userId} = ${ownerId}`
-  )[0];
+  ))[0];
   if (!doc) throw new NotFoundError('Document');
-  const row = db.select().from(documentCollaborators).where(
+  const row = (await db.select().from(documentCollaborators).where(
     sql`${documentCollaborators.id} = ${collabId} AND ${documentCollaborators.documentId} = ${documentId}`
-  )[0];
+  ))[0];
   if (!row) throw new NotFoundError('Collaborator');
   await db.execute(sql`UPDATE ${documentCollaborators} SET status = 'revoked' WHERE id = ${collabId}`);
   persistNow();
@@ -104,17 +104,17 @@ export function revokeCollaborator(documentId: number, ownerId: number, collabId
 
 export type AccessRole = 'owner' | 'viewer' | 'commenter';
 
-export function getDocumentAccess(userId: number, documentId: number): { role: AccessRole } | null {
+export async function getDocumentAccess(userId: number, documentId: number): Promise<{ role: AccessRole } | null> {
   const db = getDb();
-  const owned = db.select().from(documents).where(
+  const owned = (await db.select().from(documents).where(
     sql`${documents.id} = ${documentId} AND ${documents.userId} = ${userId} AND ${documents.isDeleted} = 0`
-  )[0];
+  ))[0];
   if (owned) return { role: 'owner' };
-  const collab = db.select().from(documentCollaborators).where(
+  const collab = (await db.select().from(documentCollaborators).where(
     sql`${documentCollaborators.documentId} = ${documentId}
         AND ${documentCollaborators.userId} = ${userId}
         AND ${documentCollaborators.status} = 'accepted'`
-  )[0];
+  ))[0];
   if (!collab) return null;
   return { role: collab.role === 'commenter' ? 'commenter' : 'viewer' };
 }

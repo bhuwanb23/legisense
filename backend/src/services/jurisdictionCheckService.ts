@@ -74,17 +74,17 @@ export function clauseMatchesKeywords(text: string, keywords: string[]): boolean
   return keywords.some((kw) => kw.trim() && hay.includes(kw.toLowerCase()));
 }
 
-export function resolveJurisdictionIds(countryCode: string, stateCode: string | null): number[] {
+export async function resolveJurisdictionIds(countryCode: string, stateCode: string | null): Promise<number[]> {
   const db = getDb();
   const ids: number[] = [];
 
-  const countryLevel = db.select().from(jurisdictions).where(
+  const countryLevel = await db.select().from(jurisdictions).where(
     sql`${jurisdictions.countryCode} = ${countryCode} AND ${jurisdictions.stateCode} IS NULL`
   );
   if (countryLevel[0]) ids.push(countryLevel[0].id);
 
   if (stateCode) {
-    const stateLevel = db.select().from(jurisdictions).where(
+    const stateLevel = await db.select().from(jurisdictions).where(
       sql`${jurisdictions.countryCode} = ${countryCode} AND ${jurisdictions.stateCode} = ${stateCode}`
     );
     if (stateLevel[0]) ids.push(stateLevel[0].id);
@@ -121,13 +121,13 @@ export function parseUserJurisdiction(raw: string | null | undefined): {
   return { countryCode: null, stateCode: null, history: [] };
 }
 
-export function updateUserJurisdictionHistory(
+export async function updateUserJurisdictionHistory(
   userId: number,
   countryCode: string,
   stateCode: string | null,
-): void {
+): Promise<void> {
   const db = getDb();
-  const rows = db.select().from(users).where(sql`${users.id} = ${userId}`);
+  const rows = await db.select().from(users).where(sql`${users.id} = ${userId}`);
   if (!rows[0]) return;
 
   const current = parseUserJurisdiction(rows[0].defaultJurisdiction);
@@ -153,7 +153,7 @@ export async function runJurisdictionCheck(
 ): Promise<CreatedFlag[]> {
   const db = getDb();
 
-  const docRows = db.select().from(documents).where(sql`${documents.id} = ${documentId}`);
+  const docRows = await db.select().from(documents).where(sql`${documents.id} = ${documentId}`);
   const doc = docRows[0];
   if (!doc) {
     await db.execute(sql`UPDATE ${analysisResults} SET jurisdiction_check_status = 'skipped' WHERE id = ${analysisId}`);
@@ -164,7 +164,7 @@ export async function runJurisdictionCheck(
   let stateCode = doc.stateCode;
 
   if (!countryCode) {
-    const userRows = db.select().from(users).where(sql`${users.id} = ${doc.userId}`);
+    const userRows = await db.select().from(users).where(sql`${users.id} = ${doc.userId}`);
     const parsed = parseUserJurisdiction(userRows[0]?.defaultJurisdiction);
     countryCode = parsed.countryCode;
     stateCode = stateCode || parsed.stateCode;
@@ -187,12 +187,12 @@ export async function runJurisdictionCheck(
     const normalizedType = normalizeDocType(documentType);
     const typeVariants = DOC_TYPE_ALIASES[normalizedType] || [normalizedType];
 
-    const allRules = db.select().from(legalRules).filter((r) => {
+    const allRules = (await db.select().from(legalRules)).filter((r) => {
       if (!jurisdictionIds.includes(r.jurisdictionId)) return false;
       return typeVariants.includes(r.documentType) || r.documentType === normalizedType;
     });
 
-    const clauseRows = db.select().from(clauses).where(sql`${clauses.analysisId} = ${analysisId}`);
+    const clauseRows = await db.select().from(clauses).where(sql`${clauses.analysisId} = ${analysisId}`);
     const created: CreatedFlag[] = [];
     const stateLabel = stateCode || countryCode;
 
@@ -205,7 +205,7 @@ export async function runJurisdictionCheck(
           clauseMatchesKeywords(`${c.clauseTitle || ''} ${c.originalText || ''}`, keywords),
         );
         if (!anyMatch) {
-          db.insert(jurisdictionFlags).values({
+          await db.insert(jurisdictionFlags).values({
             analysisId,
             documentId,
             clauseId: null,
@@ -241,7 +241,7 @@ export async function runJurisdictionCheck(
           ? `This clause may be unenforceable or prohibited in ${stateLabel}: ${rule.ruleTitle}. ${rule.ruleDescription}`
           : `This clause may be limited by ${stateLabel} law: ${rule.ruleTitle}. ${rule.ruleDescription}`;
 
-        db.insert(jurisdictionFlags).values({
+        await db.insert(jurisdictionFlags).values({
           analysisId,
           documentId,
           clauseId: clause.id,
@@ -268,7 +268,7 @@ export async function runJurisdictionCheck(
       }
     }
 
-    const flagRows = db.select().from(jurisdictionFlags).where(
+    const flagRows = await db.select().from(jurisdictionFlags).where(
       sql`${jurisdictionFlags.analysisId} = ${analysisId}`
     );
 

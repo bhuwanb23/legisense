@@ -45,11 +45,11 @@ export async function runMissingClauseCheck(
   const type = normalizeDocType(documentType);
   const typeVariants = type === 'nda' ? ['nda', 'non_disclosure'] : [type];
 
-  const templates = db.select().from(requiredClausesTemplates).filter((t) =>
+  const templates = (await db.select().from(requiredClausesTemplates)).filter((t) =>
     typeVariants.includes(t.documentType),
   );
 
-  const clauseRows = db.select().from(clauses).where(sql`${clauses.analysisId} = ${analysisId}`);
+  const clauseRows = await db.select().from(clauses).where(sql`${clauses.analysisId} = ${analysisId}`);
   const corpus = clauseRows.map((c) => `${c.clauseTitle || ''} ${c.originalText || ''}`).join('\n').toLowerCase();
 
   const likelyMissing: typeof templates = [];

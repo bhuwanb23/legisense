@@ -9,7 +9,7 @@ const MAX_COUNTER_CLAUSES = 15;
 
 export async function generateCounterClauses(documentId: number, userId: number): Promise<void> {
   const db = getDb();
-  const analysisRows = db.select().from(analysisResults).where(
+  const analysisRows = await db.select().from(analysisResults).where(
     sql`${analysisResults.documentId} = ${documentId}`
   );
   const analysis = analysisRows[0];
@@ -21,12 +21,12 @@ export async function generateCounterClauses(documentId: number, userId: number)
   persistNow();
 
   try {
-    const docRows = db.select().from(documents).where(sql`${documents.id} = ${documentId}`);
+    const docRows = await db.select().from(documents).where(sql`${documents.id} = ${documentId}`);
     const jurisdiction = [docRows[0]?.countryCode, docRows[0]?.stateCode].filter(Boolean).join('-') || 'general';
 
-    const risky = db.select().from(clauses).where(
+    const risky = (await db.select().from(clauses).where(
       sql`${clauses.analysisId} = ${analysis.id}`
-    )
+    ))
       .filter((c) => (c.riskScore ?? 0) > 50 || c.isFlagged)
       .sort((a, b) => (b.riskScore ?? 0) - (a.riskScore ?? 0))
       .slice(0, MAX_COUNTER_CLAUSES);

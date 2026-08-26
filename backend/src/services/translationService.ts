@@ -117,12 +117,12 @@ export async function translateAnalysisResults(
   }
 
   const db = getDb();
-  const docRows = db.select().from(documents).where(
+  const docRows = await db.select().from(documents).where(
     sql`${documents.id} = ${documentId} AND ${documents.userId} = ${userId} AND ${documents.isDeleted} = 0`
   );
   if (!docRows[0]) throw new NotFoundError('Document');
 
-  const analysisRows = db.select().from(analysisResults).where(
+  const analysisRows = await db.select().from(analysisResults).where(
     sql`${analysisResults.documentId} = ${documentId}`
   );
   const analysis = analysisRows[0];
@@ -139,8 +139,8 @@ export async function translateAnalysisResults(
     return existing[targetLanguage];
   }
 
-  const clauseRows = db.select().from(clauses).where(sql`${clauses.analysisId} = ${analysis.id}`);
-  const flagRows = db.select().from(jurisdictionFlags).where(
+  const clauseRows = await db.select().from(clauses).where(sql`${clauses.analysisId} = ${analysis.id}`);
+  const flagRows = await db.select().from(jurisdictionFlags).where(
     sql`${jurisdictionFlags.analysisId} = ${analysis.id}`
   );
 

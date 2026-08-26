@@ -25,8 +25,8 @@ function findSnippet(text: string, keyword: string): string {
 
 export async function runRiskPatternScan(documentId: number, analysisId: number): Promise<number> {
   const db = getDb();
-  const patterns = db.select().from(riskPatterns);
-  const clauseRows = db.select().from(clauses).where(sql`${clauses.analysisId} = ${analysisId}`);
+  const patterns = await db.select().from(riskPatterns);
+  const clauseRows = await db.select().from(clauses).where(sql`${clauses.analysisId} = ${analysisId}`);
   if (patterns.length === 0 || clauseRows.length === 0) return 0;
 
   const flaggedClauseIds = new Set<number>();
@@ -42,7 +42,7 @@ export async function runRiskPatternScan(documentId: number, analysisId: number)
       if (existingPairs.has(key)) continue;
       existingPairs.add(key);
 
-      db.insert(clauseRiskFlags).values({
+      await db.insert(clauseRiskFlags).values({
         clauseId: clause.id,
         documentId,
         analysisId,
@@ -98,7 +98,7 @@ Only include genuine matches (confidence >= 70). Use pattern names exactly from 
           if (existingPairs.has(key)) continue;
           existingPairs.add(key);
 
-          db.insert(clauseRiskFlags).values({
+          await db.insert(clauseRiskFlags).values({
             clauseId: clause.id,
             documentId,
             analysisId,

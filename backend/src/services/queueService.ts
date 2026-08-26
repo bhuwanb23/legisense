@@ -47,15 +47,15 @@ class QueueService extends EventEmitter {
     return this.enqueueWithOptions(documentId, userId);
   }
 
-  enqueueWithOptions(
+  async enqueueWithOptions(
     documentId: number,
     userId: number,
     options?: { priority?: number; timeoutMs?: number; maxRetries?: number }
-  ): Job {
+  ): Promise<Job> {
     const db = getDb();
     const id = `job_${Date.now()}_${documentId}_${Math.random().toString(36).slice(2, 6)}`;
 
-    db.insert(queueJobs).values({
+    await db.insert(queueJobs).values({
       id,
       documentId,
       userId,
@@ -90,7 +90,7 @@ class QueueService extends EventEmitter {
 
     const db = getDb();
 
-    const pendingRows = db.select().from(queueJobs).where(
+    const pendingRows = await db.select().from(queueJobs).where(
       sql`${queueJobs.status} = 'pending'`
     );
 
@@ -164,9 +164,9 @@ class QueueService extends EventEmitter {
     }
   }
 
-  private handleTimeout(jobId: string): void {
+  private async handleTimeout(jobId: string): Promise<void> {
     const db = getDb();
-    const rows = db.select().from(queueJobs).where(
+    const rows = await db.select().from(queueJobs).where(
       sql`${queueJobs.id} = ${jobId} AND ${queueJobs.status} = 'processing'`
     );
 
@@ -177,27 +177,27 @@ class QueueService extends EventEmitter {
     }
   }
 
-  getJob(jobId: string): Job | undefined {
+  async getJob(jobId: string): Promise<Job | undefined> {
     const db = getDb();
-    const rows = db.select().from(queueJobs).where(sql`${queueJobs.id} = ${jobId}`);
+    const rows = await db.select().from(queueJobs).where(sql`${queueJobs.id} = ${jobId}`);
     return rows.length > 0 ? this.mapJob(rows[0]) : undefined;
   }
 
-  getJobsByDocument(documentId: number): Job[] {
+  async getJobsByDocument(documentId: number): Promise<Job[]> {
     const db = getDb();
-    const rows = db.select().from(queueJobs).where(sql`${queueJobs.documentId} = ${documentId}`);
+    const rows = await db.select().from(queueJobs).where(sql`${queueJobs.documentId} = ${documentId}`);
     return rows.map((r) => this.mapJob(r));
   }
 
-  getPendingJobs(): Job[] {
+  async getPendingJobs(): Promise<Job[]> {
     const db = getDb();
-    const rows = db.select().from(queueJobs).where(
+    const rows = await db.select().from(queueJobs).where(
       sql`${queueJobs.status} IN ('pending', 'retrying')`
     );
     return rows.map((r) => this.mapJob(r));
   }
 
-  getStats(): { total: number; pending: number; processing: number; completed: number; failed: number; retrying: number } {
+  async getStats(): Promise<{ total: number; pending: number; processing: number; completed: number; failed: number; retrying: number }> {
     const db = getDb();
     const result = (await db.execute(sql`
       SELECT
@@ -208,7 +208,7 @@ class QueueService extends EventEmitter {
         SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END) as failed,
         SUM(CASE WHEN status = 'retrying' THEN 1 ELSE 0 END) as retrying
       FROM queue_jobs
-    `) as Array<{ total: number; pending: number; processing: number; completed: number; failed: number; retrying: number }>;
+    `)).rows as Array<{ total: number; pending: number; processing: number; completed: number; failed: number; retrying: number }>;
     return result[0] || { total: 0, pending: 0, processing: 0, completed: 0, failed: 0, retrying: 0 };
   }
 

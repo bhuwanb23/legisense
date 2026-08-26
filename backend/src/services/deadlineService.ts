@@ -68,11 +68,11 @@ export interface DeadlineInput {
   isRecurring?: boolean;
 }
 
-export function saveDeadlinesForDocument(
+export async function saveDeadlinesForDocument(
   documentId: number,
   userId: number,
   items: DeadlineInput[],
-): void {
+): Promise<void> {
   const db = getDb();
 
   for (const item of items) {
@@ -80,7 +80,7 @@ export function saveDeadlinesForDocument(
     const isRecurring = Boolean(item.isRecurring) || (recurrence !== 'one-time' && recurrence !== '');
     const urgency = calculateDeadlineUrgency(item.dueDate);
 
-    db.insert(deadlines).values({
+    await db.insert(deadlines).values({
       documentId,
       userId,
       title: item.title,
@@ -103,7 +103,7 @@ export function saveDeadlinesForDocument(
       continue;
     }
 
-    const parentRows = db.select().from(deadlines).where(
+    const parentRows = await db.select().from(deadlines).where(
       sql`${deadlines.documentId} = ${documentId} AND ${deadlines.userId} = ${userId} AND ${deadlines.title} = ${item.title} AND ${deadlines.dueDate} = ${item.dueDate}`
     );
     const parent = parentRows[parentRows.length - 1];
@@ -111,7 +111,7 @@ export function saveDeadlinesForDocument(
 
     const childDates = expandRecurringDates(item.dueDate, recurrence, 12).slice(1);
     for (const childDate of childDates) {
-      db.insert(deadlines).values({
+      await db.insert(deadlines).values({
         documentId,
         userId,
         title: item.title,

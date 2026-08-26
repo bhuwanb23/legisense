@@ -3,16 +3,16 @@ import { notifications } from '../models';
 import { sql } from 'drizzle-orm';
 import { emitToUser } from './socketService';
 
-export function createNotification(
+export async function createNotification(
   userId: number,
   type: string,
   title: string,
   body: string,
   documentId?: number,
-): number {
+): Promise<number> {
   const db = getDb();
 
-  db.insert(notifications).values({
+  await db.insert(notifications).values({
     userId,
     type,
     title,
@@ -21,7 +21,7 @@ export function createNotification(
     isRead: false,
   });
 
-  const rows = (await db.execute(sql`SELECT last_insert_rowid() as id`) as { id: number }[];
+  const rows = (await db.execute(sql`SELECT id as id`)).rows as { id: number }[];
   const id = Number(rows[0]?.id ?? 0);
 
   emitToUser(userId, 'notification:new', { id, type, title, body, documentId });
