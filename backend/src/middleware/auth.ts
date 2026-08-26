@@ -25,7 +25,7 @@ interface JwtPayload {
   email: string;
 }
 
-export function authenticate(req: Request, _res: Response, next: NextFunction): void {
+export async function authenticate(req: Request, _res: Response, next: NextFunction): Promise<void> {
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -39,7 +39,7 @@ export function authenticate(req: Request, _res: Response, next: NextFunction): 
     const decoded = jwt.verify(token, secret) as JwtPayload;
 
     const db = getDb();
-    const rows = db
+    const rows = await db
       .select({
         id: users.id,
         email: users.email,
@@ -109,7 +109,7 @@ export function authenticateApiKeyRead(req: Request, _res: Response, next: NextF
   attachApiKeyUser(req, next, false);
 }
 
-export function optionalAuth(req: Request, _res: Response, next: NextFunction): void {
+export async function optionalAuth(req: Request, _res: Response, next: NextFunction): Promise<void> {
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -123,7 +123,7 @@ export function optionalAuth(req: Request, _res: Response, next: NextFunction): 
     const decoded = jwt.verify(token, secret) as JwtPayload;
 
     const db = getDb();
-    const rows = db
+    const rows = await db
       .select({
         id: users.id,
         email: users.email,
