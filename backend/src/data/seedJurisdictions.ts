@@ -4,15 +4,15 @@ import { sql } from 'drizzle-orm';
 import { jurisdictionSeeds } from './jurisdictions';
 import { legalRuleSeeds } from './legalRules';
 
-export function seedJurisdictionsAndRules(): void {
+export async function seedJurisdictionsAndRules(): Promise<void> {
   const db = getDb();
 
-  const existing = db.select({ count: sql<number>`count(*)` }).from(jurisdictions);
+  const existing = await db.select({ count: sql<number>`count(*)` }).from(jurisdictions);
   if (Number(existing[0]?.count ?? 0) === 0) {
     let seeded = 0;
     for (const row of jurisdictionSeeds) {
       try {
-        db.insert(jurisdictions).values({
+        await db.insert(jurisdictions).values({
           countryCode: row.countryCode,
           countryName: row.countryName,
           stateCode: row.stateCode,
@@ -27,9 +27,9 @@ export function seedJurisdictionsAndRules(): void {
     console.log(`Seeded ${seeded} jurisdictions.`);
   }
 
-  const existingRules = db.select({ count: sql<number>`count(*)` }).from(legalRules);
+  const existingRules = await db.select({ count: sql<number>`count(*)` }).from(legalRules);
   if (Number(existingRules[0]?.count ?? 0) === 0) {
-    const allJurisdictions = db.select().from(jurisdictions);
+    const allJurisdictions = await db.select().from(jurisdictions);
     const byKey = new Map<string, number>();
     for (const j of allJurisdictions) {
       byKey.set(`${j.countryCode}|${j.stateCode ?? ''}`, j.id);
@@ -40,7 +40,7 @@ export function seedJurisdictionsAndRules(): void {
       const jid = byKey.get(`${rule.countryCode}|${rule.stateCode ?? ''}`);
       if (!jid) continue;
       try {
-        db.insert(legalRules).values({
+        await db.insert(legalRules).values({
           jurisdictionId: jid,
           documentType: rule.documentType,
           ruleTitle: rule.ruleTitle,
