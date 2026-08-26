@@ -98,7 +98,7 @@ async function handleFileUpload(req: Request, res: Response, next: NextFunction)
       detectedType: resolveTypeHintFromRequest(req),
     });
 
-    const doc = await db.select().from(documents).where(sql`${documents.storagePath} = ${storagePath}`)[0];
+    const doc = (await db.select().from(documents).where(sql`${documents.storagePath} = ${storagePath}`))[0];
     if (!doc) throw new Error('Failed to create document record');
     persistNow();
 
@@ -152,7 +152,7 @@ async function handleScanUpload(req: Request, res: Response, next: NextFunction)
       detectedType: resolveTypeHintFromRequest(req),
     });
 
-    const doc = await db.select().from(documents).where(sql`${documents.storagePath} = ${storagePath}`)[0];
+    const doc = (await db.select().from(documents).where(sql`${documents.storagePath} = ${storagePath}`))[0];
     if (!doc) throw new Error('Failed to create document record');
     persistNow();
 
@@ -225,7 +225,7 @@ async function handlePasteUpload(req: Request, res: Response, next: NextFunction
       detectedType: resolveTypeHintFromRequest(req),
     });
 
-    const doc = await db.select().from(documents).where(sql`${documents.originalName} = ${docTitle} AND ${documents.userId} = ${req.user.id}`).pop();
+    const doc = (await db.select().from(documents).where(sql`${documents.originalName} = ${docTitle} AND ${documents.userId} = ${req.user.id}`)).pop();
     if (!doc) throw new Error('Failed to create document record');
     persistNow();
 
@@ -286,7 +286,7 @@ async function handleUrlUpload(req: Request, res: Response, next: NextFunction):
       detectedType: resolveTypeHintFromRequest(req),
     });
 
-    const doc = await db.select().from(documents).where(sql`${documents.sourceUrl} = ${url} AND ${documents.userId} = ${req.user.id}`).pop();
+    const doc = (await db.select().from(documents).where(sql`${documents.sourceUrl} = ${url} AND ${documents.userId} = ${req.user.id}`)).pop();
     if (!doc) throw new Error('Failed to create document record');
     persistNow();
 

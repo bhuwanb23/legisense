@@ -17,7 +17,7 @@ function sleep(ms: number): Promise<void> {
 
 async function specPayload(documentId: number) {
   const db = getDb();
-  const analysis = await db.select().from(analysisResults).where(sql`${analysisResults.documentId} = ${documentId}`)[0];
+  const analysis = (await db.select().from(analysisResults).where(sql`${analysisResults.documentId} = ${documentId}`))[0];
   const clauseRows = analysis
     ? await db.select().from(clauses).where(sql`${clauses.analysisId} = ${analysis.id}`)
     : [];
@@ -104,7 +104,7 @@ export async function publicAnalyze(req: Request, res: Response, next: NextFunct
 
     const idRows = (await db.execute(sql`SELECT id as id`)).rows as { id: number }[];
     const documentId = Number(idRows[0]?.id);
-    const doc = await db.select().from(documents).where(sql`${documents.id} = ${documentId}`)[0];
+    const doc = (await db.select().from(documents).where(sql`${documents.id} = ${documentId}`))[0];
     if (!doc) throw new Error('Failed to create document');
     persistNow();
 
@@ -112,7 +112,7 @@ export async function publicAnalyze(req: Request, res: Response, next: NextFunct
 
     const waitUntil = Date.now() + Number(process.env.V1_ANALYZE_WAIT_MS || 75_000);
     while (Date.now() < waitUntil) {
-      const latest = await db.select().from(documents).where(sql`${documents.id} = ${doc.id}`)[0];
+      const latest = (await db.select().from(documents).where(sql`${documents.id} = ${doc.id}`))[0];
       if (latest?.processingStatus === 'analyzed') {
         res.status(200).json({ success: true, data: specPayload(doc.id) });
         return;
@@ -132,7 +132,7 @@ export async function publicAnalyze(req: Request, res: Response, next: NextFunct
       await sleep(1500);
     }
 
-    const latest = await db.select().from(documents).where(sql`${documents.id} = ${doc.id}`)[0];
+    const latest = (await db.select().from(documents).where(sql`${documents.id} = ${doc.id}`))[0];
     res.status(202).json({
       success: true,
       data: {
@@ -152,9 +152,9 @@ export async function getPublicAnalyze(req: Request, res: Response, next: NextFu
     if (!req.user) throw new BadRequestError('Unauthorized');
     const documentId = Number(req.params.documentId);
     const db = getDb();
-    const doc = await db.select().from(documents).where(
+    const doc = (await db.select().from(documents).where(
       sql`${documents.id} = ${documentId} AND ${documents.userId} = ${req.user.id} AND ${documents.isDeleted} = 0`
-    )[0];
+    ))[0];
     if (!doc) throw new NotFoundError('Document');
 
     if (doc.processingStatus === 'analyzed') {

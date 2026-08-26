@@ -247,7 +247,7 @@ export async function updateNote(req: Request, res: Response, next: NextFunction
 
     await db.execute(sql`UPDATE ${clauseNotes} SET note = ${note}, updated_at = NOW() WHERE id = ${noteId}`);
     persistNow();
-    const updated = await db.select().from(clauseNotes).where(sql`${clauseNotes.id} = ${noteId}`)[0];
+    const updated = (await db.select().from(clauseNotes).where(sql`${clauseNotes.id} = ${noteId}`))[0];
     res.json({ success: true, data: updated });
   } catch (err) {
     next(err);
@@ -337,7 +337,7 @@ export async function updateRule(req: Request, res: Response, next: NextFunction
       await db.execute(sql`UPDATE ${playbookRules} SET is_active = ${isActive ? 1 : 0} WHERE id = ${ruleId}`);
     }
     persistNow();
-    const updated = await db.select().from(playbookRules).where(sql`${playbookRules.id} = ${ruleId}`)[0];
+    const updated = (await db.select().from(playbookRules).where(sql`${playbookRules.id} = ${ruleId}`))[0];
     res.json({ success: true, data: updated });
   } catch (err) {
     next(err);

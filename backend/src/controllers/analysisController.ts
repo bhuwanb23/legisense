@@ -994,7 +994,7 @@ export async function getCounterClauses(
     const analysisRows = await db.select().from(analysisResults).where(
       sql`${analysisResults.documentId} = ${documentId}`
     );
-    const clauseRows = await db.select().from(clauses).where(sql`${clauses.documentId} = ${documentId}`)
+    const clauseRows = (await db.select().from(clauses).where(sql`${clauses.documentId} = ${documentId}`))
       .filter((c) => {
         const score = c.riskScore ?? 0;
         const level = (c.riskLevel || '').toLowerCase();

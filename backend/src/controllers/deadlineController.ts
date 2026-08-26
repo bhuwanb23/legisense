@@ -87,9 +87,9 @@ export async function listUpcomingDeadlines(
     }
 
     const db = getDb();
-    const rows = await db.select().from(deadlines).where(
+    const rows = (await db.select().from(deadlines).where(
       sql`${deadlines.userId} = ${req.user.id}`
-    )
+    ))
       .filter((d) => !d.isCompleted && !d.isDismissed);
 
     const urgencyRank: Record<string, number> = {
@@ -139,7 +139,7 @@ export async function listDocumentDeadlines(
       sql`${deadlines.documentId} = ${documentId} AND ${deadlines.userId} = ${req.user.id}`
     );
 
-    const analysis = await db.select().from(analysisResults).where(sql`${analysisResults.documentId} = ${documentId}`)[0];
+    const analysis = (await db.select().from(analysisResults).where(sql`${analysisResults.documentId} = ${documentId}`))[0];
     if (analysis) {
       let missing: unknown = [];
       try { missing = JSON.parse(analysis.missingClauses || '[]'); } catch { missing = []; }
@@ -391,7 +391,7 @@ export async function updateDeadlineReminders(
     }
 
     persistNow();
-    const updated = await db.select().from(deadlines).where(sql`${deadlines.id} = ${deadlineId}`)[0];
+    const updated = (await db.select().from(deadlines).where(sql`${deadlines.id} = ${deadlineId}`))[0];
     res.json({ success: true, data: mapDeadline(updated) });
   } catch (err) {
     next(err);
