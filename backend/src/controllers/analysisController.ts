@@ -5,6 +5,7 @@ import { sql } from 'drizzle-orm';
 import { analysisQueue } from '../queue';
 import { NotFoundError, BadRequestError } from '../utils/errors';
 import { classifyDocument } from '../services/analysisService';
+import { inferDocumentType } from '../services/analysisCleanup';
 import { getTypeEntry, getValidTypes, normalizeTypeKey } from '../data/documentTypes';
 import { getFilteredStateConflicts } from '../services/conflictDetectionService';
 import { parseUserJurisdiction } from '../services/jurisdictionCheckService';
@@ -592,12 +593,22 @@ export async function classifyEndpoint(
       return;
     }
 
-    const classification = await classifyDocument(rawText);
+    let classification: { type: string; confidence: number; sub_type: string | null };
+    let heuristic = false;
+    try {
+      classification = await classifyDocument(rawText);
+    } catch (err) {
+      // No AI provider configured or all providers failed: degrade to a
+      // keyword heuristic instead of returning a 500.
+      console.warn(`[classify] AI unavailable (${err instanceof Error ? err.message : String(err)}); using heuristic type inference`);
+      classification = { type: inferDocumentType(rawText), confidence: 40, sub_type: null };
+      heuristic = true;
+    }
     // Normalize the classifier's free-text type onto a canonical key so labels
     // like "Non-Disclosure Agreement" map to "nda" instead of "Unknown Document".
     const typeKey = normalizeTypeKey(classification.type);
     const typeEntry = getTypeEntry(typeKey);
-    const needsConfirmation = classification.confidence < 60;
+    const needsConfirmation = heuristic || classification.confidence < 60;
 
     res.json({
       success: true,

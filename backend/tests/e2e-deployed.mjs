@@ -291,7 +291,7 @@ async function main() {
   // ---------- 11. Features ----------
   if (documentId) {
     {
-      const r = await req('PUT', `/api/documents/${documentId}/favorite`, { token: accessToken, body: {} });
+      const r = await req('PUT', `/api/documents/${documentId}/favorite`, { token: accessToken, body: { isFavorite: true } });
       rec('PUT /api/documents/:id/favorite', r.status, r.status === 200, snippet(r.body));
     }
     let shareToken = null;
