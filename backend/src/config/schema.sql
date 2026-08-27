@@ -402,3 +402,72 @@ CREATE TABLE IF NOT EXISTS jobs (
 
 CREATE INDEX IF NOT EXISTS idx_jobs_queue_status ON jobs(queue_name, status, priority);
 CREATE INDEX IF NOT EXISTS idx_jobs_repeat_key ON jobs(repeat_job_key);
+
+-- ─── Idempotent migrations: bring drifted tables up to date ────────────────
+-- If a table was created from an older schema version, newer columns may be
+-- missing. ADD COLUMN IF NOT EXISTS is safe to run repeatedly.
+
+-- users
+ALTER TABLE users ADD COLUMN IF NOT EXISTS nickname TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS preferred_document_types TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS oauth_subject TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login_at TEXT;
+
+-- documents
+ALTER TABLE documents ADD COLUMN IF NOT EXISTS country_code TEXT;
+ALTER TABLE documents ADD COLUMN IF NOT EXISTS state_code TEXT;
+ALTER TABLE documents ADD COLUMN IF NOT EXISTS detected_type TEXT;
+ALTER TABLE documents ADD COLUMN IF NOT EXISTS detected_type_confidence DOUBLE PRECISION;
+ALTER TABLE documents ADD COLUMN IF NOT EXISTS needs_type_confirmation BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE documents ADD COLUMN IF NOT EXISTS is_favorite BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE documents ADD COLUMN IF NOT EXISTS encryption_iv TEXT;
+
+-- analysis_results
+ALTER TABLE analysis_results ADD COLUMN IF NOT EXISTS imbalance_reason TEXT;
+ALTER TABLE analysis_results ADD COLUMN IF NOT EXISTS per_category_fairness TEXT;
+ALTER TABLE analysis_results ADD COLUMN IF NOT EXISTS jurisdiction_check_status TEXT DEFAULT 'pending';
+ALTER TABLE analysis_results ADD COLUMN IF NOT EXISTS breach_scenarios TEXT;
+ALTER TABLE analysis_results ADD COLUMN IF NOT EXISTS analysis_language TEXT;
+ALTER TABLE analysis_results ADD COLUMN IF NOT EXISTS translations TEXT DEFAULT '{}';
+ALTER TABLE analysis_results ADD COLUMN IF NOT EXISTS counter_clauses_status TEXT DEFAULT 'skipped';
+
+-- clauses
+ALTER TABLE clauses ADD COLUMN IF NOT EXISTS reading_level TEXT;
+ALTER TABLE clauses ADD COLUMN IF NOT EXISTS key_legal_terms TEXT;
+ALTER TABLE clauses ADD COLUMN IF NOT EXISTS negotiation_tips TEXT;
+ALTER TABLE clauses ADD COLUMN IF NOT EXISTS used_counter BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE clauses ADD COLUMN IF NOT EXISTS copied_at TEXT;
+
+-- deadlines
+ALTER TABLE deadlines ADD COLUMN IF NOT EXISTS deadline_type TEXT;
+ALTER TABLE deadlines ADD COLUMN IF NOT EXISTS party_responsible TEXT;
+ALTER TABLE deadlines ADD COLUMN IF NOT EXISTS consequence_if_missed TEXT;
+ALTER TABLE deadlines ADD COLUMN IF NOT EXISTS is_recurring BOOLEAN NOT NULL DEFAULT FALSE;
+ALTER TABLE deadlines ADD COLUMN IF NOT EXISTS parent_id INTEGER;
+ALTER TABLE deadlines ADD COLUMN IF NOT EXISTS reminder_times TEXT DEFAULT '[7,3,1]';
+ALTER TABLE deadlines ADD COLUMN IF NOT EXISTS reminder_channels TEXT DEFAULT '["push"]';
+ALTER TABLE deadlines ADD COLUMN IF NOT EXISTS reminder_sent_days TEXT DEFAULT '[]';
+ALTER TABLE deadlines ADD COLUMN IF NOT EXISTS exported_at TEXT;
+
+-- usage_logs
+ALTER TABLE usage_logs ADD COLUMN IF NOT EXISTS provider TEXT;
+ALTER TABLE usage_logs ADD COLUMN IF NOT EXISTS model TEXT;
+ALTER TABLE usage_logs ADD COLUMN IF NOT EXISTS cost DOUBLE PRECISION;
+ALTER TABLE usage_logs ADD COLUMN IF NOT EXISTS input_tokens INTEGER;
+ALTER TABLE usage_logs ADD COLUMN IF NOT EXISTS output_tokens INTEGER;
+
+-- share_links
+ALTER TABLE share_links ADD COLUMN IF NOT EXISTS views INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE share_links ADD COLUMN IF NOT EXISTS expires_at TEXT;
+
+-- playbook_rules
+ALTER TABLE playbook_rules ADD COLUMN IF NOT EXISTS category TEXT NOT NULL DEFAULT 'general';
+
+-- api_keys
+ALTER TABLE api_keys ADD COLUMN IF NOT EXISTS daily_count INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE api_keys ADD COLUMN IF NOT EXISTS daily_reset TEXT;
+ALTER TABLE api_keys ADD COLUMN IF NOT EXISTS last_used_at TEXT;
+
+-- document_collaborators
+ALTER TABLE document_collaborators ADD COLUMN IF NOT EXISTS user_id INTEGER REFERENCES users(id);
+ALTER TABLE document_collaborators ADD COLUMN IF NOT EXISTS status TEXT NOT NULL DEFAULT 'pending';
