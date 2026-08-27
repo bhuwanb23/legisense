@@ -1,3 +1,6 @@
+import fs from 'fs';
+import path from 'path';
+import { Pool } from 'pg';
 import { initDatabase, getDb, closeDatabase } from '../src/config/database';
 import { sql } from 'drizzle-orm';
 import {
@@ -16,6 +19,21 @@ function assert(condition: boolean, test: string, detail?: string) {
 }
 
 async function setup() {
+  // Create tables from schema.sql if they don't exist
+  const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: process.env.DATABASE_URL?.includes('render.com') ? { rejectUnauthorized: false } : undefined,
+  });
+
+  try {
+    const schemaPath = path.join(__dirname, '..', 'src', 'config', 'schema.sql');
+    const schemaSql = fs.readFileSync(schemaPath, 'utf-8');
+    await pool.query(schemaSql);
+    console.log('Schema tables created/verified.');
+  } finally {
+    await pool.end();
+  }
+
   await initDatabase();
   const db = getDb();
 
