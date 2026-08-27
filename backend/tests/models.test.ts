@@ -1,5 +1,4 @@
-import initSqlJs, { type Database } from 'sql.js';
-import { drizzle, type SQLJsDatabase } from 'drizzle-orm/sql-js';
+import { initDatabase, getDb, closeDatabase } from '../src/config/database';
 import { sql } from 'drizzle-orm';
 import {
   users, documents, analysisResults,
@@ -7,8 +6,6 @@ import {
   notifications, sessions, usageLogs,
 } from '../src/models';
 
-let sqlClient: Database;
-let db: SQLJsDatabase;
 let seed: { user: any; doc: any; analysis: any };
 
 const results: { test: string; pass: boolean; detail?: string }[] = [];
@@ -19,211 +16,27 @@ function assert(condition: boolean, test: string, detail?: string) {
 }
 
 async function setup() {
-  const SQL = await initSqlJs();
-  sqlClient = new SQL.Database();
-  sqlClient.run('PRAGMA foreign_keys = ON');
-  db = drizzle(sqlClient);
+  await initDatabase();
+  const db = getDb();
 
-  await db.run(sql`CREATE TABLE IF NOT EXISTS ${users} (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    full_name TEXT NOT NULL,
-    email TEXT NOT NULL UNIQUE,
-    phone_number TEXT,
-    password_hash TEXT,
-    auth_provider TEXT NOT NULL DEFAULT 'email',
-    profile_photo_url TEXT,
-    profession TEXT,
-    preferred_language TEXT NOT NULL DEFAULT 'en',
-    default_jurisdiction TEXT,
-    nickname TEXT,
-    preferred_document_types TEXT,
-    oauth_subject TEXT,
-    is_verified INTEGER NOT NULL DEFAULT 0,
-    is_active INTEGER NOT NULL DEFAULT 1,
-    created_at TEXT NOT NULL DEFAULT (datetime('now')),
-    updated_at TEXT NOT NULL DEFAULT (datetime('now')),
-    last_login_at TEXT
-  )`);
-
-  await db.run(sql`CREATE TABLE IF NOT EXISTS ${documents} (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL REFERENCES users(id),
-    original_name TEXT NOT NULL,
-    storage_path TEXT NOT NULL,
-    file_format TEXT NOT NULL,
-    file_size INTEGER,
-    page_count INTEGER,
-    source_type TEXT NOT NULL,
-    source_url TEXT,
-    raw_text TEXT,
-    detected_language TEXT,
-    detected_type TEXT,
-    detected_type_confidence REAL,
-    needs_type_confirmation INTEGER NOT NULL DEFAULT 0,
-    country_code TEXT,
-    state_code TEXT,
-    upload_status TEXT NOT NULL DEFAULT 'uploading',
-    processing_status TEXT NOT NULL DEFAULT 'pending',
-    is_deleted INTEGER NOT NULL DEFAULT 0,
-    is_favorite INTEGER NOT NULL DEFAULT 0,
-    auto_delete_at TEXT,
-    encryption_iv TEXT,
-    created_at TEXT NOT NULL DEFAULT (datetime('now')),
-    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-  )`);
-
-  await db.run(sql`CREATE TABLE IF NOT EXISTS ${analysisResults} (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    document_id INTEGER NOT NULL UNIQUE REFERENCES documents(id),
-    user_id INTEGER NOT NULL REFERENCES users(id),
-    document_type TEXT,
-    detected_type_confidence REAL,
-    overall_risk_score REAL,
-    risk_level TEXT,
-    fairness_score REAL,
-    favors_party TEXT,
-    imbalance_reason TEXT,
-    per_category_fairness TEXT,
-    summary TEXT,
-    key_parties TEXT,
-    critical_dates TEXT,
-    key_obligations TEXT,
-    missing_clauses TEXT,
-    jurisdiction_flags TEXT,
-    breach_scenarios TEXT,
-    jurisdiction_check_status TEXT DEFAULT 'pending',
-    analysis_language TEXT,
-    translations TEXT DEFAULT '{}',
-    counter_clauses_status TEXT DEFAULT 'skipped',
-    processing_time REAL,
-    ai_model_used TEXT,
-    created_at TEXT NOT NULL DEFAULT (datetime('now'))
-  )`);
-
-  await db.run(sql`CREATE TABLE IF NOT EXISTS ${clauses} (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    document_id INTEGER NOT NULL REFERENCES documents(id),
-    analysis_id INTEGER NOT NULL REFERENCES analysis_results(id),
-    clause_number INTEGER,
-    clause_title TEXT,
-    original_text TEXT NOT NULL,
-    plain_english_text TEXT,
-    risk_level TEXT,
-    risk_score REAL,
-    risk_reason TEXT,
-    risk_category TEXT,
-    counter_suggestion TEXT,
-    is_flagged INTEGER NOT NULL DEFAULT 0,
-    page_number INTEGER,
-    party_references TEXT,
-    start_position INTEGER,
-    end_position INTEGER,
-    reading_level TEXT,
-    key_legal_terms TEXT,
-    negotiation_tips TEXT,
-    used_counter INTEGER NOT NULL DEFAULT 0,
-    copied_at TEXT,
-    created_at TEXT NOT NULL DEFAULT (datetime('now'))
-  )`);
-
-  await db.run(sql`CREATE TABLE IF NOT EXISTS ${riskItems} (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    analysis_id INTEGER NOT NULL REFERENCES analysis_results(id),
-    clause_id INTEGER REFERENCES clauses(id),
-    risk_type TEXT NOT NULL,
-    title TEXT NOT NULL,
-    description TEXT,
-    severity TEXT NOT NULL,
-    severity_score REAL,
-    recommendation TEXT,
-    legal_reference TEXT,
-    jurisdiction TEXT,
-    created_at TEXT NOT NULL DEFAULT (datetime('now'))
-  )`);
-
-  await db.run(sql`CREATE TABLE IF NOT EXISTS ${deadlines} (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    document_id INTEGER NOT NULL REFERENCES documents(id),
-    user_id INTEGER NOT NULL REFERENCES users(id),
-    title TEXT NOT NULL,
-    description TEXT,
-    due_date TEXT NOT NULL,
-    recurrence TEXT,
-    urgency_level TEXT,
-    reminder_sent INTEGER NOT NULL DEFAULT 0,
-    reminder_date TEXT,
-    is_completed INTEGER NOT NULL DEFAULT 0,
-    is_dismissed INTEGER NOT NULL DEFAULT 0,
-    calendar_exported INTEGER NOT NULL DEFAULT 0,
-    exported_at TEXT,
-    reminder_enabled INTEGER NOT NULL DEFAULT 1,
-    reminder_times TEXT DEFAULT '[7,3,1]',
-    reminder_channels TEXT DEFAULT '["push"]',
-    reminder_sent_days TEXT DEFAULT '[]',
-    deadline_type TEXT,
-    party_responsible TEXT,
-    consequence_if_missed TEXT,
-    is_recurring INTEGER NOT NULL DEFAULT 0,
-    parent_id INTEGER,
-    created_at TEXT NOT NULL DEFAULT (datetime('now'))
-  )`);
-
-  await db.run(sql`CREATE TABLE IF NOT EXISTS ${chatMessages} (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    document_id INTEGER NOT NULL REFERENCES documents(id),
-    user_id INTEGER NOT NULL REFERENCES users(id),
-    session_id TEXT NOT NULL,
-    role TEXT NOT NULL,
-    message TEXT NOT NULL,
-    cited_clause_ids TEXT,
-    cited_pages TEXT,
-    tokens_used INTEGER,
-    response_time REAL,
-    created_at TEXT NOT NULL DEFAULT (datetime('now'))
-  )`);
-
-  await db.run(sql`CREATE TABLE IF NOT EXISTS ${notifications} (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL REFERENCES users(id),
-    type TEXT NOT NULL,
-    title TEXT NOT NULL,
-    body TEXT,
-    document_id INTEGER REFERENCES documents(id),
-    is_read INTEGER NOT NULL DEFAULT 0,
-    action_url TEXT,
-    created_at TEXT NOT NULL DEFAULT (datetime('now'))
-  )`);
-
-  await db.run(sql`CREATE TABLE IF NOT EXISTS ${sessions} (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL REFERENCES users(id),
-    refresh_token TEXT NOT NULL UNIQUE,
-    device_info TEXT,
-    ip_address TEXT,
-    expires_at TEXT NOT NULL,
-    is_revoked INTEGER NOT NULL DEFAULT 0,
-    created_at TEXT NOT NULL DEFAULT (datetime('now'))
-  )`);
-
-  await db.run(sql`CREATE TABLE IF NOT EXISTS ${usageLogs} (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL REFERENCES users(id),
-    action TEXT NOT NULL,
-    document_id INTEGER REFERENCES documents(id),
-    tokens_consumed INTEGER,
-    processing_time REAL,
-    provider TEXT,
-    model TEXT,
-    cost REAL,
-    input_tokens INTEGER,
-    output_tokens INTEGER,
-    created_at TEXT NOT NULL DEFAULT (datetime('now'))
-  )`);
+  // Clean slate
+  await db.execute(sql`DELETE FROM deadlines`);
+  await db.execute(sql`DELETE FROM risk_items`);
+  await db.execute(sql`DELETE FROM clauses`);
+  await db.execute(sql`DELETE FROM analysis_results`);
+  await db.execute(sql`DELETE FROM chat_messages`);
+  await db.execute(sql`DELETE FROM notifications`);
+  await db.execute(sql`DELETE FROM sessions`);
+  await db.execute(sql`DELETE FROM usage_logs`);
+  await db.execute(sql`DELETE FROM documents`);
+  await db.execute(sql`DELETE FROM users`);
 
   seed = await seedBase();
 }
 
 async function seedBase() {
+  const db = getDb();
+
   const user = await db.insert(users).values({
     fullName: 'Test User',
     email: 'test@legisense.com',
@@ -250,6 +63,7 @@ async function seedBase() {
 
 async function testUserModel() {
   console.log('\n🧑 Testing User Model');
+  const db = getDb();
 
   const insertResult = await db.insert(users).values({
     fullName: 'Bhawarlal Bhuwan',
@@ -302,6 +116,7 @@ async function testUserModel() {
 
 async function testDocumentModel() {
   console.log('\n📄 Testing Document Model');
+  const db = getDb();
 
   const user = (await db.select().from(users).limit(1))[0];
 
@@ -334,7 +149,7 @@ async function testDocumentModel() {
 
 async function testAnalysisResultModel() {
   console.log('\n🤖 Testing AnalysisResult Model');
-
+  const db = getDb();
   const { user, doc } = seed;
 
   const allResults = await db.select().from(analysisResults);
@@ -356,8 +171,8 @@ async function testAnalysisResultModel() {
 
 async function testClauseModel() {
   console.log('\n📑 Testing Clause Model');
-
-  const { user, doc, analysis } = seed;
+  const db = getDb();
+  const { doc, analysis } = seed;
 
   const clause = await db.insert(clauses).values({
     documentId: doc.id,
@@ -413,7 +228,7 @@ async function testClauseModel() {
 
 async function testRiskItemModel() {
   console.log('\n⚠️  Testing Risk Item Model');
-
+  const db = getDb();
   const { doc, analysis } = seed;
 
   const clause = (await db.insert(clauses).values({
@@ -461,7 +276,7 @@ async function testRiskItemModel() {
 
 async function testDeadlineModel() {
   console.log('\n📅 Testing Deadline Model');
-
+  const db = getDb();
   const { user, doc } = seed;
 
   const deadline = await db.insert(deadlines).values({
@@ -506,7 +321,7 @@ async function testDeadlineModel() {
 
 async function testChatMessageModel() {
   console.log('\n💬 Testing Chat Message Model');
-
+  const db = getDb();
   const { user, doc } = seed;
 
   const sessionId = 'sess_abc123';
@@ -565,7 +380,7 @@ async function testChatMessageModel() {
 
 async function testNotificationModel() {
   console.log('\n🔔 Testing Notification Model');
-
+  const db = getDb();
   const { user, doc } = seed;
 
   const notif = await db.insert(notifications).values({
@@ -606,13 +421,13 @@ async function testNotificationModel() {
   const userNotifs = await db.select().from(notifications).where(sql`${notifications.userId} = ${user.id}`);
   assert(userNotifs.length === 3, 'Query by userId returns all notifications');
 
-  const unread = await db.select().from(notifications).where(sql`${notifications.isRead} = 0`);
+  const unread = await db.select().from(notifications).where(sql`${notifications.isRead} = FALSE`);
   assert(unread.length >= 3, 'Query for unread notifications works');
 }
 
 async function testSessionModel() {
   console.log('\n🔑 Testing Session Model');
-
+  const db = getDb();
   const { user } = seed;
 
   const session = await db.insert(sessions).values({
@@ -652,7 +467,7 @@ async function testSessionModel() {
 
 async function testUsageLogModel() {
   console.log('\n📊 Testing Usage Log Model');
-
+  const db = getDb();
   const { user, doc } = seed;
 
   const log1 = await db.insert(usageLogs).values({
@@ -711,7 +526,7 @@ function printSummary() {
 
 async function main() {
   console.log('🧪 Legisense Database Model Tests\n');
-  console.log('Setting up in-memory SQLite database...');
+  console.log('Setting up PostgreSQL database...');
 
   await setup();
   console.log('Database ready.\n');
@@ -729,7 +544,7 @@ async function main() {
 
   const allPassed = printSummary();
 
-  sqlClient.close();
+  await closeDatabase();
   process.exit(allPassed ? 0 : 1);
 }
 

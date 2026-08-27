@@ -88,11 +88,11 @@ jobs:
 
       - name: Build APK (release)
         working-directory: app
-        run: flutter build apk --release --no-pub
+        run: flutter build apk --release --no-pub --dart-define=API_BASE_URL=https://legisense-kr6z.onrender.com
 
       - name: Build App Bundle (release)
         working-directory: app
-        run: flutter build appbundle --release --no-pub
+        run: flutter build appbundle --release --no-pub --dart-define=API_BASE_URL=https://legisense-kr6z.onrender.com
 
       - name: Get version
         id: version
@@ -124,6 +124,9 @@ jobs:
             ### Downloads
             - **APK** - Install directly on Android devices
             - **AAB** - Upload to Google Play Console
+
+            ### Backend
+            - API: https://legisense-kr6z.onrender.com
 
             ### What's Changed
             See commit history for details.
