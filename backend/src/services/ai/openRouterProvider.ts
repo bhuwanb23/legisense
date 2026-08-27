@@ -13,7 +13,7 @@ function getApiKey(): string {
 }
 
 function getDefaultModel(): string {
-  return process.env.OPENROUTER_MODEL || 'openrouter/free';
+  return process.env.OPENROUTER_MODEL || 'google/gemini-2.5-flash';
 }
 
 function getClient(): OpenAI {

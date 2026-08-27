@@ -29,8 +29,11 @@ function firstCloud(): AiProvider | null {
 }
 
 function isUnreliableOpenRouter(): boolean {
-  const model = (process.env.OPENROUTER_MODEL || 'openrouter/free').toLowerCase();
-  return model.includes('free') || model === 'openrouter/auto';
+  // Only openrouter/auto is treated as unreliable (unpredictable routing).
+  // Free-tier models are allowed: they are an explicit, working choice and
+  // are preferable to falling back to heuristic analysis.
+  const model = (process.env.OPENROUTER_MODEL || '').toLowerCase();
+  return model === 'openrouter/auto';
 }
 
 export function selectProvider(context?: AiContext): AiProvider | null {
@@ -159,7 +162,7 @@ function buildFallbackChain(primaryName: ProviderName, context?: AiContext): AiP
   const cloudFirst = prefersCloud(context);
   const analysisTask = context?.task === 'analysis';
   const rest = analysisTask
-    ? [geminiProvider, ollamaProvider, openAIProvider]
+    ? [geminiProvider, openRouterProvider, ollamaProvider, openAIProvider]
     : cloudFirst
       ? [geminiProvider, openRouterProvider, openAIProvider, ollamaProvider]
       : [ollamaProvider, geminiProvider, openRouterProvider, openAIProvider];
